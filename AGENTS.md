@@ -105,3 +105,20 @@ los campos de origen, el formato del QR y la publicación de límites.
   conduce en papel. La entrada por foto y manual es la vía principal, no el respaldo.
 
 Detalle completo en `docs/ARQUITECTURA.md` y `docs/ROADMAP.md`.
+
+## 9. Las DOS pantallas de producción — no son duplicado
+
+Existe una `produccion.html` en **cada** repositorio. Son distintas a propósito y
+**ninguna sustituye a la otra. No las unifiques ni borres una.**
+
+| | QCheck · `produccion.html` | Concre-Ticket · `produccion.html` |
+|---|---|---|
+| **De quién es el dato** | De QC: lo que Segarra midió en obra | De la planta: sus propios despachos |
+| **Quién la ve** | El concretero que surte ESE vaciado | El dueño y el operador de la planta |
+| **Cuándo aplica** | Siempre que QCheck inspeccione, **surta quien surta** | Solo si la concretera es cliente de Concre-Ticket |
+| **Qué muestra** | Ritmo, ciclos batch→descarga, esperas y calidad de sus camiones | Lo anterior más lo interno: despachos, numeración, facturación |
+
+La clave: **la mayoría de las concreteras no serán clientes de Concre-Ticket**, pero igual
+surten vaciados que Segarra inspecciona. La pantalla de QCheck es lo que Segarra les
+entrega en ese caso — información que hoy Rubén les pasa por teléfono. Es, además, la
+puerta comercial hacia Concre-Ticket.
