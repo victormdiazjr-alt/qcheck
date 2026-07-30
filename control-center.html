@@ -124,22 +124,24 @@ const state = { day: null };
 
 /* ---------- menú de navegación: todas las pantallas de QCheck ---------- */
 const PANTALLAS = [
-  { href: "results.html", n: "Results", r: "Datos y cartas",
-    ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="14" rx="2"/><polyline points="6,14 10,10 13,12.5 18,7"/></svg>` },
+  /* En orden del ciclo del camión: llega, se prueba, se anuncia,
+     queda registrado, y de ahí lo ve cada parte interesada. */
+  { href: "conduce.html", n: "Recepción", r: "Entrada de conduce",
+    ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3"/><rect x="7.5" y="7.5" width="4" height="4" rx=".6"/><rect x="13" y="7.5" width="3.5" height="4" rx=".6"/><rect x="7.5" y="13" width="4" height="3.5" rx=".6"/><path d="M13.5 13h3M16.5 15.5h-3"/></svg>` },
   { href: "muestras.html", n: "Muestras", r: "Técnico · iPad",
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.5h6M10 2.5v6l-4.4 10a2 2 0 0 0 1.8 2.9h9.2a2 2 0 0 0 1.8-2.9L14 8.5v-6"/><path d="M7.2 15h9.6"/></svg>` },
   { href: "display.html", n: "Field Display", r: "Choferes", nueva: true,
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M12 16.5v4M8.5 20.5h7"/></svg>` },
-  { href: "contratista.html", n: "Contratista", r: "Estado del tiro",
-    ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V10l9-6 9 6v10"/><rect x="8.5" y="13" width="7" height="7" rx="1"/></svg>` },
+  { href: "results.html", n: "Results", r: "Datos y cartas",
+    ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="14" rx="2"/><polyline points="6,14 10,10 13,12.5 18,7"/></svg>` },
   { href: "produccion.html", n: "Concretera", r: "Rendimiento",
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="8" width="3.4" height="12" rx="1"/><rect x="16.6" y="4.5" width="3.4" height="15.5" rx="1"/></svg>` },
+  { href: "contratista.html", n: "Contratista", r: "Estado del tiro",
+    ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V10l9-6 9 6v10"/><rect x="8.5" y="13" width="7" height="7" rx="1"/></svg>` },
   { href: "autoridad.html", n: "Autoridad", r: "ACT · FHWA",
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 20 6v6c0 5-3.4 8.4-8 9.5C7.4 20.4 4 17 4 12V6z"/><polyline points="8.8,12 11,14.2 15.4,9.6"/></svg>` },
   { href: "reporte.html", n: "Reportes", r: "Entregable",
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h8l4 4v15H6z"/><path d="M14 2.5v4h4"/><path d="M9 12h6M9 16h4"/></svg>` },
-  { href: "conduce.html", n: "Recepción", r: "Entrada de conduce",
-    ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3"/><rect x="7.5" y="7.5" width="4" height="4" rx=".6"/><rect x="13" y="7.5" width="3.5" height="4" rx=".6"/><rect x="7.5" y="13" width="4" height="3.5" rx=".6"/><path d="M13.5 13h3M16.5 15.5h-3"/></svg>` },
 ];
 
 function menu() {
