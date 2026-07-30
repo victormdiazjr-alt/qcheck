@@ -12,15 +12,32 @@
    Widgets con lo que de verdad mira; cada uno entra al detalle.
    ============================================================ */
 .cc-hero {
-  background: linear-gradient(125deg, #131a2e 0%, #26356e 55%, #2c5a3a 100%);
+  background:
+    radial-gradient(680px 220px at 12% 120%, var(--tinte, rgba(52,210,123,.16)), transparent 70%),
+    linear-gradient(125deg, #131a2e 0%, #23305f 60%, #1d3c4c 100%);
   color: #fff; border-radius: 16px; padding: 20px 24px; margin-bottom: 18px;
   display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
-  box-shadow: 0 8px 30px rgba(10,30,50,.3);
+  box-shadow: 0 8px 30px rgba(10,30,50,.34);
+  border: 1px solid rgba(255,255,255,.08);
 }
-.cc-hero h1 { font-size: 22px; margin: 0; }
-.cc-hero .sub { font-size: 13px; color: #b8d0e4; margin-top: 3px; }
-.cc-hero .when { margin-left: auto; text-align: right; font-size: 12.5px; color: #b8d0e4; line-height: 1.6; }
-.cc-hero .when b { color: #fff; font-size: 15px; }
+.cc-hero.s-ok   { --tinte: rgba(52,210,123,.20); }
+.cc-hero.s-act  { --tinte: rgba(245,184,61,.20); }
+.cc-hero.s-susp { --tinte: rgba(255,90,82,.22); }
+.cc-hero .mark2 {
+  width: 46px; height: 46px; border-radius: 50%; flex: none;
+  border: 2.5px solid var(--vc); color: var(--vc);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; box-shadow: 0 0 26px -6px var(--vc);
+}
+.cc-hero.s-ok   { --vc: #56e08e; }
+.cc-hero.s-act  { --vc: #f7c65c; }
+.cc-hero.s-susp { --vc: #ff7a72; }
+.cc-hero h1 { font-size: 23px; margin: 0; font-weight: 700; letter-spacing: -.01em; color: var(--vc); }
+.cc-hero .sub { font-size: 13px; color: #bfd2e4; margin-top: 3px; }
+.cc-hero .when { margin-left: auto; text-align: right; font-size: 12px; color: #9fb6cc;
+  line-height: 1.6; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; }
+.cc-hero .when b { display: block; color: #fff; font-size: 16px; letter-spacing: 0;
+  text-transform: none; font-weight: 700; margin-top: 2px; }
 
 /* --- menú de navegación --- */
 .navmenu { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 10px; margin-bottom: 20px; }
@@ -153,6 +170,23 @@ function render() {
   document.getElementById("brand-subtitle").textContent =
     (db.project.name || "") + " · " + (db.project.qcFirm || "");
 
+  // Estado del proyecto: lo primero que debe decir un control center
+  const graves = alerts.filter((a) => a.level === "susp").length;
+  const fueraSinMarcar = rows.filter((t) => !t.rejected && worstZone(t) === "susp").length;
+  let est;
+  if (graves || fueraSinMarcar || prog.rejected) {
+    est = { cls: "susp", mark: "✕", titulo: "Atención requerida",
+      detalle: [prog.rejected ? `${prog.rejected} carga(s) rechazada(s) hoy` : null,
+                fueraSinMarcar ? `${fueraSinMarcar} ensayo(s) fuera de límite` : null,
+                graves ? `${graves} aviso(s) crítico(s)` : null].filter(Boolean).join(" · ") };
+  } else if (alerts.length) {
+    est = { cls: "act", mark: "▲", titulo: alerts.length === 1 ? "1 aviso activo" : `${alerts.length} avisos activos`,
+      detalle: alerts.map((a) => a.title).join(" · ") };
+  } else {
+    est = { cls: "ok", mark: "✓", titulo: "Todo en cumplimiento",
+      detalle: `${prog.loads} camiones · ${fmt(prog.placed, 1)} CY · sin rechazos` };
+  }
+
   // veredicto del último camión
   let lt = { cls: "idle", w: "Sin camiones", s: "—", num: "—", meta: "" };
   if (last) {
@@ -168,14 +202,15 @@ function render() {
   }
 
   document.getElementById("app").innerHTML = `
-    <div class="cc-hero">
+    <div class="cc-hero s-${est.cls}">
+      <div class="mark2">${est.mark}</div>
       <div>
-        <h1>Buen día, control de calidad</h1>
-        <div class="sub">${esc(db.project.name || "")} · mezcla ${esc(db.project.mixId || "—")}</div>
+        <h1>${est.titulo}</h1>
+        <div class="sub">${est.detalle}</div>
       </div>
       <div class="when">
-        Último vaciado<br><b>${fmtDate(day)}</b>
-        ${meta.fase ? ` · Fase ${esc(meta.fase)}` : ""}${meta.lane ? ` · ${esc(meta.lane)}` : ""}
+        Último vaciado<b>${fmtDate(day)}</b>
+        ${meta.fase || meta.lane ? `<span style="font-size:11px; letter-spacing:.1em">${[meta.fase ? "Fase " + esc(meta.fase) : null, meta.lane ? esc(meta.lane) : null].filter(Boolean).join(" · ")}</span>` : ""}
       </div>
     </div>
 
