@@ -25,16 +25,15 @@
 /* --- menú de navegación --- */
 .navmenu { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 10px; margin-bottom: 20px; }
 .navmenu a {
-  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
   background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
-  padding: 14px 8px 12px; text-decoration: none; color: var(--ink);
+  padding: 16px 8px 14px; text-decoration: none; color: var(--ink);
   box-shadow: var(--shadow); transition: transform .15s, border-color .15s;
   text-align: center;
 }
 .navmenu a:hover { transform: translateY(-3px); border-color: var(--accent); }
 .navmenu a svg { width: 26px; height: 26px; }
-.navmenu a .n { font-size: 12.5px; font-weight: 800; letter-spacing: .02em; }
-.navmenu a .r { font-size: 10.5px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
+.navmenu a .n { font-size: 13px; font-weight: 700; letter-spacing: .01em; }
 
 /* --- widgets --- */
 .w {
@@ -118,7 +117,7 @@ const PANTALLAS = [
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V10l9-6 9 6v10"/><rect x="8.5" y="13" width="7" height="7" rx="1"/></svg>` },
   { href: "produccion.html", n: "Concretera", r: "Rendimiento",
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="8" width="3.4" height="12" rx="1"/><rect x="16.6" y="4.5" width="3.4" height="15.5" rx="1"/></svg>` },
-  { href: "autoridad.html", n: "Carreteras", r: "ACT · FHWA",
+  { href: "autoridad.html", n: "Autoridad", r: "ACT · FHWA",
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 20 6v6c0 5-3.4 8.4-8 9.5C7.4 20.4 4 17 4 12V6z"/><polyline points="8.8,12 11,14.2 15.4,9.6"/></svg>` },
   { href: "reporte.html", n: "Reportes", r: "Entregable",
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h8l4 4v15H6z"/><path d="M14 2.5v4h4"/><path d="M9 12h6M9 16h4"/></svg>` },
@@ -128,8 +127,8 @@ const PANTALLAS = [
 
 function menu() {
   return `<div class="navmenu">${PANTALLAS.map((p) => `
-    <a href="${p.href}"${p.nueva ? ' target="_blank"' : ""}>
-      ${p.ic}<span class="n">${p.n}</span><span class="r">${p.r}</span>
+    <a href="${p.href}"${p.nueva ? ' target="_blank"' : ""} title="${p.r}">
+      ${p.ic}<span class="n">${p.n}</span>
     </a>`).join("")}</div>`;
 }
 
