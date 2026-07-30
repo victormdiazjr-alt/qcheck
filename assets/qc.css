@@ -2,60 +2,66 @@
    QC — Control de Hormigón PR-52 (prototipo)
    ============================================================ */
 :root {
-  --bg: #f3f5f7;
-  --panel: #ffffff;
-  --panel-2: #fafbfc;
-  --hover: #f2f6fa;
-  --ink: #16222e;
-  --ink-soft: #5a6b7c;
-  --line: #dbe2e9;
-  --accent: #0f6db4;          /* Segarra blue */
-  --accent2: #e8710a;         /* construction orange */
-  --navy: #122c42;
-  --navy-ink: #c9dcec;
-  --ok: #1e8e3e;   --ok-bg: #e3f3e8;
-  --act: #b26a00;  --act-bg: #fdf3dd;
-  --susp: #c5221f; --susp-bg: #fcE8e6;
-  --info: #1a56b4; --info-bg: #e8f0fe;
-  --radius: 10px;
-  --shadow: 0 1px 3px rgba(10,25,40,.10), 0 4px 14px rgba(10,25,40,.06);
-  /* chart colors (SPC bands & axes) */
-  --chart-ok: #e5f3e8;
-  --chart-act: #fdf3d7;
-  --chart-susp: #fbe9e7;
-  --chart-text: #5a6b7c;
-  --chart-sep: #ffffff;
-  --chart-target: #16222e;
-  --chart-ma: #122c42;
-  --chart-grid: #e3e9ef;
-  --chart-wait: rgba(18,44,66,.35);
+  /* ============================================================
+     Paleta de QCheck — la misma del Field Display y de Muestras.
+     Oscuro por defecto; el claro es la variante de día.
+     El naranja se retiró: es la marca de Concre-Ticket.
+     ============================================================ */
+  --bg: #0a0d12;
+  --panel: #12171f;
+  --panel-2: #1a2029;
+  --hover: #1e2632;
+  --ink: #eef2f6;
+  --ink-soft: #77848f;
+  --line: rgba(255,255,255,.10);
+  --accent: #4a63d8;          /* azul del logo QCheck */
+  --accent2: #96c93d;         /* verde lima del check */
+  --navy: #0b0f16;
+  --navy-ink: #77848f;
+  --ok: #34d27b;   --ok-bg: rgba(52,210,123,.14);
+  --act: #f5b83d;  --act-bg: rgba(245,184,61,.14);
+  --susp: #ff5a52; --susp-bg: rgba(255,90,82,.14);
+  --info: #5b8dbf; --info-bg: rgba(91,141,191,.14);
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(0,0,0,.42), 0 8px 24px rgba(0,0,0,.30);
+  --chart-ok: rgba(52,210,123,.13);
+  --chart-act: rgba(245,184,61,.13);
+  --chart-susp: rgba(255,90,82,.11);
+  --chart-text: #77848f;
+  --chart-sep: rgba(10,13,18,.75);
+  --chart-target: #eef2f6;
+  --chart-ma: #9fc0e8;
+  --chart-grid: rgba(255,255,255,.08);
+  --chart-wait: rgba(255,255,255,.22);
 }
 
-/* ---------- dark theme ---------- */
-:root[data-theme="dark"] {
-  --bg: #0d1218;
-  --panel: #151c25;
-  --panel-2: #1a222d;
-  --hover: #1e2836;
-  --ink: #e6ecf2;
-  --ink-soft: #91a0af;
-  --line: #273240;
-  --navy: #0b131c;
-  --navy-ink: #9fb4c8;
-  --ok: #3ecf7e;   --ok-bg: rgba(52,210,123,.15);
-  --act: #f0b23f;  --act-bg: rgba(245,184,61,.15);
-  --susp: #ff6d63; --susp-bg: rgba(255,90,82,.14);
-  --info: #6fa8f5; --info-bg: rgba(111,168,245,.15);
-  --shadow: 0 1px 3px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
-  --chart-ok: rgba(52,210,123,.14);
-  --chart-act: rgba(245,184,61,.14);
-  --chart-susp: rgba(255,90,82,.12);
-  --chart-text: #91a0af;
-  --chart-sep: rgba(13,18,24,.65);
-  --chart-target: #e6ecf2;
-  --chart-ma: #9fc0e8;
-  --chart-grid: #273240;
-  --chart-wait: rgba(255,255,255,.22);
+/* ---------- variante de día ---------- */
+:root[data-theme="light"] {
+  --bg: #f2f4f7;
+  --panel: #ffffff;
+  --panel-2: #f7f9fb;
+  --hover: #eef3f8;
+  --ink: #16222e;
+  --ink-soft: #76838f;
+  --line: rgba(15,30,45,.13);
+  --accent: #2b3a8c;
+  --accent2: #6ea01f;
+  --navy: #16222e;
+  --navy-ink: #b7c4d1;
+  --ok: #0e9d55;   --ok-bg: rgba(14,157,85,.12);
+  --act: #c8880a;  --act-bg: rgba(200,136,10,.12);
+  --susp: #e0362d; --susp-bg: rgba(224,54,45,.11);
+  --info: #3d76ab; --info-bg: rgba(61,118,171,.12);
+  --shadow: 0 1px 3px rgba(15,30,45,.10), 0 6px 20px rgba(15,30,45,.07);
+  --chart-ok: rgba(14,157,85,.13);
+  --chart-act: rgba(200,136,10,.14);
+  --chart-susp: rgba(224,54,45,.10);
+  --chart-text: #76838f;
+  --chart-sep: #ffffff;
+  --chart-target: #16222e;
+  --chart-ma: #2b3a8c;
+  --chart-grid: rgba(15,30,45,.10);
+  --chart-wait: rgba(15,30,45,.30);
 }
 
 /* ---------- theme toggle button ---------- */
@@ -87,10 +93,8 @@ header.qc-header {
   position: sticky; top: 0; z-index: 50;
 }
 .brand { display: flex; align-items: center; gap: 11px; padding: 12px 0; }
-.brand .logo {
-  background: var(--accent2); color: #fff; font-weight: 800; padding: 5px 11px;
-  border-radius: 8px; letter-spacing: .5px; font-size: 17px;
-}
+.brand .logo { display: none; }   /* sustituida por la marca en SVG */
+.brand .mark { height: 34px; width: 34px; display: block; flex: none; }
 .brand .title { font-weight: 700; font-size: 16.5px; }
 .brand .subtitle { color: var(--navy-ink); font-size: 12px; }
 nav.tabs { display: flex; gap: 2px; flex-wrap: wrap; margin-left: auto; }
@@ -116,7 +120,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 20px 20px 90px; }
 /* ---------- panels, stats ---------- */
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; }
 .panel-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.panel-head h2 { margin: 0; font-size: 15.5px; }
+.panel-head h2 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -.005em; }
 .panel-head .spacer { flex: 1; }
 .panel-body { padding: 14px 16px; }
 .panel-body.flush { padding: 0; }
@@ -129,8 +133,8 @@ main { max-width: 1280px; margin: 0 auto; padding: 20px 20px 90px; }
 @media (max-width: 640px)  { .cols-6, .cols-3, .cols-2 { grid-template-columns: repeat(2,1fr); } }
 
 .stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 11px 14px; }
-.stat .label { font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .4px; font-weight: 700; }
-.stat .value { font-size: 23px; font-weight: 800; margin-top: 1px; }
+.stat .label { font-size: 10.5px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .18em; font-weight: 800; }
+.stat .value { font-size: 27px; font-weight: 300; margin-top: 2px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 .stat .sub { font-size: 12px; color: var(--ink-soft); }
 .stat.alert .value { color: var(--susp); }
 .stat.good .value { color: var(--ok); }
@@ -139,11 +143,11 @@ main { max-width: 1280px; margin: 0 auto; padding: 20px 20px 90px; }
 .table-wrap { overflow-x: auto; }
 table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.data th {
-  text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px;
+  text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .16em;
   color: var(--ink-soft); padding: 8px 9px; border-bottom: 2px solid var(--line);
   white-space: nowrap; background: var(--panel-2); position: sticky; top: 0;
 }
-table.data td { padding: 7px 9px; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
+table.data td { padding: 8px 9px; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; font-variant-numeric: tabular-nums; }
 table.data tr:last-child td { border-bottom: none; }
 table.data td.num, table.data th.num { text-align: right; }
 table.data tr.clickable { cursor: pointer; }
@@ -170,8 +174,8 @@ tr.rejected td { background: var(--susp-bg); color: var(--susp); }
 .btn:hover { background: var(--hover); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn.primary:hover { background: #0b5a96; }
-.btn.orange { background: var(--accent2); border-color: var(--accent2); color: #fff; }
-.btn.orange:hover { background: #cf6408; }
+.btn.orange { background: var(--accent2); border-color: var(--accent2); color: #0d1a05; }
+.btn.orange:hover { filter: brightness(1.08); }
 .btn.danger { color: var(--susp); border-color: #f0c4c2; }
 .btn.danger:hover { background: var(--susp-bg); }
 .btn.small { padding: 4px 9px; font-size: 12px; }

@@ -78,7 +78,7 @@ function applyTheme(t) {
   const b = document.getElementById("theme-toggle");
   if (b) { b.innerHTML = t === "dark" ? ICON_SUN : ICON_MOON; b.title = t === "dark" ? "Modo claro" : "Modo oscuro"; }
 }
-function initTheme(def = "light") {
+function initTheme(def = "dark") {
   applyTheme(localStorage.getItem(THEME_KEY) || def);
   window.addEventListener("storage", (e) => {
     if (e.key === THEME_KEY && e.newValue) applyTheme(e.newValue);

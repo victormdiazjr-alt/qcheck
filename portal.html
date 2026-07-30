@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QCheck — Pantallas</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230f6db4'/><text x='50' y='68' font-size='46' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'>QC</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0d12'/><text x='50' y='68' font-size='46' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'>QC</text></svg>">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background:
-    radial-gradient(1100px 500px at 85% -10%, rgba(232,113,10,.25), transparent 60%),
+    radial-gradient(1100px 500px at 85% -10%, rgba(150,201,61,.25), transparent 60%),
     radial-gradient(900px 600px at -10% 110%, rgba(15,109,180,.35), transparent 60%),
     linear-gradient(160deg, #0b1c2c 0%, #122c42 55%, #173a58 100%);
   color: #fff;
@@ -20,9 +20,9 @@ body {
 .hero { max-width: 1100px; margin: 0 auto 4.5vh; }
 .hero .badge-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
 .hero .logo {
-  background: #e8710a; color: #fff; font-weight: 900; padding: 8px 16px;
+  background: var(--accent2); color: #fff; font-weight: 900; padding: 8px 16px;
   border-radius: 12px; font-size: 26px; letter-spacing: 1px;
-  box-shadow: 0 8px 24px rgba(232,113,10,.4);
+  box-shadow: 0 8px 24px rgba(150,201,61,.4);
 }
 .hero .route {
   font-size: 13px; font-weight: 800; letter-spacing: .3em; color: #9fc0ea; text-transform: uppercase;
@@ -66,7 +66,7 @@ body {
 /* ---------- light theme ---------- */
 :root[data-theme="light"] body {
   background:
-    radial-gradient(1100px 500px at 85% -10%, rgba(232,113,10,.14), transparent 60%),
+    radial-gradient(1100px 500px at 85% -10%, rgba(150,201,61,.14), transparent 60%),
     radial-gradient(900px 600px at -10% 110%, rgba(15,109,180,.16), transparent 60%),
     linear-gradient(160deg, #f2f5f8 0%, #e9eef4 55%, #e2eaf2 100%);
   color: #16222e;
@@ -126,7 +126,7 @@ body {
 
   <a class="card" href="results.html">
     <span class="tag">Ingeniero QC</span>
-    <svg class="ico" viewBox="0 0 52 52"><rect x="3" y="6" width="46" height="34" rx="4" fill="none" stroke="#7fc0ff" stroke-width="2.5"/><polyline points="9,30 17,22 24,27 33,14 43,20" fill="none" stroke="#4fe085" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="9" y1="16" x2="43" y2="16" stroke="#e8710a" stroke-width="1.6" stroke-dasharray="4 3"/><rect x="18" y="44" width="16" height="3" rx="1.5" fill="#7fc0ff"/></svg>
+    <svg class="ico" viewBox="0 0 52 52"><rect x="3" y="6" width="46" height="34" rx="4" fill="none" stroke="#7fc0ff" stroke-width="2.5"/><polyline points="9,30 17,22 24,27 33,14 43,20" fill="none" stroke="#4fe085" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="9" y1="16" x2="43" y2="16" stroke="var(--accent2)" stroke-width="1.6" stroke-dasharray="4 3"/><rect x="18" y="44" width="16" height="3" rx="1.5" fill="#7fc0ff"/></svg>
     <h2>Control Center</h2>
     <p>La versión completa: hoja de vaciado, registro de pruebas, resistencias y media móvil,
        cartas de control SPC, plan de límites, exportes y respaldos.</p>
@@ -171,7 +171,7 @@ body {
 
   <a class="card" href="produccion.html">
     <span class="tag">Planta · Contratista</span>
-    <svg class="ico" viewBox="0 0 52 52"><rect x="5" y="30" width="7" height="14" rx="1.5" fill="#7fc0ff"/><rect x="15" y="22" width="7" height="22" rx="1.5" fill="#4fe085"/><rect x="25" y="26" width="7" height="18" rx="1.5" fill="#7fc0ff"/><rect x="35" y="14" width="7" height="30" rx="1.5" fill="#e8710a"/><circle cx="41" cy="9" r="6" fill="none" stroke="#4fe085" stroke-width="2"/><path d="M41 5 v4 l3 2" fill="none" stroke="#4fe085" stroke-width="2" stroke-linecap="round"/></svg>
+    <svg class="ico" viewBox="0 0 52 52"><rect x="5" y="30" width="7" height="14" rx="1.5" fill="#7fc0ff"/><rect x="15" y="22" width="7" height="22" rx="1.5" fill="#4fe085"/><rect x="25" y="26" width="7" height="18" rx="1.5" fill="#7fc0ff"/><rect x="35" y="14" width="7" height="30" rx="1.5" fill="var(--accent2)"/><circle cx="41" cy="9" r="6" fill="none" stroke="#4fe085" stroke-width="2"/><path d="M41 5 v4 l3 2" fill="none" stroke="#4fe085" stroke-width="2" stroke-linecap="round"/></svg>
     <h2>Producción del concretero</h2>
     <p>Camiones en sitio, CY/hora, ciclos batch→descarga contra el límite de 90 min, esperas,
        yardas acumuladas del día y comparativa de los últimos vaciados.</p>
@@ -180,7 +180,7 @@ body {
 
   <a class="card" href="reporte.html">
     <span class="tag">Entregable</span>
-    <svg class="ico" viewBox="0 0 52 52"><path d="M12 4h20l8 8v36H12z" fill="none" stroke="#7fc0ff" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 4v8h8" fill="none" stroke="#7fc0ff" stroke-width="2.5" stroke-linejoin="round"/><line x1="18" y1="22" x2="34" y2="22" stroke="#4fe085" stroke-width="2.5" stroke-linecap="round"/><polyline points="18,34 23,29 28,33 34,26" fill="none" stroke="#4fe085" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="18" y1="41" x2="30" y2="41" stroke="#e8710a" stroke-width="2" stroke-linecap="round"/></svg>
+    <svg class="ico" viewBox="0 0 52 52"><path d="M12 4h20l8 8v36H12z" fill="none" stroke="#7fc0ff" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 4v8h8" fill="none" stroke="#7fc0ff" stroke-width="2.5" stroke-linejoin="round"/><line x1="18" y1="22" x2="34" y2="22" stroke="#4fe085" stroke-width="2.5" stroke-linecap="round"/><polyline points="18,34 23,29 28,33 34,26" fill="none" stroke="#4fe085" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="18" y1="41" x2="30" y2="41" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round"/></svg>
     <h2>Reporte</h2>
     <p>El paquete que se entrega: tabla matriz, media móvil y cartas de control,
        con criterios de aceptación y certificación. Listo para imprimir o PDF.</p>

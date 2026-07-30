@@ -128,3 +128,21 @@ La clave: **la mayoría de las concreteras no serán clientes de Concre-Ticket**
 surten vaciados que Segarra inspecciona. La pantalla de QCheck es lo que Segarra les
 entrega en ese caso — información que hoy Rubén les pasa por teléfono. Es, además, la
 puerta comercial hacia Concre-Ticket.
+
+## 10. Lenguaje visual — una sola identidad
+
+**Todo QCheck usa el mismo lenguaje del Field Display y de Muestras.** Los tokens viven
+en `assets/qc.css`; no inventes colores en las pantallas.
+
+- **Oscuro por defecto**, con variante de día. Fondo `#0a0d12`, superficies `#12171f`.
+- **Marca**: azul `#4a63d8` y verde lima `#96c93d` (la Q con el check).
+- **Semántica**: verde `#34d27b` dentro de límites · ámbar `#f5b83d` zona de acción ·
+  rojo `#ff5a52` fuera. Iguales en las cinco pantallas.
+- **El naranja NO se usa en QCheck**: es la marca de Concre-Ticket. Si ves naranja aquí,
+  es un descuido — cámbialo por `var(--accent2)`.
+- **Tipografía**: cifras grandes en peso ligero (300) con `tabular-nums`;
+  micro-etiquetas en mayúsculas con `letter-spacing` amplio (.16em–.26em).
+- Esquinas de 14 px, líneas de un pelo (`var(--line)`), sombras suaves.
+
+La única excepción deliberada: **`reporte.html` imprime sobre hojas blancas**, porque el
+papel es blanco. Su interfaz sigue el tema; las hojas no.

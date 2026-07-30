@@ -160,7 +160,7 @@ function viewLive() {
       <div class="spacer"></div>
       <a class="btn" href="muestras.html" target="_blank">🧪 Muestras (iPad)</a>
       <a class="btn" href="display.html" target="_blank">🖥 Field Display</a>
-      <button class="btn orange" onclick="formTest(null)">＋ Camión</button>
+      <button class="btn primary" onclick="formTest(null)">＋ Camión</button>
     </div>
 
     ${alerts.length ? `<div class="panel" style="border-left:4px solid var(--act)">
@@ -253,7 +253,7 @@ function viewDaily() {
       <button class="btn small" onclick="formDayMeta('${state.day}')">Editar fase/cierre</button>
       <div class="spacer"></div>
       <button class="btn" onclick="window.print()">🖨 Imprimir</button>
-      <button class="btn orange" onclick="formTest(null)">＋ Camión</button>
+      <button class="btn primary" onclick="formTest(null)">＋ Camión</button>
     </div>
 
     <div class="panel"><div class="panel-body">
@@ -324,7 +324,7 @@ function viewTests() {
       <span class="muted" style="font-size:12.5px">${state.showAll ? total : Math.min(120, total)} de ${total}</span>
       ${total > 120 ? `<button class="btn small" onclick="state.showAll=!state.showAll; render()">${state.showAll ? "Últimas 120" : "Ver todas"}</button>` : ""}
       <button class="btn" onclick="exportCSV()">⬇ CSV</button>
-      <button class="btn orange" onclick="formTest(null)">＋ Prueba</button>
+      <button class="btn primary" onclick="formTest(null)">＋ Prueba</button>
     </div>
     <div class="panel"><div class="panel-body flush">
       <div class="table-wrap" style="max-height:68vh; overflow-y:auto"><table class="data">
@@ -604,7 +604,9 @@ mountThemeToggle();
 enableLiveSync(() => render());
 window.addEventListener("hashchange", () => { const t = tabFromHash(); if (t) switchTab(t, false); });
 const inicial = tabFromHash();
-if (inicial) state.tab = inicial;
+if (inicial) state.tab = inicial;   // la pestaña se subraya abajo, tras pintar
 document.getElementById("brand-subtitle").textContent =
   db.project.name + " · " + (db.project.qcFirm || "QC");
 render();
+document.querySelectorAll("#main-tabs button")
+  .forEach((b) => b.classList.toggle("active", b.dataset.tab === state.tab));
