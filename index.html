@@ -94,7 +94,6 @@ button:active { transform: scale(.98); }
     Acceso de prueba: usuario <b>admin</b> · contraseña <b>1234</b>.<br>
     Puerta de demostración — la autenticación real llega con el backend.
   </div>
-  <a class="back" href="https://victormdiazjr-alt.github.io/">← Plataforma PR-52</a>
 </form>
 
 <script>
@@ -107,7 +106,7 @@ function entrar(e) {
     sessionStorage.setItem("qc-auth", "1");
     const next = new URLSearchParams(location.search).get("next");
     // solo rutas internas: nunca redirigir a un destino externo
-    const destino = next && /^[\w.-]+\.html([?#].*)?$/.test(next) ? next : "control-center.html";
+    const destino = next && /^[\w.-]+\.html([?#].*)?$/.test(next) ? next : "portal.html";
     location.replace(destino);
   } else {
     document.getElementById("err").classList.add("show");
