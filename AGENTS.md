@@ -56,7 +56,7 @@ control-center.html   ← panel de QC (pantalla principal)
 muestras.html         ← entrada de resultados en iPad
 display.html          ← pantalla de campo (TV / tablet)
 contratista.html      ← estado del tiro para el contratista
-produccion.html       ← rendimiento (vista de planta)
+produccion.html       ← vista del concretero (ver §8)
 autoridad.html        ← vista de cumplimiento para ACT / FHWA
 reporte.html          ← el entregable imprimible
 conduce.html          ← recepción de camiones
@@ -106,7 +106,7 @@ los campos de origen, el formato del QR y la publicación de límites.
 
 Detalle completo en `docs/ARQUITECTURA.md` y `docs/ROADMAP.md`.
 
-## 9. Las DOS pantallas de producción — no son duplicado
+## 8. Las DOS pantallas de producción — no son duplicado
 
 Existe una `produccion.html` en **cada** repositorio. Son distintas a propósito y
 **ninguna sustituye a la otra. No las unifiques ni borres una.**
