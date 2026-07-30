@@ -106,7 +106,7 @@ function entrar(e) {
     sessionStorage.setItem("qc-auth", "1");
     const next = new URLSearchParams(location.search).get("next");
     // solo rutas internas: nunca redirigir a un destino externo
-    const destino = next && /^[\w.-]+\.html([?#].*)?$/.test(next) ? next : "portal.html";
+    const destino = next && /^[\w.-]+\.html([?#].*)?$/.test(next) ? next : "control-center.html";
     location.replace(destino);
   } else {
     document.getElementById("err").classList.add("show");

@@ -9,10 +9,18 @@
 /* ------------------------------------------------------------ UI state */
 const state = { tab: "dashboard", day: null, search: "", showAll: false, chartRange: 80 };
 
-function switchTab(tab) {
+const TABS = ["dashboard", "live", "daily", "tests", "strength", "charts", "plan"];
+function switchTab(tab, pushHash = true) {
   state.tab = tab;
   document.querySelectorAll("#main-tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  // deja la pestaña en la direccion, para que el Control Center pueda enlazar directo
+  if (pushHash && location.hash.slice(1) !== tab) history.replaceState(null, "", "#" + tab);
   render();
+}
+/* Los widgets del Control Center abren results.html#<pestana> */
+function tabFromHash() {
+  const h = location.hash.slice(1);
+  return TABS.includes(h) ? h : null;
 }
 function render() {
   const app = document.getElementById("app");
@@ -594,6 +602,9 @@ loadDB();
 initTheme();
 mountThemeToggle();
 enableLiveSync(() => render());
+window.addEventListener("hashchange", () => { const t = tabFromHash(); if (t) switchTab(t, false); });
+const inicial = tabFromHash();
+if (inicial) state.tab = inicial;
 document.getElementById("brand-subtitle").textContent =
   db.project.name + " · " + (db.project.qcFirm || "QC");
 render();

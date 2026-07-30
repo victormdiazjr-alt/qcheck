@@ -52,7 +52,8 @@ tiene que poder abrirse con doble clic y funcionar sin internet en carretera.
 
 ```
 index.html            ← acceso (la raíz del dominio)
-control-center.html   ← panel de QC (pantalla principal)
+control-center.html   ← DASHBOARD y casa: widgets clicables + menú de navegación
+results.html          ← datos completos: vaciado diario, pruebas, resistencias, cartas
 muestras.html         ← entrada de resultados en iPad
 display.html          ← pantalla de campo (TV / tablet)
 contratista.html      ← estado del tiro para el contratista
@@ -60,11 +61,16 @@ produccion.html       ← vista del concretero (ver §8)
 autoridad.html        ← vista de cumplimiento para ACT / FHWA
 reporte.html          ← el entregable imprimible
 conduce.html          ← recepción de camiones
-portal.html           ← menú de pantallas
+portal.html           ← menú alterno (heredado; el menú vive en el Control Center)
 assets/               ← core.js (motor), qc.js, auth.js, seed.js, qc.css
 shared/               ← contrato del conduce (copia — ver §5)
 docs/                 ← arquitectura, hoja de ruta, despliegue, contrato
 ```
+
+El **Control Center** es la pantalla principal: muestra en widgets lo que Rubén mira de
+verdad y cada widget entra al detalle en `results.html#<pestaña>` (`daily`, `tests`,
+`strength`, `charts`, `live`, `plan`). Si añades una pantalla de usuario, **agrégala al
+menú** en `PANTALLAS` dentro de `control-center.html`.
 
 **`assets/core.js` es el motor**: almacenamiento, zonas SPC, cálculos, gráficas SVG,
 formularios, tema y sincronización entre ventanas. Si una función la usan dos pantallas,
