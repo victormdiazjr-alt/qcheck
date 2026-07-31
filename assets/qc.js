@@ -545,6 +545,9 @@ function formProject() {
       { key: "contractor", label: "Contratista" },
       { key: "qcFirm", label: "Firma QC" },
       { key: "notifyEmails", label: "Emails para avisos de rechazo", full: true, placeholder: "a@dvg.com, b@segarra.com, inspector@act.pr.gov" },
+      { key: "place", label: "Sitio del tiro (para el tiempo)", full: true, placeholder: "Ponce · PR-52" },
+      { key: "lat", label: "Latitud", type: "number", step: "0.0001", half: true, hint: "Corríjala si el tiro no está donde dice" },
+      { key: "lon", label: "Longitud", type: "number", step: "0.0001", half: true },
     ],
     onSave: (v) => { Object.assign(db.project, v); saveDB(); render(); toast("Proyecto actualizado"); },
   });

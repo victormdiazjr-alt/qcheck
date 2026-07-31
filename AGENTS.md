@@ -154,6 +154,24 @@ la contraseña de administrador. Las de escritorio llevan la equis normal.
 Igual que el acceso, el candado es **una puerta de demostración**: frena un toque accidental,
 no a alguien decidido.
 
+## 9a. El clima — la única salida a internet
+
+`assets/clima.js` pinta el tiempo del sitio del tiro en el héroe del Control Center:
+condición de ahora con icono animado y una tira de las próximas seis horas, al estilo
+del Tiempo del iPhone. Para hormigón no es adorno — el sol y la lluvia de la próxima
+hora deciden si se tira o se espera.
+
+- Los datos son de **Open-Meteo** (gratis, sin llave, con CORS). **Es lo único de QCheck
+  que sale a la red.** Si no hay internet, la tarjeta lo dice y **no inventa nada**;
+  el resto de la herramienta sigue funcionando igual.
+- Los iconos son **SVG propio animado con CSS**. No metas una librería ni un archivo de
+  iconos: el proyecto tiene que abrir con doble clic.
+- Las coordenadas viven en `db.project` (`lat`, `lon`, `place`) y se editan en
+  **Plan & Datos → Proyecto**. El valor por defecto es el corredor Km 0–14 de la PR-52
+  en Ponce (18.03, −66.54) — **es una suposición**, no un dato del contrato.
+- Se consulta como mucho **cada 15 minutos**; el tablero se repinta muchas veces y el
+  clima se sirve de memoria. No lo llames en cada `render()` sin ese resguardo.
+
 ## 9b. iPhone y iPad — reglas que no se rompen
 
 Las pantallas de campo se abren en una tableta o un teléfono, así que **cada cambio
