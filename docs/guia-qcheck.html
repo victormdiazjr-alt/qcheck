@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>QCheck — Guía de uso</title>
+<style>
+/* ============================================================
+   GUÍA DE QCHECK PARA RUBÉN — pensada para papel.
+   Se generan las dos salidas con Chrome sin ventana:
+
+   PNG (una tira, para compartir por mensaje):
+     chrome --headless --screenshot=docs/guia-qcheck.png \
+       --window-size=940,3200 --force-device-scale-factor=2 \
+       --hide-scrollbars --default-background-color=ffffff \
+       file://.../docs/guia-qcheck.html
+
+   PDF (para imprimir):
+     chrome --headless --print-to-pdf=docs/guia-qcheck.pdf \
+       --no-pdf-header-footer file://.../docs/guia-qcheck.html
+   ============================================================ */
+@page { size: letter; margin: 0.62in 0.7in; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background: #fff; color: #16222e; font-size: 10.2pt; line-height: 1.5; -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+h1 { font-size: 25pt; font-weight: 750; letter-spacing: -.02em; line-height: 1.1; }
+h2 { font-size: 14pt; font-weight: 750; letter-spacing: -.01em; margin: 0 0 4pt;
+     color: #0f46b5; }
+h3 { font-size: 10.5pt; font-weight: 750; margin-bottom: 2pt; }
+p  { margin-bottom: 7pt; }
+b  { font-weight: 700; }
+.gris { color: #5b6b7a; }
+.sec { margin-top: 22pt; page-break-inside: avoid; }
+.sec + .sec { margin-top: 20pt; }
+.pagina { page-break-before: always; }
+
+/* --- portada --- */
+.portada { padding-top: 18pt; page-break-after: always; }
+/* Como PNG es una sola tira: sin saltos y con aire a los lados. */
+body.png { width: 940px; padding: 34px 40px 40px; }
+body.png .portada { page-break-after: auto; padding-bottom: 6pt;
+  border-bottom: 1px solid #e4ebf1; }
+body.png .sec, body.png .pagina { page-break-before: auto; }
+.marca { display: flex; align-items: center; gap: 13pt; margin-bottom: 26pt; }
+.marca svg { width: 52pt; height: 52pt; }
+.marca .n { font-size: 21pt; font-weight: 750; letter-spacing: -.02em; }
+.marca .s { font-size: 8pt; font-weight: 800; letter-spacing: .2em;
+  text-transform: uppercase; color: #5b6b7a; margin-top: 2pt; }
+.portada .lead { font-size: 11.5pt; color: #3c4a58; margin-top: 10pt; max-width: 33em; }
+.ficha { margin-top: 22pt; border-top: 2px solid #0f46b5; padding-top: 10pt;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10pt 18pt; }
+.ficha .k { font-size: 7.4pt; font-weight: 800; letter-spacing: .16em;
+  text-transform: uppercase; color: #5b6b7a; }
+.ficha .v { font-size: 10.5pt; font-weight: 650; margin-top: 1pt; }
+
+/* --- tarjetas de aparato --- */
+.aparatos { display: grid; grid-template-columns: 1fr 1fr; gap: 11pt; margin-top: 10pt; }
+.ap { border: 1px solid #d7e0e9; border-radius: 9pt; padding: 11pt 12pt; page-break-inside: avoid; }
+.ap .cab { display: flex; align-items: center; gap: 9pt; margin-bottom: 6pt; }
+.ap .num { width: 19pt; height: 19pt; border-radius: 50%; background: #0f46b5; color: #fff;
+  font-size: 9.5pt; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  flex: none; }
+.ap .ic { width: 17pt; height: 17pt; fill: none; stroke: #0f46b5; stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.ap .qn { font-size: 7.4pt; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: #39a935; margin-bottom: 4pt; }
+.ap ul { margin: 5pt 0 0 13pt; }
+.ap li { margin-bottom: 2.5pt; }
+
+/* --- pasos --- */
+.pasos { counter-reset: p; margin-top: 8pt; }
+.paso { display: flex; gap: 10pt; margin-bottom: 9pt; page-break-inside: avoid; }
+.paso::before { counter-increment: p; content: counter(p);
+  width: 17pt; height: 17pt; border-radius: 50%; border: 1.6px solid #0f46b5; color: #0f46b5;
+  font-size: 9pt; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  flex: none; margin-top: 1pt; }
+
+/* --- tabla --- */
+table { width: 100%; border-collapse: collapse; font-size: 9.4pt; margin-top: 7pt; }
+th { text-align: left; font-size: 7.4pt; font-weight: 800; letter-spacing: .14em;
+  text-transform: uppercase; color: #5b6b7a; border-bottom: 1.4px solid #16222e;
+  padding: 0 8pt 4pt 0; }
+td { padding: 5pt 8pt 5pt 0; border-bottom: 1px solid #e4ebf1; vertical-align: top; }
+code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
+  background: #eef2f6; padding: 1pt 4pt; border-radius: 3pt; }
+
+/* --- aviso --- */
+.nota { border-left: 3px solid #39a935; background: #f4f9f2; padding: 9pt 12pt;
+  border-radius: 0 7pt 7pt 0; margin-top: 10pt; page-break-inside: avoid; }
+.nota.ojo { border-left-color: #d99a00; background: #fdf8ec; }
+.nota .t { font-weight: 750; margin-bottom: 2pt; }
+
+.pie { margin-top: 26pt; padding-top: 8pt; border-top: 1px solid #d7e0e9;
+  font-size: 8.4pt; color: #5b6b7a; }
+</style>
+</head>
+<body class="png">
+
+<!-- ================= PORTADA ================= -->
+<div class="portada">
+  <div class="marca">
+    <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <mask id="mq"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
+        <mask id="mc"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
+      </defs>
+      <path fill="#0f46b5" fill-rule="evenodd" mask="url(#mq)" d="M 509 63 A 337 337 0 1 1 508.9 63 Z M 509 174 A 226 226 0 1 0 509.1 174 Z"/>
+      <path fill="#0f46b5" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+      <g mask="url(#mc)">
+        <path fill="#39a935" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+        <path fill="#68727f" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+        <path fill="#4f5a66" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+      </g>
+      <path fill="#0f46b5" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
+    </svg>
+    <div>
+      <div class="n">QCheck</div>
+      <div class="s">Control de hormigón en obra</div>
+    </div>
+  </div>
+
+  <h1>Guía de uso</h1>
+  <p class="lead">Cómo se usa QCheck en un tiro: qué aparato va en cada sitio,
+  quién entra qué, y dónde sale la información de cada parte.</p>
+
+  <div class="ficha">
+    <div><div class="k">Para</div><div class="v">Rubén Segarra</div></div>
+    <div><div class="k">Firma de QC</div><div class="v">Segarra Engineering</div></div>
+    <div><div class="k">Proyecto</div><div class="v">Reconstrucción PR-52</div></div>
+    <div><div class="k">Dirección</div><div class="v" style="font-size:9pt">victormdiazjr-alt.github.io/qcheck</div></div>
+    <div><div class="k">Su acceso</div><div class="v"><code>ruben</code> / <code>1234</code></div></div>
+    <div><div class="k">Versión</div><div class="v">Prototipo · julio 2026</div></div>
+  </div>
+</div>
+
+<!-- ================= LA IDEA ================= -->
+<div class="sec">
+  <h2>La idea</h2>
+  <p>Hoy el técnico llena una hoja en papel en el campo y después otra persona vuelve a
+  escribir lo mismo en Excel. Se trabaja dos veces, y entre una cosa y la otra pasan horas
+  en las que nadie sabe cómo va el tiro.</p>
+  <p><b>QCheck sustituye ese Excel.</b> El dato se entra una sola vez, en el campo, en el
+  momento — y desde ahí lo ve todo el mundo al instante: el chofer que espera el visto bueno,
+  usted con sus Control Charts, el contratista midiendo el avance, el concretero con su
+  rendimiento y la Autoridad con el cumplimiento. Excel queda como formato de exportación,
+  no como el sitio donde se trabaja.</p>
+</div>
+
+<!-- ================= EL CIRCUITO ================= -->
+<div class="sec">
+  <h2>El circuito del tiro</h2>
+  <p class="gris" style="margin-bottom:12pt">Un camión, cuatro momentos. Cada aparato hace
+  una cosa y todos escriben en el mismo registro.</p>
+
+  <svg viewBox="0 0 700 428" style="width:100%; height:auto">
+    <defs>
+      <marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa0b0"/>
+      </marker>
+      <marker id="flv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#0f46b5"/>
+      </marker>
+    </defs>
+
+    <!-- zonas -->
+    <rect x="2" y="26" width="126" height="150" rx="9" fill="#f4f7fa" stroke="#e0e8ef"/>
+    <rect x="138" y="26" width="416" height="150" rx="9" fill="#eef5ff" stroke="#cfe0f5"/>
+    <rect x="564" y="26" width="134" height="150" rx="9" fill="#f4f7fa" stroke="#e0e8ef"/>
+    <text x="65"  y="18" font-size="9" font-weight="800" fill="#5b6b7a" text-anchor="middle" letter-spacing="1.6">PLANTA</text>
+    <text x="346" y="18" font-size="9" font-weight="800" fill="#0f46b5" text-anchor="middle" letter-spacing="1.6">EN LA OBRA</text>
+    <text x="631" y="18" font-size="9" font-weight="800" fill="#5b6b7a" text-anchor="middle" letter-spacing="1.6">EL CHOFER</text>
+
+    <!-- camión -->
+    <g transform="translate(30,72)">
+      <path d="M2 26V6h30v20" fill="none" stroke="#5b6b7a" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M32 11h13l11 11v4" fill="none" stroke="#5b6b7a" stroke-width="2.2" stroke-linejoin="round"/>
+      <circle cx="14" cy="30" r="4.4" fill="none" stroke="#5b6b7a" stroke-width="2.2"/>
+      <circle cx="44" cy="30" r="4.4" fill="none" stroke="#5b6b7a" stroke-width="2.2"/>
+    </g>
+    <text x="65" y="132" font-size="10" font-weight="700" fill="#16222e" text-anchor="middle">Sale el camión</text>
+    <text x="65" y="147" font-size="8.6" fill="#5b6b7a" text-anchor="middle">con su conduce</text>
+
+    <!-- 1 recepción -->
+    <g transform="translate(158,52)">
+      <rect x="0" y="0" width="118" height="98" rx="8" fill="#fff" stroke="#0f46b5" stroke-width="1.5"/>
+      <circle cx="17" cy="18" r="9" fill="#0f46b5"/>
+      <text x="17" y="21.5" font-size="9.5" font-weight="800" fill="#fff" text-anchor="middle">1</text>
+      <text x="33" y="21.5" font-size="10.5" font-weight="750" fill="#16222e">Recepción</text>
+      <text x="12" y="40" font-size="8" font-weight="800" fill="#39a935" letter-spacing="1.1">iPAD</text>
+      <text x="12" y="56" font-size="8.8" fill="#3c4a58">Escanea el QR del</text>
+      <text x="12" y="68" font-size="8.8" fill="#3c4a58">conduce, o le toma</text>
+      <text x="12" y="80" font-size="8.8" fill="#3c4a58">foto. Marca la hora</text>
+      <text x="12" y="92" font-size="8.8" fill="#3c4a58">de llegada.</text>
+    </g>
+
+    <!-- 2 muestras -->
+    <g transform="translate(292,52)">
+      <rect x="0" y="0" width="118" height="98" rx="8" fill="#fff" stroke="#0f46b5" stroke-width="1.5"/>
+      <circle cx="17" cy="18" r="9" fill="#0f46b5"/>
+      <text x="17" y="21.5" font-size="9.5" font-weight="800" fill="#fff" text-anchor="middle">2</text>
+      <text x="33" y="21.5" font-size="10.5" font-weight="750" fill="#16222e">Muestras</text>
+      <text x="12" y="40" font-size="8" font-weight="800" fill="#39a935" letter-spacing="1.1">iPAD</text>
+      <text x="12" y="56" font-size="8.8" fill="#3c4a58">Slump, Unit Weight,</text>
+      <text x="12" y="68" font-size="8.8" fill="#3c4a58">aire y temperatura.</text>
+      <text x="12" y="80" font-size="8.8" fill="#3c4a58">Botones grandes,</text>
+      <text x="12" y="92" font-size="8.8" fill="#3c4a58">para manos sucias.</text>
+    </g>
+
+    <!-- 3 field display -->
+    <g transform="translate(426,52)">
+      <rect x="0" y="0" width="118" height="98" rx="8" fill="#fff" stroke="#0f46b5" stroke-width="1.5"/>
+      <circle cx="17" cy="18" r="9" fill="#0f46b5"/>
+      <text x="17" y="21.5" font-size="9.5" font-weight="800" fill="#fff" text-anchor="middle">3</text>
+      <text x="30" y="21.5" font-size="10.5" font-weight="750" fill="#16222e">Field Display</text>
+      <text x="12" y="40" font-size="8" font-weight="800" fill="#39a935" letter-spacing="1.1">PANTALLA O TV</text>
+      <text x="12" y="56" font-size="8.8" fill="#3c4a58">Al enviar la muestra,</text>
+      <text x="12" y="68" font-size="8.8" fill="#3c4a58">canta el veredicto en</text>
+      <text x="12" y="80" font-size="8.8" fill="#3c4a58">letras enormes, con</text>
+      <text x="12" y="92" font-size="8.8" fill="#3c4a58">sonido.</text>
+    </g>
+
+    <!-- veredicto -->
+    <g transform="translate(578,58)">
+      <circle cx="53" cy="26" r="21" fill="none" stroke="#39a935" stroke-width="3.4"/>
+      <path d="M43 26 l7 7 15-15" fill="none" stroke="#39a935" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="53" y="68" font-size="11" font-weight="800" fill="#39a935" text-anchor="middle">ACEPTADO</text>
+      <text x="53" y="84" font-size="8.6" fill="#5b6b7a" text-anchor="middle">o RECHAZADO</text>
+      <text x="53" y="98" font-size="8.6" fill="#5b6b7a" text-anchor="middle">y no descarga</text>
+    </g>
+
+    <!-- flechas del recorrido -->
+    <line x1="104" y1="101" x2="152" y2="101" stroke="#8fa0b0" stroke-width="1.8" marker-end="url(#fl)"/>
+    <line x1="278" y1="101" x2="286" y2="101" stroke="#8fa0b0" stroke-width="1.8" marker-end="url(#fl)"/>
+    <line x1="412" y1="101" x2="420" y2="101" stroke="#8fa0b0" stroke-width="1.8" marker-end="url(#fl)"/>
+    <line x1="546" y1="101" x2="572" y2="101" stroke="#8fa0b0" stroke-width="1.8" marker-end="url(#fl)"/>
+
+    <!-- registro común -->
+    <path d="M217 152 V186" stroke="#0f46b5" stroke-width="1.5" fill="none"/>
+    <path d="M351 152 V186" stroke="#0f46b5" stroke-width="1.5" fill="none"/>
+    <path d="M485 152 V186" stroke="#0f46b5" stroke-width="1.5" fill="none"/>
+    <path d="M217 186 H485" stroke="#0f46b5" stroke-width="1.5" fill="none"/>
+    <line x1="351" y1="186" x2="351" y2="204" stroke="#0f46b5" stroke-width="1.8" marker-end="url(#flv)"/>
+
+    <rect x="171" y="210" width="360" height="34" rx="17" fill="#0f46b5"/>
+    <text x="351" y="232" font-size="10.5" font-weight="750" fill="#fff" text-anchor="middle">Un solo registro por conduce</text>
+
+    <line x1="351" y1="244" x2="351" y2="266" stroke="#0f46b5" stroke-width="1.8" marker-end="url(#flv)"/>
+
+    <!-- 4 control center -->
+    <g transform="translate(201,272)">
+      <rect x="0" y="0" width="300" height="52" rx="9" fill="#eef5ff" stroke="#0f46b5" stroke-width="1.8"/>
+      <circle cx="22" cy="26" r="11" fill="#0f46b5"/>
+      <text x="22" y="30" font-size="10.5" font-weight="800" fill="#fff" text-anchor="middle">4</text>
+      <text x="42" y="23" font-size="11.5" font-weight="750" fill="#16222e">Control Center — su computadora</text>
+      <text x="42" y="39" font-size="8.8" fill="#3c4a58">Estado del tiro, avisos, Control Charts y todo el histórico.</text>
+    </g>
+
+    <!-- reparto a las partes -->
+    <path d="M351 324 V344" stroke="#8fa0b0" stroke-width="1.5" fill="none"/>
+    <path d="M96 344 H606" stroke="#8fa0b0" stroke-width="1.5" fill="none"/>
+    <path d="M96 344 V362 M266 344 V362 M436 344 V362 M606 344 V362" stroke="#8fa0b0" stroke-width="1.5" fill="none" marker-end="url(#fl)"/>
+
+    <g font-size="9.6" font-weight="700" fill="#16222e" text-anchor="middle">
+      <rect x="26" y="368" width="140" height="42" rx="7" fill="#fff" stroke="#d7e0e9"/>
+      <text x="96" y="386">Contratista</text>
+      <text x="96" y="400" font-size="8.4" font-weight="400" fill="#5b6b7a">avance y cumplimiento</text>
+
+      <rect x="196" y="368" width="140" height="42" rx="7" fill="#fff" stroke="#d7e0e9"/>
+      <text x="266" y="386">Concretera</text>
+      <text x="266" y="400" font-size="8.4" font-weight="400" fill="#5b6b7a">rendimiento y ciclos</text>
+
+      <rect x="366" y="368" width="140" height="42" rx="7" fill="#fff" stroke="#d7e0e9"/>
+      <text x="436" y="386">Autoridad</text>
+      <text x="436" y="400" font-size="8.4" font-weight="400" fill="#5b6b7a">ACT · FHWA</text>
+
+      <rect x="536" y="368" width="140" height="42" rx="7" fill="#fff" stroke="#d7e0e9"/>
+      <text x="606" y="386">Reportes</text>
+      <text x="606" y="400" font-size="8.4" font-weight="400" fill="#5b6b7a">el entregable en PDF</text>
+    </g>
+  </svg>
+</div>
+
+<!-- ================= APARATOS ================= -->
+<div class="sec">
+  <h2>Qué aparato va en cada sitio</h2>
+  <p class="gris">Todo corre en el navegador. No hay nada que instalar: se abre la dirección
+  y se entra.</p>
+
+  <div class="aparatos">
+    <div class="ap">
+      <div class="cab">
+        <div class="num">1</div>
+        <svg class="ic" viewBox="0 0 24 24"><path d="M4 8.6V5.4A1.4 1.4 0 0 1 5.4 4h3.2M15.4 4h3.2A1.4 1.4 0 0 1 20 5.4v3.2M20 15.4v3.2a1.4 1.4 0 0 1-1.4 1.4h-3.2M8.6 20H5.4A1.4 1.4 0 0 1 4 18.6v-3.2"/><path d="M4 12h16"/></svg>
+        <h3>Recepción</h3>
+      </div>
+      <div class="qn">iPad · a pie de obra</div>
+      <p style="margin-bottom:4pt">Cada camión que llega se registra aquí. Tres formas, la que
+      se pueda:</p>
+      <ul>
+        <li><b>Escanear QR</b> — si la concretera lo trae, entra todo solo.</li>
+        <li><b>Tomar foto</b> — el conduce en papel queda de evidencia.</li>
+        <li><b>Entrada manual</b> — conduce, camión, yardas, hora.</li>
+      </ul>
+      <p style="margin-top:5pt">La pantalla ya le sugiere el próximo conduce y la próxima losa.</p>
+    </div>
+
+    <div class="ap">
+      <div class="cab">
+        <div class="num">2</div>
+        <svg class="ic" viewBox="0 0 24 24"><path d="M9 2.5h6M10 2.5v6l-4.4 10a2 2 0 0 0 1.8 2.9h9.2a2 2 0 0 0 1.8-2.9L14 8.5v-6"/><path d="M7.2 15h9.6"/></svg>
+        <h3>Muestras</h3>
+      </div>
+      <div class="qn">iPad · donde se toma la muestra</div>
+      <p style="margin-bottom:4pt">Aquí entra usted los resultados del camión que está en el
+      chute. Botones enormes, teclado numérico, sin escribir a mano.</p>
+      <ul>
+        <li>Slump, Unit Weight, aire y temperatura.</li>
+        <li>El veredicto se ve <b>antes</b> de enviar: verde, ámbar o rojo.</li>
+        <li>Al enviar, el Field Display lo canta.</li>
+      </ul>
+    </div>
+
+    <div class="ap">
+      <div class="cab">
+        <div class="num">3</div>
+        <svg class="ic" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M12 16.5v4M8.5 20.5h7"/></svg>
+        <h3>Field Display</h3>
+      </div>
+      <div class="qn">Pantalla o televisor · frente al vaciado</div>
+      <p style="margin-bottom:4pt">Es la pantalla que mira el chofer. Dice el número del camión
+      y si puede descargar, en letras que se leen desde el mixer.</p>
+      <ul>
+        <li><b>ACEPTADO</b> en verde · <b>RECHAZADO</b> en rojo · <b>EN PRUEBAS</b> mientras se mide.</li>
+        <li>Suena cuando llega un camión y cuando sale el veredicto.</li>
+        <li>Abajo, las yardas del día y los camiones recibidos.</li>
+      </ul>
+    </div>
+
+    <div class="ap">
+      <div class="cab">
+        <div class="num">4</div>
+        <svg class="ic" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="14" rx="2"/><polyline points="6,14 10,10 13,12.5 18,7"/></svg>
+        <h3>Control Center</h3>
+      </div>
+      <div class="qn">Su computadora · la oficina</div>
+      <p style="margin-bottom:4pt">Su vista. Lo primero que dice es en qué anda el tiro ahora
+      mismo — vaciando, esperando camión, detenido — y cuántas yardas van.</p>
+      <ul>
+        <li>Las losas del día, con cuánto lleva cada una.</li>
+        <li>El tiempo en el sitio, para saber si va a llover.</li>
+        <li>Avisos: mezcla secándose, racha en zona de acción, humedad sin registrar.</li>
+        <li>De ahí entra a Results: Control Charts, resistencias y todo el histórico.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ================= EL DÍA ================= -->
+<div class="sec">
+  <h2>Un camión, paso a paso</h2>
+  <div class="pasos">
+    <div class="paso"><div><b>Llega el camión.</b> En el iPad de Recepción escanea el QR o le
+      toma foto al conduce. Queda registrado con su hora de llegada.</div></div>
+    <div class="paso"><div><b>Toma la muestra.</b> En el iPad de Muestras aparece ese camión
+      esperando. Entra slump, Unit Weight, aire y temperatura con el teclado grande.</div></div>
+    <div class="paso"><div><b>Mira el veredicto antes de enviar.</b> Abajo a la izquierda le
+      dice ya si va a aceptar o rechazar, y por qué.</div></div>
+    <div class="paso"><div><b>Envía.</b> El Field Display lo canta al instante y el chofer
+      sabe si descarga.</div></div>
+    <div class="paso"><div><b>Marca cuándo empieza y termina de descargar</b> en Recepción.
+      Con eso salen los ciclos y las esperas del concretero.</div></div>
+    <div class="paso"><div><b>Al cerrar el día</b>, desde Reportes saca el PDF con la tabla
+      matriz, el Moving Average y las Control Charts.</div></div>
+  </div>
+
+  <div class="nota">
+    <div class="t">Antes de arrancar el tiro, declare el plan del día</div>
+    En <b>Results → Vaciado Diario → Plan y datos del día</b>: hora de comienzo, yardas
+    planificadas y cuáles losas se tiran. Sin eso el sistema no puede enseñar el avance —
+    y no se lo inventa: deja el hueco en blanco a propósito.
+  </div>
+</div>
+
+<!-- ================= QUIÉN VE QUÉ ================= -->
+<div class="sec">
+  <h2>Quién entra y qué ve</h2>
+  <table>
+    <tr><th>Usuario</th><th>Clave</th><th>Desde la computadora</th><th>Desde el iPhone</th></tr>
+    <tr><td><code>ruben</code></td><td><code>1234</code></td>
+        <td>Control Center — todo</td><td>Portal con Resultados</td></tr>
+    <tr><td><code>admin</code></td><td><code>1234</code></td>
+        <td>Igual que Rubén</td><td>Igual que Rubén</td></tr>
+    <tr><td><code>invitado</code></td><td><code>1234</code></td>
+        <td colspan="2">Solo el portal: Concretera, Contratista, Autoridad y Field Display.
+        No ve Results ni Recepción ni Muestras. <b>Es el acceso para compartir.</b></td></tr>
+  </table>
+
+  <div class="nota ojo">
+    <div class="t">Esto todavía no es seguridad de verdad</div>
+    Las claves viven en el navegador y cualquiera que sepa buscar puede leerlas. Sirven para
+    que cada quien vea lo suyo y nadie se meta donde no debe por descuido, no para proteger
+    de alguien decidido. La autenticación real llega cuando el sistema tenga su servidor.
+  </div>
+</div>
+
+<!-- ================= EL TELÉFONO ================= -->
+<div class="sec">
+  <h2>Desde el iPhone</h2>
+  <p>Entrando desde el teléfono no sale el Control Center: sale un <b>portal</b> con las
+  pantallas que se consultan de pie en la obra — Resultados, Concretera, Contratista,
+  Autoridad y el Field Display. Arriba, el estado del tiro y las yardas.</p>
+  <p>El <b>Field Display desde el teléfono</b> se abre a lo ancho. Si lo tiene de pie, le
+  pide girarlo.</p>
+  <div class="nota">
+    <div class="t">Para verlo a pantalla completa, sin las barras de Safari</div>
+    Abra el portal en Safari, toque <b>Compartir</b> y luego <b>Añadir a pantalla de inicio</b>.
+    Desde ese icono, Safari no pinta ninguna barra. Es la única manera en iPhone: ninguna
+    página web puede quitarse esas barras por su cuenta.
+  </div>
+</div>
+
+<!-- ================= SI ALGO ================= -->
+<div class="sec">
+  <h2>Si algo no cuadra</h2>
+  <table>
+    <tr><th>Qué ve</th><th>Qué pasa</th></tr>
+    <tr><td>El avance dice «sin plan»</td>
+        <td>No se han declarado las yardas del día. Póngalas en Plan y datos del día.</td></tr>
+    <tr><td>No salen las losas</td>
+        <td>Igual: hay que declarar cuáles se tiran. El sistema no las deduce para no inventarlas.</td></tr>
+    <tr><td>Dice «Detenido»</td>
+        <td>Lleva más del doble del tiempo normal entre camiones de ese mismo día sin recibir uno.</td></tr>
+    <tr><td>El tiempo no carga</td>
+        <td>Es lo único que necesita internet. Sin señal lo dice, y el resto sigue funcionando.</td></tr>
+    <tr><td>Un cambio no aparece</td>
+        <td>Recargue la página. En el iPhone, cierre la pestaña y vuelva a entrar.</td></tr>
+  </table>
+</div>
+
+<div class="pie">
+  QCheck · Segarra Engineering · Reconstrucción PR-52 [Km 14.2 a 0.0] — Prototipo, julio 2026.
+  Los datos de la demostración son un tiro simulado en marcha: sobre él se puede recibir
+  camiones y entrar muestras de verdad. Se reinicia o se apaga en Plan &amp; Datos.
+</div>
+
+</body>
+</html>

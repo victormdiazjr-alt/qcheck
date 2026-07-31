@@ -39,6 +39,7 @@
   --chart-grid: rgba(255,255,255,.08);
   --chart-wait: rgba(255,255,255,.22);
   --chart-line: #6f9fd8;
+  --chart-glow: #5b9dff;
 }
 
 /* ---------- variante de día ---------- */
@@ -70,6 +71,7 @@
   --chart-grid: rgba(15,30,45,.10);
   --chart-wait: rgba(15,30,45,.30);
   --chart-line: #2b6cb8;
+  --chart-glow: #2b7ce0;
 }
 
 /* ---------- botón de cerrar (esquina superior derecha) ---------- */
@@ -266,27 +268,18 @@ tr.rejected td { background: var(--susp-bg); color: var(--susp); }
 @keyframes chDraw { from { stroke-dashoffset: 4000; } to { stroke-dashoffset: 0; } }
 .ch-area { animation: chFade .9s .35s ease-out backwards; }
 @keyframes chFade { from { opacity: 0; } to { opacity: 1; } }
-/* transform-box: fill-box hace que la escala salga del centro del propio
-   círculo y no del origen del lienzo. */
-.ch-pulse, .ch-dot { transform-box: fill-box; transform-origin: center; }
-/* un latido por segundo: el punto crece y se encoge */
-.ch-dot { animation: chLatir 1s ease-in-out infinite; }
-@keyframes chLatir {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.55); }
-}
-/* la aureola respira al mismo compás, medio paso por delante */
-.ch-pulse { animation: chPulse 1s ease-out infinite; }
-@keyframes chPulse {
-  0%   { opacity: .5; transform: scale(.5); }
-  75%  { opacity: 0;  transform: scale(1.85); }
-  100% { opacity: 0;  transform: scale(1.85); }
+/* El último punto no se mueve: lo que respira es un resplandor azul detrás.
+   Un punto que crece y se encoge saltaba a la vista; esto solo dice
+   "esta es la lectura de ahora" sin robar la atención de la línea. */
+.ch-glow { animation: chBrillo 2.4s ease-in-out infinite; }
+@keyframes chBrillo {
+  0%, 100% { opacity: .28; }
+  50%      { opacity: .72; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ch-line { animation: none; stroke-dasharray: none; }
   .ch-area { animation: none; }
-  .ch-pulse { animation: none; opacity: .35; }
-  .ch-dot { animation: none; }
+  .ch-glow { animation: none; opacity: .45; }
 }
 
 /* ---------- charts ---------- */

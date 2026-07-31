@@ -175,6 +175,10 @@ los campos de origen, el formato del QR y la publicación de límites.
 
 Detalle completo en `docs/ARQUITECTURA.md` y `docs/ROADMAP.md`.
 
+**La guía de Rubén** vive en `docs/guia-qcheck.html` — es la fuente. De ahí salen el PNG y
+el PDF con Chrome sin ventana; los dos comandos están en el comentario de cabecera del
+propio archivo. Si cambia cómo se usa algo, se edita el HTML y se vuelven a generar.
+
 ## 8. Las DOS pantallas de producción — no son duplicado
 
 Existe una `produccion.html` en **cada** repositorio. Son distintas a propósito y

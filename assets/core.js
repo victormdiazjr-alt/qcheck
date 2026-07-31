@@ -866,6 +866,9 @@ function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
   const dentro = (v) => v != null && v >= lo && v <= hi;
 
   let g = `<defs>
+    <filter id="${uid}f" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur stdDeviation="2.6"/>
+    </filter>
     <linearGradient id="${uid}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="var(--chart-line, #5b8dbf)" stop-opacity=".26"/>
       <stop offset="1" stop-color="var(--chart-line, #5b8dbf)" stop-opacity="0"/>
@@ -918,7 +921,8 @@ function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
             stroke="var(--susp)" stroke-width="2.1" stroke-linecap="round"/></g>`;
     else if (ult)
       g += `<g class="ch-live">${t}
-        <circle cx="${X(i)}" cy="${Y(p.v)}" r="7" fill="${col}" class="ch-pulse"/>
+        <circle cx="${X(i)}" cy="${Y(p.v)}" r="6.2" fill="var(--chart-glow, #5b9dff)"
+                filter="url(#${uid}f)" class="ch-glow"/>
         <circle cx="${X(i)}" cy="${Y(p.v)}" r="3.6" fill="${col}" stroke="var(--bg)" stroke-width="1.6" class="ch-dot"/>
       </g>`;
     else
