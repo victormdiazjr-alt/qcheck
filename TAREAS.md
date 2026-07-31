@@ -12,6 +12,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
 | Q-12 | **Guía de usuario ilustrada** para Rubén: circuito de los aparatos, core features y arquitectura, con botón Run que detecta el aparato y lleva a su portal | claude (subagente) | 2026-07-31 |
+| Q-18 | **Tiro nuevo en cada acceso** (yarda 90, último camión hace 3 min) y **«Programar tiro»** desde el Control Center para trabajar de verdad | claude | 2026-07-31 |
 
 ---
 
