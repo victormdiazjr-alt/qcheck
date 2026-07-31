@@ -67,6 +67,14 @@ La inspección ya georreferencia losas ahí. Evaluar el enlace.
 
 ## Esperan a Víctor, no a un agente
 
+- **El archivo del mixer (Q-19).** Víctor quiere que el icono de camión hormigonera sea
+  una silueta suya concreta, en blanco y con fondo transparente. La imagen la enseñó en el
+  chat, y de ahí no se puede sacar a disco: hace falta el **archivo**, preferiblemente
+  **PNG** o **SVG**, puesto en `assets/`. Con SVG entra directo y toma el color del GUI con
+  `currentColor`; con PNG se le quita el fondo blanco y se pinta de blanco (esta máquina no
+  tiene ImageMagick, PIL ni potrace, así que el PNG se procesa con `zlib` de la biblioteca
+  estándar y **no** se puede vectorizar automáticamente).
+
 - **Los logos oficiales** del contratista (Del Valle Group), la concretera
   (Concre-Tech) y la Autoridad (ACT). El mecanismo está hecho y hay monograma de
   reserva; solo faltan los archivos. Se ponen en Plan & Datos → Proyecto.

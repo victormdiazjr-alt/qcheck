@@ -75,6 +75,30 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
   box-shadow: 0 0 0 3px rgba(74,99,216,.09), 0 0 22px -7px rgba(74,99,216,.95); }
 .mv-btn.destaca .ic { stroke: #8ba4f5; }   /* un punto más claro: es el destacado */
 
+/* la puerta «Dashboards» es un botón, no un enlace: abre la elección */
+button.mv-btn { width: 100%; text-align: left; font-family: inherit; cursor: pointer; }
+.mv-btn .r { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; line-height: 1.35; }
+
+/* hoja de elección de tablero */
+.mv-hoja {
+  position: fixed; inset: 0; z-index: 300; display: flex; align-items: flex-end;
+  background: rgba(6,9,13,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  padding: 16px calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+.mv-hoja[hidden] { display: none; }
+.mv-caja {
+  width: 100%; max-width: 520px; margin: 0 auto;
+  background: linear-gradient(168deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--line); border-radius: 20px; padding: 18px;
+  box-shadow: var(--shadow);
+}
+.mv-caja-cab { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.mv-caja-cab .t { font-size: 18px; font-weight: 700; letter-spacing: -.01em; margin-top: 3px; }
+.mv-x {
+  margin-left: auto; flex: none; width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+  font-size: 15px; font-family: inherit; cursor: pointer;
+}
 .mv-pie { margin-top: 26px; text-align: center; }
 .mv-pie a { font-size: 12px; color: var(--ink-soft); text-decoration: none;
   border-bottom: 1px solid var(--line); padding-bottom: 2px; }
@@ -117,6 +141,20 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
   <div class="mv-pie" id="mv-pie" hidden><a href="control-center.html">Ver el Control Center completo</a></div>
 </main>
 
+<!-- Los tres tableros, detrás de la puerta «Dashboards». -->
+<div class="mv-hoja" id="mv-tableros" hidden onclick="if(event.target===this) cerrarTableros()">
+  <div class="mv-caja">
+    <div class="mv-caja-cab">
+      <div>
+        <div class="k">Dashboards</div>
+        <div class="t">¿Cuál quiere ver?</div>
+      </div>
+      <button class="mv-x" type="button" onclick="cerrarTableros()" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="mv-menu" id="mv-lista"></div>
+  </div>
+</div>
+
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/core.js?v=e1371544"></script>
@@ -140,18 +178,32 @@ const MARCA_SEGARRA = `<svg viewBox="125 500 447 425" class="ic marca">
 
 const PUERTA_RESULTADOS = { href: "results.html", n: "Resultados", ic: MARCA_SEGARRA };
 
+/* Los tres tableros de indicadores —concretera, contratista, Autoridad— son la
+   misma clase de cosa: mirar cómo va el tiro desde fuera. Tenerlos como tres
+   puertas sueltas llenaba el portal de cosas que la mayoría no va a abrir, así
+   que entran por una sola, «Dashboards», que pregunta cuál (Víctor, 31 jul 2026). */
+const TABLEROS = [
+  { href: "produccion.html", n: "Concretero", r: "Ritmo, ciclos y calidad de sus camiones",
+    ic: `<svg viewBox="0 0 24 24" class="ic"><path d="M3 20h18"/><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="8" width="3.4" height="12" rx="1"/><rect x="16.6" y="4.5" width="3.4" height="15.5" rx="1"/></svg>` },
+  { href: "contratista.html", n: "Contratista", r: "Avance del tiro, losas y cumplimiento",
+    ic: `<svg viewBox="0 0 24 24" class="ic"><path d="M3 20V10l9-6 9 6v10"/><rect x="8.5" y="13" width="7" height="7" rx="1"/></svg>` },
+  { href: "autoridad.html", n: "Autoridad", r: "Cumplimiento para ACT y FHWA",
+    ic: `<svg viewBox="0 0 24 24" class="ic"><path d="M12 2.5 20 6v6c0 5-3.4 8.4-8 9.5C7.4 20.4 4 17 4 12V6z"/><polyline points="8.8,12 11,14.2 15.4,9.6"/></svg>` },
+];
+
+/* Aguja de indicador: el arco, las marcas y la aguja marcando alto. */
+const ICONO_GAUGE = `<svg viewBox="0 0 24 24" class="ic"><path d="M3.6 18.4a10 10 0 1 1 16.8 0"/><path d="M12 14.6 16.6 9"/><path d="M5.6 14.2l1.5-.5M7.7 9.6l1.1 1.2M12 7.6v1.6M16.3 9.6l-1.1 1.2M18.4 14.2l-1.5-.5"/></svg>`;
+
 /* Las demás puertas: quien consulta desde el teléfono no entra datos. */
 const PUERTAS = [
-  { href: "produccion.html", n: "Concretera",
-    ic: `<svg viewBox="0 0 24 24" class="ic"><path d="M3 20h18"/><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="8" width="3.4" height="12" rx="1"/><rect x="16.6" y="4.5" width="3.4" height="15.5" rx="1"/></svg>` },
-  { href: "contratista.html", n: "Contratista",
-    ic: `<svg viewBox="0 0 24 24" class="ic"><path d="M3 20V10l9-6 9 6v10"/><rect x="8.5" y="13" width="7" height="7" rx="1"/></svg>` },
-  { href: "autoridad.html", n: "Autoridad",
-    ic: `<svg viewBox="0 0 24 24" class="ic"><path d="M12 2.5 20 6v6c0 5-3.4 8.4-8 9.5C7.4 20.4 4 17 4 12V6z"/><polyline points="8.8,12 11,14.2 15.4,9.6"/></svg>` },
+  { tableros: true, n: "Dashboards", ic: ICONO_GAUGE },
   { href: "display.html?acostar=1", n: "Field Display",
     destaca: true,
     ic: `<svg viewBox="0 0 24 24" class="ic"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M12 16.5v4M8.5 20.5h7"/></svg>` },
 ];
+
+function abrirTableros() { document.getElementById("mv-tableros").hidden = false; }
+function cerrarTableros() { document.getElementById("mv-tableros").hidden = true; }
 
 function pintar() {
   document.getElementById("mv-proyecto").textContent = db.project.name || "";
@@ -177,10 +229,22 @@ function pintar() {
       hayPlan ? ` · faltan ${fmt(p.pending, 1)} CY` : ""}</div>`;
 
   const puertas = qcEsQC() ? [PUERTA_RESULTADOS, ...PUERTAS] : PUERTAS;
-  document.getElementById("mv-menu").innerHTML = puertas.map((x) => `
-    <a class="mv-btn${x.destaca ? " destaca" : ""}" href="${x.href}">
-      ${x.ic}
-      <div class="n">${x.n}</div>
+  document.getElementById("mv-menu").innerHTML = puertas.map((x) => x.tableros
+    ? `<button class="mv-btn" type="button" onclick="abrirTableros()">
+        ${x.ic}
+        <div class="n">${x.n}</div>
+        <span class="fl">›</span>
+      </button>`
+    : `<a class="mv-btn${x.destaca ? " destaca" : ""}" href="${x.href}">
+        ${x.ic}
+        <div class="n">${x.n}</div>
+        <span class="fl">›</span>
+      </a>`).join("");
+
+  document.getElementById("mv-lista").innerHTML = TABLEROS.map((t) => `
+    <a class="mv-btn" href="${t.href}">
+      ${t.ic}
+      <div><div class="n">${t.n}</div><div class="r">${t.r}</div></div>
       <span class="fl">›</span>
     </a>`).join("");
 }

@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-19 | **El mixer de Víctor como icono único**: su silueta, en la paleta del GUI, dondequiera que haya un camión hormigonera | claude | 2026-07-31 |
+| Q-19 | **El mixer de Víctor como icono único** — *parada: espera el archivo de la imagen, ver TODO.md* | claude | 2026-07-31 |
 
 ---
 
@@ -52,6 +52,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-07-31 | **Q-20 — Los tres tableros entran por una sola puerta**, «Dashboards» con aguja de indicador, que pregunta cuál | claude |
 | 2026-07-31 | **Q-18 — Tiro nuevo en cada acceso** (yarda 90, último camión hace 3 min) y **«Programar tiro»** desde el Control Center: la frontera entre enseñar y trabajar | claude |
 | 2026-07-31 | **Q-12 — Guía de usuario ilustrada** (`docs/guia-usuario.html`): circuito de los aparatos, core features, arquitectura y botón Run | claude (subagente) |
 | 2026-07-31 | **Q-17 — Muestras deja de dar de alta camiones** (duplicaba Recepción) y la comprobación de conduce repetido se muda a Recepción | claude |
