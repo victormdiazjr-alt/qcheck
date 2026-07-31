@@ -8,6 +8,11 @@ El proyecto no versiona por números todavía: se marca por hitos.
 ## [0.4] — 31 de julio · «portable»
 
 ### Añadido
+- **La guía lleva la dirección de cada pantalla** al pie de su tarjeta, partida por el
+  slash para que nadie la copie mal, y una sección propia de **«Añadir a la pantalla de
+  inicio»** con los cuatro pasos — es lo que quita las barras de Safari y da la pantalla
+  completa en iPad y iPhone. Se avisa de que cada icono guarda su propia sesión y volverá
+  a pedir la clave la primera vez.
 - **`verificar.js`** — la prueba que el proyecto no tenía: parseo de todo el
   JavaScript, referencias rotas, sellos de versión al día, clases de rejilla
   definidas, código muerto, pantallas protegidas y términos técnicos.

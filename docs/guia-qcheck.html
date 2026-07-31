@@ -34,6 +34,10 @@ b  { font-weight: 700; }
 .gris { color: #5b6b7a; }
 .sec { margin-top: 22pt; page-break-inside: avoid; }
 .sec + .sec { margin-top: 20pt; }
+/* Una sección más alta que lo que queda de página salta entera y deja el hueco.
+   Las marcadas .largo pueden partirse: sus piezas ya se protegen una a una. */
+.sec.largo { page-break-inside: auto; }
+h2 { page-break-after: avoid; }
 .pagina { page-break-before: always; }
 
 /* --- portada --- */
@@ -71,6 +75,26 @@ b  { font-weight: 700; }
   color: #39a935; margin-bottom: 4pt; }
 .ap ul { margin: 5pt 0 0 13pt; }
 .ap li { margin-bottom: 2.5pt; }
+/* la dirección de cada pantalla, al pie de su tarjeta */
+.ap .dir { margin-top: 8pt; padding-top: 7pt; border-top: 1px solid #e4ebf1; }
+/* La dirección se parte por el slash, nunca a mitad de palabra: quien la escriba
+   copiando de aquí no puede equivocarse con un «conduce.h / tml». */
+.dir .u { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 8.6pt;
+  line-height: 1.4; }
+.dir .u .base { display: block; color: #5b6b7a; }
+.dir .u .arch { display: block; color: #0f46b5; font-weight: 700; font-size: 9.4pt; }
+.dir .h { font-size: 8.4pt; color: #5b6b7a; margin-top: 3pt; }
+
+/* --- añadir a inicio --- */
+.inicio { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10pt; margin-top: 10pt; }
+.ipaso { border: 1px solid #d7e0e9; border-radius: 8pt; padding: 10pt 11pt; page-break-inside: avoid; }
+.ipaso .n { width: 17pt; height: 17pt; border-radius: 50%; background: #0f46b5; color: #fff;
+  font-size: 9pt; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  margin-bottom: 6pt; }
+.ipaso .t { font-weight: 750; font-size: 9.6pt; margin-bottom: 2pt; }
+.ipaso .d { font-size: 8.8pt; color: #3c4a58; line-height: 1.4; }
+.ipaso .ic { width: 15pt; height: 15pt; fill: none; stroke: #0f46b5; stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round; vertical-align: -2.5pt; }
 
 /* --- pasos --- */
 .pasos { counter-reset: p; margin-top: 8pt; }
@@ -307,6 +331,10 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
         <li><b>Entrada manual</b> — conduce, camión, yardas, hora.</li>
       </ul>
       <p style="margin-top:5pt">La pantalla ya le sugiere el próximo conduce y la próxima losa.</p>
+      <div class="dir">
+        <div class="u"><span class="base">victormdiazjr-alt.github.io/qcheck/</span><span class="arch">conduce.html</span></div>
+        <div class="h">Entre con su clave y <b>añádala a la pantalla de inicio</b> del iPad.</div>
+      </div>
     </div>
 
     <div class="ap">
@@ -323,6 +351,10 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
         <li>El veredicto se ve <b>antes</b> de enviar: verde, ámbar o rojo.</li>
         <li>Al enviar, el Field Display lo canta.</li>
       </ul>
+      <div class="dir">
+        <div class="u"><span class="base">victormdiazjr-alt.github.io/qcheck/</span><span class="arch">muestras.html</span></div>
+        <div class="h">Entre con su clave y <b>añádala a la pantalla de inicio</b> del iPad.</div>
+      </div>
     </div>
 
     <div class="ap">
@@ -339,6 +371,11 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
         <li>Suena cuando llega un camión y cuando sale el veredicto.</li>
         <li>Abajo, las yardas del día y los camiones recibidos.</li>
       </ul>
+      <div class="dir">
+        <div class="u"><span class="base">victormdiazjr-alt.github.io/qcheck/</span><span class="arch">display.html</span></div>
+        <div class="h">Déjela abierta todo el tiro. En un iPad, <b>añádala a la pantalla de
+        inicio</b> y póngalo a lo ancho.</div>
+      </div>
     </div>
 
     <div class="ap">
@@ -358,12 +395,70 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
           hoy; que se espera lluvia durante una hora del tiro.</li>
         <li>De ahí entra a Results: Control Charts, resistencias y todo el histórico.</li>
       </ul>
+      <div class="dir">
+        <div class="u"><span class="base">victormdiazjr-alt.github.io/qcheck/</span><span class="arch">control-center.html</span></div>
+        <div class="h">En la PC, guárdela en favoritos. Entrando por la dirección de arriba
+        con <code>ruben</code>, cae aquí sola.</div>
+      </div>
     </div>
+  </div>
+
+  <p style="margin-top:11pt" class="gris">Las direcciones de arriba se pueden escribir
+  directas. Si todavía no ha entrado, le pide usuario y clave <b>y después lo lleva a la
+  pantalla que pidió</b> — no lo deja tirado en el menú.</p>
+</div>
+
+<!-- ================= AÑADIR A INICIO ================= -->
+<div class="sec">
+  <h2>Añadir a la pantalla de inicio</h2>
+  <p>Hágalo en cada iPad y en el iPhone, una sola vez por aparato. Desde el icono, la
+  pantalla abre <b>completa</b>: sin la barra de direcciones ni las pestañas de Safari,
+  con lo que se gana todo ese alto para el trabajo y nadie se sale de la aplicación
+  sin querer.</p>
+
+  <div class="inicio">
+    <div class="ipaso">
+      <div class="n">1</div>
+      <div class="t">Abra la dirección</div>
+      <div class="d">En <b>Safari</b> — tiene que ser Safari, no Chrome. Escriba la dirección
+      de esa pantalla y entre con su usuario y clave.</div>
+    </div>
+    <div class="ipaso">
+      <div class="n">2</div>
+      <div class="t">Toque Compartir
+        <svg class="ic" viewBox="0 0 24 24"><path d="M12 15.5V3.2"/><path d="M8.2 7 12 3.2 15.8 7"/><path d="M6.5 11H5a1.6 1.6 0 0 0-1.6 1.6v6.6A1.6 1.6 0 0 0 5 20.8h14a1.6 1.6 0 0 0 1.6-1.6v-6.6A1.6 1.6 0 0 0 19 11h-1.5"/></svg>
+      </div>
+      <div class="d">El cuadradito con la flecha para arriba. En el iPad va arriba a la
+      derecha; en el iPhone, abajo en el centro.</div>
+    </div>
+    <div class="ipaso">
+      <div class="n">3</div>
+      <div class="t">Añadir a inicio</div>
+      <div class="d">Baje en la lista hasta <b>«Añadir a pantalla de inicio»</b>. Si el
+      teléfono está en inglés, <i>Add to Home Screen</i>.</div>
+    </div>
+    <div class="ipaso">
+      <div class="n">4</div>
+      <div class="t">Póngale nombre</div>
+      <div class="d">Corto, que se lea bajo el icono: <b>Recepción</b>, <b>Muestras</b>,
+      <b>Display</b>, <b>QCheck</b>. Toque <b>Añadir</b>.</div>
+    </div>
+  </div>
+
+  <div class="nota ojo">
+    <div class="t">Dos cosas que conviene saber</div>
+    Cada icono guarda su propia sesión: <b>la primera vez que abra desde el icono le va a
+    pedir el usuario y la clave otra vez</b>, aunque ya hubiera entrado en Safari. Y si el
+    iPad cierra la aplicación del todo, se la vuelve a pedir. Es normal — no es que se haya
+    perdido nada.<br><br>
+    En iPhone <b>esta es la única manera</b> de quitar las barras: ninguna página web puede
+    quitárselas por su cuenta, y menos aún poner la pantalla a lo ancho sola. Por eso el
+    Field Display en el teléfono le pide girarlo en vez de girarse él.
   </div>
 </div>
 
 <!-- ================= EL DÍA ================= -->
-<div class="sec">
+<div class="sec largo">
   <h2>Un camión, paso a paso</h2>
   <div class="pasos">
     <div class="paso"><div><b>Llega el camión.</b> En el iPad de Recepción escanea el QR o le
@@ -389,7 +484,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
 </div>
 
 <!-- ================= QUIÉN VE QUÉ ================= -->
-<div class="sec">
+<div class="sec largo">
   <h2>Quién entra y qué ve</h2>
   <table>
     <tr><th>Usuario</th><th>Clave</th><th>Desde la PC</th><th>Desde el iPhone</th></tr>
@@ -418,16 +513,19 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
   Autoridad y el Field Display. Arriba, el estado del tiro y las yardas.</p>
   <p>El <b>Field Display desde el teléfono</b> se abre a lo ancho. Si lo tiene de pie, le
   pide girarlo.</p>
-  <div class="nota">
-    <div class="t">Para verlo a pantalla completa, sin las barras de Safari</div>
-    Abra el portal en Safari, toque <b>Compartir</b> y luego <b>Añadir a pantalla de inicio</b>.
-    Desde ese icono, Safari no pinta ninguna barra. Es la única manera en iPhone: ninguna
-    página web puede quitarse esas barras por su cuenta.
+
+  <div class="ap" style="margin-top:9pt">
+    <div class="dir" style="margin-top:0; padding-top:0; border-top:0">
+      <div class="u"><span class="base">victormdiazjr-alt.github.io/qcheck/</span><span class="arch">movil.html</span></div>
+      <div class="h">O simplemente <b>victormdiazjr-alt.github.io/qcheck</b>: entrando desde
+      el teléfono lo lleva al portal solo. <b>Añádalo a la pantalla de inicio</b> — desde ahí
+      llega a todo lo demás sin escribir ninguna dirección más.</div>
+    </div>
   </div>
 </div>
 
 <!-- ================= SI ALGO ================= -->
-<div class="sec">
+<div class="sec largo">
   <h2>Si algo no cuadra</h2>
   <table>
     <tr><th>Qué ve</th><th>Qué pasa</th></tr>
@@ -441,6 +539,11 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
         <td>Es lo único que necesita internet. Sin señal lo dice, y el resto sigue funcionando.</td></tr>
     <tr><td>Un cambio no aparece</td>
         <td>Recargue la página. En el iPhone, cierre la pestaña y vuelva a entrar.</td></tr>
+    <tr><td>Desde el icono me pide la clave otra vez</td>
+        <td>Es normal: cada icono guarda su propia sesión, aparte de Safari. No se perdió nada.</td></tr>
+    <tr><td>El icono abre, pero con las barras de Safari</td>
+        <td>Se añadió desde Chrome o desde otra página. Bórrelo y hágalo desde <b>Safari</b>,
+        sobre una de las direcciones de esta guía.</td></tr>
   </table>
 </div>
 
