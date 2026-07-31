@@ -9,10 +9,10 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 ## En curso
 
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
-
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
+| Q-12 | **Guía de usuario ilustrada** para Rubén: circuito de los aparatos, core features y arquitectura, en el lenguaje visual de QCheck | claude (subagente) | 2026-07-31 |
+| Q-13 | **Cuadrar el reporte acumulado a la carta** — sus hojas se desbordan a dos páginas y el «Página N de M» del pie miente | claude | 2026-07-31 |
 
 ---
 
