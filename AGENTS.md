@@ -68,10 +68,19 @@ docs/                 ← arquitectura, hoja de ruta, despliegue, contrato
 ```
 
 En el héroe del Control Center: a la izquierda el estado del proyecto y **las losas del
-tiro** (`losasDelDia` en `core.js`), a la derecha el tiempo del sitio. Las losas salen del
-plan del día (`dayMeta.losas`) cuando está declarado, e incluyen las pendientes; si no se
-declaró, **no se inventa un plan** — se muestran las que los camiones sirvieron y se dice
-que falta declararlas.
+tiro**, a la derecha el tiempo del sitio.
+
+Las losas (`losasDelDia` en `core.js`) salen **solo** del plan del día, `dayMeta.losas`,
+que se escribe `L3-0.943:24, L3-0.936:18, L3-0.929` — el número tras los dos puntos son
+las yardas planificadas de esa losa, y es opcional. **Sin lista declarada no se pinta
+nada, ni un aviso**: deducir el plan de lo que los camiones sirvieron sería inventarlo.
+
+El avance de cada losa sale de los camiones, y aquí hay una trampa: **un camión que
+reparte su carga entre varias losas no dice cuánto dejó en cada una.** Ese volumen NO se
+reparte a ojo. Solo se atribuyen las yardas de los camiones que sirvieron una sola losa;
+si además hubo cargas repartidas, la cifra se lee como un mínimo (`≥`). Cuando una losa
+solo recibió cargas repartidas no se pinta una barra al 0 %: se dice cuántas cargas
+compartidas la tocaron. Y una losa que nadie ha tocado enseña su código y nada más.
 
 El **Control Center** es la pantalla principal: muestra en widgets lo que Rubén mira de
 verdad y cada widget entra al detalle en `results.html#<pestaña>` (`daily`, `tests`,

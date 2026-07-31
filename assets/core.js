@@ -507,32 +507,55 @@ function slabCodes(ident) {
 /* ------------------------------------------------------------ losas del tiro
    Cuáles se van a tirar hoy y cómo va cada una.
 
-   Si el plan del día las declara (dayMeta.losas), esa es la lista y manda —
-   incluye las que todavía no ha tocado ningún camión. Si no se declararon,
-   NO se inventa un plan: se muestran las que los camiones dicen haber servido,
-   en el orden en que llegaron, y se avisa de que el plan no está puesto.   */
+   La lista sale del plan del día (`dayMeta.losas`), donde se escriben así:
+       L3-0.943:24, L3-0.936:18, L3-0.929
+   El número tras los dos puntos son las yardas planificadas de esa losa, y es
+   opcional. Sin lista declarada NO hay losas: no se deduce un plan de lo que
+   los camiones hayan servido — eso sería inventarlo.
+
+   El avance de cada una sale de los camiones. Un camión que sirve una sola
+   losa aporta sus yardas enteras; uno que reparte su carga entre varias no
+   dice cuánto dejó en cada una, así que su volumen NO se reparte a ojo: la
+   losa queda marcada como "compartida" y sus yardas se leen como un mínimo. */
 function losasDelDia(day) {
+  const meta = db.dayMeta[day] || {};
+  const dec = String(meta.losas || "").match(/L\s?\d+\s?-\s?\d+\.\d+(?:\s*:\s*\d+(?:\.\d+)?)?/gi);
+  if (!dec) return { lista: [], hechas: 0 };
+
+  const plan = [];
+  const vistos = new Set();
+  for (const x of dec) {
+    const [c, cy] = x.split(":");
+    const codigo = c.replace(/\s+/g, "").toUpperCase();
+    if (vistos.has(codigo)) continue;
+    vistos.add(codigo);
+    plan.push({ codigo, cyPlan: cy == null ? null : num(cy.trim()) });
+  }
+
   const rows = testsOfDate(day).filter((t) => !t.rejected);
-  const vaciadas = new Set(), enCurso = new Set(), orden = [];
+  const estado = {}, cy = {}, cargas = {}, compartida = {};
   for (const t of rows) {
-    for (const c of slabCodes(t.ident)) {
-      if (!orden.includes(c)) orden.push(c);
-      if (t.end) vaciadas.add(c);
-      else if (t.arrive) enCurso.add(c);
+    const cs = slabCodes(t.ident);
+    const sola = cs.length === 1;
+    for (const c of cs) {
+      cargas[c] = (cargas[c] || 0) + 1;
+      if (sola) cy[c] = (cy[c] || 0) + (num(t.vol) || 0);
+      else compartida[c] = true;
+      if (t.end) estado[c] = "vaciada";
+      else if (t.arrive && estado[c] !== "vaciada") estado[c] = "curso";
     }
   }
-  const meta = db.dayMeta[day] || {};
-  const dec = String(meta.losas || "").match(/L\s?\d+\s?-\s?\d+\.\d+/gi);
-  const plan = dec ? dec.map((x) => x.replace(/\s+/g, "").toUpperCase()) : null;
 
-  const fuente = plan || orden;
-  const vistos = new Set(), lista = [];
-  for (const c of fuente) {
-    if (vistos.has(c)) continue;
-    vistos.add(c);
-    lista.push({ codigo: c, estado: vaciadas.has(c) ? "vaciada" : enCurso.has(c) ? "curso" : "pendiente" });
-  }
-  return { lista, declarado: !!plan, hechas: lista.filter((l) => l.estado === "vaciada").length };
+  const lista = plan.map((l) => ({
+    codigo: l.codigo,
+    cyPlan: l.cyPlan,
+    estado: estado[l.codigo] || "pendiente",
+    cy: cy[l.codigo] || 0,
+    cargas: cargas[l.codigo] || 0,
+    compartida: !!compartida[l.codigo],
+    pct: l.cyPlan ? Math.min(100, (cy[l.codigo] || 0) / l.cyPlan * 100) : null,
+  }));
+  return { lista, hechas: lista.filter((l) => l.estado === "vaciada").length };
 }
 
 /* Camión "esperando": llegó, no fue rechazado y todavía no terminó de descargar */
