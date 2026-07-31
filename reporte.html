@@ -91,6 +91,27 @@ table.rep td.z-susp { background: #fbe4e2; font-weight: 700; color: #a01c19; }
          --susp: #c5221f; --act: #b26a00; }
 .sheet .ch-line, .sheet .ch-area, .sheet .ch-glow { animation: none; stroke-dasharray: none; }
 
+/* Aviso de hoja: el tiro todavía no ha cerrado. No es decoración —
+   avisa de que lo que se firma abajo es una foto a media faena. */
+.aviso { border: 1px solid #e6c67a; background: #fdf5e2; color: #7a5a12;
+         border-radius: 6px; padding: 8px 11px; font-size: 9pt; margin-bottom: 14px; }
+.aviso b { color: #5e4409; }
+
+/* ficha de dos columnas: concepto y valor (ritmo, ciclos, plan contra lo real) */
+table.rep td.lbl { color: #5a6b7c; width: 42%; }
+table.rep td.dif { font-weight: 700; }
+.nota-sec { font-size: 8.5pt; color: #5a6b7c; margin: 2px 0 10px; }
+
+/* observaciones del sistema — las mismas que ve Rubén en el tablero */
+.obs { border: 1px solid #dbe2e9; border-radius: 6px; padding: 8px 11px; margin-bottom: 7px; display: flex; gap: 10px; }
+.obs .ic { font-size: 14pt; line-height: 1.1; }
+.obs .t { font-weight: 800; font-size: 9.5pt; }
+.obs .d { font-size: 9pt; }
+.obs .a { font-size: 8.5pt; color: #5a6b7c; margin-top: 2px; }
+.obs.susp { border-color: #f0b9b5; background: #fdf3f2; }
+.obs.susp .t { color: #a01c19; }
+.obs.act .t { color: #8a6100; }
+
 /* firmas */
 .signs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; margin-top: 34px; }
 .sign { border-top: 1px solid #16222e; padding-top: 5px; font-size: 8.5pt; }
@@ -134,7 +155,7 @@ table.rep td.z-susp { background: #fbe4e2; font-weight: 700; color: #a01c19; }
     </a>
     <div>
       <div class="title">Reporte de Control de Calidad</div>
-      <div class="subtitle">Tabla matriz · Moving Average · Control Charts</div>
+      <div class="subtitle">Del vaciado del día · Acumulado del proyecto</div>
     </div>
   </div>
   <nav class="tabs">
@@ -152,12 +173,49 @@ table.rep td.z-susp { background: #fbe4e2; font-weight: 700; color: #a01c19; }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=427b7868"></script>
+<script src="assets/core.js?v=d9fb5ba3"></script>
 <script src="assets/demo.js?v=5b7d9943"></script>
 <script>
 "use strict";
 
-const state = { from: null, to: null, lot: "all" };
+/* Dos reportes en la misma hoja de papel:
+
+   · "dia"       — el tiro de UNA fecha, que es lo que Rubén entrega al cerrar
+                   el vaciado: cómo cerró, qué losas se tiraron, la bitácora de
+                   camiones, las cartas del día y las incidencias.
+   · "acumulado" — el expediente del proyecto entero (o de un rango), que es
+                   lo que ya existía.
+
+   Comparten encabezado, pie, estilos de hoja y reglas de impresión: son el
+   mismo entregable con distinto alcance, no dos productos. */
+const state = { modo: "dia", dia: null, from: null, to: null, lot: "all" };
+
+/* La dirección manda: reporte.html?dia=2026-07-31 abre el reporte de ese tiro,
+   para que el Control Center y Results puedan enlazar al día que se cierra. */
+function leerDireccion() {
+  const q = new URLSearchParams(location.search);
+  const d = q.get("dia");
+  if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) { state.modo = "dia"; state.dia = d; }
+  else if (q.get("modo") === "acumulado") state.modo = "acumulado";
+}
+function cambiarModo(m) {
+  state.modo = m;
+  history.replaceState(null, "", m === "dia" ? "?dia=" + state.dia : "?modo=acumulado");
+  render();
+}
+function cambiarDia(d) {
+  state.dia = d;
+  history.replaceState(null, "", "?dia=" + d);
+  render();
+}
+
+/* Los días que se pueden reportar: los que tienen camiones y los que tienen
+   plan declarado. Hoy sale siempre, aunque esté vacío — si no hay nada que
+   reportar, el reporte lo dice; no se esconde la fecha. */
+function diasDelReporte() {
+  const s = new Set([...testDates(), ...Object.keys(db.dayMeta || {}), todayISO()]);
+  return [...s].sort().reverse();
+}
 
 /* ---------- selección ---------- */
 function rangeTests() {
@@ -191,7 +249,9 @@ function repChart(def, rows) {
   return svgChart({ pts, bands: bandsFor(def.key), dp: def.dp, pw, h: 190 });
 }
 
-function sheetHead(titulo, pag, total) {
+/* `sub` es la segunda línea: el nombre del proyecto en el acumulado, la fecha
+   del tiro en el reporte del día. */
+function sheetHead(titulo, sub) {
   const pr = db.project;
   return `<div class="sh-head">
     <svg class="logo" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
@@ -210,7 +270,7 @@ function sheetHead(titulo, pag, total) {
     </svg>
     <div>
       <div class="t1">${esc(titulo)}</div>
-      <div class="t2">${esc(pr.name || "")}</div>
+      <div class="t2">${esc(sub || pr.name || "")}</div>
     </div>
     <div class="right">
       <b>${esc(pr.qcFirm || "")}</b><br>
@@ -226,24 +286,48 @@ function sheetFoot(pag, total) {
   </div>`;
 }
 
+/* ---------- barra de herramientas ---------- */
+function barra(dias) {
+  const lots = [...new Set(db.tests.map((t) => t.lot).filter((x) => x != null))].sort((a, b) => Number(a) - Number(b));
+  const sel = (m) => (state.modo === m ? "btn small primary" : "btn small");
+  return `
+    <div class="field" style="margin-right:20px"><label>Reporte</label>
+      <button class="${sel("dia")}" onclick="cambiarModo('dia')">Del vaciado</button>
+      <button class="${sel("acumulado")}" onclick="cambiarModo('acumulado')">Acumulado del proyecto</button>
+    </div>
+    ${state.modo === "dia" ? `
+      <div class="field"><label>Día del tiro</label>
+        <select onchange="cambiarDia(this.value)">
+          ${dias.map((d) => `<option value="${d}" ${d === state.dia ? "selected" : ""}>${fmtDate(d)}${d === todayISO() ? " · hoy" : ""}</option>`).join("")}
+        </select></div>
+      <button class="btn primary" onclick="window.print()">🖨 Imprimir / PDF</button>
+    ` : `
+      <div class="field"><label>Desde</label><input type="date" value="${state.from || ""}" onchange="state.from=this.value; render()"></div>
+      <div class="field"><label>Hasta</label><input type="date" value="${state.to || ""}" onchange="state.to=this.value; render()"></div>
+      <div class="field"><label>Lote</label><select onchange="state.lot=this.value; render()">
+        <option value="all">Todos</option>
+        ${lots.map((l) => `<option value="${l}" ${state.lot === String(l) ? "selected" : ""}>Lote ${l}</option>`).join("")}
+      </select></div>
+      <button class="btn primary" onclick="window.print()">🖨 Imprimir / PDF</button>
+      <button class="btn" onclick="exportCSV()">⬇ CSV</button>
+    `}
+    <span class="muted" style="font-size:12.5px; margin-left:8px" id="cnt"></span>`;
+}
+
 /* ---------- render ---------- */
 function render() {
+  const dias = diasDelReporte();
+  if (!state.dia || !dias.includes(state.dia)) state.dia = dias[0];
   const days = testDates().slice().sort();
   if (!state.from) state.from = days[0];
   if (!state.to) state.to = days[days.length - 1];
-  const lots = [...new Set(db.tests.map((t) => t.lot).filter((x) => x != null))].sort((a, b) => Number(a) - Number(b));
 
-  document.getElementById("toolbar").innerHTML = `
-    <div class="field"><label>Desde</label><input type="date" value="${state.from}" onchange="state.from=this.value; render()"></div>
-    <div class="field"><label>Hasta</label><input type="date" value="${state.to}" onchange="state.to=this.value; render()"></div>
-    <div class="field"><label>Lote</label><select onchange="state.lot=this.value; render()">
-      <option value="all">Todos</option>
-      ${lots.map((l) => `<option value="${l}" ${state.lot === String(l) ? "selected" : ""}>Lote ${l}</option>`).join("")}
-    </select></div>
-    <button class="btn primary" onclick="window.print()">🖨 Imprimir / PDF</button>
-    <button class="btn" onclick="exportCSV()">⬇ CSV</button>
-    <span class="muted" style="font-size:12.5px; margin-left:8px" id="cnt"></span>`;
+  document.getElementById("toolbar").innerHTML = barra(dias);
+  if (state.modo === "dia") renderDiario();
+  else renderAcumulado();
+}
 
+function renderAcumulado() {
   const rows = rangeTests();
   document.getElementById("cnt").textContent = `${rows.length} ensayos en el reporte`;
 
@@ -276,7 +360,7 @@ function render() {
   // ---------- HOJA 1: portada + resumen ----------
   pg++;
   out.push(`<div class="sheet">
-    ${sheetHead("Reporte de Control de Calidad", pg, total)}
+    ${sheetHead("Reporte de Control de Calidad")}
     <h2 class="sec">Información del proyecto</h2>
     <div class="meta">
       <div><div class="k">Proyecto</div><div class="v">${esc(db.project.name || "—")}</div></div>
@@ -317,7 +401,7 @@ function render() {
   chunks.forEach((chunk, i) => {
     pg++;
     out.push(`<div class="sheet">
-      ${sheetHead("Tabla matriz de ensayos" + (chunks.length > 1 ? ` (${i + 1}/${chunks.length})` : ""), pg, total)}
+      ${sheetHead("Tabla matriz de ensayos" + (chunks.length > 1 ? ` (${i + 1}/${chunks.length})` : ""))}
       <table class="rep">
         <tr><th>#</th><th>Fecha</th><th>Conduce</th><th>Camión</th><th class="n">yd³</th><th>Lote</th><th>Identificación</th>
             <th>Muestra</th><th class="n">Rev.</th><th class="n">Aire</th><th class="n">P.U.</th><th class="n">Temp</th>
@@ -345,7 +429,7 @@ function render() {
   // ---------- Moving Average ----------
   pg++;
   out.push(`<div class="sheet">
-    ${sheetHead("Moving Average de resistencia", pg, total)}
+    ${sheetHead("Moving Average de resistencia")}
     <h2 class="sec">Resistencia a compresión y Moving Average de ${p.maWindow} ensayos</h2>
     <div class="chart-box">
       <h3>Resistencia @ ${p.cs.age} días (psi)</h3>
@@ -373,7 +457,7 @@ function render() {
   [[0, 1], [2, 3]].forEach((pair) => {
     pg++;
     out.push(`<div class="sheet">
-      ${sheetHead("Control Charts", pg, total)}
+      ${sheetHead("Control Charts")}
       ${pair.map((idx) => {
         const d = defs[idx];
         const b = bandsFor(d.key);
@@ -395,7 +479,7 @@ function render() {
   // ---------- rechazos + firmas ----------
   pg++;
   out.push(`<div class="sheet">
-    ${sheetHead("Registro de rechazos y certificación", pg, total)}
+    ${sheetHead("Registro de rechazos y certificación")}
     <h2 class="sec">Cargas rechazadas</h2>
     ${rej.length ? `<table class="rep">
       <tr><th>#</th><th>Fecha</th><th>Conduce</th><th>Camión</th><th class="n">yd³</th><th>Identificación</th>
@@ -431,7 +515,340 @@ function render() {
   document.getElementById("report").innerHTML = out.join("");
 }
 
+/* ============================================================
+   EL REPORTE DEL VACIADO — lo que se entrega al cerrar el tiro.
+
+   Es la hoja de UN día, no el expediente del proyecto: los camiones
+   de esa fecha, las losas que se tiraron contra las planificadas,
+   cómo se comportó la mezcla y qué incidencias hubo.
+
+   No calcula nada nuevo. Todo sale del mismo motor que pinta el
+   Control Center —dayProgress, dayStats, losasDelDia, trendAlerts—
+   para que la hoja firmada y el tablero no puedan discrepar.
+   ============================================================ */
+function renderDiario() {
+  const day = state.dia;
+  const rows = testsOfDate(day);
+  const meta = db.dayMeta[day] || {};
+  const p = db.plan;
+  const hoy = day === todayISO();
+  const hm = (t) => hora12(t) || "—";
+
+  document.getElementById("cnt").textContent =
+    rows.length ? `${rows.length} camiones en el vaciado` : "sin camiones registrados";
+
+  /* Un día sin camiones no se rellena con ceros: se dice que no hubo tiro. */
+  if (!rows.length) {
+    document.getElementById("report").innerHTML = `<div class="sheet">
+      ${sheetHead("Reporte del vaciado", fmtDate(day))}
+      <h2 class="sec">Sin camiones registrados</h2>
+      <p style="font-size:9.5pt; color:#5a6b7c">
+        No hay ninguna entrega registrada para el ${fmtDate(day)}.
+        ${meta.cyPlan != null
+          ? `El día tiene un plan declarado de <b>${fmt(num(meta.cyPlan), 1)} yd³</b>, pero no llegó ningún camión.`
+          : "El día tampoco tiene un plan declarado."}
+      </p>
+      ${sheetFoot(1, 1)}
+    </div>`;
+    return;
+  }
+
+  const prog = dayProgress(day);
+  const st = dayStats(day);
+  const { lista: losas, hechas } = losasDelDia(day);
+  const avisos = trendAlerts(day);
+  const rej = rows.filter((t) => t.rejected);
+  const hums = (db.humidity || []).filter((h) => h.date === day)
+    .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+  const res = rows.filter((t) => t.cs1 != null || t.cs5 != null || t.cs28 != null);
+  const tiro = estadoTiro(day);
+  const proy = hoy ? ritmoTiro(day) : null;
+  const plantas = [...new Set(rows.map((t) => t.plant).filter(Boolean))];
+  const empresas = [...new Set(rows.map((t) => t.company || plantCompany(t.plant)).filter((x) => x && x !== "—"))];
+  const lotes = [...new Set(rows.map((t) => t.lot).filter((x) => x != null))];
+  const inicio = inicioReal(day);
+  const ritmoReal = st.hours ? prog.placed / st.hours : null;
+  const cerrado = prog.cyPlan != null && prog.cyPlan > 0 && prog.placed >= prog.cyPlan;
+  const enCurso = hoy && !cerrado;
+
+  /* Cuántas losas hay que enseñar: la lista declarada manda. Sin lista
+     declarada solo se sabe cuántas tocaron los camiones (`losasDone`). */
+  const losasReal = losas.length ? hechas : prog.losasDone;
+  const losasPlan = losas.length || prog.losasPlan;
+
+  /* Las cartas van de dos en dos por hoja: cuatro no caben en una página de
+     carta. Slump y Unit Weight primero, que es lo que Rubén mira. Una lectura
+     que nadie tomó ese día no lleva carta — no se dibuja una gráfica vacía. */
+  const cartas = [0, 2, 1, 3].map((i) => CHART_DEFS[i])
+    .filter((d) => rows.some((t) => d.get(t) != null));
+  const paresCartas = [];
+  for (let i = 0; i < cartas.length; i += 2) paresCartas.push(cartas.slice(i, i + 2));
+
+  /* 18 camiones es lo máximo que cabe en una carta con el encabezado, el pie y
+     alguna losa partida en dos líneas. Más filas empujan la tabla a una segunda
+     página y el «Página N de M» del pie deja de ser verdad.
+     Las hojas se reparten parejas: 19 camiones salen 10 y 9, no 18 y 1. */
+  const PER = 18;
+  const hojasBitacora = Math.max(1, Math.ceil(rows.length / PER));
+  const porHoja = Math.ceil(rows.length / hojasBitacora);
+  const chunks = [];
+  for (let i = 0; i < rows.length; i += porHoja) chunks.push(rows.slice(i, i + porHoja));
+  const total = 2 + chunks.length + paresCartas.length + 1;
+  let pg = 0;
+  const out = [];
+
+  const dif = (real, plan, dp = 1) => {
+    if (real == null || plan == null) return `<td class="n">—</td>`;
+    const d = real - plan;
+    const z = d < 0 ? " z-act" : "";
+    return `<td class="n dif${z}">${d > 0 ? "+" : ""}${fmt(d, dp)}</td>`;
+  };
+
+  // ---------- HOJA 1: cómo cerró el vaciado ----------
+  pg++;
+  out.push(`<div class="sheet">
+    ${sheetHead("Reporte del vaciado", fmtDate(day))}
+    ${enCurso ? `<div class="aviso"><b>Tiro en curso.</b> Esta hoja se emitió a la(s) ${hm(nowHM())},
+      con el vaciado todavía abierto (${esc(tiro.txt.toLowerCase())}). Las cifras son las de este momento,
+      no las del cierre — vuelva a emitirla cuando termine el tiro.</div>` : ""}
+
+    <h2 class="sec">El vaciado</h2>
+    <div class="meta">
+      <div><div class="k">Fecha</div><div class="v">${fmtDate(day)}</div></div>
+      <div><div class="k">Proyecto</div><div class="v">${esc(db.project.name || "—")}</div></div>
+      <div><div class="k">Contratista</div><div class="v">${esc(db.project.contractor || "—")}</div></div>
+      <div><div class="k">Control de calidad</div><div class="v">${esc(db.project.qcFirm || "—")}</div></div>
+      <div><div class="k">Mezcla</div><div class="v">${esc(db.project.mixId || "—")}</div></div>
+      <div><div class="k">Concretera</div><div class="v">${esc(empresas.join(" · ") || "—")}</div></div>
+      <div><div class="k">Fase</div><div class="v">${esc(meta.fase || "—")}</div></div>
+      <div><div class="k">Carril</div><div class="v">${esc(meta.lane || "—")}</div></div>
+      <div><div class="k">Cierre</div><div class="v">${esc(meta.cierre || "—")}</div></div>
+      <div><div class="k">Km</div><div class="v">${esc(meta.km || "—")}</div></div>
+      <div><div class="k">Planta(s)</div><div class="v">${esc(plantas.join(" · ") || "—")}</div></div>
+      <div><div class="k">Lote(s)</div><div class="v">${lotes.length ? esc(lotes.join(", ")) : "—"}</div></div>
+    </div>
+
+    <h2 class="sec">${enCurso ? "Cómo va el día" : "Cómo cerró el día"}</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Yardas colocadas</div>
+        <div class="v">${fmt(prog.placed, 1)}</div>
+        <div class="s">${prog.cyPlan != null ? `de ${fmt(prog.cyPlan, 1)} yd³ planificadas` : "sin plan declarado"}</div></div>
+      <div class="kpi ${rej.length ? "bad" : ""}"><div class="k">Camiones</div>
+        <div class="v">${prog.loads}</div>
+        <div class="s">${rej.length ? (rej.length === 1 ? "1 rechazado" : `${rej.length} rechazados`) : "ninguno rechazado"}</div></div>
+      <div class="kpi ${prog.compliancePct != null && prog.compliancePct >= 90 ? "ok" : prog.compliancePct != null ? "bad" : ""}">
+        <div class="k">Dentro de límites</div>
+        <div class="v">${prog.compliancePct != null ? fmt(prog.compliancePct, 1) + "%" : "—"}</div>
+        <div class="s">${prog.conforming} de ${prog.evaluated} evaluados</div></div>
+      <div class="kpi"><div class="k">Losas vaciadas</div>
+        <div class="v">${losasReal}${losasPlan ? ` <span style="font-size:11pt; color:#5a6b7c">/ ${losasPlan}</span>` : ""}</div>
+        <div class="s">${losasPlan ? "de las planificadas" : "sin plan de losas"}</div></div>
+    </div>
+
+    <h2 class="sec">Plan contra lo real</h2>
+    <table class="rep">
+      <tr><th>Concepto</th><th class="n">Planificado</th><th class="n">Real</th><th class="n">Diferencia</th></tr>
+      <tr><td class="lbl">Yardas (yd³)</td>
+        <td class="n">${prog.cyPlan != null ? fmt(prog.cyPlan, 1) : "—"}</td>
+        <td class="n">${fmt(prog.placed, 1)}</td>${dif(prog.placed, prog.cyPlan)}</tr>
+      <tr><td class="lbl">Losas</td>
+        <td class="n">${losasPlan || "—"}</td><td class="n">${losasReal}</td>${dif(losasReal, losasPlan || null, 0)}</tr>
+      <tr><td class="lbl">Hora de comienzo</td>
+        <td class="n">${hm(meta.horaInicio)}</td><td class="n">${hm(inicio)}</td>
+        ${meta.horaInicio && inicio ? `<td class="n dif">${minutesBetween(meta.horaInicio, inicio)} min</td>` : `<td class="n">—</td>`}</tr>
+    </table>
+    ${prog.cyPlan == null ? `<div class="nota-sec">Este día no tiene yardas planificadas declaradas —
+      se declaran en Plan &amp; Datos → Datos del vaciado. Sin ellas no hay contra qué comparar y la
+      hoja no inventa un total.</div>` : ""}
+
+    <h2 class="sec">Ritmo y ciclos</h2>
+    <table class="rep">
+      <tr><td class="lbl">Primer camión / última descarga</td>
+        <td>${hm(st.firstStart)} — ${hm(st.lastEnd)}${st.hours ? ` · ${duracionCorta(Math.round(st.hours * 60))}` : ""}</td></tr>
+      <tr><td class="lbl">Ritmo de colocación</td>
+        <td>${ritmoReal != null ? `${fmt(ritmoReal, 1)} yd³/h · ${fmt(st.loadsPerHr, 1)} camiones/h` : "—"}</td></tr>
+      <tr><td class="lbl">Ciclo Batch → fin de descarga</td>
+        <td>${st.avgCycle != null ? `promedio ${Math.round(st.avgCycle)} min · máximo ${Math.round(st.maxCycle)} min (límite ${p.maxElapsedMin} min)` : "—"}${
+          st.cyclesFuera ? ` · ${st.cyclesFuera} registro${st.cyclesFuera === 1 ? "" : "s"} con horas incoherentes, fuera del promedio` : ""}</td></tr>
+      <tr><td class="lbl">Espera en sitio (llegada → comienzo)</td>
+        <td>${st.avgWait != null ? `promedio ${Math.round(st.avgWait)} min` : "—"}</td></tr>
+      ${proy && proy.fin ? `<tr><td class="lbl">A este paso terminaría</td>
+        <td>≈ ${hm(proy.fin)} · faltan ${fmt(prog.pending, 1)} yd³</td></tr>` : ""}
+    </table>
+    ${sheetFoot(pg, total)}
+  </div>`);
+
+  // ---------- HOJA 2: losas y observaciones ----------
+  pg++;
+  const hayCompartida = losas.some((l) => l.compartida);
+  out.push(`<div class="sheet">
+    ${sheetHead("Losas del vaciado", fmtDate(day))}
+    <h2 class="sec">Losas tiradas</h2>
+    ${losas.length ? `<table class="rep">
+      <tr><th>Losa</th><th class="n">Planificado (yd³)</th><th class="n">Colocado (yd³)</th>
+          <th class="n">Cargas</th><th class="n">Avance</th><th>Estado</th></tr>
+      ${losas.map((l) => `<tr>
+        <td>${esc(l.codigo)}</td>
+        <td class="n">${l.cyPlan != null ? fmt(l.cyPlan, 1) : "—"}</td>
+        <td class="n">${l.cargas ? (l.compartida ? "≥ " : "") + fmt(l.cy, 1) : "—"}</td>
+        <td class="n">${l.cargas || "—"}</td>
+        <td class="n">${l.pct != null && l.cargas ? fmt(l.pct, 0) + "%" : "—"}</td>
+        <td>${l.estado === "vaciada" ? "Vaciada" : l.estado === "curso" ? "En curso" : "Pendiente"}</td>
+      </tr>`).join("")}
+    </table>
+    <div class="tbl-note">${hechas} de ${losas.length} losas vaciadas.
+      ${hayCompartida ? `Las yardas marcadas con «≥» son un mínimo: un camión que repartió su carga entre
+      varias losas no registra cuánto dejó en cada una, y ese volumen no se reparte a ojo.` : ""}</div>`
+    : `<p style="font-size:9.5pt; color:#5a6b7c">Este día no tiene lista de losas declarada, así que la hoja
+        no puede decir cuáles se tiraron ni cuánto llevaba cada una. Deducirlas de lo que sirvieron los
+        camiones sería inventar el plan. La lista se declara en Plan &amp; Datos → Datos del vaciado.
+        ${prog.losasDone ? `Los camiones registrados tocaron <b>${prog.losasDone}</b> losa${prog.losasDone === 1 ? "" : "s"} distinta${prog.losasDone === 1 ? "" : "s"}.` : ""}</p>`}
+
+    <h2 class="sec">Observaciones del sistema</h2>
+    ${avisos.length ? avisos.map((a) => `<div class="obs ${a.level === "susp" ? "susp" : "act"}">
+        <div class="ic">${a.icon}</div>
+        <div><div class="t">${esc(a.title)}</div><div class="d">${esc(a.text)}</div>
+          <div class="a">▸ ${esc(a.action)}</div></div>
+      </div>`).join("")
+    : `<p style="font-size:9.5pt; color:#5a6b7c">Sin avisos: las tendencias de Unit Weight y Slump se
+        mantuvieron estables durante el vaciado.</p>`}
+    <div class="tbl-note">Los avisos los deduce el sistema de las propias lecturas del día
+      (tendencia de Unit Weight contra Slump, acercamiento a límites, humedades de agregados vencidas
+      y rachas en zona de acción). No sustituyen el criterio del ingeniero de control de calidad.</div>
+    ${sheetFoot(pg, total)}
+  </div>`);
+
+  // ---------- HOJAS 3..N: bitácora de camiones ----------
+  chunks.forEach((chunk, i) => {
+    pg++;
+    out.push(`<div class="sheet">
+      ${sheetHead("Bitácora de camiones" + (chunks.length > 1 ? ` (${i + 1}/${chunks.length})` : ""), fmtDate(day))}
+      <table class="rep">
+        <tr><th>#</th><th>Conduce</th><th>Camión</th><th>Planta</th><th>Batch</th><th>Llegada</th>
+            <th>Comienza</th><th>Muestra</th><th>Termina</th><th class="n">Min</th><th class="n">yd³</th>
+            <th>Losa</th><th class="n">Slump</th><th class="n">Aire</th><th class="n">P.U.</th>
+            <th class="n">Temp</th><th>Estado</th></tr>
+        ${chunk.map((t) => {
+          const z = (zz) => (zz ? ` class="n z-${zz}"` : ' class="n"');
+          const el = minutesBetween(t.batch, t.end);
+          return `<tr class="${t.rejected ? "rej" : ""}">
+            <td class="n">${t.n}</td><td>${esc(t.ticket || "—")}</td><td>${esc(t.truck || "—")}</td>
+            <td>${esc(t.plant || "—")}</td>
+            <td>${esc(t.batch || "—")}</td><td>${esc(t.arrive || "—")}</td><td>${esc(t.start || "—")}</td>
+            <td>${esc(t.testTime || "—")}</td><td>${esc(t.end || "—")}</td>
+            <td${z(zoneElapsed(t))}>${el != null ? el : "—"}</td>
+            <td class="n">${fmt(num(t.vol), 1)}</td>
+            <td class="wrap">${esc(shortIdent(t.ident))}</td>
+            <td${z(zoneSlump(t))}>${fmt(t.slump, 2)}</td>
+            <td${z(zoneAir(t))}>${fmt(t.air, 1)}</td>
+            <td${z(zoneUW(t))}>${fmt(t.uw, 2)}</td>
+            <td${z(zoneTemp(t))}>${fmt(t.temp, 0)}</td>
+            <td>${t.rejected ? "RECHAZADO" : (worstZone(t) === "susp" ? "Fuera" : worstZone(t) === "act" ? "Acción" : worstZone(t) ? "Conforme" : "—")}</td>
+          </tr>`;
+        }).join("")}
+      </table>
+      <div class="tbl-note">Horas en formato de 24 h. «Min» es el tiempo de Batch a fin de descarga
+        (límite ${p.maxElapsedMin} min). Celdas sombreadas: ámbar = zona de acción · rojo = fuera del
+        límite de suspensión. Filas rojas: cargas rechazadas y no incorporadas a la obra.</div>
+      ${sheetFoot(pg, total)}
+    </div>`);
+  });
+
+  // ---------- Control Charts del día ----------
+  paresCartas.forEach((par, i) => {
+    pg++;
+    out.push(`<div class="sheet">
+      ${sheetHead("Control Charts del vaciado" + (paresCartas.length > 1 ? ` (${i + 1}/${paresCartas.length})` : ""), fmtDate(day))}
+      <h2 class="sec">Las lecturas de hormigón fresco, en orden de llegada</h2>
+      ${par.map((d) => {
+        const b = bandsFor(d.key);
+        const lim = d.key === "temp"
+          ? `Máximo ${p.tempMax} °F · zona de acción sobre ${p.tempMax - 3} °F`
+          : `Objetivo ${fmt(b.target, 2)} · acción ${fmt(b.actLo, 2)} – ${fmt(b.actHi, 2)} · suspensión ${fmt(b.suspLo, 2)} – ${fmt(b.suspHi, 2)}`;
+        return `<div class="chart-box">
+          <h3>${esc(d.label)}</h3><div class="lim">${lim}</div>
+          ${chartForDay(d, day, 26)}
+        </div>`;
+      }).join("")}
+      <div class="tbl-note">Solo los ensayos de este día. Línea punteada: valor objetivo · ámbar: límite
+        de acción · rojo: límite de suspensión. ✕ = carga rechazada.</div>
+      ${sheetFoot(pg, total)}
+    </div>`);
+  });
+
+  // ---------- incidencias y certificación ----------
+  pg++;
+  out.push(`<div class="sheet">
+    ${sheetHead("Incidencias y certificación", fmtDate(day))}
+    <h2 class="sec">Cargas rechazadas</h2>
+    ${rej.length ? `<table class="rep">
+      <tr><th>#</th><th>Conduce</th><th>Camión</th><th class="n">yd³</th><th>Losa</th><th>Muestra</th>
+          <th class="n">Slump</th><th class="n">P.U.</th><th class="n">Aire</th><th class="n">Temp</th><th>Motivo</th></tr>
+      ${rej.map((t) => {
+        const m = [];
+        if (zoneSlump(t) === "susp") m.push("Slump fuera de límite");
+        if (zoneUW(t) === "susp") m.push("Unit Weight fuera de tolerancia");
+        if (zoneAir(t) === "susp") m.push("Aire fuera de límite");
+        if (zoneTemp(t) === "susp") m.push("Temperatura sobre el máximo");
+        return `<tr class="rej"><td class="n">${t.n}</td><td>${esc(t.ticket || "—")}</td>
+          <td>${esc(t.truck || "—")}</td><td class="n">${fmt(num(t.vol), 1)}</td>
+          <td class="wrap">${esc(shortIdent(t.ident))}</td><td>${esc(t.testTime || "—")}</td>
+          <td class="n">${fmt(t.slump, 2)}</td><td class="n">${fmt(t.uw, 2)}</td>
+          <td class="n">${fmt(t.air, 1)}</td><td class="n">${fmt(t.temp, 0)}</td>
+          <td class="wrap">${esc(m.join("; ") || t.comments || "Rechazo en campo")}</td></tr>`;
+      }).join("")}
+    </table>
+    <div class="tbl-note">Estas yardas no entraron en la obra y no cuentan en lo colocado.</div>`
+    : `<p style="font-size:9.5pt; color:#5a6b7c">No se rechazó ninguna carga en este vaciado.</p>`}
+
+    <h2 class="sec">Humedades de agregados</h2>
+    ${hums.length ? `<table class="rep">
+      <tr><th>Hora</th><th>Planta</th><th>Nota</th></tr>
+      ${hums.map((h) => `<tr><td>${esc(h.time || "—")}</td><td>${esc(h.plant || "—")}</td>
+        <td class="wrap">${esc(h.note || "—")}</td></tr>`).join("")}
+    </table>` : `<p style="font-size:9.5pt; color:#5a6b7c">Sin pruebas de humedad registradas en este día
+        (el plan de control pide una cada ${p.humidityMaxHours} h).</p>`}
+
+    <h2 class="sec">Resistencia a compresión</h2>
+    ${res.length ? `<table class="rep">
+      <tr><th>#</th><th>Conduce</th><th class="n">1 día</th><th class="n">${p.cs.age} días</th>
+          <th class="n">28 días</th><th>Evaluación</th></tr>
+      ${res.map((t) => `<tr><td class="n">${t.n}</td><td>${esc(t.ticket || "—")}</td>
+        <td class="n">${fmt(t.cs1, 0)}</td>
+        <td class="n${zoneCS5(t.cs5) === "susp" ? " z-susp" : zoneCS5(t.cs5) === "act" ? " z-act" : ""}">${fmt(t.cs5, 0)}</td>
+        <td class="n">${fmt(t.cs28, 0)}</td>
+        <td>${t.cs5 == null ? "—" : t.cs5 >= p.cs.target ? "Cumple" : t.cs5 >= p.cs.action ? "Bajo objetivo" : "No cumple"}</td>
+      </tr>`).join("")}
+    </table>` : `<p style="font-size:9.5pt; color:#5a6b7c">Todavía no hay resultados de resistencia
+        registrados para este vaciado. El plan de control ensaya a 1, ${p.cs.age} y 28 días según ASTM C39,
+        con objetivo de ${fmt(p.cs.target, 0)} psi a los ${p.cs.age} días; los resultados se incorporan
+        al expediente del proyecto según se van rompiendo los cilindros.</p>`}
+
+    ${meta.notas ? `<h2 class="sec">Notas del vaciado</h2>
+      <p style="font-size:9.5pt; white-space:pre-wrap">${esc(meta.notas)}</p>` : ""}
+
+    <h2 class="sec">Certificación</h2>
+    <p style="font-size:9pt; line-height:1.6">
+      Los ensayos de hormigón fresco de este vaciado —${fmtDate(day)}${meta.fase ? `, Fase ${esc(meta.fase)}` : ""}${meta.lane ? `, carril ${esc(meta.lane)}` : ""}—
+      fueron realizados en obra por personal de <b>${esc(db.project.qcFirm || "—")}</b> conforme a
+      ASTM C143 (Slump), C231 (aire), C138 (Unit Weight) y C1064 (temperatura), y al plan de control
+      aprobado para la mezcla <b>${esc(db.project.mixId || "—")}</b>. Se recibieron <b>${prog.loads}</b>
+      camiones y se colocaron <b>${fmt(prog.placed, 1)} yd³</b>${rej.length ? `, con ${rej.length === 1 ? "una carga rechazada" : rej.length + " cargas rechazadas"}` : ", sin cargas rechazadas"}.
+      Los datos provienen del registro digital de campo, entrado una sola vez y sin transcripción manual intermedia.
+      ${enCurso ? "<b>Hoja emitida con el tiro todavía en curso.</b>" : ""}
+    </p>
+    <div class="signs">
+      <div class="sign"><div class="r">Inspector / Técnico de campo</div></div>
+      <div class="sign"><div class="r">Ingeniero de Control de Calidad</div></div>
+    </div>
+    ${sheetFoot(pg, total)}
+  </div>`);
+
+  document.getElementById("report").innerHTML = out.join("");
+}
+
 loadDB();
+leerDireccion();
 initTheme();
 mountThemeToggle();
 mountStatusBar();

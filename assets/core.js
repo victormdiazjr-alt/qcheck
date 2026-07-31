@@ -500,11 +500,26 @@ function strengthSets() {
   return sets;
 }
 
+/* El ciclo de un camión: de Batch a fin de descarga, en minutos.
+
+   `tope` es lo que dura el día entero. Un ciclo no puede pasarse de ahí, y si
+   se pasa, el registro está mal —no el camión—: en el Excel histórico hay horas
+   mal transcritas (la #331 del 20 jun trae el batch a las 9:39 y la descarga a
+   las 7:33, o sea antes) y `minutesBetween`, que cruza la medianoche a
+   propósito, las convertía en ciclos de 21 h. Ese registro no se toca: es el
+   expediente. Se devuelve null para que no ensucie ningún promedio ni estire
+   ninguna gráfica, y quien lo llame puede contar cuántos quedaron fuera.
+   El tope sale del propio día, no de una constante inventada. */
+function cicloCamion(t, tope) {
+  const c = minutesBetween(t.batch, t.end);
+  if (c == null) return null;
+  return tope != null && c > tope ? null : c;
+}
 /* Day-level production stats (producer / contractor KPIs). */
 function dayStats(day) {
   const rows = testsOfDate(day);
   const cy = rows.reduce((a, t) => a + (num(t.vol) || 0), 0);
-  const cycles = rows.map((t) => minutesBetween(t.batch, t.end)).filter((x) => x != null);
+  const crudos = rows.map((t) => minutesBetween(t.batch, t.end)).filter((x) => x != null);
   const waits = rows.map((t) => minutesBetween(t.arrive, t.start)).filter((x) => x != null);
   const starts = rows.map((t) => t.start || t.arrive).filter(Boolean).sort();
   const ends = rows.map((t) => t.end || t.testTime).filter(Boolean).sort();
@@ -513,6 +528,10 @@ function dayStats(day) {
     const span = minutesBetween(starts[0], ends[ends.length - 1]);
     if (span != null && span > 0) hours = span / 60;
   }
+  /* Los ciclos imposibles se quedan fuera del promedio y se cuentan aparte,
+     para poder decir cuántos fueron. Ver `cicloCamion()`. */
+  const tope = hours != null ? Math.round(hours * 60) : null;
+  const cycles = rows.map((t) => cicloCamion(t, tope)).filter((x) => x != null);
   return {
     rows, cy, loads: rows.length,
     rejected: rows.filter((t) => t.rejected).length,
@@ -520,6 +539,7 @@ function dayStats(day) {
     loadsPerHr: hours ? rows.length / hours : null,
     avgCycle: cycles.length ? cycles.reduce((a, b) => a + b, 0) / cycles.length : null,
     maxCycle: cycles.length ? Math.max(...cycles) : null,
+    cyclesFuera: crudos.length - cycles.length,
     avgWait: waits.length ? waits.reduce((a, b) => a + b, 0) / waits.length : null,
     firstStart: starts[0] || null, lastEnd: ends[ends.length - 1] || null, hours,
   };
@@ -978,6 +998,14 @@ function downloadFile(name, content, type) {
   a.href = URL.createObjectURL(blob); a.download = name; a.click();
   URL.revokeObjectURL(a.href);
 }
+/* Una celda de CSV: comillas solo si el contenido las necesita.
+   Se borró por descuido en la limpieza del 31 jul 2026 y con ella se llevó
+   el botón «⬇ CSV» de las cuatro pantallas donde aparece — reventaba con
+   "csvCell is not defined" sin decir nada en la interfaz. */
+function csvCell(v) {
+  const s = v == null ? "" : String(v);
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
 function exportCSV() {
   const headers = ["#", "Fecha", "Ticket", "Camion", "CY", "Planta", "Lote", "Identificacion", "Batch", "Llegada", "Comienza", "Muestra", "Termina", "Min", "Slump", "Aire", "UW", "UW objetivo", "Temp", "CS 1d", "CS 5d", "CS 28d", "MediaMovil5d", "Estado", "Comentarios"];
   const sets = strengthSets();
@@ -988,7 +1016,7 @@ function exportCSV() {
     t.cs1, t.cs5, t.cs28, maOf.get(t.n) != null ? Math.round(maOf.get(t.n)) : "",
     t.rejected ? "RECHAZADO" : (worstZone(t) || "").toUpperCase(), t.comments,
   ]);
-  const csv = [headers, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+  const csv = [headers, ...rows].map((r) => r.map((c) => csvCell(c)).join(",")).join("\r\n");
   downloadFile(`qc-pr52-pruebas-${todayISO()}.csv`, "﻿" + csv, "text/csv;charset=utf-8");
   toast("CSV descargado");
 }

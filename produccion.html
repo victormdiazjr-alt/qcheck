@@ -89,7 +89,7 @@ body { background: var(--bg); }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=427b7868"></script>
+<script src="assets/core.js?v=d9fb5ba3"></script>
 <script src="assets/demo.js?v=5b7d9943"></script>
 <script>
 "use strict";
@@ -131,10 +131,10 @@ function cumChart(rows) {
 }
 
 /* ---------- custom SVG: per-truck cycle bars ---------- */
-function cycleChart(rows) {
+function cycleChart(rows, tope) {
   const items = rows.map((t, i) => ({
     load: i + 1, truck: t.truck, ticket: t.ticket,
-    cycle: minutesBetween(t.batch, t.end),
+    cycle: cicloCamion(t, tope),
     wait: minutesBetween(t.arrive, t.start),
     rejected: t.rejected,
   })).filter((x) => x.cycle != null);
@@ -185,7 +185,10 @@ function render() {
     `<span class="mp-nombre">${esc(cia.join(" · ") || "Concretera")}</span>`;
 
   const onSite = s.rows.filter((t) => t.arrive && !t.end && !t.rejected);
-  const over90 = s.rows.filter((t) => { const el = minutesBetween(t.batch, t.end); return el != null && el > db.plan.maxElapsedMin; }).length;
+  /* El mismo tope que usa dayStats: un ciclo más largo que el día entero es un
+     registro mal transcrito, no un camión lento. Ver `cicloCamion()`. */
+  const tope = s.hours != null ? Math.round(s.hours * 60) : null;
+  const over90 = s.rows.filter((t) => { const el = cicloCamion(t, tope); return el != null && el > db.plan.maxElapsedMin; }).length;
 
   // last 7 pour days summary
   const week = days.slice(0, 7).map((d) => ({ d, s: dayStats(d) }));
@@ -215,7 +218,7 @@ function render() {
     <div class="panel">
       <div class="panel-head"><h2>Ciclo por camión (batch → termina descarga)</h2>
         <span class="muted" style="font-size:12px">barra oscura interior = espera llegada→comienza</span></div>
-      <div class="panel-body">${cycleChart(s.rows)}</div>
+      <div class="panel-body">${cycleChart(s.rows, tope)}</div>
     </div>
 
     <div class="grid cols-2">

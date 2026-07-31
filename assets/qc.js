@@ -253,6 +253,7 @@ function viewDaily() {
       </select>
       <button class="btn small" onclick="formDayMeta('${state.day}')">Plan y datos del día</button>
       <div class="spacer"></div>
+      <a class="btn" href="reporte.html?dia=${state.day}">📄 Reporte del vaciado</a>
       <button class="btn" onclick="window.print()">🖨 Imprimir</button>
       <button class="btn primary" onclick="formTest(null)">＋ Camión</button>
     </div>
@@ -410,7 +411,7 @@ function viewCharts() {
     <div class="toolbar">
       <h2>Control Charts</h2>
       ${rangeSel}
-      <a class="btn primary" href="reporte.html">📄 Generar reporte</a>
+      <a class="btn primary" href="reporte.html?modo=acumulado">📄 Generar reporte</a>
       <div class="spacer"></div>
       <div class="chart-legend">
         <span><span class="sw" style="background:var(--susp); height:2px; margin-top:5px"></span>Límite de suspensión</span>
