@@ -18,6 +18,11 @@
   --accent2: #96c93d;         /* verde lima del check */
   --navy: #0b0f16;
   --navy-ink: #77848f;
+  /* Logo QCheck. Los recortes del vector son transparentes, así que la marca
+     se posa sobre cualquier superficie; solo cambia la intensidad de la paleta
+     según lo oscuro que esté el fondo. */
+  --logo-blue: #4a7ef0; --logo-green: #57c94f;
+  --logo-g1: #8a95a3;   --logo-g2: #6b7683;
   --ok: #34d27b;   --ok-bg: rgba(52,210,123,.14);
   --act: #f5b83d;  --act-bg: rgba(245,184,61,.14);
   --susp: #ff5a52; --susp-bg: rgba(255,90,82,.14);
@@ -33,6 +38,7 @@
   --chart-ma: #9fc0e8;
   --chart-grid: rgba(255,255,255,.08);
   --chart-wait: rgba(255,255,255,.22);
+  --chart-line: #6f9fd8;
 }
 
 /* ---------- variante de día ---------- */
@@ -48,6 +54,7 @@
   --accent2: #6ea01f;
   --navy: #16222e;
   --navy-ink: #b7c4d1;
+  /* la cabecera sigue siendo oscura en tema de día: el logo mantiene su paleta clara */
   --ok: #0e9d55;   --ok-bg: rgba(14,157,85,.12);
   --act: #c8880a;  --act-bg: rgba(200,136,10,.12);
   --susp: #e0362d; --susp-bg: rgba(224,54,45,.11);
@@ -62,7 +69,23 @@
   --chart-ma: #2b3a8c;
   --chart-grid: rgba(15,30,45,.10);
   --chart-wait: rgba(15,30,45,.30);
+  --chart-line: #2b6cb8;
 }
+
+/* ---------- botón de cerrar (esquina superior derecha) ---------- */
+.close-btn {
+  position: fixed; top: 14px; right: 16px; z-index: 320;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.07); color: var(--navy-ink);
+  cursor: pointer; transition: background .15s, color .15s, transform .15s;
+}
+.close-btn svg { width: 17px; height: 17px; }
+.close-btn:hover { background: var(--susp); border-color: var(--susp); color: #fff; transform: scale(1.06); }
+:root[data-theme="light"] .close-btn { border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.14); color: #fff; }
+
+@media print { .close-btn { display: none !important; } }
 
 /* ---------- theme toggle button ---------- */
 .theme-toggle {
@@ -88,7 +111,8 @@ body {
 
 /* ---------- header ---------- */
 header.qc-header {
-  background: var(--navy); color: #fff; padding: 0 20px;
+  /* el margen derecho le cede sitio a la barra de estado */
+  background: var(--navy); color: #fff; padding: 0 404px 0 20px;
   display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
   position: sticky; top: 0; z-index: 50;
 }
@@ -114,6 +138,7 @@ nav.tabs a.tab-link {
 }
 nav.tabs a.tab-link:hover { color: #fff; }
 nav.tabs a.tab-link::after { content: "↗"; font-size: 10px; opacity: .6; }
+@media (max-width: 720px) { header.qc-header { padding-right: 252px; } }
 
 main { max-width: 1280px; margin: 0 auto; padding: 20px 20px 90px; }
 
@@ -200,6 +225,28 @@ tr.rejected td { background: var(--susp-bg); color: var(--susp); }
 .day-meta b { font-size: 14.5px; }
 .day-meta .kv { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 5px 11px; }
 .day-meta .kv .k { font-size: 10px; color: var(--ink-soft); text-transform: uppercase; font-weight: 700; letter-spacing: .4px; }
+
+/* ---------- animación de las gráficas ----------
+   El trazo se dibuja al entrar y el último punto late: la pantalla
+   está viva y ese es el resultado que acaba de llegar. */
+.ch-line {
+  stroke-dasharray: 4000;
+  animation: chDraw 1.15s cubic-bezier(.25,.6,.25,1) forwards;
+}
+@keyframes chDraw { from { stroke-dashoffset: 4000; } to { stroke-dashoffset: 0; } }
+.ch-area { animation: chFade .9s .35s ease-out backwards; }
+@keyframes chFade { from { opacity: 0; } to { opacity: 1; } }
+.ch-pulse { transform-origin: center; animation: chPulse 1.9s ease-out infinite; }
+@keyframes chPulse {
+  0%   { opacity: .55; transform: scale(.45); }
+  70%  { opacity: 0;   transform: scale(1.9); }
+  100% { opacity: 0;   transform: scale(1.9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ch-line { animation: none; stroke-dasharray: none; }
+  .ch-area { animation: none; }
+  .ch-pulse { animation: none; opacity: .35; }
+}
 
 /* ---------- charts ---------- */
 .chart-block { margin-bottom: 6px; }

@@ -9,18 +9,32 @@
 <style>
 /* Producción — planta y contratista. Analytics theme. */
 body { background: var(--bg); }
-.prod-hero {
-  background: linear-gradient(120deg, #1d2f3f 0%, #2c5d8f 70%, #0f6db4 100%);
-  color: #fff; border-radius: 14px; padding: 20px 24px; margin-bottom: 18px;
-  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
-  box-shadow: 0 8px 28px rgba(15,40,70,.3);
+
+/* ---------- rejilla de indicadores: dos widgets por fila ---------- */
+.wgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 16px; }
+.wgrid > * { min-width: 0; }
+.wgrid .full { grid-column: 1 / -1; }
+@media (max-width: 720px) { .wgrid { grid-template-columns: 1fr; } }
+/* héroe común de los tableros de indicadores */
+.ind-hero {
+  background:
+    radial-gradient(620px 200px at 12% 130%, var(--tinte, rgba(74,99,216,.16)), transparent 70%),
+    linear-gradient(125deg, #131a2e 0%, #23305f 60%, #1d3c4c 100%);
+  color: #fff; border-radius: 16px; padding: 20px 24px; margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 8px 30px rgba(10,30,50,.34);
 }
-.prod-hero h1 { margin: 0; font-size: 22px; }
-.prod-hero .sub { color: #b8cfe2; font-size: 13px; margin-top: 3px; }
-.prod-hero select {
-  margin-left: auto; padding: 9px 12px; border-radius: 9px; border: none;
-  font-size: 14.5px; font-weight: 700; background: rgba(255,255,255,.92);
+.ind-hero .eyebrow { font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase; color: #9fb6cc; font-weight: 800; }
+.ind-hero h1 { font-size: 22px; margin: 5px 0 2px; font-weight: 700; letter-spacing: -.01em; }
+.ind-hero .sub { font-size: 13px; color: #bfd2e4; }
+.ind-hero select {
+  margin-top: 12px; padding: 9px 12px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.2); background: rgba(0,0,0,.3); color: #fff;
+  font-size: 14px; font-weight: 700; font-family: inherit;
 }
+
+.ind-hero.row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.ind-hero.row select { margin-left: auto; margin-top: 0; }
 .kpi { position: relative; overflow: hidden; }
 .kpi .spark { position: absolute; right: 10px; bottom: 8px; opacity: .85; }
 .kpi .value { font-size: 30px; }
@@ -32,10 +46,20 @@ body { background: var(--bg); }
 
 <header class="qc-header">
   <div class="brand">
-    <a href="portal.html" style="text-decoration:none"><svg class="mark" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
-        <path d="M 69.7 93.6 A 40 40 0 1 1 95.85 59.49" fill="none" stroke="#7fa0ff" stroke-width="15"/>
-        <polyline points="62,64 86,82 114,46" fill="none" stroke="#96c93d" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg></a>
+    <a href="control-center.html" style="text-decoration:none"><svg class="mark" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
+      <defs>
+        <mask id="qcm-q1"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
+        <mask id="qcm-c1"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
+      </defs>
+      <path fill="var(--logo-blue,#0f46b5)" fill-rule="evenodd" mask="url(#qcm-q1)" d="M 509 63 A 337 337 0 1 1 508.9 63 Z M 509 174 A 226 226 0 1 0 509.1 174 Z"/>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+      <g mask="url(#qcm-c1)">
+        <path fill="var(--logo-green,#39a935)" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+        <path fill="var(--logo-g1,#68727f)" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+        <path fill="var(--logo-g2,#4f5a66)" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+      </g>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
+    </svg></a>
     <div>
       <div class="title">Producción — Vista del Concretero</div>
       <div class="subtitle">Rendimiento y calidad de sus camiones, medidos por QC</div>
@@ -47,7 +71,7 @@ body { background: var(--bg); }
 </header>
 
 <main>
-  <div class="prod-hero">
+  <div class="ind-hero row">
     <div>
       <h1>Producción del vaciado</h1>
       <div class="sub" id="hero-sub">—</div>
@@ -143,6 +167,7 @@ function kpi(label, value, sub, cls = "") {
 function render() {
   const days = testDates();
   if (!state.day || !days.includes(state.day)) state.day = days[0];
+  if (typeof pintarTiro === "function") pintarTiro(state.day);   // el tiro sube en vivo
   const sel = document.getElementById("day-sel");
   sel.innerHTML = days.map((d) => `<option value="${d}" ${d === state.day ? "selected" : ""}>${fmtDate(d)}</option>`).join("");
   const s = dayStats(state.day);
@@ -158,7 +183,7 @@ function render() {
   const week = days.slice(0, 7).map((d) => ({ d, s: dayStats(d) }));
 
   document.getElementById("content").innerHTML = `
-    <div class="grid cols-4" style="margin-bottom:6px">
+    <div class="wgrid">
       ${kpi("Volumen colocado", fmt(s.cy, 1) + " <span style='font-size:14px'>CY</span>", s.loads + " loads · " + fmtDate(state.day))}
       ${kpi("Ritmo", s.cyPerHr ? fmt(s.cyPerHr, 1) + " <span style='font-size:14px'>CY/hr</span>" : "—",
         s.loadsPerHr ? fmt(s.loadsPerHr, 1) + " loads/hr · " + (s.firstStart || "") + "–" + (s.lastEnd || "") : "sin tiempos")}
@@ -167,7 +192,7 @@ function render() {
       ${kpi("Espera en sitio", s.avgWait ? fmt(s.avgWait, 0) + " <span style='font-size:14px'>min</span>" : "—",
         "llegada → comienza vaciado", s.avgWait > 30 ? "alert" : "")}
     </div>
-    <div class="grid cols-4" style="margin-bottom:16px">
+    <div class="wgrid">
       ${kpi("Camiones en sitio", onSite.length, onSite.length ? onSite.map((t) => t.truck || t.ticket).join(", ") : "ninguno descargando", onSite.length ? "good" : "")}
       ${kpi("Rechazados", s.rejected, s.rejected ? "revisar causas" : "0 hoy", s.rejected ? "alert" : "good")}
       ${kpi("Sobre 90 min", over90, "batch → fin de descarga", over90 ? "alert" : "good")}
@@ -217,6 +242,7 @@ function render() {
 loadDB();
 initTheme();
 mountThemeToggle();
+mountStatusBar();
 enableLiveSync(render);
 render();
 </script>

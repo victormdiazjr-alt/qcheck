@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Qcheck logo</title>
+  <desc id="desc">Vector logo mark with a bold blue Q, Segarra-inspired stacked chevrons, and centered C.</desc>
+  <defs>
+    <style>
+      .blue { fill: #0f46b5; }
+      .green { fill: #39a935; }
+      .gray1 { fill: #68727f; }
+      .gray2 { fill: #4f5a66; }
+      .white { fill: #ffffff; }
+    </style>
+  </defs>
+
+  <!-- Bold circular Q -->
+  <path class="blue" fill-rule="evenodd" d="
+    M 509 63
+    A 337 337 0 1 1 508.9 63
+    Z
+    M 509 174
+    A 226 226 0 1 0 509.1 174
+    Z"/>
+
+  <!-- Q tail -->
+  <path class="blue" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+
+  <!-- Straight geometric opening where the chevrons interact with the Q -->
+  <path class="white" d="M 139 531 H 558 V 802 H 139 Z"/>
+
+  <!-- Segarra-inspired stacked chevrons -->
+  <path class="green" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+  <path class="white" d="M 132 589 L 346 682 L 564 571 L 564 620 L 346 736 L 132 642 Z"/>
+  <path class="gray1" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+  <path class="white" d="M 132 704 L 346 804 L 564 681 L 564 730 L 346 852 L 132 755 Z"/>
+  <path class="gray2" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+
+  <!-- Centered C: white knockout plus blue circular C -->
+  <circle class="white" cx="346" cy="720" r="103"/>
+  <path class="blue" d="
+    M 412 665
+    A 86 86 0 1 0 412 775
+    L 368 739
+    A 31 31 0 1 1 368 701
+    Z"/>
+</svg>

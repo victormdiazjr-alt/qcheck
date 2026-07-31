@@ -8,6 +8,7 @@
 <style>
 :root {
   --bg: #0a0d12; --surface: #12171f; --surface-2: #1a2029;
+  --logo-blue:#4a7ef0; --logo-green:#57c94f; --logo-g1:#8a95a3; --logo-g2:#6b7683;
   --text: #eef2f6; --muted: #77848f; --hairline: rgba(255,255,255,.11);
   --ok: #34d27b; --susp: #ff5a52; --navy: #4a63d8;
 }
@@ -71,9 +72,19 @@ button:active { transform: scale(.98); }
 
 <form class="card" onsubmit="entrar(event)">
   <div class="brand">
-    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M 69.7 93.6 A 40 40 0 1 1 95.85 59.49" fill="none" stroke="var(--navy)" stroke-width="15"/>
-      <polyline points="62,64 86,82 114,46" fill="none" stroke="#96c93d" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+    <svg class="mark" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
+      <defs>
+        <mask id="qcm-q1"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
+        <mask id="qcm-c1"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
+      </defs>
+      <path fill="var(--logo-blue,#0f46b5)" fill-rule="evenodd" mask="url(#qcm-q1)" d="M 509 63 A 337 337 0 1 1 508.9 63 Z M 509 174 A 226 226 0 1 0 509.1 174 Z"/>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+      <g mask="url(#qcm-c1)">
+        <path fill="var(--logo-green,#39a935)" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+        <path fill="var(--logo-g1,#68727f)" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+        <path fill="var(--logo-g2,#4f5a66)" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+      </g>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
     </svg>
     <span class="n">QCheck</span>
   </div>

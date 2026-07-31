@@ -129,13 +129,36 @@ surten vaciados que Segarra inspecciona. La pantalla de QCheck es lo que Segarra
 entrega en ese caso — información que hoy Rubén les pasa por teléfono. Es, además, la
 puerta comercial hacia Concre-Ticket.
 
+## 9. La barra de estado y el modo kiosco
+
+**Todas las pantallas llevan la misma barra arriba a la derecha** — `mountStatusBar(dia, {kiosco})`
+en `core.js`. Es la barra de estado del teléfono aplicada a la obra: avance del tiro
+(yardas colocadas contra las planificadas, en segmentos) y estado de conexión, siempre a la
+vista. El botón de cerrar vive dentro de ella. Sus estilos se **inyectan desde `core.js`**,
+no desde `qc.css`, para que las pantallas de campo (que no cargan `qc.css`) la vean idéntica.
+`--qcs-e` escala el conjunto: el Field Display la agranda porque se lee de lejos.
+
+Si el día no tiene yardas planificadas, la barra dice **«sin plan»** y lleva al formulario
+donde se definen. **No inventes un total.**
+
+**Las tres pantallas de campo — `display.html`, `muestras.html`, `conduce.html` — corren en
+kiosco**: entran a pantalla completa con el primer toque (`pantallaCompletaAlTocar()`; iOS
+Safari no implementa la API y ahí simplemente no ocurre) y su salida es un candado que pide
+la contraseña de administrador. Las de escritorio llevan la equis normal.
+Igual que el acceso, el candado es **una puerta de demostración**: frena un toque accidental,
+no a alguien decidido.
+
 ## 10. Lenguaje visual — una sola identidad
 
 **Todo QCheck usa el mismo lenguaje del Field Display y de Muestras.** Los tokens viven
 en `assets/qc.css`; no inventes colores en las pantallas.
 
 - **Oscuro por defecto**, con variante de día. Fondo `#0a0d12`, superficies `#12171f`.
-- **Marca**: azul `#4a63d8` y verde lima `#96c93d` (la Q con el check).
+- **Marca**: el logo es la Q azul con los chevrons de Segarra y la C centrada
+  (`assets/logo-qcheck.svg`). En las pantallas va **en línea**, con los recortes hechos con
+  máscaras SVG — nunca con relleno blanco encima, que solo funciona sobre papel. Su paleta
+  sale de `--logo-blue/green/g1/g2`, aclarada sobre fondo oscuro y original sobre el papel
+  del reporte. Colores de interfaz: azul `#4a63d8` y verde lima `#96c93d`.
 - **Semántica**: verde `#34d27b` dentro de límites · ámbar `#f5b83d` zona de acción ·
   rojo `#ff5a52` fuera. Iguales en las cinco pantallas.
 - **El naranja NO se usa en QCheck**: es la marca de Concre-Ticket. Si ves naranja aquí,

@@ -23,6 +23,7 @@ function tabFromHash() {
   return TABS.includes(h) ? h : null;
 }
 function render() {
+  if (typeof pintarTiro === "function") pintarTiro();   // el tiro sube en vivo
   const app = document.getElementById("app");
   if (state.tab === "dashboard") app.innerHTML = viewDashboard();
   else if (state.tab === "live") app.innerHTML = viewLive();
@@ -412,11 +413,11 @@ function viewCharts() {
       <a class="btn primary" href="reporte.html">📄 Generar reporte</a>
       <div class="spacer"></div>
       <div class="chart-legend">
-        <span><span class="sw" style="background:var(--chart-ok)"></span>OK</span>
-        <span><span class="sw" style="background:var(--chart-act)"></span>Acción</span>
-        <span><span class="sw" style="background:var(--chart-susp)"></span>Suspensión</span>
-        <span><span class="sw" style="background:var(--chart-target); height:3px; margin-top:4px"></span>Objetivo</span>
-        <span style="color:#c5221f; font-weight:700">✕ rechazado</span>
+        <span><span class="sw" style="background:var(--susp); height:2px; margin-top:5px"></span>Límite de suspensión</span>
+        <span><span class="sw" style="background:var(--act); height:2px; margin-top:5px"></span>Límite de acción</span>
+        <span><span class="sw" style="background:var(--chart-target); height:2px; margin-top:5px; opacity:.5"></span>Objetivo</span>
+        <span><span class="sw" style="background:var(--chart-line); border-radius:50%; width:8px; height:8px; margin-top:2px"></span>Última lectura</span>
+        <span style="color:var(--susp); font-weight:700">✕ rechazado</span>
       </div>
     </div>
     ${CHART_DEFS.map((d) => `
@@ -608,5 +609,6 @@ if (inicial) state.tab = inicial;   // la pestaña se subraya abajo, tras pintar
 document.getElementById("brand-subtitle").textContent =
   db.project.name + " · " + (db.project.qcFirm || "QC");
 render();
+mountStatusBar();
 document.querySelectorAll("#main-tabs button")
   .forEach((b) => b.classList.toggle("active", b.dataset.tab === state.tab));

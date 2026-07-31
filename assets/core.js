@@ -99,6 +99,241 @@ function mountThemeToggle() {
   applyTheme(document.documentElement.dataset.theme || "light");
 }
 
+/* ------------------------------------------------------------ cerrar ventana
+   Si la pantalla se abrió en pestaña propia, la cierra. Si no se puede
+   (el navegador solo deja cerrar lo que abrió un script), vuelve al
+   Control Center, que es la casa.                                    */
+function cerrarVentana() {
+  const casa = "control-center.html";
+  if (location.pathname.split("/").pop() === casa) { location.href = "index.html"; return; }
+  const antes = Date.now();
+  window.close();
+  setTimeout(() => { if (Date.now() - antes < 900 && !window.closed) location.href = casa; }, 120);
+}
+/* Las pantallas de campo (Field Display, Muestras, Recepción) corren en modo
+   kiosco: la salida está bajo llave para que nadie las cierre sin querer con
+   las manos sucias. El candado pide la contraseña de administrador.
+
+   PROTOTIPO: la contraseña vive en el navegador, igual que el acceso. Frena
+   un toque accidental, no a alguien decidido. La llave real llega con el backend. */
+const CLAVE_ADMIN = "1234";
+
+function mountCloseButton(opciones) {
+  if (document.getElementById("close-btn")) return;
+  const kiosco = !!(opciones && opciones.kiosco);
+  const b = document.createElement("button");
+  b.id = "close-btn";
+  b.className = "close-btn" + (kiosco ? " locked" : "");
+  b.title = kiosco ? "Salir (requiere contraseña)" : "Cerrar";
+  b.setAttribute("aria-label", b.title);
+  b.innerHTML = kiosco
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.4 10.5V7.8a3.6 3.6 0 0 1 7.2 0v2.7"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>`;
+  b.onclick = (e) => { e.stopPropagation(); kiosco ? pedirClaveSalida(b) : cerrarVentana(); };
+  (document.getElementById("qc-status") || document.body).appendChild(b);
+}
+
+function pedirClaveSalida(boton) {
+  if (document.getElementById("qcs-lock")) return;
+  const d = document.createElement("div");
+  d.id = "qcs-lock";
+  d.className = "qcs-lock";
+  d.innerHTML = `
+    <div class="qcs-lock-card" role="dialog" aria-modal="true" aria-label="Salir de la pantalla">
+      <div class="qcs-lock-t">Salir de la pantalla</div>
+      <div class="qcs-lock-s">Escriba la contraseña de administrador.</div>
+      <input type="password" inputmode="numeric" autocomplete="off" id="qcs-lock-i" aria-label="Contraseña">
+      <div class="qcs-lock-e" id="qcs-lock-e"></div>
+      <div class="qcs-lock-b">
+        <button type="button" class="qcs-x" id="qcs-lock-c">Cancelar</button>
+        <button type="button" class="qcs-ok" id="qcs-lock-k">Salir</button>
+      </div>
+    </div>`;
+  document.body.appendChild(d);
+  const inp = d.querySelector("#qcs-lock-i");
+  const err = d.querySelector("#qcs-lock-e");
+  const cerrar = () => { d.remove(); if (boton) boton.focus(); };
+  const probar = () => {
+    if (inp.value === CLAVE_ADMIN) { cerrar(); cerrarVentana(); return; }
+    err.textContent = "Contraseña incorrecta.";
+    d.querySelector(".qcs-lock-card").classList.remove("shake");
+    void d.offsetWidth;
+    d.querySelector(".qcs-lock-card").classList.add("shake");
+    inp.select();
+  };
+  d.querySelector("#qcs-lock-c").onclick = cerrar;
+  d.querySelector("#qcs-lock-k").onclick = probar;
+  d.onclick = (e) => { if (e.target === d) cerrar(); };
+  inp.onkeydown = (e) => { if (e.key === "Enter") probar(); if (e.key === "Escape") cerrar(); };
+  inp.focus();
+}
+
+/* ------------------------------------------------------------ pantalla completa
+   Las pantallas de campo entran a pantalla completa con el primer toque: el
+   navegador solo lo permite dentro de un gesto del usuario, nunca al cargar.
+   iOS Safari no implementa la API — ahí simplemente no pasa nada.        */
+function pantallaCompletaAlTocar() {
+  const el = document.documentElement;
+  const pedir = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!pedir) return;
+  const alTocar = () => {
+    document.removeEventListener("pointerdown", alTocar, true);
+    if (document.fullscreenElement || document.webkitFullscreenElement) return;
+    try { const p = pedir.call(el); if (p && p.catch) p.catch(() => {}); } catch (_) {}
+  };
+  document.addEventListener("pointerdown", alTocar, true);
+}
+
+/* ------------------------------------------------------------ barra de estado
+   Vive arriba a la derecha en TODAS las pantallas, como la barra de estado de
+   un teléfono: el avance del tiro y la conexión siempre a la vista, sin que
+   haya que buscarlos. El botón de cerrar se aloja aquí.                  */
+const QCS_SEGMENTOS = 14;
+
+/* El día que la pantalla está mirando. Cada pantalla lleva el suyo en `state`;
+   si no, el más reciente con ensayos. */
+function diaActivo() {
+  if (typeof state !== "undefined" && state && state.day) return state.day;
+  const d = testDates(), hoy = todayISO();
+  return d.includes(hoy) ? hoy : (d[0] || hoy);
+}
+
+function mountStatusBar(day, opciones) {
+  const o = opciones || {};
+  let bar = document.getElementById("qc-status");
+  if (!bar) {
+    inyectarEstilosStatus();
+    bar = document.createElement("div");
+    bar.id = "qc-status";
+    bar.className = "qcs";
+    bar.innerHTML = `
+      <a class="qcs-tiro" id="qcs-tiro" href="results.html#daily"></a>
+      <div class="qcs-conn" id="qcs-conn"><i></i><span></span></div>`;
+    document.body.appendChild(bar);
+    addEventListener("online", pintarConexion);
+    addEventListener("offline", pintarConexion);
+    mountCloseButton({ kiosco: !!o.kiosco });
+  }
+  pintarConexion();
+  pintarTiro(day || diaActivo());
+  return bar;
+}
+
+function pintarConexion() {
+  const el = document.getElementById("qcs-conn");
+  if (!el) return;
+  const on = navigator.onLine !== false;
+  el.className = "qcs-conn" + (on ? "" : " off");
+  el.querySelector("span").textContent = on ? "En línea" : "Sin conexión";
+}
+
+function pintarTiro(day) {
+  const el = document.getElementById("qcs-tiro");
+  if (!el) return;
+  const p = dayProgress(day || diaActivo());
+  const hayPlan = p.cyPlan != null && p.cyPlan > 0;
+  const pct = hayPlan ? p.pct : 0;
+  // Sin plan de yardas no se inventa un total: se muestra lo vaciado y ya.
+  const llenos = hayPlan ? Math.round(pct / 100 * QCS_SEGMENTOS) : 0;
+  let segs = "";
+  for (let i = 0; i < QCS_SEGMENTOS; i++)
+    segs += `<i class="${i < llenos ? "on" : ""}"></i>`;
+  el.className = "qcs-tiro" + (hayPlan ? "" : " sin-plan");
+  el.href = hayPlan ? "results.html#daily" : "results.html#plan";
+  el.title = hayPlan ? "Avance del tiro" : "Defina las yardas planificadas del día";
+  el.innerHTML = `
+    <span class="qcs-lb">Tiro</span>
+    <span class="qcs-seg">${segs}</span>
+    <span class="qcs-cy">${fmt(p.placed, 1)}${hayPlan ? ` / ${fmt(p.cyPlan, 0)}` : ""} <b>cy</b></span>
+    <span class="qcs-pc">${hayPlan ? Math.round(pct) + "%" : "sin plan"}</span>`;
+}
+
+function inyectarEstilosStatus() {
+  if (document.getElementById("qcs-css")) return;
+  const s = document.createElement("style");
+  s.id = "qcs-css";
+  // Se inyecta desde el motor para que las pantallas de campo, que no cargan
+  // qc.css, tengan exactamente la misma barra. --qcs-e escala el conjunto.
+  s.textContent = `
+.qcs {
+  position: fixed; top: 12px; right: 14px; z-index: 330;
+  display: flex; align-items: center; gap: calc(10px * var(--qcs-e, 1));
+  padding: calc(5px * var(--qcs-e, 1)) calc(6px * var(--qcs-e, 1))
+           calc(5px * var(--qcs-e, 1)) calc(13px * var(--qcs-e, 1));
+  border-radius: 999px;
+  background: rgba(12,17,24,.72); border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  color: #eef2f6; font-variant-numeric: tabular-nums;
+  box-shadow: 0 6px 22px rgba(0,0,0,.34);
+}
+:root[data-theme="light"] .qcs { background: rgba(22,34,46,.90); border-color: rgba(255,255,255,.16); }
+/* El botón vive dentro de la barra: se define aquí completo para que las
+   pantallas de campo, que no cargan qc.css, lo vean igual. */
+.qcs .close-btn {
+  position: static; flex: none; padding: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  width: calc(30px * var(--qcs-e,1)); height: calc(30px * var(--qcs-e,1));
+  border-radius: 50%; border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.07); color: rgba(238,242,246,.62);
+  transition: background .15s, color .15s, transform .15s;
+}
+.qcs .close-btn svg { width: calc(15px * var(--qcs-e,1)); height: calc(15px * var(--qcs-e,1)); }
+.qcs .close-btn:hover { background: var(--susp, #ff5a52); border-color: var(--susp, #ff5a52); color: #fff; transform: scale(1.06); }
+.qcs .close-btn.locked:hover { background: #4a63d8; border-color: #4a63d8; }
+.qcs-tiro { display: flex; align-items: center; gap: calc(8px * var(--qcs-e,1)); text-decoration: none; color: inherit; }
+.qcs-tiro:hover .qcs-seg i.on { filter: brightness(1.25); }
+.qcs-lb, .qcs-pc {
+  font-size: calc(9.5px * var(--qcs-e,1)); text-transform: uppercase;
+  letter-spacing: .18em; font-weight: 800; color: rgba(238,242,246,.52);
+}
+.qcs-pc { letter-spacing: .06em; color: #96c93d; }
+.qcs-seg { display: flex; align-items: flex-end; gap: calc(2px * var(--qcs-e,1)); height: calc(13px * var(--qcs-e,1)); }
+.qcs-seg i {
+  display: block; width: calc(3px * var(--qcs-e,1)); height: 100%;
+  border-radius: calc(1.5px * var(--qcs-e,1)); background: rgba(255,255,255,.15);
+  transition: background .45s ease;
+}
+.qcs-seg i.on { background: #96c93d; box-shadow: 0 0 calc(5px * var(--qcs-e,1)) rgba(150,201,61,.55); }
+.qcs-cy { font-size: calc(12.5px * var(--qcs-e,1)); font-weight: 300; letter-spacing: -.01em; }
+.qcs-cy b { font-size: calc(9.5px * var(--qcs-e,1)); font-weight: 700; color: rgba(238,242,246,.5); letter-spacing: .1em; text-transform: uppercase; }
+.qcs-tiro.sin-plan .qcs-pc { color: rgba(238,242,246,.42); }
+.qcs-conn { display: flex; align-items: center; gap: calc(6px * var(--qcs-e,1));
+  font-size: calc(10.5px * var(--qcs-e,1)); font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: #34d27b;
+  padding-left: calc(10px * var(--qcs-e,1)); border-left: 1px solid rgba(255,255,255,.12); }
+.qcs-conn i { width: calc(6px * var(--qcs-e,1)); height: calc(6px * var(--qcs-e,1));
+  border-radius: 50%; background: currentColor; box-shadow: 0 0 calc(7px * var(--qcs-e,1)) currentColor;
+  animation: qcsLatir 1.9s ease-in-out infinite; }
+.qcs-conn.off { color: #ff5a52; }
+.qcs-conn.off i { animation: none; }
+@keyframes qcsLatir { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+@media (max-width: 720px) { .qcs-lb, .qcs-conn span { display: none; } .qcs-conn { padding-left: calc(8px * var(--qcs-e,1)); } }
+@media print { .qcs { display: none !important; } }
+@media (prefers-reduced-motion: reduce) { .qcs-conn i { animation: none; } }
+
+.qcs-lock { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center;
+  background: rgba(6,9,13,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.qcs-lock-card { width: min(92vw, 340px); background: #12171f; color: #eef2f6;
+  border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 24px 22px 18px;
+  box-shadow: 0 24px 70px rgba(0,0,0,.6); font-family: inherit; }
+.qcs-lock-t { font-size: 17px; font-weight: 700; }
+.qcs-lock-s { font-size: 13px; color: #77848f; margin-top: 4px; }
+.qcs-lock-card input { width: 100%; margin-top: 16px; padding: 12px 14px; font-size: 19px;
+  letter-spacing: .3em; text-align: center; border-radius: 12px; color: #eef2f6;
+  background: #0a0d12; border: 1px solid rgba(255,255,255,.14); }
+.qcs-lock-card input:focus { outline: 2px solid #4a63d8; outline-offset: 1px; }
+.qcs-lock-e { min-height: 17px; font-size: 12.5px; color: #ff5a52; margin-top: 7px; text-align: center; }
+.qcs-lock-b { display: flex; gap: 9px; margin-top: 6px; }
+.qcs-lock-b button { flex: 1; padding: 11px; border-radius: 11px; font-size: 14px; font-weight: 700;
+  cursor: pointer; border: 1px solid rgba(255,255,255,.14); font-family: inherit; }
+.qcs-x { background: transparent; color: #77848f; }
+.qcs-ok { background: #4a63d8; border-color: #4a63d8; color: #fff; }
+.qcs-lock-card.shake { animation: qcsShake .34s; }
+@keyframes qcsShake { 25% { transform: translateX(-7px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
+`;
+  document.head.appendChild(s);
+}
+
 /* ------------------------------------------------------------ helpers */
 function uid() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7); }
 function esc(s) {
@@ -414,51 +649,88 @@ function bandsFor(key) {
 
 function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
   if (!pts.length) return `<div class="empty">Sin datos.</div>`;
-  const PW = pw, ML = 52, MR = 14, MT = 10, MB = 26, H = h;
+  /* Estética de gráfica de mercado, no de hoja de cálculo:
+     línea fina con degradado debajo, límites como líneas de umbral
+     punteadas, y puntos solo donde importan — fuera de zona y el último. */
+  const PW = pw, ML = 46, MR = 54, MT = 14, MB = 24, H = h;
   const W = ML + MR + Math.max(1, pts.length) * PW;
   const vals = pts.map((p) => p.v);
   let lo = Math.min(...vals), hi = Math.max(...vals);
   if (bands.suspLo != null) lo = Math.min(lo, bands.suspLo);
   if (bands.suspHi != null) hi = Math.max(hi, bands.suspHi);
-  const pad = (hi - lo || 1) * 0.12;
+  const pad = (hi - lo || 1) * 0.16;
   lo -= pad; hi += pad;
   const Y = (v) => MT + (hi - v) / (hi - lo) * (H - MT - MB);
   const X = (i) => ML + i * PW + PW / 2;
+  const uid = "g" + Math.random().toString(36).slice(2, 8);
+  const dentro = (v) => v != null && v >= lo && v <= hi;
 
-  let g = "";
-  const y0 = MT, y1 = H - MB;
-  g += `<rect x="${ML}" y="${y0}" width="${W - ML - MR}" height="${y1 - y0}" fill="var(--chart-susp, #fbe9e7)"/>`;
-  if (bands.actLo != null || bands.actHi != null) {
-    const t = bands.suspHi != null ? Y(bands.suspHi) : y0;
-    const b = bands.suspLo != null ? Y(bands.suspLo) : y1;
-    g += `<rect x="${ML}" y="${t}" width="${W - ML - MR}" height="${Math.max(0, b - t)}" fill="var(--chart-act, #fdf3d7)"/>`;
-    const t2 = bands.actHi != null ? Y(bands.actHi) : y0;
-    const b2 = bands.actLo != null ? Y(bands.actLo) : y1;
-    g += `<rect x="${ML}" y="${t2}" width="${W - ML - MR}" height="${Math.max(0, b2 - t2)}" fill="var(--chart-ok, #e5f3e8)"/>`;
-  }
-  if (bands.target != null)
-    g += `<line x1="${ML}" x2="${W - MR}" y1="${Y(bands.target)}" y2="${Y(bands.target)}" stroke="var(--chart-target, #16222e)" stroke-dasharray="6 4" stroke-width="1.4"/>`;
-  const yticks = [bands.suspLo, bands.actLo, bands.target, bands.actHi, bands.suspHi].filter((v) => v != null);
-  if (!yticks.length) yticks.push(lo + pad, hi - pad);
-  for (const v of yticks)
-    g += `<text x="${ML - 6}" y="${Y(v) + 3.5}" text-anchor="end" font-size="10" fill="var(--chart-text, #5a6b7c)">${fmt(v, dp)}</text>`;
-  let lastDate = null;
+  let g = `<defs>
+    <linearGradient id="${uid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--chart-line, #5b8dbf)" stop-opacity=".26"/>
+      <stop offset="1" stop-color="var(--chart-line, #5b8dbf)" stop-opacity="0"/>
+    </linearGradient>
+  </defs>`;
+
+  /* umbrales: como soportes y resistencias */
+  const umbral = (v, color, op, txt) => dentro(v) ? `
+    <line x1="${ML}" x2="${W - MR}" y1="${Y(v)}" y2="${Y(v)}" stroke="${color}"
+          stroke-width="1" stroke-dasharray="5 5" opacity="${op}"/>
+    <text x="${W - MR + 6}" y="${Y(v) + 3.2}" font-size="9.5" fill="${color}" opacity="${op + .25}">${txt}</text>` : "";
+  g += umbral(bands.suspHi, "var(--susp)", .5, fmt(bands.suspHi, dp));
+  g += umbral(bands.suspLo, "var(--susp)", .5, fmt(bands.suspLo, dp));
+  g += umbral(bands.actHi, "var(--act)", .42, fmt(bands.actHi, dp));
+  g += umbral(bands.actLo, "var(--act)", .42, fmt(bands.actLo, dp));
+  if (dentro(bands.target)) g += `
+    <line x1="${ML}" x2="${W - MR}" y1="${Y(bands.target)}" y2="${Y(bands.target)}"
+          stroke="var(--chart-target)" stroke-width="1" stroke-dasharray="2 4" opacity=".38"/>
+    <text x="${ML - 7}" y="${Y(bands.target) + 3.2}" text-anchor="end" font-size="9.5"
+          fill="var(--chart-text)" opacity=".9">${fmt(bands.target, dp)}</text>`;
+
+  /* separadores de día, apenas perceptibles */
+  let lastDate = null, lastLabel = -999;
   pts.forEach((p, i) => {
-    if (p.date !== lastDate) {
-      lastDate = p.date;
-      g += `<line x1="${X(i) - PW / 2}" x2="${X(i) - PW / 2}" y1="${y0}" y2="${y1}" stroke="var(--chart-sep, #ffffff)" stroke-width="1.5"/>`;
-      g += `<text x="${X(i)}" y="${H - 8}" font-size="9" fill="var(--chart-text, #5a6b7c)">${p.date.slice(5)}</text>`;
-    }
+    if (p.date === lastDate) return;
+    lastDate = p.date;
+    if (i > 0) g += `<line x1="${X(i) - PW / 2}" x2="${X(i) - PW / 2}" y1="${MT}" y2="${H - MB}"
+      stroke="var(--chart-grid)" stroke-width="1"/>`;
+    // solo se rotula si cabe: con muchos días las fechas se encimarían
+    if (X(i) - lastLabel < 46) return;
+    lastLabel = X(i);
+    g += `<text x="${X(i)}" y="${H - 7}" font-size="9" fill="var(--chart-text)" opacity=".75">${p.date.slice(5)}</text>`;
   });
-  g += `<polyline fill="none" stroke="#0f6db4" stroke-width="1.6" points="${pts.map((p, i) => X(i) + "," + Y(p.v)).join(" ")}"/>`;
+
+  /* área y línea */
+  const linea = pts.map((p, i) => X(i) + "," + Y(p.v)).join(" ");
+  g += `<polygon class="ch-area" points="${ML + PW / 2},${H - MB} ${linea} ${X(pts.length - 1)},${H - MB}" fill="url(#${uid})"/>`;
+  g += `<polyline class="ch-line" points="${linea}" fill="none" stroke="var(--chart-line, #5b8dbf)"
+        stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>`;
+
+  /* puntos: solo lo que merece atención, y el último */
   pts.forEach((p, i) => {
-    const col = p.rejected ? "#c5221f" : p.z === "susp" ? "#c5221f" : p.z === "act" ? "#e8a013" : "#1e8e3e";
-    const title = `<title>#${p.n} · ${p.date} · ticket ${p.ticket || "—"} · ${fmt(p.v, dp)}${yUnit}${p.rejected ? " · RECHAZADO" : ""}</title>`;
+    const ult = i === pts.length - 1;
+    const fuera = p.rejected || p.z === "susp" || p.z === "act";
+    if (!fuera && !ult) return;
+    const col = p.rejected || p.z === "susp" ? "var(--susp)" : p.z === "act" ? "var(--act)" : "var(--chart-line, #5b8dbf)";
+    const t = `<title>#${p.n} · ${p.date} · ticket ${p.ticket || "—"} · ${fmt(p.v, dp)}${yUnit}${p.rejected ? " · RECHAZADO" : ""}</title>`;
     if (p.rejected)
-      g += `<g>${title}<path d="M${X(i) - 4},${Y(p.v) - 4} l8,8 M${X(i) + 4},${Y(p.v) - 4} l-8,8" stroke="${col}" stroke-width="2.4"/></g>`;
+      g += `<g>${t}<path d="M${X(i) - 3.6},${Y(p.v) - 3.6} l7.2,7.2 M${X(i) + 3.6},${Y(p.v) - 3.6} l-7.2,7.2"
+            stroke="var(--susp)" stroke-width="2.1" stroke-linecap="round"/></g>`;
+    else if (ult)
+      g += `<g class="ch-live">${t}
+        <circle cx="${X(i)}" cy="${Y(p.v)}" r="7" fill="${col}" class="ch-pulse"/>
+        <circle cx="${X(i)}" cy="${Y(p.v)}" r="3.6" fill="${col}" stroke="var(--bg)" stroke-width="1.6"/>
+      </g>`;
     else
-      g += `<circle cx="${X(i)}" cy="${Y(p.v)}" r="3.4" fill="${col}" stroke="#fff" stroke-width="1">${title}</circle>`;
+      g += `<circle cx="${X(i)}" cy="${Y(p.v)}" r="2.8" fill="${col}"
+            stroke="var(--bg)" stroke-width="1">${t}</circle>`;
   });
+
+  /* valor actual, como la cotización de cierre */
+  const u = pts[pts.length - 1];
+  const uCol = u.rejected || u.z === "susp" ? "var(--susp)" : u.z === "act" ? "var(--act)" : "var(--chart-line, #5b8dbf)";
+  g += `<text x="${X(pts.length - 1) + 8}" y="${Y(u.v) + 4}" font-size="12" font-weight="700" fill="${uCol}">${fmt(u.v, dp)}</text>`;
+
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="display:block">${g}</svg>`;
 }
 
