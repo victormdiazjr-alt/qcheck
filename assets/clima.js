@@ -31,7 +31,7 @@ function climaTipo(code) {
 }
 const CLIMA_TEXTO = {
   despejado: "Despejado", parcial: "Parcialmente nublado", nublado: "Nublado",
-  niebla: "Neblina", llovizna: "Llovizna", lluvia: "Lluvia",
+  niebla: "Neblina", calima: "Calima", llovizna: "Llovizna", lluvia: "Lluvia",
   chubascos: "Chubascos", tormenta: "Tormenta", nieve: "Nieve",
 };
 /* ¿este tipo moja el vaciado? */
@@ -55,7 +55,7 @@ function climaIcono(tipo, dia, grande) {
   if (tipo === "despejado") g = sol;
   else if (tipo === "parcial") g = `<g class="cl-tras">${sol}</g>${nube("cl-drift", N1)}`;
   else if (tipo === "nublado") g = `${nube("cl-drift2 cl-tenue", "M8.4 22.6a4.4 4.4 0 0 1 .4-8.7 6.2 6.2 0 0 1 11.8 1.8 3.5 3.5 0 0 1-.6 7z")}${nube("cl-drift", N1)}`;
-  else if (tipo === "niebla") g = `${nube("cl-drift", N1)}<g class="cl-niebla"><line x1="7" y1="28" x2="25" y2="28"/><line x1="9.5" y1="31" x2="27" y2="31"/></g>`;
+  else if (tipo === "niebla" || tipo === "calima") g = `${nube("cl-drift", N1)}<g class="cl-niebla"><line x1="7" y1="28" x2="25" y2="28"/><line x1="9.5" y1="31" x2="27" y2="31"/></g>`;
   else if (tipo === "llovizna") g = `${nube("", N1)}${gotas(2)}`;
   else if (tipo === "lluvia" || tipo === "nieve") g = `${nube("", N1)}${gotas(3)}`;
   else if (tipo === "chubascos") g = `<g class="cl-tras">${sol}</g>${nube("cl-drift", N1)}${gotas(3)}`;
@@ -63,56 +63,151 @@ function climaIcono(tipo, dia, grande) {
   return `<svg class="${c}" viewBox="0 0 32 36" aria-hidden="true">${g}</svg>`;
 }
 
-/* ------------------------------------------------------------ datos */
-async function climaConsultar(lat, lon) {
-  const u = "https://api.open-meteo.com/v1/forecast"
-    + `?latitude=${lat}&longitude=${lon}`
-    + "&current=temperature_2m,weather_code,is_day,apparent_temperature"
-    + "&hourly=temperature_2m,weather_code,precipitation_probability,is_day"
-    + "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=2";
+/* ------------------------------------------------------------ datos
+
+   FUENTE PRINCIPAL: el Servicio Nacional de Meteorología de EE. UU. (NWS),
+   oficina de San Juan (SJU). Es la fuente oficial para Puerto Rico y la que
+   citaría la ACT o la FHWA: un meteorólogo de la oficina ajusta a mano esa
+   rejilla, no es salida cruda de un modelo. Gratis, sin llave y con CORS.
+
+   Su pronóstico va por horas y viene en inglés; el texto no se usa tal cual
+   —la interfaz es en español— sino que se traduce a una condición propia.
+
+   COMPLEMENTO: Open-Meteo, solo para el nowcast de 15 minutos, que el NWS no
+   publica. Es lo que permite decir "lluvia en unos 25 min" en vez de "esta
+   hora". Si cualquiera de las dos falla, se sigue con la otra; si fallan las
+   dos, la tarjeta lo dice y no se inventa nada.                            */
+
+const NWS_REJILLA_KEY = "qc-nws-rejilla";
+
+/* El texto del NWS ("Chance Showers And Thunderstorms") a nuestra condición.
+   El orden importa: lo más específico primero. */
+function climaDeTexto(txt) {
+  const t = String(txt || "").toLowerCase();
+  if (/thunder|tstm/.test(t)) return "tormenta";
+  if (/snow|sleet|flurr/.test(t)) return "nieve";
+  if (/shower/.test(t)) return "chubascos";
+  if (/drizzle/.test(t)) return "llovizna";
+  if (/rain/.test(t)) return "lluvia";
+  // en Puerto Rico el "haze" casi siempre es polvo del Sahara, no neblina
+  if (/haze|smoke|dust/.test(t)) return "calima";
+  if (/fog|mist/.test(t)) return "niebla";
+  if (/mostly cloudy|overcast|^cloudy/.test(t)) return "nublado";
+  if (/partly|mostly sunny|mostly clear|few clouds/.test(t)) return "parcial";
+  if (/sunny|clear|fair/.test(t)) return "despejado";
+  return "nublado";
+}
+
+async function pedir(url, ms) {
   const ctrl = new AbortController();
-  const corte = setTimeout(() => ctrl.abort(), 8000);
+  const corte = setTimeout(() => ctrl.abort(), ms || 8000);
   try {
-    const r = await fetch(u, { signal: ctrl.signal });
+    const r = await fetch(url, { signal: ctrl.signal });
     if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json();
-    const ahoraISO = j.current.time;
-    const i0 = Math.max(0, j.hourly.time.indexOf(ahoraISO.slice(0, 13) + ":00"));
-    const horas = [];
-    for (let i = i0 + 1; i < Math.min(i0 + 7, j.hourly.time.length); i++) {
-      horas.push({
-        iso: j.hourly.time[i],
-        t: j.hourly.temperature_2m[i],
-        tipo: climaTipo(j.hourly.weather_code[i]),
-        pp: j.hourly.precipitation_probability[i],
-        dia: j.hourly.is_day[i] === 1,   // de madrugada el icono lleva luna, no sol
-      });
-    }
-    return {
-      t: j.current.temperature_2m,
-      sensacion: j.current.apparent_temperature,
-      tipo: climaTipo(j.current.weather_code),
-      dia: j.current.is_day === 1,
-      horas,
-    };
+    return await r.json();
   } finally { clearTimeout(corte); }
 }
 
+/* La rejilla de un punto no cambia nunca: se guarda y se ahorra un viaje. */
+async function nwsRejilla(lat, lon) {
+  const llave = `${lat},${lon}`;
+  try {
+    const g = JSON.parse(localStorage.getItem(NWS_REJILLA_KEY) || "null");
+    if (g && g.llave === llave) return g.url;
+  } catch (_) {}
+  const j = await pedir(`https://api.weather.gov/points/${lat},${lon}`);
+  const url = j.properties.forecastHourly;
+  try { localStorage.setItem(NWS_REJILLA_KEY, JSON.stringify({ llave, url })); } catch (_) {}
+  return url;
+}
+
+async function climaNWS(lat, lon) {
+  const j = await pedir(await nwsRejilla(lat, lon));
+  const per = j.properties.periods;
+  if (!per || !per.length) throw new Error("sin periodos");
+  const horas = per.slice(1, 6).map((x) => ({
+    iso: x.startTime,
+    t: x.temperature,
+    tipo: climaDeTexto(x.shortForecast),
+    pp: x.probabilityOfPrecipitation ? x.probabilityOfPrecipitation.value : null,
+    dia: x.isDaytime,
+  }));
+  return {
+    t: per[0].temperature,
+    tipo: climaDeTexto(per[0].shortForecast),
+    dia: per[0].isDaytime,
+    fuente: "NWS San Juan",
+    horas,
+  };
+}
+
+/* Solo el nowcast: los próximos cuartos de hora. */
+async function climaNowcast(lat, lon) {
+  const j = await pedir("https://api.open-meteo.com/v1/forecast"
+    + `?latitude=${lat}&longitude=${lon}`
+    + "&minutely_15=precipitation,precipitation_probability&timezone=auto&forecast_days=1", 6000);
+  if (!j.minutely_15 || !j.minutely_15.time) return [];
+  const ahora = Date.now(), out = [];
+  for (let k = 0; k < j.minutely_15.time.length && out.length < 4; k++) {
+    if (new Date(j.minutely_15.time[k]).getTime() < ahora) continue;
+    out.push({ iso: j.minutely_15.time[k], mm: j.minutely_15.precipitation[k],
+               pp: j.minutely_15.precipitation_probability[k] });
+  }
+  return out;
+}
+
+/* Respaldo entero, por si el NWS no contesta. */
+async function climaOpenMeteo(lat, lon) {
+  const j = await pedir("https://api.open-meteo.com/v1/forecast"
+    + `?latitude=${lat}&longitude=${lon}`
+    + "&current=temperature_2m,weather_code,is_day"
+    + "&hourly=temperature_2m,weather_code,precipitation_probability,is_day"
+    + "&temperature_unit=fahrenheit&timezone=auto&forecast_days=2");
+  const i0 = Math.max(0, j.hourly.time.indexOf(j.current.time.slice(0, 13) + ":00"));
+  const horas = [];
+  for (let i = i0 + 1; i < Math.min(i0 + 6, j.hourly.time.length); i++)
+    horas.push({ iso: j.hourly.time[i], t: j.hourly.temperature_2m[i],
+                 tipo: climaTipo(j.hourly.weather_code[i]),
+                 pp: j.hourly.precipitation_probability[i], dia: j.hourly.is_day[i] === 1 });
+  return { t: j.current.temperature_2m, tipo: climaTipo(j.current.weather_code),
+           dia: j.current.is_day === 1, fuente: "Open-Meteo", horas };
+}
+
+async function climaConsultar(lat, lon) {
+  // Las dos salen a la vez: el nowcast no debe retrasar lo principal.
+  const [base, cuartos] = await Promise.all([
+    climaNWS(lat, lon).catch(() => climaOpenMeteo(lat, lon)),
+    climaNowcast(lat, lon).catch(() => []),
+  ]);
+  base.cuartos = cuartos;
+  return base;
+}
+
 /* ------------------------------------------------------------ pintado */
-function climaHora(iso) {
+/* 12 horas en español: "1 p. m." completo, o "1p" compacto para la tira. */
+function climaHora(iso, compacta) {
   const d = new Date(iso);
-  let h = d.getHours();
-  const ampm = h >= 12 ? "p" : "a";
-  h = h % 12 || 12;
-  return h + ampm;
+  const h = d.getHours(), h12 = h % 12 || 12;
+  return compacta ? h12 + (h >= 12 ? "p" : "a") : `${h12} ${h >= 12 ? "p. m." : "a. m."}`;
+}
+/* "la 1 a. m." pero "las 2 a. m." — el uno va en singular */
+function climaALas(iso) {
+  const h12 = (new Date(iso).getHours() % 12) || 12;
+  return `${h12 === 1 ? "la" : "las"} ${climaHora(iso)}`;
 }
 
 /* Lo que de verdad se pregunta el que va a tirar: ¿me va a llover encima? */
 function climaAviso(c) {
+  if (climaMoja(c.tipo)) return { txt: "Lloviendo ahora", mojado: true };
+  // Primero el nowcast: dentro de la hora, al cuarto de hora.
+  const q = (c.cuartos || []).find((x) => x.mm > 0.1 || x.pp >= 60);
+  if (q) {
+    const min = Math.max(0, Math.round((new Date(q.iso) - Date.now()) / 60000));
+    return { txt: min <= 5 ? "Va a llover ya" : `Lluvia en unos ${min} min`, mojado: true };
+  }
   const pronto = c.horas.slice(0, 3);
   const moja = pronto.find((h) => climaMoja(h.tipo) && h.pp >= 50);
-  if (moja) return { txt: `${CLIMA_TEXTO[moja.tipo]} hacia las ${climaHora(moja.iso)}m`, mojado: true };
-  if (climaMoja(c.tipo)) return { txt: "Lloviendo ahora", mojado: true };
+  if (moja) return { txt: `${CLIMA_TEXTO[moja.tipo]} hacia ${climaALas(moja.iso)}`, mojado: true };
   const pico = pronto.reduce((a, h) => (h.pp > a ? h.pp : a), 0);
   if (pico >= 30) return { txt: `${pico}% de lluvia en las próximas horas`, mojado: false };
   return null;
@@ -122,7 +217,7 @@ function climaHTML(c, lugar) {
   const av = climaAviso(c);
   const tiras = c.horas.map((h) => `
     <div class="cl-h">
-      <div class="cl-hh">${climaHora(h.iso)}</div>
+      <div class="cl-hh">${climaHora(h.iso, true)}</div>
       ${climaIcono(h.tipo, h.dia, false)}
       <div class="cl-ht">${Math.round(h.t)}°</div>
       <div class="cl-hp ${h.pp >= 30 ? "on" : ""}">${h.pp >= 20 ? h.pp + "%" : ""}</div>
@@ -134,7 +229,7 @@ function climaHTML(c, lugar) {
         <div class="cl-t">${Math.round(c.t)}<span>°F</span></div>
         <div class="cl-d">${CLIMA_TEXTO[c.tipo]}</div>
       </div>
-      <div class="cl-loc">${esc(lugar)}</div>
+      <div class="cl-loc">${esc(lugar)}<em>${esc(c.fuente || "")}</em></div>
     </div>
     ${av ? `<div class="cl-av ${av.mojado ? "moja" : ""}">${esc(av.txt)}</div>` : ""}
     <div class="cl-horas">${tiras}</div>`;
@@ -192,11 +287,11 @@ function climaEstilos() {
   const s = document.createElement("style");
   s.id = "clima-css";
   s.textContent = `
-.clima { display: flex; flex-direction: column; gap: 9px; min-width: 268px; }
-.cl-top { display: flex; align-items: center; gap: 11px; }
-.cl-ico { width: 30px; height: 34px; flex: none; overflow: visible;
-  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.cl-ico-g { width: 46px; height: 52px; stroke-width: 1.9; }
+.clima { display: flex; flex-direction: column; gap: 6px; min-width: 206px; }
+.cl-top { display: flex; align-items: center; gap: 8px; }
+.cl-ico { width: 22px; height: 25px; flex: none; overflow: visible;
+  fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.cl-ico-g { width: 32px; height: 36px; stroke-width: 2; }
 .cl-sol circle { fill: #ffd166; stroke: none; }
 .cl-rayos path { stroke: #ffd166; stroke-width: 2.1; transform-origin: 16px 16px;
   animation: clGirar 26s linear infinite; }
@@ -219,20 +314,22 @@ function climaEstilos() {
 @keyframes clFogonazo { 0%,86%,100% { opacity: .6; } 89%,95% { opacity: 1; } 92% { opacity: .55; } }
 
 .cl-now { line-height: 1; }
-.cl-t { font-size: 30px; font-weight: 200; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.cl-t span { font-size: 13px; font-weight: 600; opacity: .55; margin-left: 1px; }
-.cl-d { font-size: 11.5px; margin-top: 4px; opacity: .72; }
-.cl-loc { margin-left: auto; text-align: right; font-size: 9.5px; font-weight: 800;
-  letter-spacing: .1em; text-transform: uppercase; opacity: .5; max-width: 130px; line-height: 1.5; }
-.cl-av { font-size: 11.5px; font-weight: 600; opacity: .8; }
+.cl-t { font-size: 21px; font-weight: 250; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.cl-t span { font-size: 10px; font-weight: 600; opacity: .55; margin-left: 1px; }
+.cl-d { font-size: 10px; margin-top: 2px; opacity: .7; }
+.cl-loc { margin-left: auto; text-align: right; font-size: 8.5px; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; opacity: .45; max-width: 108px; line-height: 1.5; }
+.cl-loc em { display: block; font-style: normal; font-weight: 600; letter-spacing: .04em;
+  text-transform: none; opacity: .7; margin-top: 2px; }
+.cl-av { font-size: 10.5px; font-weight: 600; opacity: .8; }
 .cl-av.moja { color: #7fc4ff; opacity: 1; }
-.cl-horas { display: flex; gap: 2px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.12); }
-.cl-h { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.cl-hh { font-size: 9.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .5; }
-.cl-ht { font-size: 12.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.cl-hp { font-size: 9.5px; font-weight: 700; opacity: 0; color: #7fc4ff; min-height: 12px; }
+.cl-horas { display: flex; gap: 2px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.11); }
+.cl-h { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.cl-hh { font-size: 8.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .5; }
+.cl-ht { font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.cl-hp { font-size: 8.5px; font-weight: 700; opacity: 0; color: #7fc4ff; min-height: 11px; }
 .cl-hp.on, .cl-hp:not(:empty) { opacity: .85; }
-.cl-vacio { font-size: 11.5px; opacity: .6; padding: 6px 0; }
+.cl-vacio { font-size: 10.5px; opacity: .6; padding: 4px 0; }
 .cl-cargando { animation: clLatirTxt 1.4s ease-in-out infinite; }
 @keyframes clLatirTxt { 0%,100% { opacity: .35; } 50% { opacity: .7; } }
 .cl-reint { margin-left: 8px; background: none; border: 1px solid rgba(255,255,255,.25);

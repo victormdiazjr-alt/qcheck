@@ -16,7 +16,7 @@
     radial-gradient(680px 220px at 12% 120%, var(--tinte, rgba(52,210,123,.16)), transparent 70%),
     linear-gradient(125deg, #131a2e 0%, #23305f 60%, #1d3c4c 100%);
   color: #fff; border-radius: 16px; padding: 20px 24px; margin-bottom: 18px;
-  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  display: flex; align-items: flex-start; gap: 18px; flex-wrap: wrap;
   box-shadow: 0 8px 30px rgba(10,30,50,.34);
   border: 1px solid rgba(255,255,255,.08);
 }
@@ -24,7 +24,8 @@
 .cc-hero.s-act  { --tinte: rgba(245,184,61,.20); }
 .cc-hero.s-susp { --tinte: rgba(255,90,82,.22); }
 .cc-hero .mark2 {
-  width: 46px; height: 46px; border-radius: 50%; flex: none;
+  /* a la altura de la cifra grande, no en el centro del bloque */
+  width: 46px; height: 46px; border-radius: 50%; flex: none; margin-top: 12px;
   border: 2.5px solid var(--vc); color: var(--vc);
   display: flex; align-items: center; justify-content: center;
   font-size: 22px; box-shadow: 0 0 26px -6px var(--vc);
@@ -33,12 +34,26 @@
 .cc-hero.s-act  { --vc: #f7c65c; }
 .cc-hero.s-susp { --vc: #ff7a72; }
 .cc-hero h1 { font-size: 23px; margin: 0; font-weight: 700; letter-spacing: -.01em; color: var(--vc); }
-.cc-hero .sub { font-size: 13px; color: #bfd2e4; margin-top: 3px; }
+.cc-hero .sub { font-size: 12.5px; color: #9fb6cc; margin-top: 7px; }
+/* --- especificaciones del tiro --- */
+.cc-hero .ex-fila { display: flex; align-items: baseline; gap: 26px; flex-wrap: wrap; color: #fff; }
+.cc-hero .ex { display: flex; flex-direction: column-reverse; gap: 2px; }
+.cc-hero .ex b { font-size: 25px; font-weight: 300; letter-spacing: -.015em;
+  font-variant-numeric: tabular-nums; line-height: 1.1; }
+.cc-hero .ex i { font-style: normal; font-size: 9.5px; font-weight: 800; letter-spacing: .2em;
+  text-transform: uppercase; color: #8ea6bd; }
+.cc-hero .ex-mezcla { font-size: 11.5px; color: #8ea6bd; margin-top: 8px;
+  letter-spacing: .04em; }
 .cc-hero .cc-izq { min-width: 0; flex: 1 1 300px; }
-.cc-hero .cc-der { margin-left: auto; display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.cc-hero .cc-der { margin-left: auto; display: flex; align-items: flex-start; gap: 22px; flex-wrap: wrap; margin-top: 4px; }
 .cc-hero .cc-der .clima { color: #eaf1f8; }
 @media (max-width: 900px) {
   .cc-hero .cc-der { margin-left: 0; width: 100%; gap: 14px; }
+}
+@media (max-width: 720px) {
+  /* en el teléfono el tramo se comía dos líneas a tamaño de titular */
+  .cc-hero .ex-fila { gap: 8px 20px; }
+  .cc-hero .ex b { font-size: 19px; }
 }
 /* --- losas del tiro --- */
 .losas { margin-top: 14px; }
@@ -188,6 +203,27 @@ const PANTALLAS = [
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h8l4 4v15H6z"/><path d="M14 2.5v4h4"/><path d="M9 12h6M9 16h4"/></svg>` },
 ];
 
+/* Las especificaciones del tiro: a qué hora empieza, cuántas yardas son y de
+   qué mezcla. Cada dato aparece solo si existe — nada se rellena a ojo.
+   La hora planificada manda; si no se declaró, se dice a qué hora arrancó
+   de verdad, que eso sí lo saben los camiones. */
+function especsHTML(day, meta, prog) {
+  const planificada = hora12(meta.horaInicio);
+  const real = hora12(inicioReal(day));
+  const partes = [];
+  if (planificada) partes.push(`<span class="ex"><b>${planificada}</b><i>comienza</i></span>`);
+  else if (real)   partes.push(`<span class="ex"><b>${real}</b><i>comenzó</i></span>`);
+  if (prog.cyPlan) partes.push(`<span class="ex"><b>${fmt(prog.cyPlan, 0)} CY</b><i>del tiro</i></span>`);
+  const sitio = [meta.fase ? "Fase " + esc(meta.fase) : null, meta.lane ? esc(meta.lane) : null,
+                 meta.km ? "Km " + esc(meta.km) : null].filter(Boolean).join(" · ");
+  if (sitio) partes.push(`<span class="ex"><b>${sitio}</b><i>tramo</i></span>`);
+
+  // Sin ningún dato del tiro, la fecha es lo único cierto que se puede decir.
+  if (!partes.length) return `<h1 class="ex-fila"><span class="ex"><b>${fmtDate(day)}</b><i>vaciado</i></span></h1>`;
+  return `<h1 class="ex-fila">${partes.join("")}</h1>
+    ${db.project.mixId ? `<div class="ex-mezcla">${esc(db.project.mixId)}</div>` : ""}`;
+}
+
 /* Las losas del tiro, cada una con lo que se sepa de su avance.
    Sin lista declarada en el plan del día no se pinta nada — ni un aviso. */
 function losasHTML(day) {
@@ -284,8 +320,8 @@ function render() {
     <div class="cc-hero s-${est.cls}">
       <div class="mark2">${est.mark}</div>
       <div class="cc-izq">
-        <h1>${est.titulo}</h1>
-        <div class="sub">${est.detalle}</div>
+        ${especsHTML(day, meta, prog)}
+        <div class="sub">${est.titulo} — ${est.detalle}</div>
         ${losasHTML(day)}
       </div>
       <div class="cc-der"><div id="clima"></div></div>

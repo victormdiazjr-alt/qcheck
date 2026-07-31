@@ -377,6 +377,21 @@ function nowHM() {
   return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
 }
 function parseDate(iso) { if (!iso) return null; const [y, m, dd] = iso.split("-").map(Number); return new Date(y, m - 1, dd); }
+/* "06:00" -> "6:00 a. m."  — 12 horas, como pidió Víctor, escrito en español */
+function hora12(hhmm) {
+  const m = String(hhmm || "").match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const h = +m[1], suf = h >= 12 ? "p. m." : "a. m.";
+  return `${h % 12 || 12}:${m[2]} ${suf}`;
+}
+
+/* Cuándo arrancó de verdad el tiro: la primera hora que quedó registrada. */
+function inicioReal(day) {
+  const t = testsOfDate(day).filter((x) => !x.rejected)
+    .map((x) => x.start || x.arrive || x.batch).filter(Boolean).sort();
+  return t.length ? t[0] : null;
+}
+
 function fmtDate(iso) {
   const d = parseDate(iso); if (!d) return "—";
   return d.toLocaleDateString("es-PR", { year: "numeric", month: "short", day: "numeric" });

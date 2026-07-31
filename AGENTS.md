@@ -172,13 +172,22 @@ no a alguien decidido.
 ## 9a. El clima — la única salida a internet
 
 `assets/clima.js` pinta el tiempo del sitio del tiro en el héroe del Control Center:
-condición de ahora con icono animado y una tira de las próximas seis horas, al estilo
-del Tiempo del iPhone. Para hormigón no es adorno — el sol y la lluvia de la próxima
-hora deciden si se tira o se espera.
+condición de ahora con icono animado y una tira de las próximas horas. Para hormigón no
+es adorno — el sol y la lluvia de la próxima hora deciden si se tira o se espera.
 
-- Los datos son de **Open-Meteo** (gratis, sin llave, con CORS). **Es lo único de QCheck
-  que sale a la red.** Si no hay internet, la tarjeta lo dice y **no inventa nada**;
-  el resto de la herramienta sigue funcionando igual.
+- **Fuente principal: el NWS, oficina de San Juan** (`api.weather.gov`). Es la fuente
+  oficial para Puerto Rico y la que citaría la ACT o la FHWA: un meteorólogo de la
+  oficina ajusta esa rejilla a mano, no es salida cruda de un modelo. Gratis, sin llave,
+  con CORS. Su texto viene en inglés y **no se muestra tal cual**: se traduce a una
+  condición propia (`climaDeTexto`) porque la interfaz es en español. La rejilla del
+  punto se guarda en `localStorage` — no cambia nunca.
+- **Open-Meteo** cumple dos papeles: el **nowcast de 15 minutos**, que el NWS no publica
+  y es lo que permite decir "lluvia en unos 25 min", y el **respaldo entero** si el NWS
+  no contesta. Las dos consultas salen en paralelo.
+- **Es lo único de QCheck que sale a la red.** Sin internet la tarjeta lo dice y
+  **no inventa nada**; el resto de la herramienta sigue funcionando igual.
+- En Puerto Rico el `haze` del NWS casi siempre es **polvo del Sahara**: se muestra como
+  «Calima», no como neblina.
 - Los iconos son **SVG propio animado con CSS**. No metas una librería ni un archivo de
   iconos: el proyecto tiene que abrir con doble clic.
 - Las coordenadas viven en `db.project` (`lat`, `lon`, `place`) y se editan en

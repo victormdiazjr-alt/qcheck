@@ -518,6 +518,8 @@ function formDayMeta(day) {
     title: `Datos del vaciado — ${fmtDate(day)}`,
     initial: meta,
     fields: [
+      { key: "horaInicio", label: "Hora de comienzo", type: "time", half: true,
+        hint: "A qué hora arranca el tiro" },
       { key: "cyPlan", label: "Yardas planificadas (CY)", type: "number", step: "5", half: true,
         hint: "Sin esto la barra de estado no puede mostrar el avance del tiro" },
       { key: "losasPlan", label: "Losas a tirar hoy", type: "number", step: "1", half: true },
