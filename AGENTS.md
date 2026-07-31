@@ -281,11 +281,19 @@ tener que entrar a ver si está pasando algo.
 
 ## 8b. La simulación — el tiro de hoy ya en marcha
 
-`assets/demo.js`. Al entrar, si **hoy no tiene ni un camión**, el sistema siembra un vaciado
-ya empezado: **120 yardas de un plan de 260, doce camiones recibidos y todo a la espera del
-próximo**. Un tablero vacío no demuestra nada, y QCheck se enseña antes de usarse.
+`assets/demo.js`. El sistema siembra un vaciado ya empezado: **90 yardas de un plan de 260,
+nueve camiones recibidos y el último terminado hace 3 minutos**. Un tablero vacío no
+demuestra nada, y QCheck se enseña antes de usarse.
 
-- **Nunca pisa datos**: solo siembra si el día está vacío. Lo que crea lleva `source: "demo"`.
+- **Cada acceso arranca un tiro nuevo** (Víctor, 31 jul 2026). Quien entra se encuentra
+  siempre el mismo punto de partida y no lo que dejó a medias la visita anterior. El acceso
+  no puede sembrarlo —no carga el motor ni los 397 ensayos, y meterlos en una pantalla de dos
+  campos serían 150 KB de nada—, así que deja la marca `qc-nuevo-tiro` en `sessionStorage` y
+  la recoge `sembrarDia()` en la primera pantalla que sí carga el motor.
+- **Esto solo escribe sobre HOY.** El histórico del proyecto —los 397 ensayos del Excel y
+  todos los días anteriores— sigue entero y analizable en Results y en las Control Charts.
+- **Fuera de eso, nunca pisa datos**: solo siembra si el día está vacío. Lo que crea lleva
+  `source: "demo"`.
 - **Las horas son relativas a AHORA**, no fijas: se abra a la hora que se abra, el último
   camión acaba de irse y el estado es *Esperando camión*. El paso entre camiones se aprieta
   para que el tiro no acabe «empezando» de madrugada.
@@ -294,6 +302,12 @@ próximo**. Un tablero vacío no demuestra nada, y QCheck se enseña antes de us
   verdad sobre un día ya empezado.
 - En **Plan & Datos** hay un panel para **reiniciarla** o **apagarla** (apagar deja el día en
   blanco y no vuelve a sembrar; los 397 ensayos históricos no se tocan).
+- **Para trabajar de verdad, Rubén programa el tiro desde el Control Center** — el botón
+  «Programar tiro», el primero del menú. Eso borra el vaciado simulado de hoy, **apaga la
+  simulación para siempre** (`db.demo = false`, y ni el acceso la vuelve a encender) y abre
+  el plan del día. Es la frontera entre enseñar y trabajar: `programarTiro()` en `demo.js`.
+- El plan del día (`formDayMeta`) vive en **`core.js`**, no en `qc.js`, porque lo abren dos
+  pantallas: Results en Plan & Datos y el Control Center al programar el tiro.
 - Recepción sugiere el **próximo conduce** y la **primera losa pendiente** — son marcadores
   de posición en gris, no se guarda nada hasta que el técnico lo confirme.
 

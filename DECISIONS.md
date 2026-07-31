@@ -155,7 +155,7 @@ los documentos del contrato.
 ## 13. La simulación arranca sola
 
 **Decidido:** al entrar, si hoy no tiene ni un camión, se siembra un tiro en marcha
-por la yarda 120, esperando el próximo camión.
+por la yarda 90, con el último camión terminado hace 3 minutos.
 
 **Por qué:** QCheck se enseña antes de usarse y un tablero vacío no demuestra nada.
 Las horas son **relativas a ahora**, así que a cualquier hora que se abra el estado es

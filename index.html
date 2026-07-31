@@ -125,6 +125,18 @@ function entrar(e) {
   if (cuenta && cuenta.clave === p) {
     sessionStorage.setItem("qc-auth", "1");
     sessionStorage.setItem("qc-user", u);
+    /* Cada acceso arranca un tiro nuevo de la simulación: quien entra se
+       encuentra siempre el mismo punto de partida —yarda 90, último camión
+       hace 3 minutos— y no lo que dejó a medias la visita anterior.
+
+       El acceso no puede sembrarlo: no carga el motor ni los 397 ensayos, y
+       cargarlos aquí sería 150 KB por una pantalla de dos campos. Deja la
+       marca y la recoge `sembrarDia()` en la primera pantalla que sí lo carga.
+
+       Solo afecta a HOY y solo si la simulación sigue encendida: si alguien
+       programó un tiro de verdad, `db.demo === false` y esto no se ejecuta.
+       El histórico del proyecto no se toca nunca. */
+    sessionStorage.setItem("qc-nuevo-tiro", "1");
     const next = new URLSearchParams(location.search).get("next");
     /* Desde un teléfono se entra al portal móvil, no al Control Center: en la
        mano solo se consulta. El iPad NO cuenta como teléfono — es el aparato de

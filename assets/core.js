@@ -28,9 +28,22 @@ function loadDB() {
 
 /* La simulación: si hoy no tiene ni un camión, se arranca con un tiro ya en
    marcha para que el sistema se pueda enseñar. Ver assets/demo.js. */
+const QC_NUEVO_TIRO = "qc-nuevo-tiro";
 function sembrarDia() {
   if (db.demo === false) return;                       // alguien la apagó
   if (typeof sembrarTiroDemo !== "function") return;   // pantalla sin demo.js
+
+  /* Cada acceso arranca un tiro nuevo: quien entra se encuentra siempre el
+     mismo punto de partida y no lo que dejó a medias la visita anterior.
+     El acceso deja la marca —no puede sembrar él mismo, no carga el motor— y
+     la recoge la primera pantalla que sí lo carga.
+
+     Esto solo pisa HOY. El histórico del proyecto sigue entero, y si alguien
+     programó un tiro de verdad la simulación está apagada y ya salimos arriba. */
+  if (sessionStorage.getItem(QC_NUEVO_TIRO) === "1") {
+    sessionStorage.removeItem(QC_NUEVO_TIRO);
+    if (typeof reiniciarDemo === "function") { reiniciarDemo(); return; }
+  }
   if (sembrarTiroDemo(db)) saveDB();
 }
 /* Esquema v2: record por conduce (compañía + número), humedades, plan del día */
@@ -1128,6 +1141,41 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
   if (first) first.focus();
 }
 function closeForm() { const r = document.getElementById("modal-root"); if (r) r.innerHTML = ""; }
+
+/* ------------------------------------------------------------ plan del día
+   El plan del día lo escriben DOS pantallas —Results, en Plan & Datos, y el
+   Control Center al programar el tiro—, así que vive aquí y no se duplica.
+
+   `onSave` fusiona en vez de reemplazar: este formulario y el del contratista
+   escriben el mismo día, y sustituir el objeto le borraba el plan al otro. */
+function formDayMeta(day) {
+  const meta = db.dayMeta[day] || {};
+  openForm({
+    title: `Datos del vaciado — ${fmtDate(day)}`,
+    initial: meta,
+    fields: [
+      { key: "horaInicio", label: "Hora de comienzo", type: "time", half: true,
+        hint: "A qué hora arranca el tiro" },
+      { key: "cyPlan", label: "Yardas planificadas (CY)", type: "number", step: "5", half: true,
+        hint: "Sin esto la barra de estado no puede mostrar el avance del tiro" },
+      { key: "losasPlan", label: "Losas a tirar hoy", type: "number", step: "1", half: true },
+      { key: "losas", label: "Losas a tirar hoy", type: "textarea", full: true,
+        placeholder: "L3-0.943:24, L3-0.936:18, L3-0.929 …",
+        hint: "Tras los dos puntos, las yardas planificadas de esa losa (opcional). En blanco, el tablero no muestra losas." },
+      { key: "fase", label: "Fase" },
+      { key: "cierre", label: "Cierre" },
+      { key: "lane", label: "Carril", placeholder: "L1 / L2 / L3" },
+      { key: "km", label: "Km (desde–hasta)", half: true, placeholder: "0.943 – 0.461" },
+      { key: "notas", label: "Notas", type: "textarea", full: true },
+    ],
+    // Se fusiona: este formulario y el del contratista escriben el mismo día,
+    // y reemplazar el objeto le borraba el plan al otro.
+    onSave: (v) => {
+      db.dayMeta[day] = { ...(db.dayMeta[day] || {}), ...v };
+      saveDB(); render(); toast("Datos del día guardados");
+    },
+  });
+}
 
 /* ------------------------------------------------------------ truck test form (shared) */
 function formTest(_ignored, n, opts = {}) {

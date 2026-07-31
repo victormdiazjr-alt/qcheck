@@ -3,7 +3,7 @@
 
    QCheck se enseña antes de usarse. Un tablero vacío no demuestra
    nada, así que al entrar el sistema arranca con un vaciado de hoy
-   ya empezado: 120 yardas colocadas, doce camiones recibidos y
+   ya empezado: 90 yardas colocadas, nueve camiones recibidos y
    TODO A LA ESPERA DEL PRÓXIMO CAMIÓN.
 
    A partir de ahí no hay nada falso: se recibe el camión en
@@ -12,7 +12,17 @@
    verdad corriendo sobre un día ya empezado.
 
    Reglas:
-   - Solo siembra si HOY no tiene ningún camión. Nunca pisa datos.
+   - **Cada acceso arranca un tiro nuevo.** Quien entra se encuentra
+     siempre el mismo punto de partida —yarda 90, último camión hace
+     3 minutos— y no lo que dejó a medias la visita anterior. Lo
+     dispara el acceso poniendo una marca; la recoge `sembrarDia()`.
+   - Fuera de eso, solo siembra si HOY no tiene ningún camión.
+   - **El histórico no se toca nunca.** Los 397 ensayos del Excel y
+     todos los días anteriores siguen enteros en Results y en las
+     Control Charts: la simulación solo escribe sobre HOY.
+   - **Si alguien programó un tiro de verdad, esto no se ejecuta.**
+     `db.demo === false` apaga la simulación para siempre y ni el
+     acceso la vuelve a encender. Ver `programarTiro()`.
    - Los ensayos que crea llevan `source: "demo"`, así que se
      distinguen y se pueden borrar sin tocar nada más.
    - Las horas son relativas a AHORA, no fijas: se abra a la hora
@@ -22,14 +32,14 @@
 "use strict";
 
 const DEMO_CY_CAMION = 10;
-const DEMO_CAMIONES = 12;              /* 12 x 10 = 120 yardas colocadas */
+const DEMO_CAMIONES = 9;               /* 9 x 10 = 90 yardas colocadas */
 const DEMO_CY_LOSA = 20;               /* dos camiones por losa */
 const DEMO_LOSAS = [
   "L3-0.443", "L3-0.437", "L3-0.429", "L3-0.421", "L3-0.413", "L3-0.405", "L3-0.397",
   "L3-0.389", "L3-0.381", "L3-0.373", "L3-0.365", "L3-0.357", "L3-0.349",
 ];                                     /* 13 losas x 20 = 260 yardas de plan */
 const DEMO_PASO_MIN = 22;              /* ritmo entre camiones */
-const DEMO_ULTIMO_HACE = 8;            /* el último terminó hace 8 min */
+const DEMO_ULTIMO_HACE = 3;            /* el último terminó hace 3 min */
 
 /* Lecturas creíbles: rondan el objetivo y alguna se acerca al límite,
    que es justo lo que hay que saber enseñar. */
@@ -144,4 +154,30 @@ function apagarDemo() {
   db.tests = db.tests.filter((t) => !(t.date === hoy && t.source === "demo"));
   db.demo = false;
   saveDB();
+}
+
+/* ------------------------------------------------------------ el tiro de verdad
+
+   La simulación es para enseñar. Para TRABAJAR, Rubén programa el tiro del día
+   desde el Control Center, y eso es lo que separa una cosa de la otra:
+
+   - se borra el vaciado simulado de hoy y la simulación queda apagada
+     (`db.demo = false`), así que ni el acceso la vuelve a sembrar;
+   - se abre el plan del día para declarar hora de comienzo, yardas y losas.
+
+   Sin plan declarado el tablero no enseña avance y no se lo inventa: por eso
+   programar el tiro es el primer paso del día de verdad, no un trámite.
+
+   El histórico no se toca — ni aquí ni en ningún sitio de este archivo. */
+function programarTiro() {
+  const hoy = todayISO();
+  const enDemo = db.tests.some((t) => t.date === hoy && t.source === "demo");
+  if (enDemo && !confirm(
+      "Programar el tiro de hoy borra el vaciado de demostración y apaga la simulación.\n\n" +
+      "El histórico del proyecto no se toca. ¿Seguimos?")) return;
+
+  apagarDemo();
+  delete db.dayMeta[hoy];
+  saveDB();
+  formDayMeta(hoy);
 }

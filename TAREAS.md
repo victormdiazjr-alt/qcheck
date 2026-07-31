@@ -11,8 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-12 | **Guía de usuario ilustrada** para Rubén: circuito de los aparatos, core features y arquitectura, con botón Run que detecta el aparato y lleva a su portal | claude (subagente) | 2026-07-31 |
-| Q-18 | **Tiro nuevo en cada acceso** (yarda 90, último camión hace 3 min) y **«Programar tiro»** desde el Control Center para trabajar de verdad | claude | 2026-07-31 |
+_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 
 ---
 
@@ -53,6 +52,8 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-07-31 | **Q-18 — Tiro nuevo en cada acceso** (yarda 90, último camión hace 3 min) y **«Programar tiro»** desde el Control Center: la frontera entre enseñar y trabajar | claude |
+| 2026-07-31 | **Q-12 — Guía de usuario ilustrada** (`docs/guia-usuario.html`): circuito de los aparatos, core features, arquitectura y botón Run | claude (subagente) |
 | 2026-07-31 | **Q-17 — Muestras deja de dar de alta camiones** (duplicaba Recepción) y la comprobación de conduce repetido se muda a Recepción | claude |
 | 2026-07-31 | **Q-16 — Las pantallas no dan instrucciones**: fuera las credenciales del acceso y el consejo de pantalla de inicio del portal | claude |
 | 2026-07-31 | **Q-15 — Rubén ya no ve el enlace al Control Center** en el portal del teléfono | claude |

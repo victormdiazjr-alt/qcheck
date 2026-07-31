@@ -191,7 +191,7 @@ Ver [`ARCHITECTURE.md` §3](ARCHITECTURE.md). Resumen: un objeto en
 - Las once pantallas están construidas y verificadas en cuatro tamaños de aparato.
 - El circuito completo está probado: se recibe un camión en Recepción, se entran
   las muestras en el iPad, el Field Display canta el veredicto y el progreso sube.
-- Al entrar, el sistema siembra **un tiro de hoy ya en marcha por la yarda 120**,
+- Cada acceso arranca **un tiro de hoy ya en marcha por la yarda 90**,
   esperando el próximo camión, para poder enseñarlo sin preparar nada.
 - Tres papeles de usuario, con el guardián devolviendo al portal a quien no sea QC.
 - Guía de uso para Rubén en PNG y PDF.

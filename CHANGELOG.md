@@ -5,6 +5,35 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.7] — 31 de julio · «enseñar y trabajar»
+
+### Añadido
+- **Cada acceso arranca un tiro nuevo**: yarda 90 de un plan de 260, nueve camiones y el
+  último terminado **hace 3 minutos**. Quien entra se encuentra siempre el mismo punto de
+  partida y no lo que dejó a medias la visita anterior. El acceso deja la marca
+  `qc-nuevo-tiro`; la recoge `sembrarDia()` en la primera pantalla que carga el motor,
+  porque el acceso no puede sembrar (no carga los 397 ensayos y meterlos en una pantalla
+  de dos campos serían 150 KB de nada).
+- **«Programar tiro» en el Control Center**, el primer botón del menú. Es la frontera
+  entre enseñar y trabajar: borra el vaciado simulado de hoy, **apaga la simulación para
+  siempre** —ni el acceso la vuelve a encender— y abre el plan del día para declarar hora
+  de comienzo, yardas y losas. Sin plan declarado el tablero no enseña avance y no se lo
+  inventa, así que programar el tiro es el primer paso del día de verdad.
+- **La guía de usuario ilustrada** (`docs/guia-usuario.html`): el circuito de los aparatos,
+  los core features y la arquitectura, en el lenguaje visual oscuro de QCheck. Es para
+  pantalla; la de papel (`guia-qcheck.html`) sigue siendo la que se imprime y se lleva en
+  el bolsillo. Lleva un botón **Run** que detecta el aparato y lleva a cada quien a su
+  portal, explicando antes cómo añadir QCheck a la pantalla de inicio.
+
+### Cambiado
+- El plan del día (`formDayMeta`) se mudó de `qc.js` a **`core.js`**: ahora lo abren dos
+  pantallas —Results y el Control Center— y no se duplica.
+- **El histórico no se toca nunca.** La simulación solo escribe sobre HOY: los 397 ensayos
+  del Excel y todos los días anteriores siguen enteros y analizables en Results y en las
+  Control Charts.
+
+---
+
 ## [0.6] — 31 de julio · «lista para el field»
 
 Todo esto salió de la primera prueba de campo de Víctor con el iPhone en la mano.

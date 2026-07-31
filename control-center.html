@@ -147,16 +147,22 @@
 
 /* --- menú de navegación --- */
 .navmenu { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 10px; margin-bottom: 20px; }
-.navmenu a {
+.navmenu a, .navmenu button {
   display: flex; flex-direction: column; align-items: center; gap: 9px;
   background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
   padding: 16px 8px 14px; text-decoration: none; color: var(--ink);
   box-shadow: var(--shadow); transition: transform .15s, border-color .15s;
-  text-align: center;
+  text-align: center; font-family: inherit; cursor: pointer;
 }
-.navmenu a:hover { transform: translateY(-3px); border-color: var(--accent); }
-.navmenu a svg { width: 26px; height: 26px; }
-.navmenu a .n { font-size: 13px; font-weight: 700; letter-spacing: .01em; }
+.navmenu a:hover, .navmenu button:hover { transform: translateY(-3px); border-color: var(--accent); }
+.navmenu a svg, .navmenu button svg { width: 26px; height: 26px; }
+.navmenu a .n, .navmenu button .n { font-size: 13px; font-weight: 700; letter-spacing: .01em; }
+/* Programar el tiro es la acción con la que empieza el día de verdad, y va la
+   primera. El color entra por el resplandor, no por el relleno. */
+.navmenu button.accion { border-color: rgba(150,201,61,.45);
+  box-shadow: var(--shadow), 0 0 0 3px rgba(150,201,61,.07), 0 0 20px -8px rgba(150,201,61,.9); }
+.navmenu button.accion svg { color: var(--accent2); }
+.navmenu button.accion:hover { border-color: var(--accent2); }
 
 /* --- widgets --- */
 .w {
@@ -232,8 +238,8 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=d9fb5ba3"></script>
-<script src="assets/demo.js?v=5b7d9943"></script>
+<script src="assets/core.js?v=e1371544"></script>
+<script src="assets/demo.js?v=43d3e3ad"></script>
 <script src="assets/clima.js?v=d5c4fb65"></script>
 <script src="assets/usuarios.js?v=dfd5ecc0"></script>
 <script src="assets/auth.js?v=c77eb346"></script>
@@ -352,8 +358,18 @@ function losasHTML(day) {
   </div>`;
 }
 
+/* Programar el tiro va primero porque es lo primero del día: la simulación
+   sirve para enseñar QCheck, pero para trabajar de verdad hay que declarar el
+   plan —hora de comienzo, yardas y losas—, y hasta que no se declara el
+   tablero no enseña avance y no se lo inventa. Ver `programarTiro()`. */
+const ICONO_PROGRAMAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v4M16 3v4"/><path d="M12 12.5v5M9.5 15h5"/></svg>`;
+
 function menu() {
-  return `<div class="navmenu">${PANTALLAS.map((p) => `
+  return `<div class="navmenu">
+    <button class="accion" onclick="programarTiro()" title="Declarar el plan del tiro de hoy: hora de comienzo, yardas y losas">
+      ${ICONO_PROGRAMAR}<span class="n">Programar tiro</span>
+    </button>
+    ${PANTALLAS.map((p) => `
     <a href="${p.href}"${p.nueva ? ' target="_blank"' : ""} title="${p.r}">
       ${p.ic}<span class="n">${p.n}</span>
     </a>`).join("")}</div>`;

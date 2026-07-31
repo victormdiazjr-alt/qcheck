@@ -76,7 +76,7 @@ La sesión empezó con el prototipo ya en pie y lo llevó a producto presentable
   no en Ponce.
 
 **La simulación**
-- Al entrar, si hoy está vacío, se siembra un tiro **en marcha por la yarda 120**
+- Cada acceso siembra un tiro **en marcha por la yarda 90**
   esperando el próximo camión. Las horas son relativas a ahora.
 - Verificado de punta a punta: recibir camión → entrar muestras → veredicto en el
   Field Display → el progreso sube.

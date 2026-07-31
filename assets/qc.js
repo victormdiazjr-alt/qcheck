@@ -526,34 +526,6 @@ function resetSeed() {
 }
 
 /* ------------------------------------------------------------ meta forms */
-function formDayMeta(day) {
-  const meta = db.dayMeta[day] || {};
-  openForm({
-    title: `Datos del vaciado — ${fmtDate(day)}`,
-    initial: meta,
-    fields: [
-      { key: "horaInicio", label: "Hora de comienzo", type: "time", half: true,
-        hint: "A qué hora arranca el tiro" },
-      { key: "cyPlan", label: "Yardas planificadas (CY)", type: "number", step: "5", half: true,
-        hint: "Sin esto la barra de estado no puede mostrar el avance del tiro" },
-      { key: "losasPlan", label: "Losas a tirar hoy", type: "number", step: "1", half: true },
-      { key: "losas", label: "Losas a tirar hoy", type: "textarea", full: true,
-        placeholder: "L3-0.943:24, L3-0.936:18, L3-0.929 …",
-        hint: "Tras los dos puntos, las yardas planificadas de esa losa (opcional). En blanco, el tablero no muestra losas." },
-      { key: "fase", label: "Fase" },
-      { key: "cierre", label: "Cierre" },
-      { key: "lane", label: "Carril", placeholder: "L1 / L2 / L3" },
-      { key: "km", label: "Km (desde–hasta)", half: true, placeholder: "0.943 – 0.461" },
-      { key: "notas", label: "Notas", type: "textarea", full: true },
-    ],
-    // Se fusiona: este formulario y el del contratista escriben el mismo día,
-    // y reemplazar el objeto le borraba el plan al otro.
-    onSave: (v) => {
-      db.dayMeta[day] = { ...(db.dayMeta[day] || {}), ...v };
-      saveDB(); render(); toast("Datos del día guardados");
-    },
-  });
-}
 function formProject() {
   openForm({
     title: "Proyecto",
