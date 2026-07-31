@@ -123,15 +123,6 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
 .ficha .v b { font-weight: 600; }
 .ficha .v .mono { font-size: 14.5px; }
 
-/* la puerta de demostración: aviso, no alarma → línea neutra, sin verde ni rojo */
-.puerta {
-  margin-top: 20px; display: flex; gap: 12px; align-items: flex-start;
-  border: 1px solid var(--line); border-left: 2px solid var(--accent);
-  background: rgba(74,99,216,.07); border-radius: 0 12px 12px 0;
-  padding: 12px 16px; font-size: 13px; color: #b6c3d0;
-}
-.puerta svg { width: 17px; height: 17px; flex: none; margin-top: 2px; color: var(--accent); }
-.puerta b { color: var(--ink); }
 .llave {
   display: inline-flex; gap: 6px; align-items: baseline;
   border: 1px solid var(--line); background: rgba(255,255,255,.04);
@@ -397,19 +388,9 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
   y desde ahí lo ven todos al instante. El diagrama de abajo es el sistema entero.</p>
 
   <div class="ficha">
-    <div><div class="k">Para</div><div class="v"><b>Rubén Segarra</b></div></div>
-    <div><div class="k">Firma de QC</div><div class="v">Segarra Engineering</div></div>
+    <div><div class="k">Para</div><div class="v"><b>Rubén Segarra</b> — Segarra Engineering</div></div>
     <div><div class="k">Proyecto</div><div class="v">Reconstrucción PR-52 · San Juan</div></div>
-    <div><div class="k">Dirección</div><div class="v"><span class="mono">victormdiazjr-alt.github.io/qcheck</span></div></div>
     <div><div class="k">Su acceso</div><div class="v"><span class="llave mono">ruben</span> <span class="llave mono">1234</span></div></div>
-    <div><div class="k">Versión</div><div class="v">Prototipo · julio 2026</div></div>
-  </div>
-
-  <div class="puerta">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10.5" rx="2"/><path d="M8 10.5V7.4a4 4 0 0 1 8 0"/><path d="M12 14.6v2.6"/></svg>
-    <div>Esa clave es una <b>puerta de demostración</b>, no seguridad de verdad: vive en el
-    navegador y cualquiera que sepa buscar la lee. Sirve para que cada quien vea lo suyo y
-    nadie se meta donde no debe por descuido. El candado real llega con el servidor.</div>
   </div>
 </section>
 
@@ -836,9 +817,7 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
     </g>
     <path fill="var(--logo-blue)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
   </svg>
-  <p>QCheck · Segarra Engineering · Reconstrucción PR-52 [Km 14.2 a 0.0] — Prototipo, julio
-  2026. Esta guía es para pantalla. La que se imprime y se lleva en el bolsillo es
-  <b>docs/guia-qcheck.html</b>, y no la sustituye.</p>
+  <p>QCheck · Segarra Engineering · Reconstrucción PR-52 [Km 14.2 a 0.0] — Prototipo, julio 2026.</p>
 </div>
 
 </div>
