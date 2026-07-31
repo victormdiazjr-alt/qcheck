@@ -23,6 +23,15 @@ El proyecto no versiona por números todavía: se marca por hitos.
   que esté seleccionado.
 
 ### Arreglado
+- **El reporte acumulado no cabía en el papel** (Q-13, de antes de Q-03). Sus hojas de
+  tabla matriz medían ~1.200 px de contenido contra los 892 que caben en una carta, y la
+  de Moving Average llegaba a 2.584: cada una imprimía en dos o tres páginas y el
+  «Página N de M» del pie dejaba de ser verdad. Ahora los dos reportes reparten las filas
+  con la misma función, `repartir()`, que además deja las hojas parejas —19 camiones
+  salen 10 y 9, no 18 y 1—. El acumulado del proyecto pasa de 19 hojas que mentían a
+  **30 hojas que son 30 páginas**, con la numeración de sets corrida a lo largo del
+  reporte. Medido en cuatro escenarios: proyecto entero, filtrado por lote, un día en
+  curso y un día cerrado. Ninguna hoja pasa de 883 px.
 - **El botón «⬇ CSV» estaba roto en las cuatro pantallas donde aparece.** `exportCSV()`
   llamaba a `csvCell()`, que se borró en la limpieza del 31 de julio: reventaba con
   «csvCell is not defined» sin decir nada en la interfaz.

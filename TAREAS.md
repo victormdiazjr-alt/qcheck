@@ -11,8 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-12 | **Guía de usuario ilustrada** para Rubén: circuito de los aparatos, core features y arquitectura, en el lenguaje visual de QCheck | claude (subagente) | 2026-07-31 |
-| Q-13 | **Cuadrar el reporte acumulado a la carta** — sus hojas se desbordan a dos páginas y el «Página N de M» del pie miente | claude | 2026-07-31 |
+| Q-12 | **Guía de usuario ilustrada** para Rubén: circuito de los aparatos, core features y arquitectura, con botón Run que detecta el aparato y lleva a su portal | claude (subagente) | 2026-07-31 |
 
 ---
 
@@ -53,6 +52,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-07-31 | **Q-13 — El reporte acumulado cuadrado a la carta**: sus hojas imprimían en dos páginas y el «Página N de M» del pie mentía | claude |
 | 2026-07-31 | **Q-03 — Reporte del vaciado del día**, con dos fallos reales de paso: el botón CSV (`csvCell` borrada) y los ciclos de camión imposibles del Excel histórico | claude |
 | 2026-07-31 | Cierre de sesión: limpieza de código muerto, `verificar.js`, y la documentación de traspaso completa | claude |
 | 2026-07-31 | Portal de teléfono, tres cuentas con papeles, guía de uso de Rubén | claude |

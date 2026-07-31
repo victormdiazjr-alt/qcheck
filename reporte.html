@@ -217,6 +217,24 @@ function diasDelReporte() {
   return [...s].sort().reverse();
 }
 
+/* Reparte una lista en hojas de como mucho `max` filas, y las deja parejas
+   entre sí: 19 camiones con tope 18 salen 10 y 9, no 18 y 1.
+
+   Esto no es cosmética. Cada `<div class="sheet">` tiene que caber en una carta
+   porque el pie dice «Página N de M»: en cuanto una hoja se desborda a dos
+   páginas, el número del pie deja de ser verdad y el paquete que se entrega ya
+   no cuadra consigo mismo. El presupuesto es de 892 px de contenido — 11 in
+   menos los márgenes de `@page` y el relleno de la hoja. Para medir una sección
+   nueva: alto de la `.sheet` en pantalla menos 134. */
+function repartir(lista, max) {
+  if (!lista.length) return [];
+  const hojas = Math.max(1, Math.ceil(lista.length / max));
+  const porHoja = Math.ceil(lista.length / hojas);
+  const out = [];
+  for (let i = 0; i < lista.length; i += porHoja) out.push(lista.slice(i, i + porHoja));
+  return out;
+}
+
 /* ---------- selección ---------- */
 function rangeTests() {
   return sortedTests().filter((t) => {
@@ -348,11 +366,21 @@ function renderAcumulado() {
   const minMA = ma.filter((s) => s.ma != null).map((s) => s.ma);
   const p = db.plan;
 
-  // páginas: 1 portada+resumen, N de matriz, 1 Moving Average, 2 cartas, 1 rechazos+firmas
-  const PER = 30;
-  const chunks = [];
-  for (let i = 0; i < rows.length; i += PER) chunks.push(rows.slice(i, i + PER));
-  const total = 1 + chunks.length + 1 + 2 + 1;
+  /* Reparto de hojas. Los topes salieron de medir: la matriz tiene una columna
+     de identificación que se parte en dos líneas —«STA 3+37 to STA 2+40»— y por
+     eso sus filas abultan más que las de la tabla de resistencias.
+     La hoja de Moving Average lleva la carta encima, así que le caben menos
+     filas que a las siguientes. */
+  const chunks = repartir(rows, 20);                 // tabla matriz
+  const MA_CON_CARTA = 14;                           // filas bajo la carta
+  const maPrimera = cs5.slice(0, MA_CON_CARTA);
+  const maResto = repartir(cs5.slice(MA_CON_CARTA), 28);
+  /* Los rechazos comparten hoja con la certificación mientras quepan; si son
+     muchos, se van a sus propias hojas y la certificación se queda sola. */
+  const REJ_CON_FIRMAS = 12;
+  const rejAparte = rej.length > REJ_CON_FIRMAS ? repartir(rej, 22) : [];
+
+  const total = 1 + chunks.length + 1 + maResto.length + 2 + rejAparte.length + 1;
   let pg = 0;
 
   const out = [];
@@ -426,31 +454,48 @@ function renderAcumulado() {
     </div>`);
   });
 
-  // ---------- Moving Average ----------
+  // ---------- Moving Average: la carta y la tabla, set por set ----------
+  const cabeceraMA = `<tr><th>Set</th><th>Fecha</th><th>Conduce</th><th class="n">1 día</th>
+    <th class="n">${p.cs.age} días</th><th class="n">28 días</th><th class="n">Moving Average</th><th>Evaluación</th></tr>`;
+  /* `desde` es el número de set con el que arranca la hoja: la numeración
+     corre a lo largo del reporte, no se reinicia en cada página. */
+  const filasMA = (lista, desde) => lista.map((s, i) => `<tr>
+      <td class="n">${desde + i + 1}</td><td>${esc(s.date)}</td><td>${esc(s.ticket || "—")}</td>
+      <td class="n">${fmt(s.cs1, 0)}</td>
+      <td class="n${s.cs5 < p.cs.action ? " z-susp" : s.cs5 < p.cs.target ? " z-act" : ""}">${fmt(s.cs5, 0)}</td>
+      <td class="n">${fmt(s.cs28, 0)}</td>
+      <td class="n${s.ma != null && s.ma < p.cs.target ? " z-susp" : ""}">${fmt(s.ma, 0)}</td>
+      <td>${s.cs5 >= p.cs.target ? "Cumple" : s.cs5 >= p.cs.action ? "Bajo objetivo" : "No cumple"}</td>
+    </tr>`).join("");
+  const notaMA = `<div class="tbl-note">${cs5.length} ensayos con resistencia a ${p.cs.age} días · ${bajo} por debajo del objetivo.
+    La Moving Average se calcula sobre los ${p.maWindow} ensayos consecutivos incluidos en este reporte.</div>`;
+
   pg++;
   out.push(`<div class="sheet">
-    ${sheetHead("Moving Average de resistencia")}
+    ${sheetHead("Moving Average de resistencia" + (maResto.length ? ` (1/${maResto.length + 1})` : ""))}
     <h2 class="sec">Resistencia a compresión y Moving Average de ${p.maWindow} ensayos</h2>
     <div class="chart-box">
       <h3>Resistencia @ ${p.cs.age} días (psi)</h3>
       <div class="lim">Objetivo ${fmt(p.cs.target, 0)} psi · límite de acción ${fmt(p.cs.action, 0)} psi · línea punteada oscura = Moving Average</div>
       ${chartCS5(ma.map((s) => ({ ...s, _ma5: s.ma })), "all")}
     </div>
-    <table class="rep">
-      <tr><th>Set</th><th>Fecha</th><th>Conduce</th><th class="n">1 día</th><th class="n">${p.cs.age} días</th><th class="n">28 días</th><th class="n">Moving Average</th><th>Evaluación</th></tr>
-      ${cs5.map((s, i) => `<tr>
-        <td class="n">${i + 1}</td><td>${esc(s.date)}</td><td>${esc(s.ticket || "—")}</td>
-        <td class="n">${fmt(s.cs1, 0)}</td>
-        <td class="n${s.cs5 < p.cs.action ? " z-susp" : s.cs5 < p.cs.target ? " z-act" : ""}">${fmt(s.cs5, 0)}</td>
-        <td class="n">${fmt(s.cs28, 0)}</td>
-        <td class="n${s.ma != null && s.ma < p.cs.target ? " z-susp" : ""}">${fmt(s.ma, 0)}</td>
-        <td>${s.cs5 >= p.cs.target ? "Cumple" : s.cs5 >= p.cs.action ? "Bajo objetivo" : "No cumple"}</td>
-      </tr>`).join("")}
-    </table>
-    <div class="tbl-note">${cs5.length} ensayos con resistencia a ${p.cs.age} días · ${bajo} por debajo del objetivo.
-      La Moving Average se calcula sobre los ${p.maWindow} ensayos consecutivos incluidos en este reporte.</div>
+    ${maPrimera.length ? `<table class="rep">${cabeceraMA}${filasMA(maPrimera, 0)}</table>` : ""}
+    ${maResto.length ? "" : notaMA}
     ${sheetFoot(pg, total)}
   </div>`);
+
+  let setN = maPrimera.length;
+  maResto.forEach((trozo, i) => {
+    pg++;
+    const desde = setN;
+    setN += trozo.length;
+    out.push(`<div class="sheet">
+      ${sheetHead(`Resistencia set por set (${i + 2}/${maResto.length + 1})`)}
+      <table class="rep">${cabeceraMA}${filasMA(trozo, desde)}</table>
+      ${i === maResto.length - 1 ? notaMA : ""}
+      ${sheetFoot(pg, total)}
+    </div>`);
+  });
 
   // ---------- Control Charts (2 hojas) ----------
   const defs = CHART_DEFS;
@@ -477,26 +522,38 @@ function renderAcumulado() {
   });
 
   // ---------- rechazos + firmas ----------
+  const cabeceraRej = `<tr><th>#</th><th>Fecha</th><th>Conduce</th><th>Camión</th><th class="n">yd³</th><th>Identificación</th>
+      <th class="n">Rev.</th><th class="n">P.U.</th><th class="n">Temp</th><th>Motivo</th></tr>`;
+  const filasRej = (lista) => lista.map((t) => {
+    const m = [];
+    if (zoneSlump(t) === "susp") m.push("Slump fuera de límite");
+    if (zoneUW(t) === "susp") m.push("Unit Weight fuera de tolerancia");
+    if (zoneAir(t) === "susp") m.push("Aire fuera de límite");
+    if (zoneTemp(t) === "susp") m.push("Temperatura sobre el máximo");
+    return `<tr class="rej"><td class="n">${t.n}</td><td>${esc(t.date)}</td><td>${esc(t.ticket || "—")}</td>
+      <td>${esc(t.truck || "—")}</td><td class="n">${fmt(num(t.vol), 1)}</td>
+      <td class="wrap">${esc(shortIdent(t.ident))}</td>
+      <td class="n">${fmt(t.slump, 2)}</td><td class="n">${fmt(t.uw, 2)}</td><td class="n">${fmt(t.temp, 0)}</td>
+      <td class="wrap">${esc(m.join("; ") || t.comments || "Rechazo en campo")}</td></tr>`;
+  }).join("");
+
+  rejAparte.forEach((trozo, i) => {
+    pg++;
+    out.push(`<div class="sheet">
+      ${sheetHead("Registro de rechazos" + (rejAparte.length > 1 ? ` (${i + 1}/${rejAparte.length})` : ""))}
+      <h2 class="sec">Cargas rechazadas</h2>
+      <table class="rep">${cabeceraRej}${filasRej(trozo)}</table>
+      <div class="tbl-note">${rej.length} cargas rechazadas en el período. Estas yardas no entraron en la obra.</div>
+      ${sheetFoot(pg, total)}
+    </div>`);
+  });
+
   pg++;
   out.push(`<div class="sheet">
-    ${sheetHead("Registro de rechazos y certificación")}
-    <h2 class="sec">Cargas rechazadas</h2>
-    ${rej.length ? `<table class="rep">
-      <tr><th>#</th><th>Fecha</th><th>Conduce</th><th>Camión</th><th class="n">yd³</th><th>Identificación</th>
-          <th class="n">Rev.</th><th class="n">P.U.</th><th class="n">Temp</th><th>Motivo</th></tr>
-      ${rej.map((t) => {
-        const m = [];
-        if (zoneSlump(t) === "susp") m.push("Slump fuera de límite");
-        if (zoneUW(t) === "susp") m.push("Unit Weight fuera de tolerancia");
-        if (zoneAir(t) === "susp") m.push("Aire fuera de límite");
-        if (zoneTemp(t) === "susp") m.push("Temperatura sobre el máximo");
-        return `<tr class="rej"><td class="n">${t.n}</td><td>${esc(t.date)}</td><td>${esc(t.ticket || "—")}</td>
-          <td>${esc(t.truck || "—")}</td><td class="n">${fmt(num(t.vol), 1)}</td>
-          <td class="wrap">${esc(shortIdent(t.ident))}</td>
-          <td class="n">${fmt(t.slump, 2)}</td><td class="n">${fmt(t.uw, 2)}</td><td class="n">${fmt(t.temp, 0)}</td>
-          <td class="wrap">${esc(m.join("; ") || t.comments || "Rechazo en campo")}</td></tr>`;
-      }).join("")}
-    </table>` : `<p style="font-size:9.5pt; color:#5a6b7c">No se registraron cargas rechazadas en el período.</p>`}
+    ${sheetHead(rejAparte.length ? "Certificación" : "Registro de rechazos y certificación")}
+    ${rejAparte.length ? "" : `<h2 class="sec">Cargas rechazadas</h2>
+    ${rej.length ? `<table class="rep">${cabeceraRej}${filasRej(rej)}</table>`
+      : `<p style="font-size:9.5pt; color:#5a6b7c">No se registraron cargas rechazadas en el período.</p>`}`}
 
     <h2 class="sec">Certificación</h2>
     <p style="font-size:9pt; line-height:1.6">
@@ -585,14 +642,8 @@ function renderDiario() {
   for (let i = 0; i < cartas.length; i += 2) paresCartas.push(cartas.slice(i, i + 2));
 
   /* 18 camiones es lo máximo que cabe en una carta con el encabezado, el pie y
-     alguna losa partida en dos líneas. Más filas empujan la tabla a una segunda
-     página y el «Página N de M» del pie deja de ser verdad.
-     Las hojas se reparten parejas: 19 camiones salen 10 y 9, no 18 y 1. */
-  const PER = 18;
-  const hojasBitacora = Math.max(1, Math.ceil(rows.length / PER));
-  const porHoja = Math.ceil(rows.length / hojasBitacora);
-  const chunks = [];
-  for (let i = 0; i < rows.length; i += porHoja) chunks.push(rows.slice(i, i + porHoja));
+     alguna losa partida en dos líneas. Ver `repartir()`. */
+  const chunks = repartir(rows, 18);
   const total = 2 + chunks.length + paresCartas.length + 1;
   let pg = 0;
   const out = [];
