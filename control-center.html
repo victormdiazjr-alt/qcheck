@@ -480,8 +480,23 @@ function render() {
       </a>
     </div>
 
-    <!-- fila 2: avisos + último camión -->
+    <!-- fila 2: lo que Rubén realmente mira.
+         Slump y Unit Weight van ENCIMA de los avisos y del último camión
+         (Víctor, 31 jul 2026): son las dos lecturas que mira de verdad, así
+         que ganan la posición alta. -->
     <div class="grid cols-2" style="margin-bottom:16px">
+      <a class="w" href="results.html#charts">
+        <div class="lbl">Slump — en vivo <span class="trend">${trendLabel(day, "slump")}</span></div>
+        <div class="chart-scroll" style="margin-top:6px">${chartForDay(CHART_DEFS[0], day, 22)}</div>
+      </a>
+      <a class="w" href="results.html#charts">
+        <div class="lbl">Unit Weight — en vivo <span class="trend">${trendLabel(day, "uw")}</span></div>
+        <div class="chart-scroll" style="margin-top:6px">${chartForDay(CHART_DEFS[2], day, 22)}</div>
+      </a>
+    </div>
+
+    <!-- fila 3: avisos + último camión -->
+    <div class="grid cols-2">
       <div class="w" style="cursor:default">
         <div class="lbl" style="margin-bottom:6px">⚡ Avisos del sistema</div>
         ${alerts.length ? alerts.map((a) => `
@@ -509,18 +524,6 @@ function render() {
           <div class="w2">${lt.w}</div>
           <div class="sub">${lt.s}</div>
         </div>
-      </a>
-    </div>
-
-    <!-- fila 3: lo que Rubén realmente mira -->
-    <div class="grid cols-2">
-      <a class="w" href="results.html#charts">
-        <div class="lbl">Slump — en vivo <span class="trend">${trendLabel(day, "slump")}</span></div>
-        <div class="chart-scroll" style="margin-top:6px">${chartForDay(CHART_DEFS[0], day, 22)}</div>
-      </a>
-      <a class="w" href="results.html#charts">
-        <div class="lbl">Unit Weight — en vivo <span class="trend">${trendLabel(day, "uw")}</span></div>
-        <div class="chart-scroll" style="margin-top:6px">${chartForDay(CHART_DEFS[2], day, 22)}</div>
       </a>
     </div>`;
 
