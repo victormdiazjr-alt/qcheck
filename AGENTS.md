@@ -207,6 +207,24 @@ las de campo y Víctor lo quitó el 31 jul 2026 por estorboso. Si algún día ha
 la salida de un iPad montado en obra, eso va con la autenticación real (Q-07), no con una
 clave escrita en el navegador.
 
+## 8a. El portal del teléfono
+
+`movil.html`. Quien consulta el tiro desde el teléfono —el concretero, el contratista, la
+Autoridad— **no entra datos**: mira. Por eso el portal tiene cuatro puertas y nada más
+(Concretera, Contratista, Autoridad, Field Display), más un resumen del tiro arriba para no
+tener que entrar a ver si está pasando algo.
+
+- **Al entrar desde un teléfono, el acceso lleva aquí**, no al Control Center. `esTelefono()`
+  mira el agente de usuario, **no el ancho**: el iPad en vertical mide 768 px y NO debe caer
+  aquí — es el aparato de Muestras y necesita el tablero entero. iPadOS se anuncia como
+  «Macintosh», así que no cuela. Del portal se salta al Control Center con un enlace al pie.
+- **El Field Display se abre con `?acostar=1`**: pide pantalla completa y orientación
+  horizontal (`acostarPantalla()`). **En el iPhone eso no se puede** — Safari de iPhone no
+  implementa ni `requestFullscreen` ni el bloqueo de orientación. Por eso el plan B no es
+  opcional: si el aparato está de pie sale un aviso de girarlo, que se quita solo al girar.
+  Si tocas esto, no quites el aviso creyendo que sobra.
+- Las demás pantallas de indicadores se abren normales, sin trucos.
+
 ## 8b. La simulación — el tiro de hoy ya en marcha
 
 `assets/demo.js`. Al entrar, si **hoy no tiene ni un camión**, el sistema siembra un vaciado

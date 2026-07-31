@@ -122,8 +122,15 @@ function entrar(e) {
   if (u === "admin" && p === "1234") {
     sessionStorage.setItem("qc-auth", "1");
     const next = new URLSearchParams(location.search).get("next");
+    /* Desde un teléfono se entra al portal móvil, no al Control Center: en la
+       mano solo se consulta. El iPad NO cuenta como teléfono — es el aparato de
+       Muestras y necesita el tablero entero. Del portal se puede saltar al
+       Control Center con un enlace, por si alguien lo quiere igual. */
+    const ua = navigator.userAgent || "";
+    const telefono = /iPhone|iPod/.test(ua) || (/Android/.test(ua) && /Mobile/.test(ua));
+    const casa = telefono ? "movil.html" : "control-center.html";
     // solo rutas internas: nunca redirigir a un destino externo
-    const destino = next && /^[\w.-]+\.html([?#].*)?$/.test(next) ? next : "control-center.html";
+    const destino = next && /^[\w.-]+\.html([?#].*)?$/.test(next) ? next : casa;
     location.replace(destino);
   } else {
     document.getElementById("err").classList.add("show");

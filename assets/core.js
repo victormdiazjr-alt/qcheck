@@ -137,6 +137,32 @@ function mountCloseButton() {
   (document.getElementById("qc-status") || document.body).appendChild(b);
 }
 
+/* ------------------------------------------------------------ ¿es un teléfono?
+   Se mira el agente de usuario y no el ancho a propósito: el iPad en vertical
+   mide 768 px y NO debe ir al portal de teléfono — es el aparato de Muestras y
+   necesita el Control Center entero. iPadOS se anuncia como "Macintosh", así
+   que por aquí no cuela. */
+function esTelefono() {
+  const ua = navigator.userAgent || "";
+  return /iPhone|iPod/.test(ua) || (/Android/.test(ua) && /Mobile/.test(ua));
+}
+
+/* ------------------------------------------------------------ acostar la pantalla
+   Pantalla completa y orientación horizontal. Funciona en Android y en el
+   escritorio; en el iPhone NO: Safari de iPhone no implementa requestFullscreen
+   ni el bloqueo de orientación. Por eso quien llame a esto tiene que tener un
+   plan B visible — en el Field Display, el aviso de girar el teléfono. */
+async function acostarPantalla() {
+  const el = document.documentElement;
+  const pedirFS = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (pedirFS && !document.fullscreenElement) {
+    try { await pedirFS.call(el); } catch (_) { return false; }
+  }
+  const o = screen.orientation;
+  if (o && o.lock) { try { await o.lock("landscape"); return true; } catch (_) {} }
+  return !!document.fullscreenElement;
+}
+
 /* ------------------------------------------------------------ pantalla completa
    Las pantallas de campo entran a pantalla completa con el primer toque: el
    navegador solo lo permite dentro de un gesto del usuario, nunca al cargar.

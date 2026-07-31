@@ -277,6 +277,26 @@ footer {
   #sim-overlay .ol-route { font-size: 9vw; }
 }
 
+/* ---------- aviso de girar el teléfono ----------
+   Solo aparece cuando se entró con ?acostar=1 y el aparato está de pie. */
+#gire {
+  position: fixed; inset: 0; z-index: 500; display: none;
+  flex-direction: column; align-items: center; justify-content: center; gap: 3vh;
+  background: var(--bg); text-align: center; padding: 8vw;
+}
+#gire.ver { display: flex; }
+#gire svg { width: 30vw; max-width: 190px; height: auto; fill: none; stroke: var(--text);
+  stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; opacity: .85;
+  animation: gireGirar 2.6s ease-in-out infinite; transform-origin: 60px 60px; }
+#gire .g-flecha { stroke: var(--ok); }
+#gire .g-t { font-size: 6vw; font-weight: 750; letter-spacing: -.01em; }
+#gire .g-s { font-size: 3.4vw; color: var(--muted); font-weight: 600; }
+@keyframes gireGirar {
+  0%, 55%, 100% { transform: rotate(0deg); }
+  75%, 92%      { transform: rotate(-90deg); }
+}
+@media (prefers-reduced-motion: reduce) { #gire svg { animation: none; } }
+
 /* ---------- overlay de inicio (simulación) ---------- */
 #sim-overlay {
   position: fixed; inset: 0; z-index: 400;
@@ -337,7 +357,7 @@ footer {
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=b91072e1"></script>
+<script src="assets/core.js?v=5eac50db"></script>
 <script src="assets/demo.js?v=61eea5eb"></script>
 <script>
 "use strict";
@@ -709,11 +729,51 @@ function startSim() {
   document.body.appendChild(ol);
 }
 
+/* ---------- llegando desde el portal del teléfono (?acostar=1) ----------
+   Se pide pantalla completa y orientación horizontal. En Android y en el
+   escritorio lo concede el navegador. En el iPhone NO: Safari de iPhone no
+   implementa ni requestFullscreen ni el bloqueo de orientación — no hay forma
+   de acostarlo por código. Por eso el plan B no es opcional: si el teléfono
+   está de pie, se pide girarlo, y el aviso se quita solo al girar.        */
+function montarAcostar() {
+  if (!new URLSearchParams(location.search).has("acostar")) return;
+
+  /* el navegador solo concede pantalla completa dentro de un gesto */
+  const alTocar = () => {
+    document.removeEventListener("pointerdown", alTocar, true);
+    acostarPantalla();
+  };
+  document.addEventListener("pointerdown", alTocar, true);
+  acostarPantalla();   // por si el navegador ya lo permite sin gesto
+
+  const ol = document.createElement("div");
+  ol.id = "gire";
+  ol.innerHTML = `
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <rect x="40" y="18" width="40" height="70" rx="6"/>
+      <path d="M60 78h.01"/>
+      <path class="g-flecha" d="M92 44a34 34 0 0 1-10 34"/>
+      <path class="g-flecha" d="M76 74l6 6 6-8"/>
+    </svg>
+    <div class="g-t">Gire el teléfono</div>
+    <div class="g-s">El Field Display se lee a lo ancho</div>`;
+  document.body.appendChild(ol);
+
+  const revisar = () => {
+    const dePie = innerHeight > innerWidth;
+    ol.classList.toggle("ver", dePie);
+  };
+  revisar();
+  addEventListener("resize", revisar);
+  addEventListener("orientationchange", () => setTimeout(revisar, 250));
+}
+
 loadDB();
 initTheme("dark"); /* the field display defaults to dark */
 mountThemeToggle();
 mountStatusBar();
 pantallaCompletaAlTocar();
+montarAcostar();
 mountSoundToggle();
 enableLiveSync(render);
 render();
