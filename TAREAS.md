@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-22 | **El mixer de la guía, en reversa**: volteado en horizontal para que entre de espaldas al vaciado | claude | 2026-07-31 |
 
 ---
 
