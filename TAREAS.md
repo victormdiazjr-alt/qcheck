@@ -9,10 +9,9 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 ## En curso
 
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
-
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
+| Q-03 | **Reporte diario de vaciado** (el del mismo día, no el acumulado) | claude | 2026-07-31 |
 
 ---
 
@@ -22,7 +21,6 @@ _(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 |----|-------|-----------------|--------|
 | Q-01 | **OCR del conduce en papel** — foto → el sistema entra los datos solos | La mayoría de concreteras no tendrán QR: esta es la vía principal de entrada, no el respaldo | grande |
 | Q-02 | **Backend y base de datos en la nube** | Hoy cada navegador guarda lo suyo; sin esto no hay "correr en vivo" para el equipo | grande |
-| Q-03 | **Reporte diario de vaciado** (el del mismo día, no el acumulado) | Es lo que se entrega al cerrar el tiro | mediano |
 | Q-04 | **Correo automático al rechazar** | Hoy abre un correo pre-llenado; falta el envío real (necesita Q-02) | mediano |
 | Q-05 | **Línea de tiempo de eventos por conduce** | Modelo de datos definitivo: salida de planta, llegada, muestra, veredicto, vaciado, cilindros | mediano |
 | Q-06 | **Adjuntos en el conduce**: foto del conduce, pesadas, fotos de losa y cilindros | Cierra el expediente digital que hoy se arma a mano | mediano |
