@@ -719,7 +719,7 @@ function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
     else if (ult)
       g += `<g class="ch-live">${t}
         <circle cx="${X(i)}" cy="${Y(p.v)}" r="7" fill="${col}" class="ch-pulse"/>
-        <circle cx="${X(i)}" cy="${Y(p.v)}" r="3.6" fill="${col}" stroke="var(--bg)" stroke-width="1.6"/>
+        <circle cx="${X(i)}" cy="${Y(p.v)}" r="3.6" fill="${col}" stroke="var(--bg)" stroke-width="1.6" class="ch-dot"/>
       </g>`;
     else
       g += `<circle cx="${X(i)}" cy="${Y(p.v)}" r="2.8" fill="${col}"
