@@ -12,6 +12,9 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
 | Q-12 | **Guía de usuario ilustrada** para Rubén: circuito de los aparatos, core features y arquitectura, con botón Run que detecta el aparato y lleva a su portal | claude (subagente) | 2026-07-31 |
+| Q-14 | **El icono de iPhone abre como marcador, no como aplicación** — falta el manifest y seis pantallas no llevan las etiquetas | claude | 2026-07-31 |
+| Q-15 | **El enlace al Control Center en el portal lo ve Rubén** y solo debe verlo el administrador | claude | 2026-07-31 |
+| Q-16 | **Quitar el aviso de «añadir a la pantalla de inicio»** de las pantallas: pasa a la guía | claude | 2026-07-31 |
 
 ---
 
