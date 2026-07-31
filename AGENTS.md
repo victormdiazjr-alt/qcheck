@@ -391,6 +391,11 @@ en `assets/qc.css`; no inventes colores en las pantallas.
   del reporte. Colores de interfaz: azul `#4a63d8` y verde lima `#96c93d`.
 - **Semántica**: verde `#34d27b` dentro de límites · ámbar `#f5b83d` zona de acción ·
   rojo `#ff5a52` fuera. Iguales en las cinco pantallas.
+- **El camión hormigonera es siempre el mismo dibujo**: `assets/mixer.png`, la silueta
+  que dio Víctor, en blanco sobre transparente. Donde tenga que tomar color —el estado del
+  tiro en el Control Center— entra como **máscara CSS** (`mask-image` + `background:
+  currentColor`), nunca como `<img>`: una imagen no se recolorea y una máscara sí. No
+  dibujes otro mixer; si hace falta en otra pantalla, se reusa este archivo.
 - **El naranja NO se usa en QCheck**: es la marca de Concre-Ticket. Si ves naranja aquí,
   es un descuido — cámbialo por `var(--accent2)`.
 - **El color entra por el resplandor, no por el relleno.** Nada de botones pintados de

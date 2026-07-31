@@ -434,19 +434,13 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
         </marker>
       </defs>
 
-      <!-- ---------- el camión llega ---------- -->
+      <!-- ---------- el camión llega ----------
+           El mixer es el dibujo de Víctor: `assets/mixer.png`, blanco sobre
+           transparente. Es el MISMO archivo que usa el Control Center — una
+           sola copia en el repositorio— y por eso va por ruta relativa y no
+           incrustado. Se atenúa para que no grite más que los paneles. -->
       <g transform="translate(8,98)">
-        <g class="ilus">
-          <path d="M8 48 H118"/>
-          <path d="M86 48 V24 H106 L118 36 V48"/>
-          <path d="M92 27 h11 l7 7 h-18 z"/>
-          <g transform="rotate(-7 54 29)">
-            <rect x="24" y="15" width="62" height="28" rx="13"/>
-            <path d="M38 15.6 L34 42.6 M51 15.2 L47 42.8 M64 15 L60 43" stroke-width="1.3" opacity=".55"/>
-          </g>
-          <path d="M21 35 L10 41 L13 47"/>
-          <circle cx="34" cy="52" r="5"/><circle cx="76" cy="52" r="5"/><circle cx="100" cy="52" r="5"/>
-        </g>
+        <image href="../assets/mixer.png" x="4" y="10" width="118" height="49" opacity=".85"/>
         <path class="cae" d="M11 52 v5 M11 60 v3" stroke="#8ea6bd" stroke-width="1.6" stroke-linecap="round" fill="none"/>
       </g>
       <text class="sv-t2" x="73" y="192" text-anchor="middle">Llega el camión</text>
