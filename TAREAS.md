@@ -51,6 +51,11 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-07-30 | Logo nuevo de QCheck en todas las pantallas, con recortes por máscara SVG (commit `ba1cae2`) | claude |
+| 2026-07-30 | Barra de estado común: avance del tiro en segmentos y conexión, arriba a la derecha en todas las pantallas (`ba1cae2`) | claude |
+| 2026-07-30 | Modo kiosco en Field Display, Muestras y Recepción: pantalla completa al primer toque y salida bajo contraseña (`ba1cae2`) | claude |
+| 2026-07-30 | Cartas de control con estética de gráfica de mercado: umbrales punteados, trazo progresivo y punto vivo latiendo (`ba1cae2`) | claude |
+| 2026-07-30 | Botón de cerrar en todas las ventanas, rejilla de dos widgets por fila en las pantallas de indicadores, sin avisos internos en la del contratista (`ba1cae2`) | claude |
 | 2026-07-30 | Pantalla de acceso y guardián de sesión | claude |
 | 2026-07-30 | Reporte imprimible: tabla matriz, media móvil, cartas y certificación | claude |
 | 2026-07-30 | Contrato v4: independencia, QR como URL, límites publicados por QC | claude |
