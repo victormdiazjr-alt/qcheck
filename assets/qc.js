@@ -1,7 +1,7 @@
 /* ============================================================
    QC — Control Center (full version)
    Requires: seed.js + core.js loaded first.
-   Role screens: portal.html · display.html · conduce.html ·
+   Role screens: movil.html · display.html · conduce.html ·
    produccion.html · autoridad.html — all share the same DB.
    ============================================================ */
 "use strict";

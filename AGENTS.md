@@ -13,6 +13,21 @@ Producto **independiente**. No depende de ninguna otra herramienta para funciona
 Su hermana, **Concre-Ticket** (la concretera), vive en otro repositorio.
 Lo único que comparten es `shared/conduce-contract.js` — ver §5.
 
+## 1b. Mapa de la documentación
+
+| Archivo | Para qué |
+|---|---|
+| **`AGENTS.md`** | este — obligatorio antes de tocar nada |
+| `PROJECT_HANDOFF.md` | retomar el proyecto de cero |
+| `ARCHITECTURE.md` | cómo está hecho |
+| `DECISIONS.md` | **por qué** está hecho así, con el precio de cada decisión |
+| `CURRENT_STATUS.md` | dónde se quedó la última sesión |
+| `TODO.md` | lo que falta, por prioridad |
+| `TAREAS.md` | quién está haciendo qué **ahora** |
+| `CHANGELOG.md` | qué cambió y cuándo |
+
+Antes de dar nada por bueno: **`node verificar.js`**.
+
 ## 2. Regla de oro: la bitácora manda
 
 **`TAREAS.md` es la única fuente de verdad sobre quién está haciendo qué.**
@@ -82,7 +97,6 @@ produccion.html       ← vista del concretero (ver §8)
 autoridad.html        ← vista de cumplimiento para ACT / FHWA
 reporte.html          ← el entregable imprimible
 conduce.html          ← recepción de camiones
-portal.html           ← menú alterno (heredado; el menú vive en el Control Center)
 assets/               ← core.js (motor), qc.js, auth.js, seed.js, qc.css
 shared/               ← contrato del conduce (copia — ver §5)
 docs/                 ← arquitectura, hoja de ruta, despliegue, contrato
@@ -173,7 +187,7 @@ los campos de origen, el formato del QR y la publicación de límites.
 - La mayoría de las concreteras **no tendrán Concre-Ticket ni códigos QR**: llegan con
   conduce en papel. La entrada por foto y manual es la vía principal, no el respaldo.
 
-Detalle completo en `docs/ARQUITECTURA.md` y `docs/ROADMAP.md`.
+Detalle completo en `ARCHITECTURE.md` y `TODO.md`.
 
 **La guía de Rubén** vive en `docs/guia-qcheck.html` — es la fuente. De ahí salen el PNG y
 el PDF con Chrome sin ventana; los dos comandos están en el comentario de cabecera del

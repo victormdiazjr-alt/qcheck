@@ -34,7 +34,3 @@ function qcRol() {
 /* ¿Este usuario lleva el control de calidad? */
 function qcEsQC() { return qcRol() === "qc"; }
 
-function qcNombre() {
-  const u = sessionStorage.getItem("qc-user");
-  return (QC_CUENTAS[u] && QC_CUENTAS[u].nombre) || "";
-}

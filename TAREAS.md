@@ -30,6 +30,9 @@ _(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 | Q-08 | **Más reglas de inteligencia** | La capa de avisos ya detecta agua, tendencia y humedad vencida; faltan reglas de temperatura y de tiempo de viaje | pequeño |
 | Q-09 | **Aire en el tablero del productor** | El contrato ya publica los límites de aire; nadie los muestra | pequeño |
 | Q-10 | **Integración con ArcGIS** | La inspección ya georreferencia losas ahí; evaluar el enlace | investigación |
+| Q-11 | **Avance exacto por losa** | Un camión que reparte su carga no registra cuánto dejó en cada una | pequeño |
+
+**El detalle de cada tarea está en [`TODO.md`](TODO.md).** Aquí solo se reclama.
 
 ---
 
@@ -51,6 +54,9 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-07-31 | Cierre de sesión: limpieza de código muerto, `verificar.js`, y la documentación de traspaso completa | claude |
+| 2026-07-31 | Portal de teléfono, tres cuentas con papeles, guía de uso de Rubén | claude |
+| 2026-07-31 | Simulación: el tiro de hoy arranca en marcha por la yarda 120 | claude |
 | 2026-07-30 | Logo nuevo de QCheck en todas las pantallas, con recortes por máscara SVG (commit `ba1cae2`) | claude |
 | 2026-07-30 | Barra de estado común: avance del tiro en segmentos y conexión, arriba a la derecha en todas las pantallas (`ba1cae2`) | claude |
 | 2026-07-30 | Modo kiosco en Field Display, Muestras y Recepción: pantalla completa al primer toque y salida bajo contraseña (`ba1cae2`) | claude |

@@ -12,7 +12,7 @@
      devuelve al portal — que frena un despiste, no a alguien decidido: esto
      vive en el navegador. El candado de verdad llega con el backend (Q-07). */
   var SOLO_QC = ["control-center.html", "results.html", "conduce.html",
-                    "muestras.html", "reporte.html", "portal.html"];
+                    "muestras.html", "reporte.html"];
   if (!qcEsQC() && SOLO_QC.indexOf(aqui) >= 0) {
     location.replace("movil.html");
   }

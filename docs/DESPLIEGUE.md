@@ -8,7 +8,7 @@ Todas las pantallas accesibles por URL, desde cualquier navegador y dispositivo:
 
 | Pantalla | URL |
 |---|---|
-| Portal | `/qc/portal.html` |
+| Portal del teléfono | `/qc/movil.html` |
 | Control Center (QC) | `/qc/index.html` |
 | Muestras (iPad) | `/qc/muestras.html` |
 | Contratista | `/qc/contratista.html` |

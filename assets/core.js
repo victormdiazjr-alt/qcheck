@@ -972,7 +972,6 @@ function chartCS5(sets, rangeN) {
 }
 
 /* ------------------------------------------------------------ CSV / files */
-function csvCell(v) { const s = String(v == null ? "" : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 function downloadFile(name, content, type) {
   const blob = new Blob([content], { type });
   const a = document.createElement("a");
