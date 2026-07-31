@@ -564,8 +564,11 @@ function render() {
         <button class="key" onclick="keyPress('.')">.</button>
         <button class="key" onclick="keyPress('0')">0</button>
         <button class="key del" onclick="keyPress('del')">⌫</button>
-        <button class="key wide" onclick="clearField()">Borrar</button>
-        <button class="key wide" onclick="nextField()">Siguiente ▸</button>
+        <!-- Delete, Next y Clear en inglés: es como se dicen en la caseta y así
+             lo pidió Víctor el 31 jul 2026. Delete borra el campo en el que se
+             está; Clear borra las cuatro lecturas del camión. -->
+        <button class="key wide" onclick="clearField()">Delete</button>
+        <button class="key wide" onclick="nextField()">Next ▸</button>
         <button class="key wide clr" onclick="clearAll()">Clear</button>
       </div>
     </div>`;
