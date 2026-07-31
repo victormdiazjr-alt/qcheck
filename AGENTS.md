@@ -45,8 +45,17 @@ node serve.js 8452
 Usuario de demostración: `admin` / `1234`.
 
 Sin paso de compilación. HTML, CSS y JavaScript planos. **No introduzcas un bundler,
-un framework ni dependencias de npm** sin acuerdo explícito de Víctor: el proyecto
-tiene que poder abrirse con doble clic y funcionar sin internet en carretera.
+un framework ni dependencias de npm** sin acuerdo explícito de Víctor.
+
+**Funcionar sin internet ya NO es requisito en esta fase** — Víctor lo levantó el
+31 jul 2026. Se sirve por HTTP y punto. Sigue en pie lo de no meter dependencias:
+el valor está en que cualquiera pueda abrir un archivo y entenderlo.
+
+**Antes de cada commit que toque `assets/` o `shared/`, corre `node sello.js`.**
+Le pone a cada `<script>` y `<link>` un sello sacado del contenido del archivo
+(`core.js?v=b91072e1`). GitHub Pages cachea los .js diez minutos: sin el sello,
+despliegas un arreglo y durante ese rato el navegador sigue enseñando el fallo
+anterior — ya pasó una vez en una prueba. Es idempotente: correrlo de más no hace nada.
 
 ## 4. Estructura
 

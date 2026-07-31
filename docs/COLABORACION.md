@@ -38,7 +38,9 @@ ANTES DE TOCAR NADA, en el repositorio en el que vayas a trabajar:
 Reglas que no se negocian:
 
   · Sin paso de compilación. HTML, CSS y JavaScript planos. Nada de frameworks,
-    bundlers ni dependencias de npm. Debe abrir con doble clic y funcionar sin internet.
+    bundlers ni dependencias de npm. (Funcionar sin internet dejó de ser requisito
+    el 31 jul 2026; no meter dependencias sigue en pie.)
+  · Antes de cada commit que toque assets/ o shared/: node sello.js
   · Interfaz y comentarios en español.
   · Verifica en el navegador antes de decir que algo funciona (node serve.js 8452).
   · Borra los datos de prueba que crees.
