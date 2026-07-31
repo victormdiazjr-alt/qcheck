@@ -38,11 +38,14 @@ b  { font-weight: 700; }
 
 /* --- portada --- */
 .portada { padding-top: 18pt; page-break-after: always; }
-/* Como PNG es una sola tira: sin saltos y con aire a los lados. */
-body.png { width: 940px; padding: 34px 40px 40px; }
-body.png .portada { page-break-after: auto; padding-bottom: 6pt;
-  border-bottom: 1px solid #e4ebf1; }
-body.png .sec, body.png .pagina { page-break-before: auto; }
+/* Como PNG es una sola tira: sin saltos y con aire a los lados.
+   Va dentro de @media screen a propósito — en papel manda la paginación. */
+@media screen {
+  body.png { width: 940px; padding: 34px 40px 40px; }
+  body.png .portada { page-break-after: auto; padding-bottom: 6pt;
+    border-bottom: 1px solid #e4ebf1; }
+  body.png .sec, body.png .pagina { page-break-before: auto; }
+}
 .marca { display: flex; align-items: center; gap: 13pt; margin-bottom: 26pt; }
 .marca svg { width: 52pt; height: 52pt; }
 .marca .n { font-size: 21pt; font-weight: 750; letter-spacing: -.02em; }
@@ -253,7 +256,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
       <rect x="0" y="0" width="300" height="52" rx="9" fill="#eef5ff" stroke="#0f46b5" stroke-width="1.8"/>
       <circle cx="22" cy="26" r="11" fill="#0f46b5"/>
       <text x="22" y="30" font-size="10.5" font-weight="800" fill="#fff" text-anchor="middle">4</text>
-      <text x="42" y="23" font-size="11.5" font-weight="750" fill="#16222e">Control Center — su computadora</text>
+      <text x="42" y="23" font-size="11.5" font-weight="750" fill="#16222e">Control Center — su PC</text>
       <text x="42" y="39" font-size="8.8" fill="#3c4a58">Estado del tiro, avisos, Control Charts y todo el histórico.</text>
     </g>
 
@@ -295,7 +298,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
         <svg class="ic" viewBox="0 0 24 24"><path d="M4 8.6V5.4A1.4 1.4 0 0 1 5.4 4h3.2M15.4 4h3.2A1.4 1.4 0 0 1 20 5.4v3.2M20 15.4v3.2a1.4 1.4 0 0 1-1.4 1.4h-3.2M8.6 20H5.4A1.4 1.4 0 0 1 4 18.6v-3.2"/><path d="M4 12h16"/></svg>
         <h3>Recepción</h3>
       </div>
-      <div class="qn">iPad · a pie de obra</div>
+      <div class="qn">iPad · Check Point</div>
       <p style="margin-bottom:4pt">Cada camión que llega se registra aquí. Tres formas, la que
       se pueda:</p>
       <ul>
@@ -344,13 +347,15 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
         <svg class="ic" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="14" rx="2"/><polyline points="6,14 10,10 13,12.5 18,7"/></svg>
         <h3>Control Center</h3>
       </div>
-      <div class="qn">Su computadora · la oficina</div>
+      <div class="qn">PC · la oficina</div>
       <p style="margin-bottom:4pt">Su vista. Lo primero que dice es en qué anda el tiro ahora
       mismo — vaciando, esperando camión, detenido — y cuántas yardas van.</p>
       <ul>
         <li>Las losas del día, con cuánto lleva cada una.</li>
         <li>El tiempo en el sitio, para saber si va a llover.</li>
-        <li>Avisos: mezcla secándose, racha en zona de acción, humedad sin registrar.</li>
+        <li><b>Notificaciones de anomalías y/o alarmas.</b> Por ejemplo: tres camiones
+          rechazados corridos; que según e-Ticket la planta no ha cogido humedades
+          hoy; que se espera lluvia durante una hora del tiro.</li>
         <li>De ahí entra a Results: Control Charts, resistencias y todo el histórico.</li>
       </ul>
     </div>
@@ -387,7 +392,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
 <div class="sec">
   <h2>Quién entra y qué ve</h2>
   <table>
-    <tr><th>Usuario</th><th>Clave</th><th>Desde la computadora</th><th>Desde el iPhone</th></tr>
+    <tr><th>Usuario</th><th>Clave</th><th>Desde la PC</th><th>Desde el iPhone</th></tr>
     <tr><td><code>ruben</code></td><td><code>1234</code></td>
         <td>Control Center — todo</td><td>Portal con Resultados</td></tr>
     <tr><td><code>admin</code></td><td><code>1234</code></td>
