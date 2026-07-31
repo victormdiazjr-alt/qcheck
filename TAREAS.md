@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-19 | **El mixer de Víctor como icono único**: su silueta, en la paleta del GUI, dondequiera que haya un camión hormigonera | claude | 2026-07-31 |
 
 ---
 
