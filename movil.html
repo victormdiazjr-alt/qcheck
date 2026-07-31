@@ -127,9 +127,10 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=f52eea8e"></script>
+<script src="assets/core.js?v=5f9dd94e"></script>
 <script src="assets/demo.js?v=5b7d9943"></script>
-<script src="assets/auth.js?v=b007de04"></script>
+<script src="assets/usuarios.js?v=824e1a97"></script>
+<script src="assets/auth.js?v=efc598fa"></script>
 <script>
 "use strict";
 
@@ -161,8 +162,8 @@ const PUERTAS = [
 
 function pintar() {
   document.getElementById("mv-proyecto").textContent = db.project.name || "";
-  // el invitado no ve la puerta al tablero completo
-  document.getElementById("mv-pie").hidden = sessionStorage.getItem("qc-user") !== "admin";
+  // quien no lleva el control de calidad no ve la puerta al tablero completo
+  document.getElementById("mv-pie").hidden = !qcEsQC();
 
   /* El consejo de la pantalla de inicio solo si es iOS en Safari y todavía no
      está guardada: ya guardada no hay barras que quitar. */
@@ -187,8 +188,7 @@ function pintar() {
     <div class="mv-nota">${p.loads} ${p.loads === 1 ? "camión recibido" : "camiones recibidos"}${
       hayPlan ? ` · faltan ${fmt(p.pending, 1)} CY` : ""}</div>`;
 
-  const esAdmin = sessionStorage.getItem("qc-user") === "admin";
-  const puertas = esAdmin ? [PUERTA_RESULTADOS, ...PUERTAS] : PUERTAS;
+  const puertas = qcEsQC() ? [PUERTA_RESULTADOS, ...PUERTAS] : PUERTAS;
   document.getElementById("mv-menu").innerHTML = puertas.map((x) => `
     <a class="mv-btn${x.destaca ? " destaca" : ""}" href="${x.href}">
       ${x.ic}

@@ -8,12 +8,12 @@
     location.replace("index.html?next=" + encodeURIComponent(aqui + location.search + location.hash));
     return;
   }
-  /* El invitado solo ve sus indicadores. Escribir la dirección a mano lo
+  /* Quien no lleva el control de calidad solo ve sus indicadores. Escribir la dirección a mano lo
      devuelve al portal — que frena un despiste, no a alguien decidido: esto
      vive en el navegador. El candado de verdad llega con el backend (Q-07). */
-  var SOLO_ADMIN = ["control-center.html", "results.html", "conduce.html",
+  var SOLO_QC = ["control-center.html", "results.html", "conduce.html",
                     "muestras.html", "reporte.html", "portal.html"];
-  if (sessionStorage.getItem("qc-user") !== "admin" && SOLO_ADMIN.indexOf(aqui) >= 0) {
+  if (!qcEsQC() && SOLO_QC.indexOf(aqui) >= 0) {
     location.replace("movil.html");
   }
 })();

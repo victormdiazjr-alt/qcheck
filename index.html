@@ -112,24 +112,22 @@ button:active { transform: scale(.98); }
 
   <div class="hint">
     <span class="demo">DEMOSTRACIÓN</span><br>
-    Acceso de prueba: <b>admin</b> / <b>1234</b> — todo.<br>
+    Acceso de prueba: <b>ruben</b> o <b>admin</b> / <b>1234</b> — todo.<br>
     <b>invitado</b> / <b>1234</b> — solo los indicadores.<br>
     Puerta de demostración — la autenticación real llega con el backend.
   </div>
 </form>
 
+<script src="assets/usuarios.js?v=824e1a97"></script>
 <script>
 "use strict";
 function entrar(e) {
   e.preventDefault();
   const u = document.getElementById("u").value.trim().toLowerCase();
   const p = document.getElementById("p").value;
-  /* Dos accesos de demostración. `invitado` es para compartir el portal con el
-     contratista, el concretero o la Autoridad: ve sus indicadores y nada más.
-     Como el acceso mismo, esto es una puerta de demostración — la de verdad
-     llega con el backend (Q-07). */
-  const CUENTAS = { admin: "1234", invitado: "1234" };
-  if (CUENTAS[u] && CUENTAS[u] === p) {
+  /* La lista de usuarios vive en assets/usuarios.js — una sola. */
+  const cuenta = QC_CUENTAS[u];
+  if (cuenta && cuenta.clave === p) {
     sessionStorage.setItem("qc-auth", "1");
     sessionStorage.setItem("qc-user", u);
     const next = new URLSearchParams(location.search).get("next");
@@ -139,8 +137,10 @@ function entrar(e) {
        Control Center con un enlace, por si alguien lo quiere igual. */
     const ua = navigator.userAgent || "";
     const telefono = /iPhone|iPod/.test(ua) || (/Android/.test(ua) && /Mobile/.test(ua));
-    /* el invitado va siempre al portal, sea el aparato que sea */
-    const casa = (telefono || u !== "admin") ? "movil.html" : "control-center.html";
+    /* Quien no lleva el control de calidad va siempre al portal. Quien sí lo
+       lleva, al portal desde el teléfono y al Control Center desde la
+       computadora. */
+    const casa = (telefono || cuenta.rol !== "qc") ? "movil.html" : "control-center.html";
     // solo rutas internas: nunca redirigir a un destino externo
     const destino = next && /^[\w.-]+\.html([?#].*)?$/.test(next) ? next : casa;
     location.replace(destino);

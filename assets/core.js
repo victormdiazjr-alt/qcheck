@@ -119,7 +119,7 @@ function mountThemeToggle() {
    - en un teléfono, al portal — el Control Center no cabe en la mano;
    - el invitado, siempre al portal: no tiene tablero.                    */
 function casaDe() {
-  if (sessionStorage.getItem("qc-user") !== "admin") return "movil.html";
+  if (typeof qcEsQC === "function" && !qcEsQC()) return "movil.html";
   return esTelefono() ? "movil.html" : "control-center.html";
 }
 

@@ -42,9 +42,18 @@ anótalo en la bitácora.
 node serve.js 8452
 # abre http://localhost:8452  → pantalla de acceso
 ```
-Dos accesos de demostración: **`admin` / `1234`** (todo) e **`invitado` / `1234`**
-(solo los indicadores: entra al portal del teléfono y `auth.js` lo devuelve ahí si escribe
-a mano la dirección de una pantalla de QC). Como el acceso mismo, frena un despiste, no a
+**Los usuarios viven en `assets/usuarios.js` — una sola lista.** Para añadir a alguien se
+toca ese archivo y nada más; el papel se comprueba con `qcEsQC()`, nunca con el nombre.
+
+| usuario | clave | papel | dónde entra |
+|---|---|---|---|
+| `ruben` | 1234 | qc | teléfono → portal · computadora → Control Center |
+| `admin` | 1234 | qc | igual que Rubén |
+| `invitado` | 1234 | consulta | siempre al portal, sin Resultados |
+
+El papel **se deduce del usuario en cada comprobación, no se guarda**: así una sesión abierta
+antes de añadir a alguien no queda a medias. `auth.js` devuelve al portal a quien no lleve
+el control de calidad si escribe a mano la dirección de una pantalla de QC. Como el acceso mismo, frena un despiste, no a
 alguien decidido: vive en el navegador. El candado de verdad llega con el backend (Q-07).
 
 Sin paso de compilación. HTML, CSS y JavaScript planos. **No introduzcas un bundler,
