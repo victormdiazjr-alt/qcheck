@@ -438,10 +438,17 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
            El mixer es el dibujo de Víctor: `assets/mixer.png`, blanco sobre
            transparente. Es el MISMO archivo que usa el Control Center — una
            sola copia en el repositorio— y por eso va por ruta relativa y no
-           incrustado. Se atenúa para que no grite más que los paneles. -->
+           incrustado. Se atenúa para que no grite más que los paneles.
+
+           Va VOLTEADO en horizontal a propósito: al vaciado se entra en
+           reversa, con la canaleta hacia la obra y la cabina hacia la calle.
+           Espejo sobre su propio centro (x = 4 + 118/2 = 63, de ahí el
+           translate de 126). El hormigón cae al lado de la canaleta, que
+           tras el volteo es el derecho. -->
       <g transform="translate(8,98)">
-        <image href="../assets/mixer.png" x="4" y="10" width="118" height="49" opacity=".85"/>
-        <path class="cae" d="M11 52 v5 M11 60 v3" stroke="#8ea6bd" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+        <image href="../assets/mixer.png" x="4" y="10" width="118" height="49" opacity=".85"
+               transform="translate(126,0) scale(-1,1)"/>
+        <path class="cae" d="M115 52 v5 M115 60 v3" stroke="#8ea6bd" stroke-width="1.6" stroke-linecap="round" fill="none"/>
       </g>
       <text class="sv-t2" x="73" y="192" text-anchor="middle">Llega el camión</text>
       <text class="sv-p2" x="73" y="207" text-anchor="middle">con su conduce en mano</text>
