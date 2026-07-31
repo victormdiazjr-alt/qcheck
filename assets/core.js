@@ -115,8 +115,16 @@ function mountThemeToggle() {
    Si la pantalla está a pantalla completa —el Field Display y Muestras lo
    están— hay que SALIR primero: navegar sin salir dejaría el Control Center
    ocupando la pantalla entera, sin barra del navegador ni forma de volver. */
+/* ¿A dónde vuelve el botón? Depende de quién y desde dónde:
+   - en un teléfono, al portal — el Control Center no cabe en la mano;
+   - el invitado, siempre al portal: no tiene tablero.                    */
+function casaDe() {
+  if (sessionStorage.getItem("qc-user") !== "admin") return "movil.html";
+  return esTelefono() ? "movil.html" : "control-center.html";
+}
+
 async function cerrarVentana() {
-  const casa = "control-center.html";
+  const casa = casaDe();
   const salir = document.exitFullscreen || document.webkitExitFullscreen;
   if (salir && (document.fullscreenElement || document.webkitFullscreenElement)) {
     try { await salir.call(document); } catch (_) {}
@@ -129,8 +137,10 @@ function mountCloseButton() {
   const b = document.createElement("button");
   b.id = "close-btn";
   b.className = "close-btn";
-  const enCasa = location.pathname.split("/").pop() === "control-center.html";
-  b.title = enCasa ? "Salir" : "Volver al Control Center";
+  const casa = casaDe();
+  const enCasa = location.pathname.split("/").pop() === casa;
+  b.title = enCasa ? "Salir"
+    : casa === "movil.html" ? "Volver al portal" : "Volver al Control Center";
   b.setAttribute("aria-label", b.title);
   b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>`;
   b.onclick = (e) => { e.stopPropagation(); cerrarVentana(); };

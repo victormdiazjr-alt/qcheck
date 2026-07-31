@@ -200,7 +200,11 @@ donde se definen. **No inventes un total.**
 **Recepción no** — Víctor la sacó el 31 jul 2026: se usa entrando y saliendo de otras
 pantallas, y ponerse a pantalla completa al tocarla estorbaba.
 
-El botón de la esquina **lleva al Control Center**, que es la casa — no cierra la pestaña.
+El botón de la esquina **lleva a la casa** — no cierra la pestaña. Cuál es la casa lo
+decide `casaDe()`: en un teléfono, **el portal** (`movil.html`), porque el Control Center no
+cabe en la mano; para el invitado, siempre el portal, que no tiene tablero; en el escritorio
+con `admin`, el Control Center. Desde la propia casa el botón sale de la sesión, y el rótulo
+lo dice: «Volver al portal», «Volver al Control Center» o «Salir».
 Si la pantalla está a pantalla completa, `cerrarVentana()` **sale de fullscreen primero**:
 navegar sin salir dejaría el Control Center ocupando la pantalla entera, sin barra del
 navegador ni forma de volver. Desde la propia casa, el botón sale de la sesión.
