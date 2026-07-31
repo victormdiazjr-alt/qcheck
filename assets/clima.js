@@ -10,9 +10,10 @@
    ============================================================ */
 "use strict";
 
-/* Ponce, corredor Km 0–14 de la PR-52. Se puede corregir en Plan & Datos:
+/* PR-52 a la altura de la salida de la PR-199 (Las Cumbres), San Juan.
+   Lo dijo Víctor el 30 jul 2026. Se puede corregir en Plan & Datos:
    el proyecto manda si trae lat/lon propias. */
-const CLIMA_DEFECTO = { lat: 18.03, lon: -66.54, lugar: "Ponce · PR-52" };
+const CLIMA_DEFECTO = { lat: 18.362, lon: -66.091, lugar: "San Juan · PR-52 / PR-199" };
 const CLIMA_REFRESCO_MIN = 15;
 
 /* Códigos WMO agrupados a lo que de verdad importa en obra */
@@ -222,7 +223,7 @@ function climaEstilos() {
 .cl-t span { font-size: 13px; font-weight: 600; opacity: .55; margin-left: 1px; }
 .cl-d { font-size: 11.5px; margin-top: 4px; opacity: .72; }
 .cl-loc { margin-left: auto; text-align: right; font-size: 9.5px; font-weight: 800;
-  letter-spacing: .16em; text-transform: uppercase; opacity: .5; max-width: 96px; }
+  letter-spacing: .1em; text-transform: uppercase; opacity: .5; max-width: 130px; line-height: 1.5; }
 .cl-av { font-size: 11.5px; font-weight: 600; opacity: .8; }
 .cl-av.moja { color: #7fc4ff; opacity: 1; }
 .cl-horas { display: flex; gap: 2px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.12); }

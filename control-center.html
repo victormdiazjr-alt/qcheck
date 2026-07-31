@@ -34,17 +34,37 @@
 .cc-hero.s-susp { --vc: #ff7a72; }
 .cc-hero h1 { font-size: 23px; margin: 0; font-weight: 700; letter-spacing: -.01em; color: var(--vc); }
 .cc-hero .sub { font-size: 13px; color: #bfd2e4; margin-top: 3px; }
+.cc-hero .cc-izq { min-width: 0; flex: 1 1 300px; }
 .cc-hero .cc-der { margin-left: auto; display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
 .cc-hero .cc-der .clima { color: #eaf1f8; }
 @media (max-width: 900px) {
-  /* apilado, la fecha alineada a la derecha queda huérfana */
   .cc-hero .cc-der { margin-left: 0; width: 100%; gap: 14px; }
-  .cc-hero .when { text-align: left; }
 }
-.cc-hero .when { text-align: right; font-size: 12px; color: #9fb6cc;
-  line-height: 1.6; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; }
-.cc-hero .when b { display: block; color: #fff; font-size: 16px; letter-spacing: 0;
-  text-transform: none; font-weight: 700; margin-top: 2px; }
+/* --- losas del tiro --- */
+.losas { margin-top: 14px; }
+.losas .lz-k { font-size: 10px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase;
+  color: #9fb6cc; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.losas .lz-k b { color: #fff; font-size: 12px; letter-spacing: .04em; white-space: nowrap; }
+/* la coletilla se va a su propia línea antes que partir el título */
+.losas .lz-k .lz-nota { flex: 1 0 100%; font-weight: 600; letter-spacing: .04em;
+  text-transform: none; color: #8ea6bd; font-size: 11px; margin-top: 1px; }
+.losas .lz-tira { display: flex; gap: 5px; margin-top: 7px; overflow-x: auto;
+  -webkit-overflow-scrolling: touch; padding-bottom: 4px; scrollbar-width: thin; }
+.losas .lz { flex: none; font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px;
+  font-variant-numeric: tabular-nums; letter-spacing: .02em; white-space: nowrap;
+  border: 1px solid rgba(255,255,255,.16); color: #c8d8e8; background: rgba(255,255,255,.05); }
+/* vaciada: el color entra por el resplandor, no por el relleno */
+.losas .lz.ok { color: #7ce7a8; border-color: rgba(52,210,123,.5);
+  box-shadow: 0 0 0 2px rgba(52,210,123,.09), 0 0 14px -4px rgba(52,210,123,.85); }
+.losas .lz.ok::before { content: "✓ "; opacity: .8; }
+/* en curso: hay un camión encima ahora mismo */
+.losas .lz.curso { color: #ffd98a; border-color: rgba(245,184,61,.55);
+  box-shadow: 0 0 0 2px rgba(245,184,61,.10), 0 0 16px -4px rgba(245,184,61,.9);
+  animation: lzLatir 1.8s ease-in-out infinite; }
+.losas .lz.pendiente { opacity: .5; }
+@keyframes lzLatir { 0%,100% { box-shadow: 0 0 0 2px rgba(245,184,61,.10), 0 0 14px -4px rgba(245,184,61,.7); }
+                     50%     { box-shadow: 0 0 0 3px rgba(245,184,61,.18), 0 0 22px -4px rgba(245,184,61,1); } }
+@media (prefers-reduced-motion: reduce) { .losas .lz.curso { animation: none; } }
 
 /* --- menú de navegación --- */
 .navmenu { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 10px; margin-bottom: 20px; }
@@ -162,6 +182,24 @@ const PANTALLAS = [
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h8l4 4v15H6z"/><path d="M14 2.5v4h4"/><path d="M9 12h6M9 16h4"/></svg>` },
 ];
 
+/* Las losas del tiro, con su estado. Si el plan del día no dice cuáles son,
+   se muestran las que los camiones sirvieron y se dice que falta declararlas. */
+function losasHTML(day) {
+  const L = losasDelDia(day);
+  if (!L.lista.length) {
+    return `<div class="losas"><div class="lz-k">Losas del tiro
+      <span class="lz-nota">— defina cuáles se tiran hoy en el plan del día</span></div></div>`;
+  }
+  const tira = L.lista.map((l) =>
+    `<span class="lz ${l.estado === "vaciada" ? "ok" : l.estado === "curso" ? "curso" : "pendiente"}"
+           title="${l.estado === "vaciada" ? "Vaciada" : l.estado === "curso" ? "Descargando ahora" : "Pendiente"}">${esc(l.codigo)}</span>`).join("");
+  return `<div class="losas">
+    <div class="lz-k">Losas del tiro <b>${L.hechas} de ${L.lista.length}</b>
+      ${L.declarado ? "" : `<span class="lz-nota">— servidas hasta ahora; el plan del día no las declara</span>`}</div>
+    <div class="lz-tira">${tira}</div>
+  </div>`;
+}
+
 function menu() {
   return `<div class="navmenu">${PANTALLAS.map((p) => `
     <a href="${p.href}"${p.nueva ? ' target="_blank"' : ""} title="${p.r}">
@@ -224,17 +262,12 @@ function render() {
   document.getElementById("app").innerHTML = `
     <div class="cc-hero s-${est.cls}">
       <div class="mark2">${est.mark}</div>
-      <div>
+      <div class="cc-izq">
         <h1>${est.titulo}</h1>
         <div class="sub">${est.detalle}</div>
+        ${losasHTML(day)}
       </div>
-      <div class="cc-der">
-        <div class="when">
-          Último vaciado<b>${fmtDate(day)}</b>
-          ${meta.fase || meta.lane ? `<span style="font-size:11px; letter-spacing:.1em">${[meta.fase ? "Fase " + esc(meta.fase) : null, meta.lane ? esc(meta.lane) : null].filter(Boolean).join(" · ")}</span>` : ""}
-        </div>
-        <div id="clima"></div>
-      </div>
+      <div class="cc-der"><div id="clima"></div></div>
     </div>
 
     ${menu()}

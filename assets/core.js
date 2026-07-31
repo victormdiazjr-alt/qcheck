@@ -504,6 +504,37 @@ function slabCodes(ident) {
   return m ? m.map((s) => s.replace(/\s+/g, "").toUpperCase()) : [];
 }
 
+/* ------------------------------------------------------------ losas del tiro
+   Cuáles se van a tirar hoy y cómo va cada una.
+
+   Si el plan del día las declara (dayMeta.losas), esa es la lista y manda —
+   incluye las que todavía no ha tocado ningún camión. Si no se declararon,
+   NO se inventa un plan: se muestran las que los camiones dicen haber servido,
+   en el orden en que llegaron, y se avisa de que el plan no está puesto.   */
+function losasDelDia(day) {
+  const rows = testsOfDate(day).filter((t) => !t.rejected);
+  const vaciadas = new Set(), enCurso = new Set(), orden = [];
+  for (const t of rows) {
+    for (const c of slabCodes(t.ident)) {
+      if (!orden.includes(c)) orden.push(c);
+      if (t.end) vaciadas.add(c);
+      else if (t.arrive) enCurso.add(c);
+    }
+  }
+  const meta = db.dayMeta[day] || {};
+  const dec = String(meta.losas || "").match(/L\s?\d+\s?-\s?\d+\.\d+/gi);
+  const plan = dec ? dec.map((x) => x.replace(/\s+/g, "").toUpperCase()) : null;
+
+  const fuente = plan || orden;
+  const vistos = new Set(), lista = [];
+  for (const c of fuente) {
+    if (vistos.has(c)) continue;
+    vistos.add(c);
+    lista.push({ codigo: c, estado: vaciadas.has(c) ? "vaciada" : enCurso.has(c) ? "curso" : "pendiente" });
+  }
+  return { lista, declarado: !!plan, hechas: lista.filter((l) => l.estado === "vaciada").length };
+}
+
 /* Camión "esperando": llegó, no fue rechazado y todavía no terminó de descargar */
 function trucksWaiting(day) {
   return testsOfDate(day).filter((t) => t.arrive && !t.end && !t.rejected);

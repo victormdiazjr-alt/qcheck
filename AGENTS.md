@@ -67,6 +67,12 @@ shared/               ← contrato del conduce (copia — ver §5)
 docs/                 ← arquitectura, hoja de ruta, despliegue, contrato
 ```
 
+En el héroe del Control Center: a la izquierda el estado del proyecto y **las losas del
+tiro** (`losasDelDia` en `core.js`), a la derecha el tiempo del sitio. Las losas salen del
+plan del día (`dayMeta.losas`) cuando está declarado, e incluyen las pendientes; si no se
+declaró, **no se inventa un plan** — se muestran las que los camiones sirvieron y se dice
+que falta declararlas.
+
 El **Control Center** es la pantalla principal: muestra en widgets lo que Rubén mira de
 verdad y cada widget entra al detalle en `results.html#<pestaña>` (`daily`, `tests`,
 `strength`, `charts`, `live`, `plan`). Si añades una pantalla de usuario, **agrégala al
@@ -167,8 +173,8 @@ hora deciden si se tira o se espera.
 - Los iconos son **SVG propio animado con CSS**. No metas una librería ni un archivo de
   iconos: el proyecto tiene que abrir con doble clic.
 - Las coordenadas viven en `db.project` (`lat`, `lon`, `place`) y se editan en
-  **Plan & Datos → Proyecto**. El valor por defecto es el corredor Km 0–14 de la PR-52
-  en Ponce (18.03, −66.54) — **es una suposición**, no un dato del contrato.
+  **Plan & Datos → Proyecto**. Por defecto: **PR-52 a la altura de la salida de la
+  PR-199 (Las Cumbres), San Juan** — 18.362, −66.091. Lo confirmó Víctor.
 - Se consulta como mucho **cada 15 minutos**; el tablero se repinta muchas veces y el
   clima se sirve de memoria. No lo llames en cada `render()` sin ese resguardo.
 
