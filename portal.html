@@ -19,6 +19,7 @@ body {
 }
 .hero { max-width: 1100px; margin: 0 auto 4.5vh; }
 .hero .badge-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.hero .mark { height: 54px; width: 54px; flex: none; display: block; }
 .hero .logo {
   background: var(--accent2); color: #fff; font-weight: 900; padding: 8px 16px;
   border-radius: 12px; font-size: 26px; letter-spacing: 1px;
@@ -103,6 +104,8 @@ body {
 .theme-btn:hover { transform: scale(1.1); border-color: #fff; }
 </style>
 <script src="assets/auth.js"></script>
+<script src="assets/seed.js"></script>
+<script src="assets/core.js"></script>
 </head>
 <body>
 
@@ -214,27 +217,15 @@ body {
   de este equipo. Historial cargado: 397 pruebas reales (nov 2025 – jul 2026) del Excel de control de Segarra.
 </div>
 
-<button class="theme-btn" id="theme-btn" title="Modo claro / oscuro" onclick="toggleTheme()">🌙</button>
-
 <script>
 "use strict";
-const THEME_KEY = "qc-theme";
-const ICON_SUN = `<svg viewBox="0 0 24 24" style="width:58%;height:58%" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.3"/><path d="M12 2.6v2.1M12 19.3v2.1M2.6 12h2.1M19.3 12h2.1M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5"/></svg>`;
-const ICON_MOON = `<svg viewBox="0 0 24 24" style="width:56%;height:56%" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 14.5A8.6 8.6 0 0 1 9.5 3.8a8.6 8.6 0 1 0 10.7 10.7z"/></svg>`;
-function applyTheme(t) {
-  document.documentElement.dataset.theme = t;
-  document.getElementById("theme-btn").innerHTML = t === "dark" ? ICON_SUN : ICON_MOON;
-}
-function toggleTheme() {
-  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-  localStorage.setItem(THEME_KEY, next);
-  applyTheme(next);
-}
-applyTheme(localStorage.getItem(THEME_KEY) || "dark");
-if (typeof mountStatusBar === "function") mountStatusBar();
-window.addEventListener("storage", (e) => {
-  if (e.key === THEME_KEY && e.newValue) applyTheme(e.newValue);
-});
+/* El tema, el botón y la barra los pone core.js. Este archivo llegó a tener
+   su propia copia de todo eso y, al cargar el motor, las redeclaraciones
+   rompían el bloque entero — por eso la pantalla se quedaba sin barra. */
+loadDB();
+initTheme("dark");
+mountThemeToggle();
+mountStatusBar();
 </script>
 
 </body>

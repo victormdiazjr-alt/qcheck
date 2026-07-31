@@ -210,7 +210,7 @@ function mountStatusBar(day, opciones) {
       <a class="qcs-tiro" id="qcs-tiro" href="results.html#daily"></a>
       <div class="qcs-conn" id="qcs-conn"><i></i><span></span></div>`;
     document.body.appendChild(bar);
-    if (document.querySelector("header.qc-header")) document.documentElement.classList.add("qcs-fija");
+    document.documentElement.classList.add("qcs-fija");
     addEventListener("online", pintarConexion);
     addEventListener("offline", pintarConexion);
     mountCloseButton({ kiosco: !!o.kiosco });
@@ -256,32 +256,46 @@ function inyectarEstilosStatus() {
   // Se inyecta desde el motor para que las pantallas de campo, que no cargan
   // qc.css, tengan exactamente la misma barra. --qcs-e escala el conjunto.
   s.textContent = `
+/* Alto de la franja. De aquí cuelga el desplazamiento de todo lo demás. */
+:root { --qcs-h: calc(42px * var(--qcs-e, 1) + env(safe-area-inset-top)); }
+
+/* La barra es una franja fija de borde a borde, arriba del todo, en TODAS las
+   pantallas y a cualquier tamaño. Nada se pinta encima: el resto del GUI
+   empieza justo debajo, desplazado por --qcs-h. */
 .qcs {
-  position: fixed; top: 12px; right: 14px; z-index: 330;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 330;
   display: flex; align-items: center; gap: calc(10px * var(--qcs-e, 1));
-  padding: calc(5px * var(--qcs-e, 1)) calc(6px * var(--qcs-e, 1))
-           calc(5px * var(--qcs-e, 1)) calc(13px * var(--qcs-e, 1));
-  border-radius: 999px;
-  background: rgba(12,17,24,.72); border: 1px solid rgba(255,255,255,.12);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  height: var(--qcs-h);
+  padding: env(safe-area-inset-top) calc(10px + env(safe-area-inset-right)) 0
+           calc(16px + env(safe-area-inset-left));
+  background: rgba(8,11,16,.86); border-bottom: 1px solid rgba(255,255,255,.09);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   color: #eef2f6; font-variant-numeric: tabular-nums;
-  box-shadow: 0 6px 22px rgba(0,0,0,.34);
 }
-:root[data-theme="light"] .qcs { background: rgba(22,34,46,.90); border-color: rgba(255,255,255,.16); }
+:root[data-theme="light"] .qcs { background: rgba(18,28,38,.94); }
+/* el contenido de cada pantalla arranca bajo la franja */
+html.qcs-fija body { padding-top: var(--qcs-h); }
+html.qcs-fija header.qc-header { top: var(--qcs-h); }
+
 /* El botón vive dentro de la barra: se define aquí completo para que las
    pantallas de campo, que no cargan qc.css, lo vean igual. */
 .qcs .close-btn {
-  position: static; flex: none; padding: 0; cursor: pointer;
+  position: static; flex: none; padding: 0; cursor: pointer; margin-left: auto;
   display: flex; align-items: center; justify-content: center;
   width: calc(30px * var(--qcs-e,1)); height: calc(30px * var(--qcs-e,1));
   border-radius: 50%; border: 1px solid rgba(255,255,255,.16);
   background: rgba(255,255,255,.07); color: rgba(238,242,246,.62);
-  transition: background .15s, color .15s, transform .15s;
+  transition: background .15s, color .15s, box-shadow .15s, transform .15s;
 }
 .qcs .close-btn svg { width: calc(15px * var(--qcs-e,1)); height: calc(15px * var(--qcs-e,1)); }
-.qcs .close-btn:hover { background: var(--susp, #ff5a52); border-color: var(--susp, #ff5a52); color: #fff; transform: scale(1.06); }
-.qcs .close-btn.locked:hover { background: #4a63d8; border-color: #4a63d8; }
-.qcs-tiro { display: flex; align-items: center; gap: calc(8px * var(--qcs-e,1)); text-decoration: none; color: inherit; }
+/* el color entra por el resplandor, no por el relleno */
+.qcs .close-btn:hover { color: var(--susp, #ff5a52); border-color: rgba(255,90,82,.55);
+  box-shadow: 0 0 0 3px rgba(255,90,82,.10), 0 0 16px -2px rgba(255,90,82,.7); transform: scale(1.06); }
+.qcs .close-btn.locked:hover { color: #7d92ea; border-color: rgba(125,146,234,.55);
+  box-shadow: 0 0 0 3px rgba(74,99,216,.12), 0 0 16px -2px rgba(74,99,216,.75); }
+
+.qcs-tiro { display: flex; align-items: center; gap: calc(8px * var(--qcs-e,1));
+  text-decoration: none; color: inherit; min-width: 0; }
 .qcs-tiro:hover .qcs-seg i.on { filter: brightness(1.25); }
 .qcs-lb, .qcs-pc {
   white-space: nowrap;
@@ -299,36 +313,25 @@ function inyectarEstilosStatus() {
 .qcs-cy { font-size: calc(12.5px * var(--qcs-e,1)); font-weight: 300; letter-spacing: -.01em; white-space: nowrap; }
 .qcs-cy b { font-size: calc(9.5px * var(--qcs-e,1)); font-weight: 700; color: rgba(238,242,246,.5); letter-spacing: .1em; text-transform: uppercase; }
 .qcs-tiro.sin-plan .qcs-pc { color: rgba(238,242,246,.42); }
-.qcs-conn { display: flex; align-items: center; gap: calc(6px * var(--qcs-e,1));
+.qcs-conn { display: flex; align-items: center; gap: calc(6px * var(--qcs-e,1)); flex: none;
   font-size: calc(10.5px * var(--qcs-e,1)); font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: #34d27b;
-  padding-left: calc(10px * var(--qcs-e,1)); border-left: 1px solid rgba(255,255,255,.12); }
+  text-transform: uppercase; color: #34d27b; margin-left: auto;
+  padding-right: calc(12px * var(--qcs-e,1)); }
+/* con la conexión ya empujada a la derecha, el botón la sigue */
+.qcs-conn + .close-btn { margin-left: 0; }
 .qcs-conn i { width: calc(6px * var(--qcs-e,1)); height: calc(6px * var(--qcs-e,1));
   border-radius: 50%; background: currentColor; box-shadow: 0 0 calc(7px * var(--qcs-e,1)) currentColor;
   animation: qcsLatir 1.9s ease-in-out infinite; }
 .qcs-conn.off { color: #ff5a52; }
 .qcs-conn.off i { animation: none; }
 @keyframes qcsLatir { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
-/* En el teléfono deja de ser una píldora en la esquina y pasa a ser la franja
-   de arriba, como la barra de estado de iOS: así no le roba ancho al
-   encabezado — que era lo que desbordaba la página a lo ancho. */
 @media (max-width: 820px) {
-  .qcs {
-    top: 0; left: 0; right: 0; border-radius: 0; border-width: 0 0 1px 0;
-    gap: 10px;
-    padding: calc(6px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right))
-             6px calc(13px + env(safe-area-inset-left));
-  }
+  .qcs { gap: 10px; padding-left: calc(13px + env(safe-area-inset-left)); }
   .qcs-lb, .qcs-conn span { display: none; }
-  .qcs-conn { padding-left: 10px; }
-  /* los segmentos conservan su grosor de barra de señal; lo que se estira
-     es el hueco, para que la conexión quede pegada al borde derecho */
-  .qcs-tiro { flex: 1; min-width: 0; }
-  /* el contenido baja para no quedar debajo de la franja */
-  html.qcs-fija body { padding-top: calc(42px + env(safe-area-inset-top)); }
-  html.qcs-fija header.qc-header { top: calc(42px + env(safe-area-inset-top)); }
+  .qcs-conn { padding-right: calc(10px * var(--qcs-e,1)); }
 }
-@media print { .qcs { display: none !important; } }
+/* en papel no hay barra, así que tampoco el hueco que le deja arriba */
+@media print { .qcs { display: none !important; } html.qcs-fija body { padding-top: 0; } }
 @media (prefers-reduced-motion: reduce) { .qcs-conn i { animation: none; } }
 
 .qcs-lock { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center;

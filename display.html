@@ -15,7 +15,7 @@
 :root {
   --bg: #0a0d12;
   --logo-blue:#4a7ef0; --logo-green:#57c94f; --logo-g1:#8a95a3; --logo-g2:#6b7683;
-  --qcs-e: 1.75;
+  --qcs-e: 1.45;
   --text: #eef2f6;
   --muted: #77848f;
   --hairline: rgba(255,255,255,.09);
@@ -47,7 +47,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  height: 100vh; height: 100dvh;
+  height: 100vh; height: 100dvh; padding-top: var(--qcs-h, 42px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -74,8 +74,6 @@ body.s-susp #ambient { animation: breathe 2.6s ease-in-out infinite; }
 header {
   display: flex; align-items: baseline; gap: 1.6vw;
   padding: 3.2vh 5vw 0 3.4vw;
-  /* el reloj se aparta lo que mide la barra de estado, sea cual sea su escala */
-  margin-top: calc(16px + 42px * var(--qcs-e, 1));
   position: relative;
 }
 .brand-left { display: flex; align-items: center; gap: 1.3vw; }
@@ -235,8 +233,7 @@ footer {
      Aquí la página crece con su contenido y, si hace falta, se desplaza. */
   body { height: auto; min-height: 100dvh; }
   .stage { flex: none; }
-  header { flex-direction: column; align-items: stretch; gap: 2vw;
-           padding: calc(48px + env(safe-area-inset-top)) 5vw 0 5vw; }
+  header { flex-direction: column; align-items: stretch; gap: 2vw; padding: 3vw 5vw 0 5vw; }
   .qclogo { height: min(12vw, 8vh); }
   .brand-name { font-size: min(5vw, 3.2vh); } .meta-line { font-size: min(3vw, 1.9vh); }
   .clock { margin-left: 0; text-align: left; display: flex; align-items: baseline; gap: 3vw; }

@@ -131,12 +131,18 @@ puerta comercial hacia Concre-Ticket.
 
 ## 9. La barra de estado y el modo kiosco
 
-**Todas las pantallas llevan la misma barra arriba a la derecha** — `mountStatusBar(dia, {kiosco})`
-en `core.js`. Es la barra de estado del teléfono aplicada a la obra: avance del tiro
-(yardas colocadas contra las planificadas, en segmentos) y estado de conexión, siempre a la
-vista. El botón de cerrar vive dentro de ella. Sus estilos se **inyectan desde `core.js`**,
-no desde `qc.css`, para que las pantallas de campo (que no cargan `qc.css`) la vean idéntica.
-`--qcs-e` escala el conjunto: el Field Display la agranda porque se lee de lejos.
+**Todas las pantallas llevan la misma barra** — `mountStatusBar(dia, {kiosco})` en `core.js`.
+Es la barra de estado del teléfono aplicada a la obra: avance del tiro (yardas colocadas
+contra las planificadas, en segmentos) y estado de conexión, siempre a la vista. El botón
+de cerrar vive dentro de ella.
+
+**Es una franja fija de borde a borde, pegada arriba, en todas las pantallas y a cualquier
+tamaño, y NADA se pinta encima.** El resto del GUI empieza justo debajo: `--qcs-h` lleva su
+alto y de ahí cuelgan `body { padding-top }` y el `top` de los encabezados pegajosos. Si
+añades una pantalla, no la desplaces a mano — basta con que llame a `mountStatusBar()`.
+Sus estilos se **inyectan desde `core.js`**, no desde `qc.css`, para que las pantallas de
+campo (que no cargan `qc.css`) la vean idéntica. `--qcs-e` escala el conjunto: el Field
+Display la agranda porque se lee de lejos, y vuelve a 1 en pantallas bajitas.
 
 Si el día no tiene yardas planificadas, la barra dice **«sin plan»** y lleva al formulario
 donde se definen. **No inventes un total.**
@@ -184,6 +190,10 @@ en `assets/qc.css`; no inventes colores en las pantallas.
   rojo `#ff5a52` fuera. Iguales en las cinco pantallas.
 - **El naranja NO se usa en QCheck**: es la marca de Concre-Ticket. Si ves naranja aquí,
   es un descuido — cámbialo por `var(--accent2)`.
+- **El color entra por el resplandor, no por el relleno.** Nada de botones pintados de
+  verde o de azul: superficie de panel, borde teñido y un `box-shadow` de color alrededor.
+  Así el color señala sin gritar y todo pertenece al mismo tablero oscuro. El botón de
+  enviar de Muestras además respira, porque es la acción que se busca con la mano sucia.
 - **Tipografía**: cifras grandes en peso ligero (300) con `tabular-nums`;
   micro-etiquetas en mayúsculas con `letter-spacing` amplio (.16em–.26em).
 - Esquinas de 14 px, líneas de un pelo (`var(--line)`), sombras suaves.

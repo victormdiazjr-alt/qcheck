@@ -48,7 +48,7 @@ html, body { height: 100%; overflow: hidden; }
 body {
   background: var(--bg); color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  height: 100vh; height: 100dvh; display: flex; flex-direction: column;
+  height: 100vh; height: 100dvh; padding-top: var(--qcs-h, 42px); display: flex; flex-direction: column;
   user-select: none; -webkit-user-select: none;
 }
 
@@ -140,7 +140,6 @@ header .spacer { flex: 1; }
     overflow-y: auto; -webkit-overflow-scrolling: touch;
     gap: 2.2vw; padding: 2vw 3vw 3vw;
   }
-  header { padding-top: calc(46px + env(safe-area-inset-top)); }
   .left, .right { gap: 2vw; }
   .vals { grid-template-columns: repeat(2, 1fr); gap: 2vw; }
   .val { min-height: 22vw; padding: 3vw 2vw; gap: .4vw; }
@@ -189,12 +188,37 @@ footer {
 .v-ok { --vc: var(--ok); } .v-act { --vc: var(--act); } .v-susp { --vc: var(--susp); } .v-idle { --vc: var(--muted); }
 footer .spacer { flex: 1; }
 .btn-sub {
-  background: var(--ok); color: #06180d; border: none; border-radius: 16px;
+  /* El color entra por el resplandor, no por el relleno: la superficie es la
+     misma del resto de las tarjetas y el verde llama la atención desde el borde. */
+  --bc: var(--ok);
+  background: linear-gradient(168deg, var(--surface-2), var(--surface));
+  color: var(--bc); border: 1px solid color-mix(in srgb, var(--bc) 55%, transparent);
+  border-radius: 16px;
   padding: 2.4vh 4vw; font-size: 2.8vh; font-weight: 850; letter-spacing: .12em;
   text-transform: uppercase; font-family: inherit; cursor: pointer;
+  box-shadow: 0 0 0 .35vh color-mix(in srgb, var(--bc) 12%, transparent),
+              0 0 4vh -1vh color-mix(in srgb, var(--bc) 75%, transparent),
+              inset 0 1px 0 rgba(255,255,255,.06);
+  animation: subLatir 2.4s ease-in-out infinite;
+  transition: transform .16s cubic-bezier(.2,.7,.3,1), box-shadow .22s, border-color .22s;
 }
-.btn-sub.rej { background: var(--susp); color: #fff; }
-.btn-sub:disabled { background: var(--surface-2); color: var(--muted); cursor: default; }
+/* el resplandor respira para pedir el toque sin gritar */
+@keyframes subLatir {
+  0%, 100% { box-shadow: 0 0 0 .35vh color-mix(in srgb, var(--bc) 12%, transparent),
+                         0 0 4vh -1vh color-mix(in srgb, var(--bc) 70%, transparent),
+                         inset 0 1px 0 rgba(255,255,255,.06); }
+  50%      { box-shadow: 0 0 0 .55vh color-mix(in srgb, var(--bc) 18%, transparent),
+                         0 0 6vh -1vh color-mix(in srgb, var(--bc) 95%, transparent),
+                         inset 0 1px 0 rgba(255,255,255,.06); }
+}
+.btn-sub:active { transform: scale(.97); }
+.btn-sub.rej { --bc: var(--susp); }
+.btn-sub:disabled {
+  --bc: var(--muted);
+  color: var(--muted); border-color: var(--hairline); cursor: default;
+  animation: none; box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) { .btn-sub { animation: none; } }
 .btn-ghost {
   background: transparent; color: var(--muted); border: 2px solid var(--hairline);
   border-radius: 16px; padding: 2.4vh 2.2vw; font-size: 1.9vh; font-weight: 800;
