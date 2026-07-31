@@ -1,0 +1,22 @@
+{
+  "name": "QCheck — Control de Hormigón PR-52",
+  "short_name": "QCheck",
+  "description": "Control de calidad de hormigón de Segarra Engineering para la reconstrucción de la PR-52.",
+  "lang": "es-PR",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0a0d12",
+  "theme_color": "#0a0d12",
+  "icons": [
+    {
+      "src": "assets/icono-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

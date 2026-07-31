@@ -3,10 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<!-- Aplicación en la pantalla de inicio (iOS y Android). Sin estas etiquetas
+     y sin el manifest, el icono guardado abre como un MARCADOR de Safari, con
+     una franja arriba enseñando el dominio en vez de la aplicación limpia. -->
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="QCheck">
 <link rel="apple-touch-icon" href="assets/icono-180.png">
+<meta name="theme-color" content="#0a0d12">
 <title>Muestras — QCheck</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%2396c93d' stroke-width='8'/></svg>">
 <style>
@@ -170,7 +176,6 @@ header .spacer { flex: 1; }
   footer .spacer { display: none; }
   .verdict-pre { min-width: 0; }
   .verdict-pre .txt .w { white-space: nowrap; }
-  .btn-truck { width: 15vw; height: 11vw; border-radius: 3vw; flex: none; }
   .btn-ghost, .icon-btn { flex: none; }
 }
 
@@ -227,104 +232,6 @@ footer .spacer { flex: 1; }
   letter-spacing: .14em; text-transform: uppercase; font-family: inherit; cursor: pointer;
 }
 
-/* ---------- botón "nuevo camión" con mixer ---------- */
-/* Botón solo gráfico: pastilla suave con relieve, sin una sola palabra */
-.btn-truck {
-  display: flex; align-items: center; justify-content: center;
-  width: 13vh; height: 9.6vh; padding: 0 1.2vh;
-  border-radius: 2.6vh; cursor: pointer; font-family: inherit;
-  background: linear-gradient(165deg, var(--surface-2), var(--surface));
-  border: 1px solid var(--hairline);
-  box-shadow: 0 .7vh 2.2vh rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.07);
-  transition: transform .16s cubic-bezier(.2,.7,.3,1), box-shadow .22s, border-color .22s;
-}
-.btn-truck:hover {
-  border-color: rgba(52,210,123,.55);
-  box-shadow: 0 .9vh 2.6vh rgba(0,0,0,.4), 0 0 0 .45vh rgba(52,210,123,.11), inset 0 1px 0 rgba(255,255,255,.09);
-  transform: translateY(-.25vh);
-}
-.btn-truck:active { transform: scale(.96) translateY(0); box-shadow: 0 .3vh 1vh rgba(0,0,0,.3), inset 0 2px 5px rgba(0,0,0,.22); }
-.btn-truck .mixer { width: 100%; height: auto; display: block;
-  fill: none; stroke: var(--idle); stroke-width: 1.6;
-  stroke-linecap: round; stroke-linejoin: round; }
-.btn-truck .mixer .mas { stroke: #8ba4f5; stroke-width: 2.2; }
-.btn-truck:hover .mixer { stroke: #8ba4f5; }
-
-/* paleta del icono, sensible al tema */
-:root {
-  --mx-hi: #a6b3c3; --mx-mid: #74808f; --mx-lo: #4d5865; --mx-edge: #dbe4ed;
-  --mx-band: #e3eaf2; --mx-tyre: #232a33; --mx-hub: #7d8898;
-  --mx-glass: rgba(133,190,240,.5); --mx-shadow: rgba(0,0,0,.32); --mx-glow: rgba(52,210,123,.25);
-}
-:root[data-theme="light"] {
-  --mx-hi: #b6c1cd; --mx-mid: #8a95a3; --mx-lo: #64707e; --mx-edge: #ffffff;
-  --mx-band: #ffffff; --mx-tyre: #3b434e; --mx-hub: #aab4c0;
-  --mx-glass: rgba(96,152,205,.5); --mx-shadow: rgba(15,30,45,.16); --mx-glow: rgba(14,157,85,.18);
-}
-
-/* ---------- hoja de entrada (escanear / manual) ---------- */
-.sheet {
-  position: fixed; inset: 0; z-index: 520; display: none;
-  align-items: center; justify-content: center;
-  background: rgba(6,9,13,.88); backdrop-filter: blur(5px);
-}
-.sheet.show { display: flex; }
-.sbox {
-  background: var(--surface); border: 2px solid var(--hairline); border-radius: 24px;
-  padding: 4vh 3.4vw; width: min(74vw, 900px); max-height: 92vh; overflow-y: auto;
-}
-.sbox h2 { font-size: 3.4vh; margin-bottom: .6vh; }
-.sbox .sub { font-size: 1.8vh; color: var(--muted); margin-bottom: 3.4vh; }
-.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 2vw; }
-.opts.opts-3 { grid-template-columns: repeat(3, 1fr); gap: 1.4vw; }
-.opts.opts-3 .opt { padding: 2.8vh 1vw; }
-.opts.opts-3 .opt .ico { width: 7.6vh; height: 7.6vh; margin-bottom: 1.2vh; }
-.opts.opts-3 .opt .t { font-size: 2.2vh; }
-.opts.opts-3 .opt .d { font-size: 1.35vh; }
-label.opt { display: block; }
-.opt {
-  background: var(--surface-2); border: 3px solid var(--hairline); border-radius: 20px;
-  padding: 3.4vh 1.6vw; text-align: center; cursor: pointer; font-family: inherit; color: var(--text);
-}
-.opt:active { border-color: var(--ok); }
-.opt .ico { display: block; margin: 0 auto 1.6vh; width: 9vh; height: 9vh; }
-.opt .t { font-size: 2.6vh; font-weight: 800; }
-.opt .d { font-size: 1.5vh; color: var(--muted); margin-top: .8vh; line-height: 1.4; }
-.remember {
-  display: flex; align-items: center; gap: 1.2vw; margin-top: 3vh;
-  background: var(--surface-2); border-radius: 14px; padding: 1.8vh 2vw; cursor: pointer;
-}
-.remember .box {
-  width: 4.4vh; height: 4.4vh; border-radius: 10px; border: 3px solid var(--muted);
-  display: flex; align-items: center; justify-content: center; font-size: 2.6vh; color: var(--ok); flex: none;
-}
-.remember.on .box { border-color: var(--ok); background: rgba(52,210,123,.14); }
-.remember .txt { font-size: 1.9vh; font-weight: 700; }
-.remember .txt s { display: block; font-size: 1.4vh; color: var(--muted); font-weight: 600; text-decoration: none; }
-.sheet-foot { display: flex; gap: 1.4vw; justify-content: flex-end; margin-top: 3vh; align-items: center; }
-.sheet-foot .spacer { flex: 1; }
-.link-reset { background: none; border: none; color: var(--idle); font-family: inherit; font-size: 1.6vh; font-weight: 700; cursor: pointer; text-decoration: underline; }
-
-/* campos de entrada manual */
-.mgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2vh 2vw; }
-.mgrid .f { display: flex; flex-direction: column; gap: .8vh; }
-.mgrid .f.wide { grid-column: span 3; }
-.mgrid label { font-size: 1.4vh; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
-.mgrid input, .mgrid select {
-  background: var(--surface-2); border: 2px solid var(--hairline); color: var(--text);
-  border-radius: 14px; padding: 2vh 1.4vw; font-size: 3vh; font-weight: 700;
-  font-family: inherit; font-variant-numeric: tabular-nums; width: 100%;
-}
-.mgrid input:focus, .mgrid select:focus { outline: none; border-color: var(--idle); }
-
-/* cámara */
-#scan-wrap { position: relative; border-radius: 18px; overflow: hidden; background: #000; }
-#scan-wrap video { width: 100%; max-height: 52vh; display: block; object-fit: cover; }
-#scan-wrap .frame {
-  position: absolute; inset: 14% 20%; border: 4px solid rgba(255,255,255,.9); border-radius: 18px;
-  box-shadow: 0 0 0 2000px rgba(0,0,0,.42);
-}
-
 /* ---------- confirmación de rechazo ---------- */
 #confirm {
   position: fixed; inset: 0; z-index: 500; display: none;
@@ -363,7 +270,7 @@ label.opt { display: block; }
 .icon-btn.muted { opacity: .55; border-style: dashed; }
 .empty-state { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 2.4vh; line-height: 1.6; }
 </style>
-<script src="assets/usuarios.js?v=fb697b5c"></script>
+<script src="assets/usuarios.js?v=dfd5ecc0"></script>
 <script src="assets/auth.js?v=c77eb346"></script>
 </head>
 <body>
@@ -394,93 +301,6 @@ label.opt { display: block; }
 <div class="body" id="body"></div>
 
 <footer id="foot"></footer>
-
-<!-- hoja de entrada: escanear o manual -->
-<div class="sheet" id="intake">
-  <div class="sbox">
-    <h2>Nuevo camión</h2>
-    <div class="sub">¿Cómo desea entrar el conduce?</div>
-    <div class="opts opts-3">
-      <button class="opt" onclick="chooseIntake('scan')">
-        <svg class="ico" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 20V10h10M48 10h10v10M58 44v10H48M16 54H6V44"/>
-          <rect x="19" y="19" width="11" height="11" rx="1.5"/>
-          <rect x="34" y="19" width="11" height="11" rx="1.5"/>
-          <rect x="19" y="34" width="11" height="11" rx="1.5"/>
-          <path d="M34 34h5v5M45 34v5M39 45h6" stroke-width="3.4"/>
-        </svg>
-        <div class="t">Escanear QR</div>
-        <div class="d">Conduce con código · entra todo solo</div>
-      </button>
-      <label class="opt">
-        <input type="file" accept="image/*" capture="environment" style="display:none" onchange="photoIntake(this)">
-        <svg class="ico" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 20a4 4 0 0 1 4-4h6l4-6h16l4 6h6a4 4 0 0 1 4 4v26a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4z"/>
-          <circle cx="32" cy="32" r="10"/>
-        </svg>
-        <div class="t">Foto del conduce</div>
-        <div class="d">Conduce en papel · queda como evidencia</div>
-      </label>
-      <button class="opt" onclick="chooseIntake('manual')">
-        <svg class="ico" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="10" y="8" width="44" height="34" rx="4"/>
-          <path d="M18 18h6M30 18h6M42 18h4M18 27h6M30 27h6M42 27h4M22 36h20" stroke-width="3.6"/>
-          <path d="M24 50h16M32 42v14" stroke-width="3.6"/>
-        </svg>
-        <div class="t">Entrada manual</div>
-        <div class="d">Escribir el ticket · sin código</div>
-      </button>
-    </div>
-    <div id="scan-support" style="display:none; margin-top:2vh; font-size:1.5vh; color:var(--act); text-align:center"></div>
-    <div class="remember" id="remember" onclick="toggleRemember()">
-      <div class="box" id="remember-box"></div>
-      <div class="txt">No volver a preguntar
-        <s>Usar siempre el método que elija ahora</s></div>
-    </div>
-    <div class="sheet-foot">
-      <button class="btn-ghost" onclick="closeSheet('intake')">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<!-- escanear -->
-<div class="sheet" id="scan">
-  <div class="sbox">
-    <h2>Escanear conduce</h2>
-    <div class="sub" id="scan-sub">Apunte la cámara al código QR del ticket</div>
-    <div id="scan-wrap"><video id="scan-video" playsinline muted></video><div class="frame"></div></div>
-    <div class="sheet-foot">
-      <button class="link-reset" onclick="resetIntakePref()">Cambiar método de entrada</button>
-      <div class="spacer"></div>
-      <button class="btn-ghost" onclick="stopScan(); closeSheet('scan')">Cancelar</button>
-      <button class="btn-sub" onclick="stopScan(); closeSheet('scan'); openManual()">Entrar manual</button>
-    </div>
-  </div>
-</div>
-
-<!-- entrada manual -->
-<div class="sheet" id="manual">
-  <div class="sbox">
-    <h2>Nuevo camión</h2>
-    <div class="sub">Datos del conduce</div>
-    <div class="mgrid">
-      <div class="f"><label>Ticket / Conduce *</label><input id="m-ticket" inputmode="numeric" placeholder="66905"></div>
-      <div class="f"><label>Camión</label><input id="m-truck" inputmode="numeric" placeholder="115"></div>
-      <div class="f"><label>Volumen (CY)</label><input id="m-vol" inputmode="decimal" value="10"></div>
-      <div class="f"><label>Compañía</label><input id="m-company" placeholder="Concretec"></div>
-      <div class="f"><label>Planta</label><input id="m-plant" placeholder="01-SAN JUAN"></div>
-      <div class="f"><label>Hora batch</label><input id="m-batch" type="time"></div>
-      <div class="f wide"><label>Losa / Identificación</label><input id="m-ident" placeholder="Phase 10 - Slab L3-0.443"></div>
-    </div>
-    <div id="m-photo" style="display:flex; align-items:center; gap:1.2vw; margin-top:2vh"></div>
-    <div class="sheet-foot">
-      <button class="link-reset" onclick="resetIntakePref()">Cambiar método de entrada</button>
-      <div class="spacer"></div>
-      <button class="btn-ghost" onclick="closeSheet('manual')">Cancelar</button>
-      <button class="btn-sub" onclick="saveManual()">Registrar llegada</button>
-    </div>
-  </div>
-</div>
 
 <div id="confirm">
   <div class="cbox">
@@ -534,7 +354,6 @@ const snd = {
   clear: () => tone(420, 0, 0.09, "triangle", 0.12),    // borrar
   ok:    () => { tone(523, 0, 0.12); tone(659, 0.12, 0.12); tone(784, 0.25, 0.34); },
   bad:   () => { tone(210, 0, 0.28, "square", 0.14); tone(165, 0.32, 0.46, "square", 0.14); },
-  truck: () => { tone(587, 0, 0.13, "sine", 0.2); tone(784, 0.15, 0.13, "sine", 0.2); tone(988, 0.3, 0.3, "sine", 0.2); },
 };
 
 const ICON_SPK = `<svg viewBox="0 0 24 24" style="width:52%;height:52%" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 5.2 7 9H3.6v6H7l4.5 3.8z" fill="currentColor" stroke="none"/><path d="M15.4 9a4.4 4.4 0 0 1 0 6M18.1 6.6a8 8 0 0 1 0 10.8"/></svg>`;
@@ -692,7 +511,10 @@ function render() {
   const foot = document.getElementById("foot");
 
   if (!t) {
-    body.innerHTML = `<div class="empty-state">No hay camiones registrados hoy.<br>Escanee un conduce en la pantalla de Recepción.</div>`;
+    /* Muestras ya no da de alta camiones: se muestrea lo que llegó por
+       Recepción. Sin camiones recibidos no hay nada que muestrear, y la
+       pantalla lo dice — no es una instrucción, es de dónde sale el dato. */
+    body.innerHTML = `<div class="empty-state">No hay camiones recibidos hoy.<br>Los camiones entran por Recepción.</div>`;
     foot.innerHTML = "";
     return;
   }
@@ -759,208 +581,10 @@ function render() {
     <button class="icon-btn ${soundOn ? "" : "muted"}" id="sound-toggle" onclick="toggleSound()"
       title="${soundOn ? "Silenciar" : "Activar sonido"}" aria-label="Sonido">${soundOn ? ICON_SPK : ICON_MUTE}</button>
     <button class="icon-btn" id="theme-toggle" onclick="toggleTheme()" aria-label="Tema"></button>
-    <button class="btn-truck" onclick="newTruck()" title="Nuevo camión — ${intakeLabel()}" aria-label="Nuevo camión">
-      ${MIXER_SVG}
-    </button>
     ${v.ready ? `<button class="btn-sub ${v.bad ? "rej" : ""}" onclick="askSubmit()">
       ${v.bad ? "Rechazar" : "Aprobar"}
     </button>` : ""}`;
   applyTheme(document.documentElement.dataset.theme || "dark"); // repinta el icono del tema
-}
-
-/* ============================================================
-   Nuevo camión: mixer + escanear / manual, con memoria de método
-   ============================================================ */
-/* Mixer minimalista: mismo trazo, extremos redondeados y acento verde,
-   coherente con el logo QCheck y los demás iconos del sistema. */
-/* Mixer basado en el dibujo de Víctor: cabina clásica, tambor almendra
-   con bandas, tolva y canaleta atrás, tándem trasero, y el + sobre el
-   tambor. Trazo limpio del sistema, acento verde en el +. */
-/* Mixer con volumen: cuerpo en degradado metálico, tambor con espiral,
-   sombra de contacto y el + verde en relieve. Basado en el dibujo de Víctor. */
-const MIXER_SVG = `<svg class="mixer" viewBox="0 0 42 28" aria-hidden="true">
-  <!-- tambor: rectángulo redondeado inclinado, que es lo que lee como mixer -->
-  <g transform="rotate(-24 21.5 13)">
-    <rect x="10.5" y="7.6" width="23" height="10.8" rx="5.4"/>
-    <path d="M17.4 8.6v8.8M24.2 8.6v8.8"/>
-  </g>
-  <!-- canaleta -->
-  <path d="M32.6 15.4l3.6 3.1"/>
-  <!-- cabina y chasis -->
-  <path d="M2.6 20.4v-7.8h5.4l2.9 4.6v3.2"/>
-  <path d="M4.4 14.2h3.2l1.8 2.9H4.4z"/>
-  <path d="M2.6 20.4h27.8"/>
-  <!-- ruedas -->
-  <circle cx="7.4" cy="22.8" r="2.4"/>
-  <circle cx="21.4" cy="22.8" r="2.4"/>
-  <circle cx="27.4" cy="22.8" r="2.4"/>
-  <!-- el signo de más, que es lo que dice "otro camión" -->
-  <path class="mas" d="M37.6 3.4v6.4M34.4 6.6h6.4"/>
-</svg>`;
-
-const INTAKE_KEY = "qc-intake-pref";
-let intakePref = localStorage.getItem(INTAKE_KEY) || null;   // 'scan' | 'manual' | null
-let rememberOn = false;
-
-function intakeLabel() {
-  if (intakePref === "scan") return "escanear QR";
-  if (intakePref === "manual") return "entrada manual";
-  return "escanear o manual";
-}
-function openSheet(id) { document.getElementById(id).classList.add("show"); }
-function closeSheet(id) { document.getElementById(id).classList.remove("show"); }
-
-/* iPhone/iPad: Safari no trae lector nativo de QR (BarcodeDetector).
-   Se detecta y se guía al usuario a la foto del conduce o a la entrada manual. */
-const CAN_SCAN = "BarcodeDetector" in window;
-
-function newTruck() {
-  if (intakePref === "scan" && CAN_SCAN) return openScan();
-  if (intakePref === "manual") return openManual();
-  rememberOn = false;
-  paintRemember();
-  const note = document.getElementById("scan-support");
-  if (!CAN_SCAN) {
-    note.style.display = "block";
-    note.innerHTML = "⚠ Este dispositivo no lee QR desde el navegador — use <b>Foto del conduce</b> o <b>Entrada manual</b>.";
-  } else note.style.display = "none";
-  openSheet("intake");
-}
-
-/* ---------- foto del conduce (funciona en iPhone/iPad) ---------- */
-function photoIntake(input) {
-  const file = input.files && input.files[0];
-  input.value = "";
-  if (!file) return;
-  const img = new Image();
-  img.onload = () => {
-    const c = document.createElement("canvas");
-    const scale = Math.min(1, 1400 / img.width);
-    c.width = Math.round(img.width * scale);
-    c.height = Math.round(img.height * scale);
-    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-    pendingPhoto = c.toDataURL("image/jpeg", 0.72);
-    URL.revokeObjectURL(img.src);
-    if (rememberOn) { intakePref = "manual"; localStorage.setItem(INTAKE_KEY, "manual"); }
-    closeSheet("intake");
-    openManual();
-    document.getElementById("m-photo").innerHTML =
-      `<img src="${pendingPhoto}" style="height:9vh;border-radius:10px;border:2px solid var(--ok)">
-       <span style="font-size:1.5vh;color:var(--ok);font-weight:800;letter-spacing:.14em">📎 CONDUCE ADJUNTO</span>`;
-    toast("Foto adjunta — confirme el ticket");
-  };
-  img.src = URL.createObjectURL(file);
-}
-let pendingPhoto = null;
-function toggleRemember() { rememberOn = !rememberOn; paintRemember(); }
-function paintRemember() {
-  const el = document.getElementById("remember");
-  el.classList.toggle("on", rememberOn);
-  document.getElementById("remember-box").textContent = rememberOn ? "✓" : "";
-}
-function chooseIntake(mode) {
-  if (rememberOn) { intakePref = mode; localStorage.setItem(INTAKE_KEY, mode); }
-  closeSheet("intake");
-  mode === "scan" ? openScan() : openManual();
-}
-function resetIntakePref() {
-  intakePref = null; localStorage.removeItem(INTAKE_KEY);
-  stopScan(); closeSheet("scan"); closeSheet("manual");
-  toast("Volverá a preguntar el método");
-  render();
-}
-
-/* ---------- escanear QR ---------- */
-let scanStream = null, scanTimer = null;
-async function openScan() {
-  openSheet("scan");
-  const sub = document.getElementById("scan-sub");
-  if (!("BarcodeDetector" in window)) {
-    sub.textContent = "Este navegador no lee QR — use entrada manual.";
-    return;
-  }
-  try {
-    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-  } catch (e) { sub.textContent = "No se pudo abrir la cámara: " + e.message; return; }
-  const video = document.getElementById("scan-video");
-  video.srcObject = scanStream; await video.play();
-  const det = new BarcodeDetector({ formats: ["qr_code", "code_128", "code_39"] });
-  scanTimer = setInterval(async () => {
-    try {
-      const codes = await det.detect(video);
-      if (codes.length) { stopScan(); closeSheet("scan"); applyScan(codes[0].rawValue); }
-    } catch (_) {}
-  }, 380);
-}
-function stopScan() {
-  if (scanTimer) clearInterval(scanTimer);
-  if (scanStream) scanStream.getTracks().forEach((t) => t.stop());
-  scanTimer = scanStream = null;
-}
-function applyScan(raw) {
-  let d = {};
-  try { d = JSON.parse(raw); } catch (_) {
-    const p = raw.split(/[;|,]/).map((s) => s.trim());
-    d = { ticket: p[0], truck: p[1], vol: p[2], batch: p[3], company: p[4], plant: p[5] };
-  }
-  if (!d.ticket) { toast("QR no reconocido — use entrada manual"); openManual(); return; }
-  createConduce({
-    ticket: String(d.ticket), truck: d.truck || null, vol: num(d.vol) ?? 10,
-    company: d.company || null, plant: d.plant || null,
-    batch: /^\d{1,2}:\d{2}$/.test(String(d.batch || "")) ? String(d.batch).padStart(5, "0") : null,
-    ident: d.ident || null, source: "qr",
-  });
-}
-
-/* ---------- entrada manual ---------- */
-function openManual() {
-  const last = testsOfDate(state.day).slice(-1)[0];
-  document.getElementById("m-ticket").value = "";
-  document.getElementById("m-truck").value = "";
-  document.getElementById("m-vol").value = "10";
-  document.getElementById("m-company").value = last ? (last.company || "") : "";
-  document.getElementById("m-plant").value = last ? (last.plant || "") : "";
-  document.getElementById("m-batch").value = "";
-  document.getElementById("m-ident").value = "";
-  if (!pendingPhoto) document.getElementById("m-photo").innerHTML = "";
-  openSheet("manual");
-  setTimeout(() => document.getElementById("m-ticket").focus(), 120);
-}
-function saveManual() {
-  const ticket = document.getElementById("m-ticket").value.trim();
-  if (!ticket) { toast("Falta el número de ticket"); document.getElementById("m-ticket").focus(); return; }
-  createConduce({
-    ticket,
-    truck: document.getElementById("m-truck").value.trim() || null,
-    vol: num(document.getElementById("m-vol").value) ?? 10,
-    company: document.getElementById("m-company").value.trim() || null,
-    plant: document.getElementById("m-plant").value.trim() || null,
-    batch: document.getElementById("m-batch").value || null,
-    ident: document.getElementById("m-ident").value.trim() || null,
-    source: pendingPhoto ? "foto" : "manual",
-    photo: pendingPhoto,
-  });
-  pendingPhoto = null;
-  document.getElementById("m-photo").innerHTML = "";
-  closeSheet("manual");
-}
-
-/* Crea el record del conduce (clave: compañía + ticket) y lo deja listo para probar */
-function createConduce(d) {
-  const company = d.company || plantCompany(d.plant) || "—";
-  const dup = findConduce(company, d.ticket);
-  if (dup) { toast(`Ticket ${d.ticket} ya registrado — abriendo`); pickTruck(dup.n); return; }
-  const t = {
-    n: nextTestN(), id: uid(), date: todayISO(),
-    ticket: d.ticket, truck: d.truck, vol: d.vol, company, plant: d.plant,
-    batch: d.batch, arrive: nowHM(), ident: d.ident,
-    uwTarget: db.plan.uw.target, rejected: false, source: d.source,
-  };
-  if (d.photo) t.photo = d.photo;   // evidencia del conduce en papel
-  db.tests.push(t); saveDB();
-  snd.truck();
-  pickTruck(t.n);
-  toast(`Camión ${t.truck || ""} · ticket ${t.ticket} registrado`);
 }
 
 function nextField() {

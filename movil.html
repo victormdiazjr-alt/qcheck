@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Aplicación en la pantalla de inicio (iOS y Android). Sin estas etiquetas
+     y sin el manifest, el icono guardado abre como un MARCADOR de Safari, con
+     una franja arriba enseñando el dominio en vez de la aplicación limpia. -->
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="QCheck">
 <link rel="apple-touch-icon" href="assets/icono-180.png">
@@ -70,12 +75,6 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
   box-shadow: 0 0 0 3px rgba(74,99,216,.09), 0 0 22px -7px rgba(74,99,216,.95); }
 .mv-btn.destaca .ic { stroke: #8ba4f5; }   /* un punto más claro: es el destacado */
 
-.mv-inicio { display: flex; gap: 11px; margin-top: 18px; padding: 13px 15px;
-  border-radius: 14px; border: 1px dashed var(--line); color: var(--ink-soft);
-  font-size: 12px; line-height: 1.5; }
-.mv-inicio svg { width: 20px; height: 20px; flex: none; margin-top: 1px; fill: none;
-  stroke: var(--logo-blue, #4a7ef0); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.mv-inicio b { color: var(--ink); font-weight: 700; }
 .mv-pie { margin-top: 26px; text-align: center; }
 .mv-pie a { font-size: 12px; color: var(--ink-soft); text-decoration: none;
   border-bottom: 1px solid var(--line); padding-bottom: 2px; }
@@ -109,19 +108,12 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
 
   <div class="mv-menu" id="mv-menu"></div>
 
-  <!-- Safari de iPhone no deja poner una web a pantalla completa por código.
-       La única vía de verdad es guardarla en la pantalla de inicio, y desde el
-       icono abre sin barras. Se dice solo si hace falta. -->
-  <div class="mv-inicio" id="mv-inicio" hidden>
-    <svg viewBox="0 0 24 24"><path d="M12 15.5V3.5M8.4 7.1 12 3.5l3.6 3.6"/><path d="M4.5 13.5v5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5"/></svg>
-    <div>
-      <b>¿Lo quiere sin las barras de Safari?</b>
-      Toque <b>Compartir</b> y luego <b>Añadir a pantalla de inicio</b>.
-      Desde el icono, el Field Display abre a pantalla completa de verdad.
-    </div>
-  </div>
+  <!-- El consejo de «añadir a la pantalla de inicio» vivía aquí. Víctor lo sacó
+       el 31 jul 2026: ahora se explica una sola vez, y con dibujos, en la guía
+       de usuario (`docs/guia-usuario.html`). En las pantallas estorbaba. -->
 
-  <!-- la puerta al tablero completo solo la ve el administrador -->
+  <!-- La puerta al tablero completo solo la ve quien tenga `tablero` en la lista
+       de usuarios. Rubén NO: el Control Center no cabe en la mano. -->
   <div class="mv-pie" id="mv-pie" hidden><a href="control-center.html">Ver el Control Center completo</a></div>
 </main>
 
@@ -129,13 +121,14 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/core.js?v=d9fb5ba3"></script>
 <script src="assets/demo.js?v=5b7d9943"></script>
-<script src="assets/usuarios.js?v=fb697b5c"></script>
+<script src="assets/usuarios.js?v=dfd5ecc0"></script>
 <script src="assets/auth.js?v=c77eb346"></script>
 <script>
 "use strict";
 
-/* Resultados va primero y solo lo ve el administrador: es la pantalla de QC,
-   no de quien viene a consultar.
+/* Resultados va primero y solo lo ve quien lleva el control de calidad —Rubén
+   y el administrador—: es la pantalla de QC, no de quien viene a consultar.
+   (Eso sí lo ve Rubén; lo que no ve es el enlace al Control Center del pie.)
 
    El logotipo son los chevrons apilados de Segarra Engineering — el mismo
    elemento que lleva el logo de QCheck dentro, recortado y sin texto. */
@@ -145,7 +138,7 @@ const MARCA_SEGARRA = `<svg viewBox="125 500 447 425" class="ic marca">
   <path fill="#6b7683" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
 </svg>`;
 
-const PUERTA_RESULTADOS = { href: "results.html", n: "Resultados", ic: MARCA_SEGARRA, soloAdmin: true };
+const PUERTA_RESULTADOS = { href: "results.html", n: "Resultados", ic: MARCA_SEGARRA };
 
 /* Las demás puertas: quien consulta desde el teléfono no entra datos. */
 const PUERTAS = [
@@ -162,15 +155,10 @@ const PUERTAS = [
 
 function pintar() {
   document.getElementById("mv-proyecto").textContent = db.project.name || "";
-  // quien no lleva el control de calidad no ve la puerta al tablero completo
-  document.getElementById("mv-pie").hidden = !qcEsQC();
-
-  /* El consejo de la pantalla de inicio solo si es iOS en Safari y todavía no
-     está guardada: ya guardada no hay barras que quitar. */
-  const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  const guardada = navigator.standalone === true ||
-                   matchMedia("(display-mode: standalone)").matches;
-  document.getElementById("mv-inicio").hidden = !(iOS && !guardada);
+  /* El enlace al Control Center no es cosa del papel sino de la cuenta: Rubén
+     lleva el control de calidad y aun así no lo ve, porque ese tablero no cabe
+     en un teléfono. Ver `qcVeTablero()` en `assets/usuarios.js`. */
+  document.getElementById("mv-pie").hidden = !qcVeTablero();
 
   const day = diaActivo();
   const t = estadoTiro(day), p = dayProgress(day);

@@ -3,10 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Aplicación en la pantalla de inicio (iOS y Android). Sin estas etiquetas
+     y sin el manifest, el icono guardado abre como un MARCADOR de Safari, con
+     una franja arriba enseñando el dominio en vez de la aplicación limpia. -->
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="QCheck">
 <link rel="apple-touch-icon" href="assets/icono-180.png">
+<meta name="theme-color" content="#0a0d12">
 <title>Conduce — QC PR-52</title>
 <link rel="stylesheet" href="assets/qc.css?v=4c59a2ca">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0d12'/><text x='50' y='70' font-size='52' text-anchor='middle' fill='white'>▤</text></svg>">
@@ -70,7 +76,7 @@ body { background: var(--bg); }
 #video-wrap .close-scan { position: absolute; top: 10px; right: 10px; }
 .photo-chip { height: 42px; border-radius: 6px; border: 1px solid var(--line); }
 </style>
-<script src="assets/usuarios.js?v=fb697b5c"></script>
+<script src="assets/usuarios.js?v=dfd5ecc0"></script>
 <script src="assets/auth.js?v=c77eb346"></script>
 </head>
 <body>
@@ -245,13 +251,33 @@ function photoCapture(input) {
 function saveArrival() {
   const ticket = document.getElementById("f-ticket").value.trim();
   if (!ticket) { toast("Falta el número de ticket"); document.getElementById("f-ticket").focus(); return; }
+
+  /* Un conduce no se registra dos veces. La llave es compañía + ticket, no el
+     ticket solo: dos plantas pueden emitir el mismo número. Esta comprobación
+     vivía en la alta de camión de Muestras; al quitarla de allí —los camiones
+     entran por aquí y solo por aquí— se trajo a Recepción, que es donde ahora
+     hace falta. Sin ella, un conduce entrado dos veces duplica las yardas. */
+  const planta = "01-SAN JUAN";
+  const repetido = findConduce(plantCompany(planta), ticket);
+  if (repetido) {
+    toast(`El ticket ${ticket} ya está registrado — camión ${repetido.truck || "—"}`);
+    document.getElementById("f-ticket").focus();
+    return;
+  }
+
   const t = {
     n: nextTestN(), id: uid(),
     date: todayISO(),
     ticket,
     truck: document.getElementById("f-truck").value.trim() || null,
     vol: num(document.getElementById("f-vol").value),
-    plant: "01-SAN JUAN",
+    plant: planta,
+    /* La compañía va en el registro desde el minuto uno: es la mitad de la
+       llave del conduce. Si se dejaba para que la rellenara `migrateDB()` en
+       la siguiente carga, dos entradas seguidas del mismo ticket en la misma
+       sesión no se reconocían como repetidas. */
+    company: plantCompany(planta),
+    source: pendingPhoto ? "foto" : "manual",
     batch: document.getElementById("f-batch").value || null,
     arrive: document.getElementById("f-arrive").value || nowHM(),
     ident: document.getElementById("f-ident").value.trim() || null,

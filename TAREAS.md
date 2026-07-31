@@ -12,9 +12,6 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
 | Q-12 | **Guía de usuario ilustrada** para Rubén: circuito de los aparatos, core features y arquitectura, con botón Run que detecta el aparato y lleva a su portal | claude (subagente) | 2026-07-31 |
-| Q-14 | **El icono de iPhone abre como marcador, no como aplicación** — falta el manifest y seis pantallas no llevan las etiquetas | claude | 2026-07-31 |
-| Q-15 | **El enlace al Control Center en el portal lo ve Rubén** y solo debe verlo el administrador | claude | 2026-07-31 |
-| Q-16 | **Quitar el aviso de «añadir a la pantalla de inicio»** de las pantallas: pasa a la guía | claude | 2026-07-31 |
 
 ---
 
@@ -55,6 +52,10 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-07-31 | **Q-17 — Muestras deja de dar de alta camiones** (duplicaba Recepción) y la comprobación de conduce repetido se muda a Recepción | claude |
+| 2026-07-31 | **Q-16 — Las pantallas no dan instrucciones**: fuera las credenciales del acceso y el consejo de pantalla de inicio del portal | claude |
+| 2026-07-31 | **Q-15 — Rubén ya no ve el enlace al Control Center** en el portal del teléfono | claude |
+| 2026-07-31 | **Q-14 — El icono de la pantalla de inicio abre como aplicación**: manifest y etiquetas en las once pantallas | claude |
 | 2026-07-31 | **Q-13 — El reporte acumulado cuadrado a la carta**: sus hojas imprimían en dos páginas y el «Página N de M» del pie mentía | claude |
 | 2026-07-31 | **Q-03 — Reporte del vaciado del día**, con dos fallos reales de paso: el botón CSV (`csvCell` borrada) y los ciclos de camión imposibles del Excel histórico | claude |
 | 2026-07-31 | Cierre de sesión: limpieza de código muerto, `verificar.js`, y la documentación de traspaso completa | claude |

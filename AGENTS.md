@@ -264,14 +264,20 @@ tener que entrar a ver si está pasando algo.
   opcional: si el aparato está de pie sale un aviso de girarlo, que se quita solo al girar.
   Si tocas esto, no quites el aviso creyendo que sobra.
 - Las demás pantallas de indicadores se abren normales, sin trucos.
-- **`admin` ve además Resultados, y va primero.** Su logotipo son los chevrons apilados de
-  Segarra Engineering, recortados del logo de QCheck y sin texto. **No es el logo real de
-  Segarra** — ese nunca llegó al repositorio; si Víctor lo envía, se sustituye ahí.
-- **El enlace al Control Center, al pie, solo lo ve `admin`.**
-- **Pantalla completa de verdad en iPhone = guardarlo en la pantalla de inicio.** Las
-  etiquetas están puestas (`apple-mobile-web-app-capable`, icono de 180 px); desde el icono
-  Safari no pinta barras. En una pestaña normal de Safari **no hay forma** de quitarlas por
-  código, así que el portal lo explica cuando detecta iOS sin guardar.
+- **Quien lleva el control de calidad ve además Resultados, y va primero.** Su logotipo son
+  los chevrons apilados de Segarra Engineering, recortados del logo de QCheck y sin texto.
+  **No es el logo real de Segarra** — ese nunca llegó al repositorio; si Víctor lo envía, se
+  sustituye ahí.
+- **El enlace al Control Center, al pie, NO lo ve Rubén.** No es cosa del papel: Rubén lleva
+  el control de calidad y aun así no lo ve, porque ese tablero no cabe en un teléfono. Va por
+  capacidad de la cuenta —`qcVeTablero()`, la marca `tablero: true` en `assets/usuarios.js`—
+  y **no** comprobando `usuario === "admin"`, que es lo que §3 prohíbe.
+- **Pantalla completa de verdad en iPhone = guardarlo en la pantalla de inicio**, y desde el
+  31 jul 2026 es **requisito**, no consejo. Ver §12.
+- **Las pantallas no dan instrucciones.** Víctor lo pidió el 31 jul 2026: el acceso ya no
+  enseña las credenciales de demostración y el portal ya no explica cómo guardar el icono.
+  Todo eso vive en la guía de usuario. Si te hace falta explicar algo dentro de una pantalla,
+  probablemente la pantalla esté mal.
 
 ## 8b. La simulación — el tiro de hoy ya en marcha
 
@@ -414,3 +420,44 @@ Reglas que no se rompen aquí:
   deduce el plan de lo que sirvieron los camiones.
 - **Si el tiro sigue abierto, la hoja lo avisa** arriba y en la certificación. Se firma lo
   que hay, y hay que saber que es una foto a media faena.
+
+## 12. La aplicación en la pantalla de inicio
+
+**Añadir QCheck a la pantalla de inicio es requisito**, no un consejo (Víctor, 31 jul 2026).
+Es la única forma de que las pantallas de campo abran limpias en iPhone y iPad.
+
+Para que el icono guardado abra **como aplicación** y no como marcador de Safari —con una
+franja arriba enseñando el dominio— hacen falta **las dos cosas, en todas las pantallas**:
+
+- **`manifest.webmanifest`** en la raíz, con `display: "standalone"`, `scope` y `start_url`
+  relativos (el sitio cuelga de `/qcheck/`, no del dominio), y los colores de fondo y de
+  tema en `#0a0d12`. Desde iOS 16.4 Safari lee el manifest; antes solo miraba las etiquetas
+  de Apple, y por eso van las dos.
+- **El bloque de etiquetas** justo debajo del `<meta name="viewport">`: `rel="manifest"`,
+  `apple-mobile-web-app-capable`, `mobile-web-app-capable`, `status-bar-style`,
+  `apple-mobile-web-app-title` y el `apple-touch-icon` de 180 px.
+
+**Si añades una pantalla, cópiale ese bloque.** Faltaba en seis de las once y ahí el icono
+abría como marcador. `node verificar.js` comprueba que el manifest exista, no que esté
+enlazado: no te fíes, míralo.
+
+Dos cosas que hay que saber y decir sin rodeos:
+
+- **iOS no deja añadir nada a la pantalla de inicio por código. No existe API.** Safari
+  obliga a tocar Compartir → «Añadir a inicio». Cualquier «Run» o botón de instalar en iOS
+  solo puede *guiar*; si alguna vez parece que lo hace solo, está mintiendo.
+- **iOS congela estos datos cuando se crea el icono.** Cambiar el manifest o las etiquetas
+  no arregla un icono ya guardado: hay que borrarlo y volver a añadirlo.
+
+## 13. Los camiones entran por Recepción, y solo por ahí
+
+Muestras **no da de alta camiones**. Se muestrea lo que ya llegó: el selector de arriba
+lista los camiones del día y arranca en el primero pendiente. Tenía su propia alta —mixer,
+escaneo de QR, foto y entrada manual— y era un duplicado de Recepción; Víctor la quitó el
+31 jul 2026. Si un camión no aparece en Muestras, lo que falta es recibirlo en Recepción.
+
+**La comprobación de conduce repetido vive ahora en `saveArrival()` de `conduce.html`.**
+Estaba en la alta de Muestras y se fue con ella; sin ella, el mismo conduce entrado dos
+veces duplica las yardas. La llave es **compañía + ticket**, nunca el ticket solo, y por eso
+el registro guarda `company` desde que se crea: si se dejaba para `migrateDB()`, dos entradas
+seguidas en la misma sesión no se reconocían como repetidas.

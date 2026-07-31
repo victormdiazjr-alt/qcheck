@@ -19,7 +19,7 @@
 "use strict";
 
 const QC_CUENTAS = {
-  admin:    { clave: "1234", rol: "qc",       nombre: "Administrador" },
+  admin:    { clave: "1234", rol: "qc",       nombre: "Administrador", tablero: true },
   ruben:    { clave: "1234", rol: "qc",       nombre: "Rubén Segarra" },
   invitado: { clave: "1234", rol: "consulta", nombre: "Invitado" },
 };
@@ -33,4 +33,19 @@ function qcRol() {
 
 /* ¿Este usuario lleva el control de calidad? */
 function qcEsQC() { return qcRol() === "qc"; }
+
+/* ¿Puede saltar del portal del teléfono al Control Center?
+
+   No es lo mismo que llevar el control de calidad: Rubén lo lleva y aun así
+   NO debe ver ese enlace en el teléfono —el Control Center no cabe en la mano
+   y desde el portal tiene todo lo que necesita en la obra—. Víctor lo pidió
+   así el 31 jul 2026.
+
+   Va como capacidad de la cuenta y no como `usuario === "admin"` a propósito:
+   el papel de cada quien se deduce de esta lista y nunca del nombre (AGENTS §3).
+   Para dárselo a alguien más, se le pone `tablero: true` aquí y ya. */
+function qcVeTablero() {
+  const u = sessionStorage.getItem("qc-user");
+  return !!(QC_CUENTAS[u] && QC_CUENTAS[u].tablero);
+}
 

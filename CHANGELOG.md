@@ -5,6 +5,38 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.6] — 31 de julio · «lista para el field»
+
+Todo esto salió de la primera prueba de campo de Víctor con el iPhone en la mano.
+
+### Añadido
+- **`manifest.webmanifest`** y el bloque de etiquetas de aplicación **en las once
+  pantallas** (faltaba en seis). Sin ellos, el icono guardado en la pantalla de inicio
+  abría como **marcador de Safari**, con una franja arriba enseñando el dominio en vez de
+  la aplicación limpia. Detalle y trampas en `AGENTS.md` §12 — entre ellas que iOS congela
+  estos datos al crear el icono: **hay que borrarlo y volver a añadirlo**.
+- **Comprobación de conduce repetido en Recepción** (`saveArrival()`). La llave es
+  compañía + ticket, nunca el ticket solo, y el registro guarda ya `company` desde que se
+  crea: dejarlo para `migrateDB()` hacía que dos entradas seguidas del mismo ticket en la
+  misma sesión no se reconocieran.
+
+### Cambiado
+- **Muestras ya no da de alta camiones.** Tenía su propia entrada —mixer, escaneo de QR,
+  foto y entrada manual— duplicando Recepción. Se muestrea lo que ya llegó: los camiones
+  entran por Recepción y solo por ahí. Son ~18.000 caracteres menos de pantalla.
+- **Rubén ya no ve el enlace al Control Center** en el portal del teléfono. No es cosa del
+  papel —Rubén lleva el control de calidad— sino de la cuenta: va por `qcVeTablero()` y la
+  marca `tablero: true` en la lista de usuarios, no comprobando el nombre.
+- **Las pantallas dejan de dar instrucciones.** Fuera las credenciales de demostración del
+  acceso y el consejo de «añadir a la pantalla de inicio» del portal. Todo eso vive en la
+  guía de usuario.
+
+### Arreglado
+- El comentario del portal decía «solo la ve el administrador» y el código se lo enseñaba
+  a cualquiera con papel de QC. Ahora el código y el comentario dicen lo mismo.
+
+---
+
 ## [0.5] — 31 de julio · «el reporte del vaciado» (Q-03)
 
 ### Añadido
