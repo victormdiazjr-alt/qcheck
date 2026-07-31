@@ -26,14 +26,14 @@
 .cc-hero.t-detenido { --tinte: rgba(255,90,82,.20); --vc: #ff7a72; }
 .cc-hero.t-fin      { --tinte: rgba(74,99,216,.20);  --vc: #8fa6f2; }
 .cc-hero.t-quieto   { --tinte: rgba(255,255,255,.06); --vc: #8ea6bd; }
+.hp-cab { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
 .cc-hero .mark2 {
-  /* a la altura de la cifra grande, no en el centro del bloque */
-  width: 50px; height: 50px; border-radius: 50%; flex: none; margin-top: 14px;
+  width: 44px; height: 44px; border-radius: 50%; flex: none;
   border: 2.5px solid var(--vc); color: var(--vc);
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 0 26px -6px var(--vc);
 }
-.cc-hero .ic-t { width: 25px; height: 25px; fill: none; stroke: currentColor;
+.cc-hero .ic-t { width: 22px; height: 22px; fill: none; stroke: currentColor;
   stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 /* mientras se vacía, el aro respira y el hormigón cae */
 .cc-hero.t-vaciando .mark2 { animation: tLatir 2.2s ease-in-out infinite; }
@@ -48,9 +48,9 @@
 }
 
 /* --- estado y progreso del tiro --- */
-.cc-hero .t-estado { font-size: 10px; font-weight: 800; letter-spacing: .22em;
+.cc-hero .t-estado { font-size: 11px; font-weight: 800; letter-spacing: .2em;
   text-transform: uppercase; color: var(--vc); }
-.prog-tiro { margin-top: 6px; }
+.prog-tiro { margin-top: 0; }
 .pt-cifra { display: flex; align-items: baseline; gap: 8px; color: #fff;
   font-variant-numeric: tabular-nums; }
 .pt-cifra b { font-size: 44px; font-weight: 250; letter-spacing: -.025em; line-height: 1; }
@@ -75,11 +75,28 @@
   text-transform: uppercase; color: #8ea6bd; }
 .cc-hero .ex-mezcla { font-size: 11px; color: #8ea6bd; margin-top: 7px;
   letter-spacing: .04em; }
-.cc-hero .cc-izq { min-width: 0; flex: 1 1 300px; }
-.cc-hero .cc-der { margin-left: auto; display: flex; align-items: flex-start; gap: 22px; flex-wrap: wrap; margin-top: 4px; }
-.cc-hero .cc-der .clima { color: #eaf1f8; }
+.cc-hero .cc-cuerpo { flex: 1 1 auto; min-width: 0; }
+/* fila de arriba: progreso · datos · tiempo. Abajo, las losas de lado a lado. */
+.hero-fila { display: flex; align-items: flex-start; gap: 26px; flex-wrap: wrap; }
+.hero-prog { flex: 1 1 260px; min-width: 240px; }
+.hero-datos { flex: 2 1 300px; display: grid; gap: 12px 20px;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); align-content: start; padding-top: 3px; }
+.hero-clima { flex: 0 0 auto; }
+.hero-clima .clima { color: #eaf1f8; }
+.dato { min-width: 0; }
+.dato.ancho { grid-column: span 2; }
+.dt-k { font-size: 9px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #8ea6bd; }
+.dt-v { font-size: 15px; font-weight: 600; color: #dce7f2; margin-top: 3px; line-height: 1.3;
+  font-variant-numeric: tabular-nums; }
+.dt-v em { font-style: normal; font-weight: 600; font-size: 11.5px; color: #8ea6bd; }
+/* el kilometraje a su propia línea: partido queda ilegible */
+.dt-v em.linea { display: block; margin-top: 2px; }
+.dt-v em.v-ok { color: #7ce7a8; } .dt-v em.v-act { color: #ffd98a; }
+.dt-v em.v-bad { color: #ff9d97; } .dt-v em.v-idle { color: #8ea6bd; }
+.dt-mix { font-size: 11.5px; font-weight: 500; color: #a9bccf; }
 @media (max-width: 900px) {
-  .cc-hero .cc-der { margin-left: 0; width: 100%; gap: 14px; }
+  .hero-fila { gap: 16px; }
+  .hero-clima { width: 100%; }
 }
 @media (max-width: 720px) {
   /* en el teléfono el tramo se comía dos líneas a tamaño de titular */
@@ -87,7 +104,7 @@
   .pt-cifra b { font-size: 36px; }
 }
 /* --- losas del tiro --- */
-.losas { margin-top: 14px; }
+.losas { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.10); }
 .losas .lz-k { font-size: 10px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase;
   color: #9fb6cc; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .losas .lz-k b { color: #fff; font-size: 12px; letter-spacing: .04em; white-space: nowrap; }
@@ -265,26 +282,30 @@ function progresoHTML(p) {
   </div>`;
 }
 
-/* Las especificaciones del tiro: a qué hora empieza, cuántas yardas son y de
-   qué mezcla. Cada dato aparece solo si existe — nada se rellena a ojo.
-   La hora planificada manda; si no se declaró, se dice a qué hora arrancó
-   de verdad, que eso sí lo saben los camiones. */
-function especsHTML(day, meta) {
-  const planificada = hora12(meta.horaInicio);
-  const real = hora12(inicioReal(day));
+/* Los datos del tiro en una rejilla compacta: llenan el hueco que quedaba
+   entre el progreso y el tiempo, y de paso caben cosas que antes no se veían.
+   Cada uno aparece solo si existe — nada se rellena a ojo. */
+function datosHTML(day, meta, prog, lt) {
+  const d = [];
+  const planificada = hora12(meta.horaInicio), real = hora12(inicioReal(day));
   const arrancado = testsOfDate(day).some((t) => t.start || t.arrive);
-  const partes = [];
-  // con camiones ya recibidos, la hora es la de arranque, no una promesa
-  if (planificada) partes.push(`<span class="ex"><b>${planificada}</b><i>${arrancado ? "comenzó" : "comienza"}</i></span>`);
-  else if (real)   partes.push(`<span class="ex"><b>${real}</b><i>comenzó</i></span>`);
-  const sitio = [meta.fase ? "Fase " + esc(meta.fase) : null, meta.lane ? esc(meta.lane) : null,
-                 meta.km ? "Km " + esc(meta.km) : null].filter(Boolean).join(" · ");
-  if (sitio) partes.push(`<span class="ex"><b>${sitio}</b><i>tramo</i></span>`);
+  if (planificada) d.push(["Comenz" + (arrancado ? "ó" : "ará"), planificada]);
+  else if (real)   d.push(["Comenzó", real]);
 
-  // Sin ningún dato del tiro, la fecha es lo único cierto que se puede decir.
-  if (!partes.length) return `<h1 class="ex-fila"><span class="ex"><b>${fmtDate(day)}</b><i>vaciado</i></span></h1>`;
-  return `<h1 class="ex-fila">${partes.join("")}</h1>
-    ${db.project.mixId ? `<div class="ex-mezcla">${esc(db.project.mixId)}</div>` : ""}`;
+  const r = ritmoTiro(day);
+  if (r) d.push(["Ritmo", `${fmt(r.cyHora, 0)} <em>CY/h</em>`]);
+  if (r && r.fin) d.push(["Termina", `≈ ${hora12(r.fin)}`, "aprox"]);
+
+  if (prog.loads) d.push(["Camiones", `${prog.loads}${prog.rejected ? ` <em>· ${prog.rejected} rech.</em>` : ""}`]);
+  if (lt && lt.num !== "—") d.push(["Último camión", `${esc(lt.num)} <em class="v-${lt.cls}">· ${esc(lt.w)}</em>`]);
+
+  const sitio = [meta.fase ? "Fase " + esc(meta.fase) : null, meta.lane ? esc(meta.lane) : null].filter(Boolean).join(" · ");
+  if (sitio) d.push(["Tramo", sitio + (meta.km ? `<em class="linea">Km ${esc(meta.km)}</em>` : "")]);
+  if (db.project.mixId) d.push(["Mezcla", `<span class="dt-mix">${esc(db.project.mixId)}</span>`, "ancho"]);
+
+  if (!d.length) return "";
+  return `<div class="hero-datos">${d.map(([k, v, mod]) =>
+    `<div class="dato${mod === "ancho" ? " ancho" : ""}"><div class="dt-k">${k}</div><div class="dt-v">${v}</div></div>`).join("")}</div>`;
 }
 
 /* Las losas del tiro, cada una con lo que se sepa de su avance.
@@ -383,14 +404,20 @@ function render() {
 
   document.getElementById("app").innerHTML = `
     <div class="cc-hero t-${tiro.cls}">
-      <div class="mark2">${ICONO_TIRO[tiro.icono]}</div>
-      <div class="cc-izq">
-        <div class="t-estado">${esc(tiro.txt)}</div>
-        ${progresoHTML(prog)}
-        ${especsHTML(day, meta)}
+      <div class="cc-cuerpo">
+        <div class="hero-fila">
+          <div class="hero-prog">
+            <div class="hp-cab">
+              <div class="mark2">${ICONO_TIRO[tiro.icono]}</div>
+              <div class="t-estado">${esc(tiro.txt)}</div>
+            </div>
+            ${progresoHTML(prog)}
+          </div>
+          ${datosHTML(day, meta, prog, lt)}
+          <div class="hero-clima"><div id="clima"></div></div>
+        </div>
         ${losasHTML(day)}
       </div>
-      <div class="cc-der"><div id="clima"></div></div>
     </div>
 
     ${menu()}

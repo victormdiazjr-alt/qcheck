@@ -67,8 +67,15 @@ shared/               ← contrato del conduce (copia — ver §5)
 docs/                 ← arquitectura, hoja de ruta, despliegue, contrato
 ```
 
-En el héroe del Control Center, de arriba abajo: **el estado del tiro** con su aro, **el
-progreso en grande**, las especificaciones y **las losas**; a la derecha, el tiempo del sitio.
+El héroe del Control Center va en dos bandas. Arriba, tres bloques en fila: **estado del
+tiro** con su aro junto al **progreso en grande**, una **rejilla de datos** (comenzó, ritmo,
+hora estimada de fin, camiones, último camión, tramo, mezcla) y el **tiempo del sitio**.
+Abajo, **las losas de lado a lado**. La rejilla existe para que no quede hueco muerto entre
+el progreso y el tiempo — si un dato no existe, su casilla simplemente no se pinta.
+
+`ritmoTiro(day)` calcula yardas por hora y **a qué hora acabaría a ese paso**, con las
+yardas colocadas contra el tiempo desde el primer camión. No es una promesa: se enseña con
+«≈». Con menos de tres camiones o menos de media hora no da número.
 
 `estadoTiro(day)` en `core.js` deduce en qué anda el vaciado — *Vaciando, Camión esperando,
 Esperando camión, Detenido, Tiro completado, Sin comenzar* — **de los camiones**, sin ningún

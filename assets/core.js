@@ -601,7 +601,11 @@ function minutosDesde(hhmm) {
   const m = String(hhmm || "").match(/^(\d{1,2}):(\d{2})/);
   if (!m) return null;
   const d = new Date();
-  return Math.round((d.getHours() * 60 + d.getMinutes()) - (+m[1] * 60 + +m[2]));
+  let dif = (d.getHours() * 60 + d.getMinutes()) - (+m[1] * 60 + +m[2]);
+  /* Un tiro que empezó anoche y sigue de madrugada daba negativo, y con él
+     el ritmo y el "detenido" se apagaban. Si sale negativo, cruzó las 12. */
+  if (dif < 0) dif += 24 * 60;
+  return dif;
 }
 function ritmoDelDia(day) {
   const t = testsOfDate(day).filter((x) => !x.rejected).map((x) => x.arrive).filter(Boolean).sort();
@@ -621,6 +625,30 @@ function duracionCorta(min) {
   if (min < 90) return `${min} min`;
   const h = Math.floor(min / 60), m = min % 60;
   return m ? `${h} h ${m} min` : `${h} h`;
+}
+
+/* Ritmo del tiro y a qué hora acabaría a ese paso. Sale del propio día:
+   yardas colocadas contra el tiempo transcurrido desde que llegó el primer
+   camión. No es una promesa — es la proyección del ritmo que lleva, y por eso
+   la interfaz la enseña con "≈". Con menos de tres camiones o menos de media
+   hora de vaciado no da número: no habría de dónde sacarlo. */
+function ritmoTiro(day) {
+  const p = dayProgress(day);
+  const rows = testsOfDate(day).filter((t) => !t.rejected);
+  const horas = rows.map((t) => t.arrive || t.start).filter(Boolean).sort();
+  if (rows.length < 3 || !horas.length || !p.placed) return null;
+  const transcurrido = minutosDesde(horas[0]);
+  if (transcurrido == null || transcurrido < 30) return null;
+
+  const cyHora = p.placed / (transcurrido / 60);
+  if (!Number.isFinite(cyHora) || cyHora <= 0) return null;
+  let fin = null;
+  if (p.pending != null && p.pending > 0) {
+    const faltanMin = Math.round(p.pending / cyHora * 60);
+    const d = new Date(Date.now() + faltanMin * 60000);
+    fin = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  return { cyHora, fin };
 }
 
 function estadoTiro(day) {
