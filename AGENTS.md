@@ -183,12 +183,14 @@ Display la agranda porque se lee de lejos, y vuelve a 1 en pantallas bajitas.
 Si el día no tiene yardas planificadas, la barra dice **«sin plan»** y lleva al formulario
 donde se definen. **No inventes un total.**
 
-**Las tres pantallas de campo — `display.html`, `muestras.html`, `conduce.html` — corren en
-kiosco**: entran a pantalla completa con el primer toque (`pantallaCompletaAlTocar()`; iOS
-Safari no implementa la API y ahí simplemente no ocurre) y su salida es un candado que pide
-la contraseña de administrador. Las de escritorio llevan la equis normal.
-Igual que el acceso, el candado es **una puerta de demostración**: frena un toque accidental,
-no a alguien decidido.
+**Las tres pantallas de campo — `display.html`, `muestras.html`, `conduce.html` — entran a
+pantalla completa con el primer toque** (`pantallaCompletaAlTocar()`; iOS Safari no
+implementa la API y ahí simplemente no ocurre).
+
+El botón de cerrar **no pide contraseña en ninguna pantalla**: llegó a tener un candado en
+las de campo y Víctor lo quitó el 31 jul 2026 por estorboso. Si algún día hace falta blindar
+la salida de un iPad montado en obra, eso va con la autenticación real (Q-07), no con una
+clave escrita en el navegador.
 
 ## 8b. La simulación — el tiro de hoy ya en marcha
 

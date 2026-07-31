@@ -119,62 +119,16 @@ function cerrarVentana() {
   window.close();
   setTimeout(() => { if (Date.now() - antes < 900 && !window.closed) location.href = casa; }, 120);
 }
-/* Las pantallas de campo (Field Display, Muestras, Recepción) corren en modo
-   kiosco: la salida está bajo llave para que nadie las cierre sin querer con
-   las manos sucias. El candado pide la contraseña de administrador.
-
-   PROTOTIPO: la contraseña vive en el navegador, igual que el acceso. Frena
-   un toque accidental, no a alguien decidido. La llave real llega con el backend. */
-const CLAVE_ADMIN = "1234";
-
-function mountCloseButton(opciones) {
+function mountCloseButton() {
   if (document.getElementById("close-btn")) return;
-  const kiosco = !!(opciones && opciones.kiosco);
   const b = document.createElement("button");
   b.id = "close-btn";
-  b.className = "close-btn" + (kiosco ? " locked" : "");
-  b.title = kiosco ? "Salir (requiere contraseña)" : "Cerrar";
-  b.setAttribute("aria-label", b.title);
-  b.innerHTML = kiosco
-    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.4 10.5V7.8a3.6 3.6 0 0 1 7.2 0v2.7"/></svg>`
-    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>`;
-  b.onclick = (e) => { e.stopPropagation(); kiosco ? pedirClaveSalida(b) : cerrarVentana(); };
+  b.className = "close-btn";
+  b.title = "Cerrar";
+  b.setAttribute("aria-label", "Cerrar");
+  b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>`;
+  b.onclick = (e) => { e.stopPropagation(); cerrarVentana(); };
   (document.getElementById("qc-status") || document.body).appendChild(b);
-}
-
-function pedirClaveSalida(boton) {
-  if (document.getElementById("qcs-lock")) return;
-  const d = document.createElement("div");
-  d.id = "qcs-lock";
-  d.className = "qcs-lock";
-  d.innerHTML = `
-    <div class="qcs-lock-card" role="dialog" aria-modal="true" aria-label="Salir de la pantalla">
-      <div class="qcs-lock-t">Salir de la pantalla</div>
-      <div class="qcs-lock-s">Escriba la contraseña de administrador.</div>
-      <input type="password" inputmode="numeric" autocomplete="off" id="qcs-lock-i" aria-label="Contraseña">
-      <div class="qcs-lock-e" id="qcs-lock-e"></div>
-      <div class="qcs-lock-b">
-        <button type="button" class="qcs-x" id="qcs-lock-c">Cancelar</button>
-        <button type="button" class="qcs-ok" id="qcs-lock-k">Salir</button>
-      </div>
-    </div>`;
-  document.body.appendChild(d);
-  const inp = d.querySelector("#qcs-lock-i");
-  const err = d.querySelector("#qcs-lock-e");
-  const cerrar = () => { d.remove(); if (boton) boton.focus(); };
-  const probar = () => {
-    if (inp.value === CLAVE_ADMIN) { cerrar(); cerrarVentana(); return; }
-    err.textContent = "Contraseña incorrecta.";
-    d.querySelector(".qcs-lock-card").classList.remove("shake");
-    void d.offsetWidth;
-    d.querySelector(".qcs-lock-card").classList.add("shake");
-    inp.select();
-  };
-  d.querySelector("#qcs-lock-c").onclick = cerrar;
-  d.querySelector("#qcs-lock-k").onclick = probar;
-  d.onclick = (e) => { if (e.target === d) cerrar(); };
-  inp.onkeydown = (e) => { if (e.key === "Enter") probar(); if (e.key === "Escape") cerrar(); };
-  inp.focus();
 }
 
 /* ------------------------------------------------------------ pantalla completa
@@ -222,7 +176,7 @@ function mountStatusBar(day, opciones) {
     document.documentElement.classList.add("qcs-fija");
     addEventListener("online", pintarConexion);
     addEventListener("offline", pintarConexion);
-    mountCloseButton({ kiosco: !!o.kiosco });
+    mountCloseButton();
   }
   pintarConexion();
   pintarTiro(day || diaActivo());
@@ -300,8 +254,6 @@ html.qcs-fija header.qc-header { top: var(--qcs-h); }
 /* el color entra por el resplandor, no por el relleno */
 .qcs .close-btn:hover { color: var(--susp, #ff5a52); border-color: rgba(255,90,82,.55);
   box-shadow: 0 0 0 3px rgba(255,90,82,.10), 0 0 16px -2px rgba(255,90,82,.7); transform: scale(1.06); }
-.qcs .close-btn.locked:hover { color: #7d92ea; border-color: rgba(125,146,234,.55);
-  box-shadow: 0 0 0 3px rgba(74,99,216,.12), 0 0 16px -2px rgba(74,99,216,.75); }
 
 .qcs-tiro { display: flex; align-items: center; gap: calc(8px * var(--qcs-e,1));
   text-decoration: none; color: inherit; min-width: 0; }
@@ -343,25 +295,7 @@ html.qcs-fija header.qc-header { top: var(--qcs-h); }
 @media print { .qcs { display: none !important; } html.qcs-fija body { padding-top: 0; } }
 @media (prefers-reduced-motion: reduce) { .qcs-conn i { animation: none; } }
 
-.qcs-lock { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center;
-  background: rgba(6,9,13,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-.qcs-lock-card { width: min(92vw, 340px); background: #12171f; color: #eef2f6;
-  border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 24px 22px 18px;
-  box-shadow: 0 24px 70px rgba(0,0,0,.6); font-family: inherit; }
-.qcs-lock-t { font-size: 17px; font-weight: 700; }
-.qcs-lock-s { font-size: 13px; color: #77848f; margin-top: 4px; }
-.qcs-lock-card input { width: 100%; margin-top: 16px; padding: 12px 14px; font-size: 19px;
-  letter-spacing: .3em; text-align: center; border-radius: 12px; color: #eef2f6;
-  background: #0a0d12; border: 1px solid rgba(255,255,255,.14); }
-.qcs-lock-card input:focus { outline: 2px solid #4a63d8; outline-offset: 1px; }
-.qcs-lock-e { min-height: 17px; font-size: 12.5px; color: #ff5a52; margin-top: 7px; text-align: center; }
-.qcs-lock-b { display: flex; gap: 9px; margin-top: 6px; }
-.qcs-lock-b button { flex: 1; padding: 11px; border-radius: 11px; font-size: 14px; font-weight: 700;
-  cursor: pointer; border: 1px solid rgba(255,255,255,.14); font-family: inherit; }
-.qcs-x { background: transparent; color: #77848f; }
-.qcs-ok { background: #4a63d8; border-color: #4a63d8; color: #fff; }
-.qcs-lock-card.shake { animation: qcsShake .34s; }
-@keyframes qcsShake { 25% { transform: translateX(-7px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
+ 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
 `;
   document.head.appendChild(s);
 }
