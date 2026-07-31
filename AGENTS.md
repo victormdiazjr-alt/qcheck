@@ -390,6 +390,10 @@ se prueba a 390×844 (iPhone), 768×1024 (iPad de pie) y 1024×768 (iPad acostad
 en `assets/qc.css`; no inventes colores en las pantallas.
 
 - **Oscuro por defecto**, con variante de día. Fondo `#0a0d12`, superficies `#12171f`.
+- **La marca, fijada por Víctor el 31 jul 2026**: el nombre se describe con
+  **«Smart Quality Control»** y el lema es **«Build Connected»**. Los dos van **en inglés**
+  —son marca, como Field Display o Control Center, no interfaz— y no se traducen. El resto
+  de la interfaz sigue en español de Puerto Rico.
 - **Marca**: el logo es la Q azul con los chevrons de Segarra y la C centrada
   (`assets/logo-qcheck.svg`). En las pantallas va **en línea**, con los recortes hechos con
   máscaras SVG — nunca con relleno blanco encima, que solo funciona sobre papel. Su paleta
