@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Authority / FHWA — QC PR-52</title>
+<title>Autoridad / FHWA — QC PR-52</title>
 <link rel="stylesheet" href="assets/qc.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230b3d91'/><text x='50' y='70' font-size='50' text-anchor='middle' fill='white'>★</text></svg>">
 <style>
@@ -65,29 +65,29 @@ h2.sec-title { font-size: 18px; margin: 26px 0 12px; }
       <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
     </svg></a>
     <div>
-      <div class="title">Highway Authority / FHWA — Oversight</div>
-      <div class="subtitle">PR-52 Concrete Quality — read-only compliance view</div>
+      <div class="title">Autoridad de Carreteras / FHWA — Fiscalización</div>
+      <div class="subtitle">Calidad del hormigón PR-52 — vista de cumplimiento, solo lectura</div>
     </div>
   </div>
   <nav class="tabs">
-    <button class="btn small" style="margin:10px 0" onclick="exportCSV()">⬇ Full data (CSV)</button>
+    <button class="btn small" style="margin:10px 0" onclick="exportCSV()">⬇ Datos completos (CSV)</button>
   </nav>
 </header>
 
 <main>
   <div class="auth-hero">
-    <div class="eyebrow">Puerto Rico Highways &amp; Transportation Authority · FHWA</div>
+    <div class="eyebrow">Autoridad de Carreteras y Transportación de Puerto Rico · FHWA</div>
     <h1 id="hero-title">—</h1>
     <div class="sub" id="hero-sub">—</div>
     <div class="hero-kpis" id="hero-kpis"></div>
   </div>
 
   <div class="sec-nav">
-    <a href="#compliance">Compliance</a>
-    <a href="#strength">Strength &amp; Moving Average</a>
-    <a href="#spc">Control Charts</a>
-    <a href="#lots">Lot Summary</a>
-    <a href="#rejects">Rejected Loads</a>
+    <a href="#compliance">Cumplimiento</a>
+    <a href="#strength">Resistencia y media móvil</a>
+    <a href="#spc">Cartas de control</a>
+    <a href="#lots">Resumen por lote</a>
+    <a href="#rejects">Camiones rechazados</a>
   </div>
 
   <div id="content"></div>
@@ -133,15 +133,15 @@ function render() {
 
   document.getElementById("hero-title").textContent = db.project.name;
   document.getElementById("hero-sub").textContent =
-    `${db.project.mixId} · Contractor: ${db.project.contractor || "—"} · QC: ${db.project.qcFirm || "—"} · ${fmtDate(days[days.length - 1])} – ${fmtDate(days[0])}`;
+    `${db.project.mixId} · Contratista: ${db.project.contractor || "—"} · QC: ${db.project.qcFirm || "—"} · ${fmtDate(days[days.length - 1])} – ${fmtDate(days[0])}`;
 
   document.getElementById("hero-kpis").innerHTML = `
-    <div class="hk"><div class="v">${tests.length}</div><div class="k">QC tests</div></div>
-    <div class="hk"><div class="v">${fmt(totalCY, 0)}<span class="u"> CY</span></div><div class="k">Concrete placed</div></div>
-    <div class="hk"><div class="v">${days.length}</div><div class="k">Pour days</div></div>
-    <div class="hk"><div class="v">${lastMA ? fmt(lastMA._ma5, 0) : "—"}<span class="u"> psi</span></div><div class="k">Current moving avg (target ${fmt(db.plan.cs.target, 0)})</div></div>
-    <div class="hk compliance-ring">${donut(compliancePct, "#4fe085")}<div><div class="k" style="margin-bottom:2px">Fresh tests<br>within action limits</div></div></div>
-    <div class="hk compliance-ring">${donut(strengthPct, strengthPct >= 95 ? "#4fe085" : "#ffc93d")}<div><div class="k" style="margin-bottom:2px">5-day strength<br>≥ f'c target</div></div></div>`;
+    <div class="hk"><div class="v">${tests.length}</div><div class="k">Ensayos de QC</div></div>
+    <div class="hk"><div class="v">${fmt(totalCY, 0)}<span class="u"> CY</span></div><div class="k">Hormigón colocado</div></div>
+    <div class="hk"><div class="v">${days.length}</div><div class="k">Días de vaciado</div></div>
+    <div class="hk"><div class="v">${lastMA ? fmt(lastMA._ma5, 0) : "—"}<span class="u"> psi</span></div><div class="k">Media móvil actual (objetivo ${fmt(db.plan.cs.target, 0)})</div></div>
+    <div class="hk compliance-ring">${donut(compliancePct, "#4fe085")}<div><div class="k" style="margin-bottom:2px">Ensayos en fresco<br>dentro de límites de acción</div></div></div>
+    <div class="hk compliance-ring">${donut(strengthPct, strengthPct >= 95 ? "#4fe085" : "#ffc93d")}<div><div class="k" style="margin-bottom:2px">Resistencia a 5 días<br>≥ objetivo f\'c</div></div></div>`;
 
   // ---- lots ----
   const lots = {};
@@ -156,47 +156,47 @@ function render() {
     const min5 = cs5.length ? Math.min(...cs5) : null;
     const cy = o.tests.reduce((a, t) => a + (num(t.vol) || 0), 0);
     const rej = o.tests.filter((t) => t.rejected).length;
-    let status = `<span class="badge neutral">Pending</span>`;
+    let status = `<span class="badge neutral">Pendiente</span>`;
     if (avg5 != null) {
-      status = min5 < db.plan.cs.action ? `<span class="badge susp">Review</span>`
-        : avg5 >= db.plan.cs.target ? `<span class="badge ok">Conforming</span>`
-        : `<span class="badge act">Watch</span>`;
+      status = min5 < db.plan.cs.action ? `<span class="badge susp">Revisar</span>`
+        : avg5 >= db.plan.cs.target ? `<span class="badge ok">Conforme</span>`
+        : `<span class="badge act">Vigilar</span>`;
     }
     return { lot, dates: [...o.dates].sort(), n: o.tests.length, cy, rej, avg5, min5, status };
   }).sort((a, b) => (Number(a.lot) || 999) - (Number(b.lot) || 999));
 
   const r = state.chartRange;
   document.getElementById("content").innerHTML = `
-    <h2 class="sec-title" id="compliance">Compliance summary</h2>
+    <h2 class="sec-title" id="compliance">Resumen de cumplimiento</h2>
     <div class="wgrid">
-      <div class="stat ${compliancePct >= 90 ? "good" : ""}"><div class="label">Within action limits</div>
-        <div class="value">${fmt(compliancePct, 1)}%</div><div class="sub">${inAction} of ${evaluated.length} evaluated tests</div></div>
-      <div class="stat ${rejected.length ? "alert" : "good"}"><div class="label">Rejected loads</div>
-        <div class="value">${rejected.length}</div><div class="sub">${fmt(rejected.reduce((a, t) => a + (num(t.vol) || 0), 0), 0)} CY turned away</div></div>
-      <div class="stat ${strengthPct >= 95 ? "good" : ""}"><div class="label">Strength conformance</div>
-        <div class="value">${fmt(strengthPct, 1)}%</div><div class="sub">${passing}/${cs5sets.length} sets ≥ ${fmt(db.plan.cs.target, 0)} psi @ ${db.plan.cs.age}d</div></div>
-      <div class="stat ${minMA >= db.plan.cs.target ? "good" : "alert"}"><div class="label">Lowest moving avg</div>
-        <div class="value">${Number.isFinite(minMA) ? fmt(minMA, 0) : "—"}</div><div class="sub">6-set MA, entire project</div></div>
+      <div class="stat ${compliancePct >= 90 ? "good" : ""}"><div class="label">Dentro de límites de acción</div>
+        <div class="value">${fmt(compliancePct, 1)}%</div><div class="sub">${inAction} de ${evaluated.length} ensayos evaluados</div></div>
+      <div class="stat ${rejected.length ? "alert" : "good"}"><div class="label">Camiones rechazados</div>
+        <div class="value">${rejected.length}</div><div class="sub">${fmt(rejected.reduce((a, t) => a + (num(t.vol) || 0), 0), 0)} CY devueltos</div></div>
+      <div class="stat ${strengthPct >= 95 ? "good" : ""}"><div class="label">Conformidad de resistencia</div>
+        <div class="value">${fmt(strengthPct, 1)}%</div><div class="sub">${passing}/${cs5sets.length} sets ≥ ${fmt(db.plan.cs.target, 0)} psi a ${db.plan.cs.age} días</div></div>
+      <div class="stat ${minMA >= db.plan.cs.target ? "good" : "alert"}"><div class="label">Media móvil mínima</div>
+        <div class="value">${Number.isFinite(minMA) ? fmt(minMA, 0) : "—"}</div><div class="sub">MA de 6 sets, todo el proyecto</div></div>
     </div>
 
-    <h2 class="sec-title" id="strength">Strength &amp; moving average — f'c ${fmt(db.plan.cs.target, 0)} psi @ ${db.plan.cs.age} days</h2>
+    <h2 class="sec-title" id="strength">Resistencia y media móvil — f'c ${fmt(db.plan.cs.target, 0)} psi a ${db.plan.cs.age} días</h2>
     <div class="panel"><div class="panel-body">
       <div class="chart-legend">
-        <span><span class="sw" style="background:var(--chart-ok)"></span>≥ target</span>
-        <span><span class="sw" style="background:var(--chart-act)"></span>action (&lt; ${fmt(db.plan.cs.target, 0)})</span>
-        <span><span class="sw" style="background:var(--chart-susp)"></span>suspension (&lt; ${fmt(db.plan.cs.action, 0)})</span>
-        <span>▪▪ dark dotted = ${db.plan.maWindow}-set moving average</span>
+        <span><span class="sw" style="background:var(--chart-ok)"></span>≥ objetivo</span>
+        <span><span class="sw" style="background:var(--chart-act)"></span>acción (&lt; ${fmt(db.plan.cs.target, 0)})</span>
+        <span><span class="sw" style="background:var(--chart-susp)"></span>suspensión (&lt; ${fmt(db.plan.cs.action, 0)})</span>
+        <span>▪▪ punteado oscuro = media móvil de ${db.plan.maWindow} sets</span>
       </div>
       <div class="chart-scroll">${chartCS5(sets, "all")}</div>
     </div></div>
 
-    <h2 class="sec-title" id="spc">Statistical control charts — fresh concrete</h2>
+    <h2 class="sec-title" id="spc">Cartas de control estadístico — hormigón fresco</h2>
     <div class="toolbar">
       <select onchange="state.chartRange=this.value==='all'?'all':Number(this.value); render()">
-        <option value="all" ${r === "all" ? "selected" : ""}>Entire project</option>
-        ${[150, 80].map((n) => `<option value="${n}" ${r === n ? "selected" : ""}>Last ${n} tests</option>`).join("")}
+        <option value="all" ${r === "all" ? "selected" : ""}>Todo el proyecto</option>
+        ${[150, 80].map((n) => `<option value="${n}" ${r === n ? "selected" : ""}>Últimos ${n} ensayos</option>`).join("")}
       </select>
-      <span class="muted" style="font-size:12.5px">Green = within action · yellow = action zone · red = suspension · ✕ = rejected load</span>
+      <span class="muted" style="font-size:12.5px">Verde = dentro de acción · amarillo = zona de acción · rojo = suspensión · ✕ = camión rechazado</span>
     </div>
     ${CHART_DEFS.map((d) => `
       <div class="panel chart-block">
@@ -204,10 +204,10 @@ function render() {
         <div class="panel-body"><div class="chart-scroll">${chartFor(d, r)}</div></div>
       </div>`).join("")}
 
-    <h2 class="sec-title" id="lots">Lot summary</h2>
+    <h2 class="sec-title" id="lots">Resumen por lote</h2>
     <div class="panel"><div class="panel-body flush"><div class="table-wrap"><table class="data">
-      <tr><th>Lot</th><th>Dates</th><th class="num">Tests</th><th class="num">CY</th>
-          <th class="num">Avg 5-day (psi)</th><th class="num">Min 5-day</th><th class="num">Rejected</th><th>Status</th></tr>
+      <tr><th>Lote</th><th>Fechas</th><th class="num">Ensayos</th><th class="num">CY</th>
+          <th class="num">Media 5 días (psi)</th><th class="num">Mín. 5 días</th><th class="num">Rechazados</th><th>Estado</th></tr>
       ${lotRows.map((l) => `<tr>
         <td><b>${esc(l.lot)}</b></td>
         <td style="font-size:12px">${l.dates.map(fmtDate).join(", ")}</td>
@@ -220,17 +220,17 @@ function render() {
       </tr>`).join("")}
     </table></div></div></div>
 
-    <h2 class="sec-title" id="rejects">Rejected loads — full log</h2>
+    <h2 class="sec-title" id="rejects">Camiones rechazados — registro completo</h2>
     <div class="panel"><div class="panel-body flush">
       ${rejected.length ? `<div class="table-wrap"><table class="data">
-        <tr><th>#</th><th>Date</th><th>Ticket</th><th>Truck</th><th>Location</th>
-            <th class="num">Slump</th><th class="num">UW</th><th class="num">Temp</th><th>Reason</th></tr>
+        <tr><th>#</th><th>Fecha</th><th>Conduce</th><th>Camión</th><th>Ubicación</th>
+            <th class="num">Slump</th><th class="num">UW</th><th class="num">Temp</th><th>Motivo</th></tr>
         ${rejected.map((t) => {
           const reasons = [];
-          if (zoneSlump(t) === "susp") reasons.push("Slump out of suspension limits");
-          if (zoneUW(t) === "susp") reasons.push("Unit weight out of tolerance");
-          if (zoneAir(t) === "susp") reasons.push("Air content out of limits");
-          if (zoneTemp(t) === "susp") reasons.push("Temperature over max");
+          if (zoneSlump(t) === "susp") reasons.push("Revenimiento fuera de límites de suspensión");
+          if (zoneUW(t) === "susp") reasons.push("Peso unitario fuera de tolerancia");
+          if (zoneAir(t) === "susp") reasons.push("Contenido de aire fuera de límites");
+          if (zoneTemp(t) === "susp") reasons.push("Temperatura sobre el máximo");
           return `<tr class="rejected">
             <td class="mono">${t.n}</td><td class="mono">${esc(t.date)}</td>
             <td class="mono"><b>${esc(t.ticket || "—")}</b></td><td class="mono">${esc(t.truck || "—")}</td>
@@ -238,19 +238,19 @@ function render() {
             <td${zClass(zoneSlump(t))}>${fmt(t.slump, 2)}</td>
             <td${zClass(zoneUW(t))}>${fmt(t.uw, 2)}</td>
             <td${zClass(zoneTemp(t))}>${fmt(t.temp, 0)}</td>
-            <td style="white-space:normal; font-size:12px">${esc(reasons.join("; ") || t.comments || "Field rejection — see records")}</td>
+            <td style="white-space:normal; font-size:12px">${esc(reasons.join("; ") || t.comments || "Rechazo en campo — ver expediente")}</td>
           </tr>`;
         }).join("")}
-      </table></div>` : `<div class="empty">No rejected loads.</div>`}
+      </table></div>` : `<div class="empty">Ningún camión rechazado.</div>`}
     </div></div>
 
     <p class="muted" style="font-size:12px; margin-top:18px">
-      Control plan: slump ${db.plan.slump.target}" (action ${db.plan.slump.actLo}–${db.plan.slump.actHi}", suspension ${db.plan.slump.suspLo}–${db.plan.slump.suspHi}") ·
-      air ${db.plan.air.target}% (${db.plan.air.actLo}–${db.plan.air.actHi} / ${db.plan.air.suspLo}–${db.plan.air.suspHi}) ·
-      unit weight ±${db.plan.uw.act}/±${db.plan.uw.susp} pcf of plant target ·
-      strength ${fmt(db.plan.cs.target, 0)} psi @ ${db.plan.cs.age} days (suspension &lt; ${fmt(db.plan.cs.action, 0)}) ·
-      open to traffic ${fmt(db.plan.cs.openTarget, 0)} psi (min ${fmt(db.plan.cs.openLow, 0)}).
-      Data entered live in the field by ${esc(db.project.qcFirm || "QC")} — view is read-only.
+      Plan de control: revenimiento ${db.plan.slump.target}" (acción ${db.plan.slump.actLo}–${db.plan.slump.actHi}", suspensión ${db.plan.slump.suspLo}–${db.plan.slump.suspHi}") ·
+      aire ${db.plan.air.target}% (${db.plan.air.actLo}–${db.plan.air.actHi} / ${db.plan.air.suspLo}–${db.plan.air.suspHi}) ·
+      peso unitario ±${db.plan.uw.act}/±${db.plan.uw.susp} pcf del objetivo de planta ·
+      resistencia ${fmt(db.plan.cs.target, 0)} psi a ${db.plan.cs.age} días (suspensión &lt; ${fmt(db.plan.cs.action, 0)}) ·
+      apertura al tráfico ${fmt(db.plan.cs.openTarget, 0)} psi (mín. ${fmt(db.plan.cs.openLow, 0)}).
+      Datos entrados en vivo en el campo por ${esc(db.project.qcFirm || "QC")} — esta vista es de solo lectura.
     </p>`;
 }
 

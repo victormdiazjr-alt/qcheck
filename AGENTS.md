@@ -116,7 +116,13 @@ los campos de origen, el formato del QR y la publicación de límites.
   que no viste funcionar.
 - **Borra los datos de prueba** que crees. La base sembrada tiene 397 ensayos reales
   del proyecto; debe quedar como estaba.
-- **Español** en la interfaz (es el idioma de la cuadrilla) y en los comentarios.
+- **Español de Puerto Rico** en toda la interfaz —incluida la pantalla de la Autoridad— y en
+  los comentarios. No vale con que la palabra esté en el diccionario: tiene que ser la que
+  se usa aquí. «Calima» es correcto en España y nadie la entiende en la isla; se dice
+  **polvo del Sahara**. Igual **aguaceros**, no «chubascos». Los nombres de pantalla que
+  eligió Víctor en inglés (Field Display, Control Center, Results) se quedan como están.
+- **Los datos históricos no se traducen.** Los comentarios del Excel («REJECTED - UW Out of
+  Tolerance») los escribió el inspector: son el expediente, no texto de interfaz.
 - **No inventes límites, valores ni resultados.** Si un dato no existe, muestra que no existe.
 - Commits pequeños y descriptivos, en español.
 - No subas `node_modules`, respaldos ni archivos temporales.

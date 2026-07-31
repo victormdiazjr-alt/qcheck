@@ -10,10 +10,11 @@
    ============================================================ */
 "use strict";
 
-/* PR-52 a la altura de la salida de la PR-199 (Las Cumbres), San Juan.
-   Lo dijo Víctor el 30 jul 2026. Se puede corregir en Plan & Datos:
+/* El tiro: PR-52 en San Juan, a la altura de la salida de la PR-199.
+   Las coordenadas son de ese punto; el rótulo dice solo "San Juan · PR-52",
+   que es como se llama la obra. Lo confirmó Víctor. Se puede corregir en Plan & Datos:
    el proyecto manda si trae lat/lon propias. */
-const CLIMA_DEFECTO = { lat: 18.362, lon: -66.091, lugar: "San Juan · PR-52 / PR-199" };
+const CLIMA_DEFECTO = { lat: 18.362, lon: -66.091, lugar: "San Juan · PR-52" };
 const CLIMA_REFRESCO_MIN = 15;
 
 /* Códigos WMO agrupados a lo que de verdad importa en obra */
@@ -31,8 +32,8 @@ function climaTipo(code) {
 }
 const CLIMA_TEXTO = {
   despejado: "Despejado", parcial: "Parcialmente nublado", nublado: "Nublado",
-  niebla: "Neblina", calima: "Calima", llovizna: "Llovizna", lluvia: "Lluvia",
-  chubascos: "Chubascos", tormenta: "Tormenta", nieve: "Nieve",
+  niebla: "Neblina", calima: "Polvo del Sahara", llovizna: "Llovizna", lluvia: "Lluvia",
+  chubascos: "Aguaceros", tormenta: "Tormenta", nieve: "Nieve",
 };
 /* ¿este tipo moja el vaciado? */
 function climaMoja(t) { return t === "llovizna" || t === "lluvia" || t === "chubascos" || t === "tormenta"; }
@@ -136,7 +137,7 @@ async function climaNWS(lat, lon) {
     t: per[0].temperature,
     tipo: climaDeTexto(per[0].shortForecast),
     dia: per[0].isDaytime,
-    fuente: "NWS San Juan",
+    fuente: "Meteorología de San Juan",
     horas,
   };
 }
@@ -318,8 +319,8 @@ function climaEstilos() {
 .cl-t span { font-size: 10px; font-weight: 600; opacity: .55; margin-left: 1px; }
 .cl-d { font-size: 10px; margin-top: 2px; opacity: .7; }
 .cl-loc { margin-left: auto; text-align: right; font-size: 8.5px; font-weight: 800;
-  letter-spacing: .1em; text-transform: uppercase; opacity: .45; max-width: 108px; line-height: 1.5; }
-.cl-loc em { display: block; font-style: normal; font-weight: 600; letter-spacing: .04em;
+  letter-spacing: .1em; text-transform: uppercase; opacity: .45; max-width: 138px; line-height: 1.5; }
+.cl-loc em { display: block; font-style: normal; font-weight: 600; letter-spacing: .01em;
   text-transform: none; opacity: .7; margin-top: 2px; }
 .cl-av { font-size: 10.5px; font-weight: 600; opacity: .8; }
 .cl-av.moja { color: #7fc4ff; opacity: 1; }

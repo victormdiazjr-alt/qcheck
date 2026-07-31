@@ -461,7 +461,7 @@ function render() {
     document.body.className = "s-" + s;
     document.getElementById("truck-num").textContent = last.truck || "—";
     document.getElementById("truck-sub").innerHTML =
-      `Ticket <b>${esc(last.ticket || "—")}</b> · Load <b>#${rows.length}</b>${last.vol ? ` · <b>${fmt(last.vol, 1)}</b> CY` : ""}`;
+      `Ticket <b>${esc(last.ticket || "—")}</b> · Camión <b>#${rows.length}</b>${last.vol ? ` · <b>${fmt(last.vol, 1)}</b> CY` : ""}`;
     setPlant(last.plant);
     verdict.className = "verdict v-" + s;
     verdict.innerHTML = testing
@@ -487,7 +487,7 @@ function render() {
 
   document.getElementById("totals").innerHTML = `
     <div class="tot"><span class="k">Yardas hoy</span><span class="v">${fmt(cy, 1)}</span><span class="u">CY</span></div>
-    <div class="tot"><span class="k">Loads</span><span class="v">${rows.length}</span></div>
+    <div class="tot"><span class="k">Camiones</span><span class="v">${rows.length}</span></div>
     <div class="tot ${nRej ? "warn" : ""}"><span class="k">Rechazados</span><span class="v">${nRej}</span></div>`;
 }
 
@@ -608,14 +608,14 @@ function simIndics(t, hora) {
 function simTotals() {
   document.getElementById("totals").innerHTML = `
     <div class="tot"><span class="k">Yardas hoy</span><span class="v">${fmt(SIM.cy, 1)}</span><span class="u">CY</span></div>
-    <div class="tot"><span class="k">Loads</span><span class="v">${SIM.loads}</span></div>
+    <div class="tot"><span class="k">Camiones</span><span class="v">${SIM.loads}</span></div>
     <div class="tot ${SIM.rej ? "warn" : ""}"><span class="k">Rechazados</span><span class="v">${SIM.rej}</span></div>`;
 }
 function simArrival(t, hora) {
   document.body.className = "s-idle";
   document.getElementById("truck-num").textContent = t.truck;
   document.getElementById("truck-sub").innerHTML =
-    `Ticket <b>${t.ticket}</b> · Load <b>#${SIM.loads}</b> · <b>${fmt(t.vol, 1)}</b> CY · llegó ${fmt12(hora)}`;
+    `Ticket <b>${t.ticket}</b> · Camión <b>#${SIM.loads}</b> · <b>${fmt(t.vol, 1)}</b> CY · llegó ${fmt12(hora)}`;
   setPlant(t.plant);
   const v = document.getElementById("verdict");
   v.className = "verdict v-idle";

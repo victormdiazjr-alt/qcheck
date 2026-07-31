@@ -153,7 +153,7 @@ function cycleChart(rows) {
     const over = x.cycle > db.plan.maxElapsedMin;
     const col = x.rejected ? "#c5221f" : over ? "var(--accent2)" : "#2c7fb8";
     g += `<rect x="${X(i)}" y="${Y(x.cycle)}" width="${bw}" height="${Y(0) - Y(x.cycle)}" rx="3" fill="${col}">
-      <title>Load ${x.load} · camión ${x.truck || "—"} · batch→termina ${x.cycle} min${x.wait != null ? " · espera " + x.wait + " min" : ""}${x.rejected ? " · RECHAZADO" : ""}</title></rect>`;
+      <title>Carga ${x.load} · camión ${x.truck || "—"} · batch→termina ${x.cycle} min${x.wait != null ? " · espera " + x.wait + " min" : ""}${x.rejected ? " · RECHAZADO" : ""}</title></rect>`;
     if (x.wait != null)
       g += `<rect x="${X(i)}" y="${Y(x.wait)}" width="${bw}" height="${Y(0) - Y(x.wait)}" rx="3" fill="var(--chart-wait, rgba(18,44,66,.35))"/>`;
     g += `<text x="${X(i) + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="9.5" fill="var(--chart-text, #5a6b7c)">${x.truck || x.load}</text>`;
@@ -225,7 +225,7 @@ function render() {
     <div class="panel">
       <div class="panel-head"><h2>Últimos ${week.length} días de vaciado</h2></div>
       <div class="panel-body flush"><div class="table-wrap"><table class="data">
-        <tr><th>Fecha</th><th class="num">Loads</th><th class="num">CY</th><th class="num">CY/hr</th>
+        <tr><th>Fecha</th><th class="num">Camiones</th><th class="num">CY</th><th class="num">CY/hr</th>
             <th class="num">Ciclo prom (min)</th><th class="num">Espera prom (min)</th><th class="num">Rechazados</th></tr>
         ${week.map((w) => `<tr class="clickable" onclick="state.day='${w.d}'; render(); window.scrollTo({top:0,behavior:'smooth'})">
           <td><b>${fmtDate(w.d)}</b></td>

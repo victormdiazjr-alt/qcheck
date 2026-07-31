@@ -291,7 +291,7 @@ function render() {
   const cy = rows.reduce((a, t) => a + (num(t.vol) || 0), 0);
   document.getElementById("hero-day").textContent = shown === day ? "Vaciado de hoy — " + fmtDate(shown) : "Último vaciado — " + fmtDate(shown);
   document.getElementById("hero-sub").textContent = db.project.name + " · " + db.project.mixId;
-  document.getElementById("next-load").textContent = "Load #" + (testsOfDate(day).length + 1) + " de hoy";
+  document.getElementById("next-load").textContent = "Camión #" + (testsOfDate(day).length + 1) + " de hoy";
   document.getElementById("day-tot").textContent = `${rows.length} camiones · ${fmt(cy, 1)} CY`;
   sugerirProximo(day);
 
