@@ -251,7 +251,7 @@ function viewDaily() {
       <select onchange="state.day=this.value; render()">
         ${days.map((d) => `<option value="${d}" ${d === state.day ? "selected" : ""}>${fmtDate(d)}</option>`).join("")}
       </select>
-      <button class="btn small" onclick="formDayMeta('${state.day}')">Editar fase/cierre</button>
+      <button class="btn small" onclick="formDayMeta('${state.day}')">Plan y datos del día</button>
       <div class="spacer"></div>
       <button class="btn" onclick="window.print()">🖨 Imprimir</button>
       <button class="btn primary" onclick="formTest(null)">＋ Camión</button>
@@ -518,13 +518,21 @@ function formDayMeta(day) {
     title: `Datos del vaciado — ${fmtDate(day)}`,
     initial: meta,
     fields: [
+      { key: "cyPlan", label: "Yardas planificadas (CY)", type: "number", step: "5", half: true,
+        hint: "Sin esto la barra de estado no puede mostrar el avance del tiro" },
+      { key: "losasPlan", label: "Losas a tirar hoy", type: "number", step: "1", half: true },
       { key: "fase", label: "Fase" },
       { key: "cierre", label: "Cierre" },
       { key: "lane", label: "Carril", placeholder: "L1 / L2 / L3" },
       { key: "km", label: "Km (desde–hasta)", half: true, placeholder: "0.943 – 0.461" },
       { key: "notas", label: "Notas", type: "textarea", full: true },
     ],
-    onSave: (v) => { db.dayMeta[day] = v; saveDB(); render(); toast("Datos del día guardados"); },
+    // Se fusiona: este formulario y el del contratista escriben el mismo día,
+    // y reemplazar el objeto le borraba el plan al otro.
+    onSave: (v) => {
+      db.dayMeta[day] = { ...(db.dayMeta[day] || {}), ...v };
+      saveDB(); render(); toast("Datos del día guardados");
+    },
   });
 }
 function formProject() {

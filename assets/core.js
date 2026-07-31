@@ -239,7 +239,7 @@ function pintarTiro(day) {
   for (let i = 0; i < QCS_SEGMENTOS; i++)
     segs += `<i class="${i < llenos ? "on" : ""}"></i>`;
   el.className = "qcs-tiro" + (hayPlan ? "" : " sin-plan");
-  el.href = hayPlan ? "results.html#daily" : "results.html#plan";
+  el.href = "results.html#daily";
   el.title = hayPlan ? "Avance del tiro" : "Defina las yardas planificadas del día";
   el.innerHTML = `
     <span class="qcs-lb">Tiro</span>
