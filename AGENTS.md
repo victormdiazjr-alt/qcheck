@@ -70,7 +70,8 @@ docs/                 ← arquitectura, hoja de ruta, despliegue, contrato
 El héroe del Control Center va en dos bandas. Arriba, tres bloques en fila: **estado del
 tiro** con su aro junto al **progreso en grande**, una **rejilla de datos** (comenzó, ritmo,
 hora estimada de fin, camiones, último camión, tramo, mezcla) y el **tiempo del sitio**.
-Abajo, **las losas de lado a lado**. La rejilla existe para que no quede hueco muerto entre
+Abajo, **las losas de lado a lado**. Debajo del héroe, los widgets van **dos por fila**
+(`grid cols-2`) — indicadores, avisos, último camión y cartas, todos con el mismo ancho. La rejilla existe para que no quede hueco muerto entre
 el progreso y el tiempo — si un dato no existe, su casilla simplemente no se pinta.
 
 `ritmoTiro(day)` calcula yardas por hora y **a qué hora acabaría a ese paso**, con las

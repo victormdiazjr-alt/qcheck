@@ -156,11 +156,13 @@ code, kbd { overflow-wrap: anywhere; word-break: break-word; }
 .grid > * { min-width: 0; }
 .cols-2 { grid-template-columns: repeat(2,1fr); }
 .cols-3 { grid-template-columns: repeat(3,1fr); }
+.cols-4 { grid-template-columns: repeat(4,1fr); }
 .cols-6 { grid-template-columns: repeat(6,1fr); }
-@media (max-width: 1000px) { .cols-6 { grid-template-columns: repeat(3,1fr); } }
-@media (max-width: 640px)  { .cols-6, .cols-3 { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 1000px) { .cols-6 { grid-template-columns: repeat(3,1fr); }
+                             .cols-4 { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 640px)  { .cols-6, .cols-3, .cols-4 { grid-template-columns: repeat(2,1fr); } }
 /* en el teléfono, una tarjeta por fila: dos no caben sin apretujar la cifra */
-@media (max-width: 560px)  { .cols-6, .cols-3, .cols-2 { grid-template-columns: 1fr; } }
+@media (max-width: 560px)  { .cols-6, .cols-3, .cols-2, .cols-4 { grid-template-columns: 1fr; } }
 
 .stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 11px 14px; }
 .stat .label { font-size: 10.5px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .18em; font-weight: 800; }
