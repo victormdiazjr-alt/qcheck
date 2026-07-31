@@ -52,6 +52,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-07-31 | **Q-19 (cerrada) — El vector del mixer de Víctor** es ya el icono del camión hormigonera, y toma el color del estado | claude |
 | 2026-07-31 | **Q-25 — Delete, Next y Clear** en el teclado de Muestras | claude |
 | 2026-07-31 | **Q-24 — La portada de la guía, al hueso**: para quién, proyecto y acceso; fuera el aviso de la clave y la coletilla del pie | claude |
 | 2026-07-31 | **Q-23 — Slump y Unit Weight suben** por encima de los avisos y del último camión en el Control Center | claude |

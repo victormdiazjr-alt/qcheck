@@ -397,11 +397,18 @@ en `assets/qc.css`; no inventes colores en las pantallas.
   del reporte. Colores de interfaz: azul `#4a63d8` y verde lima `#96c93d`.
 - **Semántica**: verde `#34d27b` dentro de límites · ámbar `#f5b83d` zona de acción ·
   rojo `#ff5a52` fuera. Iguales en las cinco pantallas.
-- **El camión hormigonera es siempre el mismo dibujo**: `assets/mixer.png`, la silueta
-  que dio Víctor, en blanco sobre transparente. Donde tenga que tomar color —el estado del
-  tiro en el Control Center— entra como **máscara CSS** (`mask-image` + `background:
-  currentColor`), nunca como `<img>`: una imagen no se recolorea y una máscara sí. No
-  dibujes otro mixer; si hace falta en otra pantalla, se reusa este archivo.
+- **El camión hormigonera es siempre el mismo dibujo**: `assets/mixer.svg`, el vector que
+  dio Víctor. **No dibujes otro mixer** — se intentó y no llega ni de lejos; si hace falta
+  en otra pantalla, se reusa este archivo.
+  - El original venía para papel (trazo `#060606` sobre rellenos blancos). Aquí el trazo
+    es `currentColor` y los rellenos se apagan, así que **toma el color de donde esté**:
+    inline hereda el de la pantalla —incluido el del estado del tiro— y como archivo
+    suelto cae en el gris de `svg { color }`.
+  - Donde tenga que tomar color entra como **máscara CSS** (`mask-image` + `background:
+    currentColor`), que además deja el trazado fuera del HTML.
+  - **Proporción 709×406.** Respétala o sale aplastado.
+  - **Viene con la cabina a la izquierda**, o sea ya entra en reversa hacia el vaciado.
+    No lo espejes por costumbre: el PNG anterior sí lo necesitaba y este no.
 - **El naranja NO se usa en QCheck**: es la marca de Concre-Ticket. Si ves naranja aquí,
   es un descuido — cámbialo por `var(--accent2)`.
 - **El color entra por el resplandor, no por el relleno.** Nada de botones pintados de

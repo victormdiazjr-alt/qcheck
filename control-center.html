@@ -45,14 +45,15 @@
 }
 .cc-hero .ic-t { width: 22px; height: 22px; fill: none; stroke: currentColor;
   stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-/* El camión hormigonera es el dibujo de Víctor (`assets/mixer.png`), blanco
-   sobre transparente. Entra como MÁSCARA y no como imagen: así toma el color
-   del estado del tiro —ámbar esperando, verde vaciando, rojo detenido—, que es
-   lo que hacen los demás iconos con `currentColor`. Una imagen no se recolorea;
-   una máscara sí. Si algún día llega el vector, se cambia solo esta regla. */
-.ic-mixer { display: block; width: 27px; height: 17px; background: currentColor;
-  -webkit-mask: url(assets/mixer.png) center/contain no-repeat;
-          mask: url(assets/mixer.png) center/contain no-repeat; }
+/* El camión hormigonera es el dibujo de Víctor: `assets/mixer.svg`, su vector.
+   Entra como MÁSCARA y no como imagen, y por dos razones: así toma el color del
+   estado del tiro —ámbar esperando, verde vaciando, rojo detenido—, como el
+   resto de los iconos con `currentColor`; y así el archivo se queda fuera del
+   HTML en vez de meter 17 KB de trazado en cada pantalla.
+   La proporción del dibujo es 709×406 — respétala o sale aplastado. */
+.ic-mixer { display: block; width: 28px; height: 16px; background: currentColor;
+  -webkit-mask: url(assets/mixer.svg) center/contain no-repeat;
+          mask: url(assets/mixer.svg) center/contain no-repeat; }
 /* mientras se vacía, el aro respira y el hormigón cae */
 .cc-hero.t-vaciando .mark2 { animation: tLatir 2.2s ease-in-out infinite; }
 .cc-hero.t-vaciando .ic-cae { animation: tCaer 1.1s linear infinite; }

@@ -5,6 +5,24 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.9] — 31 de julio · «el mixer de Víctor»
+
+### Cambiado
+- **El camión hormigonera es el vector de Víctor**, `assets/mixer.svg`. Sustituye al PNG
+  y con él a mis intentos de dibujarlo a mano, que no llegaban. El original venía para
+  papel —trazo casi negro sobre rellenos blancos, invisible sobre el tablero oscuro—, así
+  que se le reescribió la paleta: el trazo es `currentColor` y los rellenos se apagan.
+- Con eso **vuelve a tomar el color del estado del tiro** en el aro del Control Center
+  —ámbar esperando, verde vaciando, rojo detenido—, que era justo lo que se perdía con una
+  imagen a color. Entra como máscara CSS, así que el trazado no se mete en el HTML.
+- Se le recortó el lienzo a la caja del dibujo (ocupaba 697×394 dentro de 750×750 y
+  flotaba en el centro) y en la guía se dibuja con su proporción real: el PNG iba estirado
+  a 118×49 y no se notó hasta tener el vector.
+- En la guía **no lleva volteo**: el vector ya viene con la cabina a la izquierda, o sea ya
+  entra en reversa. El PNG anterior sí había que espejarlo.
+
+---
+
 ## [0.8] — 31 de julio · «una puerta, tres tableros»
 
 ### Cambiado
