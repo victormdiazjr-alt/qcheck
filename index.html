@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QCheck">
+<link rel="apple-touch-icon" href="assets/icono-180.png">
 <title>QCheck — Acceso</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%2396c93d' stroke-width='8'/></svg>">
 <style>
@@ -108,7 +112,8 @@ button:active { transform: scale(.98); }
 
   <div class="hint">
     <span class="demo">DEMOSTRACIÓN</span><br>
-    Acceso de prueba: usuario <b>admin</b> · contraseña <b>1234</b>.<br>
+    Acceso de prueba: <b>admin</b> / <b>1234</b> — todo.<br>
+    <b>invitado</b> / <b>1234</b> — solo los indicadores.<br>
     Puerta de demostración — la autenticación real llega con el backend.
   </div>
 </form>
@@ -119,8 +124,14 @@ function entrar(e) {
   e.preventDefault();
   const u = document.getElementById("u").value.trim().toLowerCase();
   const p = document.getElementById("p").value;
-  if (u === "admin" && p === "1234") {
+  /* Dos accesos de demostración. `invitado` es para compartir el portal con el
+     contratista, el concretero o la Autoridad: ve sus indicadores y nada más.
+     Como el acceso mismo, esto es una puerta de demostración — la de verdad
+     llega con el backend (Q-07). */
+  const CUENTAS = { admin: "1234", invitado: "1234" };
+  if (CUENTAS[u] && CUENTAS[u] === p) {
     sessionStorage.setItem("qc-auth", "1");
+    sessionStorage.setItem("qc-user", u);
     const next = new URLSearchParams(location.search).get("next");
     /* Desde un teléfono se entra al portal móvil, no al Control Center: en la
        mano solo se consulta. El iPad NO cuenta como teléfono — es el aparato de
@@ -128,7 +139,8 @@ function entrar(e) {
        Control Center con un enlace, por si alguien lo quiere igual. */
     const ua = navigator.userAgent || "";
     const telefono = /iPhone|iPod/.test(ua) || (/Android/.test(ua) && /Mobile/.test(ua));
-    const casa = telefono ? "movil.html" : "control-center.html";
+    /* el invitado va siempre al portal, sea el aparato que sea */
+    const casa = (telefono || u !== "admin") ? "movil.html" : "control-center.html";
     // solo rutas internas: nunca redirigir a un destino externo
     const destino = next && /^[\w.-]+\.html([?#].*)?$/.test(next) ? next : casa;
     location.replace(destino);

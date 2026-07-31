@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QCheck">
+<link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>QCheck — Móvil</title>
 <link rel="stylesheet" href="assets/qc.css?v=db2f38e2">
@@ -66,6 +68,12 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
   box-shadow: 0 0 0 3px rgba(74,99,216,.09), 0 0 22px -7px rgba(74,99,216,.95); }
 .mv-btn.destaca .ic { stroke: #7d92ea; }
 
+.mv-inicio { display: flex; gap: 11px; margin-top: 18px; padding: 13px 15px;
+  border-radius: 14px; border: 1px dashed var(--line); color: var(--ink-soft);
+  font-size: 12px; line-height: 1.5; }
+.mv-inicio svg { width: 20px; height: 20px; flex: none; margin-top: 1px; fill: none;
+  stroke: var(--accent2); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.mv-inicio b { color: var(--ink); font-weight: 700; }
 .mv-pie { margin-top: 26px; text-align: center; }
 .mv-pie a { font-size: 12px; color: var(--ink-soft); text-decoration: none;
   border-bottom: 1px solid var(--line); padding-bottom: 2px; }
@@ -99,14 +107,27 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
 
   <div class="mv-menu" id="mv-menu"></div>
 
-  <div class="mv-pie"><a href="control-center.html">Ver el Control Center completo</a></div>
+  <!-- Safari de iPhone no deja poner una web a pantalla completa por código.
+       La única vía de verdad es guardarla en la pantalla de inicio, y desde el
+       icono abre sin barras. Se dice solo si hace falta. -->
+  <div class="mv-inicio" id="mv-inicio" hidden>
+    <svg viewBox="0 0 24 24"><path d="M12 15.5V3.5M8.4 7.1 12 3.5l3.6 3.6"/><path d="M4.5 13.5v5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5"/></svg>
+    <div>
+      <b>¿Lo quiere sin las barras de Safari?</b>
+      Toque <b>Compartir</b> y luego <b>Añadir a pantalla de inicio</b>.
+      Desde el icono, el Field Display abre a pantalla completa de verdad.
+    </div>
+  </div>
+
+  <!-- la puerta al tablero completo solo la ve el administrador -->
+  <div class="mv-pie" id="mv-pie" hidden><a href="control-center.html">Ver el Control Center completo</a></div>
 </main>
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/core.js?v=5eac50db"></script>
 <script src="assets/demo.js?v=61eea5eb"></script>
-<script src="assets/auth.js?v=fa765d99"></script>
+<script src="assets/auth.js?v=b007de04"></script>
 <script>
 "use strict";
 
@@ -125,6 +146,15 @@ const PUERTAS = [
 
 function pintar() {
   document.getElementById("mv-proyecto").textContent = db.project.name || "";
+  // el invitado no ve la puerta al tablero completo
+  document.getElementById("mv-pie").hidden = sessionStorage.getItem("qc-user") !== "admin";
+
+  /* El consejo de la pantalla de inicio solo si es iOS en Safari y todavía no
+     está guardada: ya guardada no hay barras que quitar. */
+  const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const guardada = navigator.standalone === true ||
+                   matchMedia("(display-mode: standalone)").matches;
+  document.getElementById("mv-inicio").hidden = !(iOS && !guardada);
 
   const day = diaActivo();
   const t = estadoTiro(day), p = dayProgress(day);

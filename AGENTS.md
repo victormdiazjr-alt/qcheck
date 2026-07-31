@@ -42,7 +42,10 @@ anótalo en la bitácora.
 node serve.js 8452
 # abre http://localhost:8452  → pantalla de acceso
 ```
-Usuario de demostración: `admin` / `1234`.
+Dos accesos de demostración: **`admin` / `1234`** (todo) e **`invitado` / `1234`**
+(solo los indicadores: entra al portal del teléfono y `auth.js` lo devuelve ahí si escribe
+a mano la dirección de una pantalla de QC). Como el acceso mismo, frena un despiste, no a
+alguien decidido: vive en el navegador. El candado de verdad llega con el backend (Q-07).
 
 Sin paso de compilación. HTML, CSS y JavaScript planos. **No introduzcas un bundler,
 un framework ni dependencias de npm** sin acuerdo explícito de Víctor.
@@ -224,6 +227,11 @@ tener que entrar a ver si está pasando algo.
   opcional: si el aparato está de pie sale un aviso de girarlo, que se quita solo al girar.
   Si tocas esto, no quites el aviso creyendo que sobra.
 - Las demás pantallas de indicadores se abren normales, sin trucos.
+- **El enlace al Control Center, al pie, solo lo ve `admin`.**
+- **Pantalla completa de verdad en iPhone = guardarlo en la pantalla de inicio.** Las
+  etiquetas están puestas (`apple-mobile-web-app-capable`, icono de 180 px); desde el icono
+  Safari no pinta barras. En una pestaña normal de Safari **no hay forma** de quitarlas por
+  código, así que el portal lo explica cuando detecta iOS sin guardar.
 
 ## 8b. La simulación — el tiro de hoy ya en marcha
 
