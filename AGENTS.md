@@ -231,6 +231,9 @@ tener que entrar a ver si está pasando algo.
   opcional: si el aparato está de pie sale un aviso de girarlo, que se quita solo al girar.
   Si tocas esto, no quites el aviso creyendo que sobra.
 - Las demás pantallas de indicadores se abren normales, sin trucos.
+- **`admin` ve además Resultados, y va primero.** Su logotipo son los chevrons apilados de
+  Segarra Engineering, recortados del logo de QCheck y sin texto. **No es el logo real de
+  Segarra** — ese nunca llegó al repositorio; si Víctor lo envía, se sustituye ahí.
 - **El enlace al Control Center, al pie, solo lo ve `admin`.**
 - **Pantalla completa de verdad en iPhone = guardarlo en la pantalla de inicio.** Las
   etiquetas están puestas (`apple-mobile-web-app-capable`, icono de 180 px); desde el icono
