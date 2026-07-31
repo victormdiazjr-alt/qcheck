@@ -9,9 +9,10 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 ## En curso
 
+_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-03 | **Reporte diario de vaciado** (el del mismo día, no el acumulado) | claude | 2026-07-31 |
 
 ---
 
@@ -52,6 +53,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-07-31 | **Q-03 — Reporte del vaciado del día**, con dos fallos reales de paso: el botón CSV (`csvCell` borrada) y los ciclos de camión imposibles del Excel histórico | claude |
 | 2026-07-31 | Cierre de sesión: limpieza de código muerto, `verificar.js`, y la documentación de traspaso completa | claude |
 | 2026-07-31 | Portal de teléfono, tres cuentas con papeles, guía de uso de Rubén | claude |
 | 2026-07-31 | Simulación: el tiro de hoy arranca en marcha por la yarda 120 | claude |

@@ -8,9 +8,11 @@
    GUÍA DE QCHECK PARA RUBÉN — pensada para papel.
    Se generan las dos salidas con Chrome sin ventana:
 
-   PNG (una tira, para compartir por mensaje):
+   PNG (una tira, para compartir por mensaje). El alto de la ventana tiene que
+   cubrir la guía entera o Chrome la corta por abajo sin avisar — hoy mide unos
+   4.030 px de alto y por eso van 4.120; si crece, súbelo:
      chrome --headless --screenshot=docs/guia-qcheck.png \
-       --window-size=940,3200 --force-device-scale-factor=2 \
+       --window-size=940,4120 --force-device-scale-factor=2 \
        --hide-scrollbars --default-background-color=ffffff \
        file://.../docs/guia-qcheck.html
 
@@ -471,8 +473,10 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 9pt;
       sabe si descarga.</div></div>
     <div class="paso"><div><b>Marca cuándo empieza y termina de descargar</b> en Recepción.
       Con eso salen los ciclos y las esperas del concretero.</div></div>
-    <div class="paso"><div><b>Al cerrar el día</b>, desde Reportes saca el PDF con la tabla
-      matriz, el Moving Average y las Control Charts.</div></div>
+    <div class="paso"><div><b>Al cerrar el día</b>, desde Reportes saca el <b>reporte del
+      vaciado</b>: cómo cerró el tiro, las losas, la bitácora de camiones, las Control Charts
+      del día y las incidencias, listo para firmar. El acumulado del proyecto —tabla matriz y
+      Moving Average— está en el mismo sitio, en «Acumulado del proyecto».</div></div>
   </div>
 
   <div class="nota">

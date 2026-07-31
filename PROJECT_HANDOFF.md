@@ -195,6 +195,8 @@ Ver [`ARCHITECTURE.md` §3](ARCHITECTURE.md). Resumen: un objeto en
   esperando el próximo camión, para poder enseñarlo sin preparar nada.
 - Tres papeles de usuario, con el guardián devolviendo al portal a quien no sea QC.
 - Guía de uso para Rubén en PNG y PDF.
+- **El entregable del cierre del tiro**: `reporte.html` da el reporte del vaciado del
+  día y el acumulado del proyecto, con el mismo papel. Ver `AGENTS.md` §11.
 
 **Lo que NO existe todavía:** backend, autenticación real, OCR del conduce, correo
 automático, adjuntos.
@@ -232,10 +234,8 @@ Ver [`TODO.md`](TODO.md). Las tres que mandan:
 
 1. **Q-02, el backend.** Todo lo demás mejora cuando existe. Empezar por reescribir
    solo `loadDB`/`saveDB` en `core.js` — la capa de datos está aislada a propósito.
-2. **Q-03, el reporte diario del mismo día.** Es lo que se entrega al cerrar el tiro
-   y hoy solo existe el acumulado. Es pequeño y de valor inmediato.
-3. **Q-01, el OCR.** El que más trabajo manual quita en el campo.
-4. **Pedir a Víctor** los logos oficiales y el vector de Segarra: son diez minutos de
+2. **Q-01, el OCR.** El que más trabajo manual quita en el campo.
+3. **Pedir a Víctor** los logos oficiales y el vector de Segarra: son diez minutos de
    trabajo y quitan dos «problemas conocidos».
 
 ---

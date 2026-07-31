@@ -17,14 +17,6 @@ equipo, y bloquea Q-04, Q-06 y Q-07.
 `loadDB()` y `saveDB()` en `assets/core.js` contra una API; el resto del motor no
 debería enterarse. Mantén `enableLiveSync()` funcionando.
 
-### Q-03 · Reporte diario del vaciado — **mediano**
-`reporte.html` produce el acumulado del proyecto. Falta el del día, que es lo que se
-entrega al cerrar el tiro: camiones de la fecha, ensayos, losas tiradas, cumplimiento
-e incidencias.
-
-Toda la información existe ya (`testsOfDate`, `dayProgress`, `losasDelDia`,
-`trendAlerts`). Es composición, no cálculo nuevo. **Buena primera tarea.**
-
 ### Q-01 · OCR del conduce en papel — **grande**
 La mayoría de las concreteras no tendrán QR: llegan con conduce en papel. Hoy la foto
 se guarda como evidencia y los datos se entran a mano. **Esta es la vía principal de

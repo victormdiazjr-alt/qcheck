@@ -1,11 +1,50 @@
 # CURRENT_STATUS
 
-**Última sesión:** 29–31 de julio de 2026 · agente `claude`
+**Última sesión:** 31 de julio de 2026 · agente `claude` · **Q-03**
 **Estado:** verde. `node verificar.js` pasa sin fallos. Publicado y funcionando.
 
 ---
 
-## Lo que se completó en esta sesión
+## Lo que se completó en la última sesión (Q-03)
+
+**El reporte del vaciado del día.** Hasta ahora `reporte.html` solo producía el
+acumulado del proyecto; el que Rubén entrega al cerrar el tiro es el del día, y no
+existía. Ahora la misma pantalla da los dos alcances y **abre por defecto el del día**
+(`reporte.html?dia=2026-07-31`). Está documentado en `AGENTS.md` §11.
+
+Son seis hojas: cómo cerró el vaciado (plan contra lo real, ritmo y ciclos), las losas
+con las observaciones del sistema, la bitácora de camiones, las Control Charts del día
+en pares —Slump y Unit Weight primero— e incidencias con la certificación.
+
+No calcula nada nuevo: sale de `dayProgress`, `dayStats`, `losasDelDia` y `trendAlerts`,
+el mismo motor que pinta el Control Center, para que el papel firmado y el tablero no
+puedan discrepar. Un día sin plan declarado no se compara con nada y lo dice; un día sin
+camiones no se rellena con ceros; y si el tiro sigue abierto, la hoja lo avisa arriba y
+en la certificación.
+
+**Dos fallos reales encontrados de paso**
+
+- **El botón «⬇ CSV» estaba roto en las cuatro pantallas donde aparece.** `exportCSV()`
+  llamaba a `csvCell()`, borrada en la limpieza de la sesión anterior. Reventaba con
+  «csvCell is not defined» sin decir nada en la interfaz. `verificar.js` no lo vio
+  porque la función se pasaba por referencia (`.map(csvCell)`) y su comprobación de
+  código muerto busca llamadas; ahora se llama explícita.
+- **Ciclos de camión imposibles.** Un ciclo Batch → fin de descarga no puede durar más
+  que el día entero. El Excel histórico trae horas mal transcritas —la #331 del 20 de
+  junio anota el batch a las 9:39 y la descarga a las 7:33— y `minutesBetween`, que
+  cruza la medianoche a propósito, las volvía ciclos de 21 h: la pantalla de la
+  concretera enseñaba **«máximo 1314 min»**. El registro histórico no se toca; el ciclo
+  imposible se queda fuera del promedio y se cuenta aparte (`cicloCamion()` en
+  `core.js`, con el tope sacado del propio día).
+
+**Verificado en el navegador**: el tiro de hoy en curso, un día histórico cerrado con
+rechazo y sin plan declarado (20 jun), la vuelta al acumulado, el CSV, la pantalla de la
+concretera después del arreglo, y que **ninguna hoja se pasa de la carta** (máximo
+847 px de 892 disponibles) para que el «Página N de M» del pie sea verdad.
+
+---
+
+## Sesión anterior (29–31 de julio)
 
 La sesión empezó con el prototipo ya en pie y lo llevó a producto presentable.
 
@@ -105,15 +144,11 @@ nuevo, en [`TODO.md`](TODO.md).
 
 ## Primera tarea sugerida para la próxima sesión
 
-**Q-03 — el reporte diario del vaciado.**
+**Q-02 — el backend y la base de datos.** Es el cuello de botella de fondo: hoy cada
+navegador guarda lo suyo y los aparatos no se sincronizan, así que no hay «en vivo» de
+verdad para el equipo. Bloquea Q-04, Q-06 y Q-07. Empieza por reescribir **solo**
+`loadDB()` y `saveDB()` en `assets/core.js` contra una API: la capa de datos está
+aislada justamente para eso, y `enableLiveSync()` tiene que seguir funcionando.
 
-Por qué esta y no el backend: es pequeña, se puede terminar en una sesión, y es lo
-que Rubén **entrega al cerrar el tiro**. Hoy `reporte.html` solo produce el acumulado
-del proyecto. Falta el del día: los camiones de la fecha, sus ensayos, las losas
-tiradas, el cumplimiento y las incidencias, en una hoja.
-
-Toda la información ya existe — `testsOfDate()`, `dayProgress()`, `losasDelDia()`,
-`trendAlerts()`. Es composición, no cálculo nuevo.
-
-Si prefieres atacar lo grande, entonces **Q-02, el backend**, y empieza por reescribir
-solo `loadDB`/`saveDB` en `core.js`: la capa de datos está aislada justamente para eso.
+Si prefieres algo que se cierre en una sesión, **Q-01, el OCR del conduce en papel**, es
+lo que más trabajo manual quita en el campo: la mayoría de las concreteras no tendrán QR.

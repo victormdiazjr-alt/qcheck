@@ -5,6 +5,39 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.5] — 31 de julio · «el reporte del vaciado» (Q-03)
+
+### Añadido
+- **El reporte del día** en `reporte.html`. Hasta ahora solo existía el acumulado del
+  proyecto; el que se entrega al cerrar el tiro es este. Se abre con
+  `reporte.html?dia=2026-07-31` y son seis hojas: cómo cerró el vaciado (plan contra lo
+  real, ritmo y ciclos), las losas con las observaciones del sistema, la bitácora de
+  camiones, las Control Charts del día en pares —**Slump y Unit Weight primero**, que es
+  lo que Rubén mira— e incidencias con la certificación y las firmas.
+- Todo sale del motor que ya pinta el Control Center (`dayProgress`, `dayStats`,
+  `losasDelDia`, `trendAlerts`): la hoja firmada y el tablero **no pueden discrepar**.
+- Un día **sin plan declarado** no se compara con nada y la hoja lo dice; un día **sin
+  camiones** tampoco se rellena con ceros. Emitida con el tiro todavía abierto, lo avisa
+  arriba y lo repite en la certificación.
+- Acceso desde **Results → Vaciado Diario → 📄 Reporte del vaciado**, que abre el día
+  que esté seleccionado.
+
+### Arreglado
+- **El botón «⬇ CSV» estaba roto en las cuatro pantallas donde aparece.** `exportCSV()`
+  llamaba a `csvCell()`, que se borró en la limpieza del 31 de julio: reventaba con
+  «csvCell is not defined» sin decir nada en la interfaz.
+- **Ciclos de camión imposibles.** Un ciclo Batch → fin de descarga no puede durar más
+  que el día entero. El Excel histórico trae horas mal transcritas —la #331 del 20 de
+  junio anota el batch a las 9:39 y la descarga a las 7:33, o sea antes— y
+  `minutesBetween`, que cruza la medianoche a propósito, las convertía en ciclos de
+  21 h: la pantalla de la concretera enseñaba **«máximo 1314 min»**. El registro
+  histórico no se toca; el ciclo imposible se queda fuera del promedio y se cuenta
+  aparte para poder decirlo.
+- El comando del PNG de la guía en su propio encabezado se había quedado corto
+  (`--window-size=940,3200`) y Chrome cortaba la guía por abajo sin avisar.
+
+---
+
 ## [0.4] — 31 de julio · «portable»
 
 ### Añadido

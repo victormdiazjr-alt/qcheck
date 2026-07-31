@@ -158,7 +158,7 @@ hay interruptores que alguien tenga que acordarse de mover.
 | `contratista.html` | cualquiera | avance del tiro |
 | `produccion.html` | cualquiera | rendimiento del concretero |
 | `autoridad.html` | cualquiera | cumplimiento ACT / FHWA |
-| `reporte.html` | PC | el entregable imprimible |
+| `reporte.html` | PC | el entregable imprimible: del vaciado del día (`?dia=`) y acumulado del proyecto |
 
 **Las dos pantallas de producción no son duplicado.** Existe una `produccion.html` en
 cada repositorio: la de QCheck enseña lo que Segarra midió (aplica surta quien surta),

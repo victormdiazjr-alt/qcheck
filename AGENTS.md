@@ -95,7 +95,7 @@ display.html          ← pantalla de campo (TV / tablet)
 contratista.html      ← estado del tiro para el contratista
 produccion.html       ← vista del concretero (ver §8)
 autoridad.html        ← vista de cumplimiento para ACT / FHWA
-reporte.html          ← el entregable imprimible
+reporte.html          ← el entregable imprimible (dos alcances — ver §11)
 conduce.html          ← recepción de camiones
 assets/               ← core.js (motor), qc.js, auth.js, seed.js, qc.css
 shared/               ← contrato del conduce (copia — ver §5)
@@ -383,3 +383,34 @@ en `assets/qc.css`; no inventes colores en las pantallas.
 
 La única excepción deliberada: **`reporte.html` imprime sobre hojas blancas**, porque el
 papel es blanco. Su interfaz sigue el tema; las hojas no.
+
+## 11. El reporte: dos alcances, una hoja de papel
+
+`reporte.html` produce **dos** entregables con el mismo encabezado, pie, estilos de hoja y
+reglas de impresión. Son el mismo producto con distinto alcance, no dos pantallas:
+
+| | **Del vaciado** (`?dia=2026-07-31`) | **Acumulado** (`?modo=acumulado`) |
+|---|---|---|
+| Qué cubre | un día | el proyecto, o un rango con filtro de lote |
+| Cuándo | **al cerrar el tiro** — es lo que se entrega | expediente, revisiones, cierre de lote |
+| Hojas | cómo cerró · losas y avisos · bitácora de camiones · Control Charts del día · incidencias y firmas | portada · tabla matriz · Moving Average · Control Charts · rechazos y firmas |
+
+**Por defecto abre el del día**, porque es el que se saca a diario. El acumulado está a un
+clic. `render()` reparte a `renderDiario()` o `renderAcumulado()` y **la barra se pinta una
+sola vez**, en `barra()`.
+
+Reglas que no se rompen aquí:
+
+- **El reporte no calcula nada por su cuenta.** Sale de `dayProgress`, `dayStats`,
+  `losasDelDia` y `trendAlerts`, el mismo motor que pinta el Control Center: si un número
+  del papel firmado no cuadra con el tablero, es un fallo.
+- **Cada `<div class="sheet">` tiene que caber en una carta.** El pie dice «Página N de M»
+  y deja de ser verdad en cuanto una hoja se desborda a dos páginas. El presupuesto son
+  **892 px de contenido** (11 in − márgenes de `@page` − el relleno de la hoja). Por eso van
+  **18 camiones por hoja** en la bitácora y **dos cartas por hoja**, no cuatro. Si añades una
+  sección, mide: `alto de .sheet en pantalla − 134`.
+- **Un día sin plan declarado no se compara con nada, y un día sin camiones no se rellena
+  con ceros.** La hoja dice que no existe. Igual con las losas: sin lista declarada no se
+  deduce el plan de lo que sirvieron los camiones.
+- **Si el tiro sigue abierto, la hoja lo avisa** arriba y en la certificación. Se firma lo
+  que hay, y hay que saber que es una foto a media faena.
