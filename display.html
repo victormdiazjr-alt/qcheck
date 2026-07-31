@@ -338,6 +338,7 @@ footer {
 <script src="shared/conduce-contract.js"></script>
 <script src="assets/seed.js"></script>
 <script src="assets/core.js"></script>
+<script src="assets/demo.js"></script>
 <script>
 "use strict";
 
@@ -429,7 +430,8 @@ function render() {
   if (typeof pintarTiro === "function") pintarTiro(day);   // el tiro sube en vivo
   const rows = day ? testsOfDate(day) : [];
   const last = rows[rows.length - 1];
-  const cy = rows.reduce((a, t) => a + (num(t.vol) || 0), 0);
+  // lo colocado, no lo recibido: el camión que aún descarga no cuenta todavía
+  const cy = dayProgress(day).placed;
   const nRej = rows.filter((t) => t.rejected).length;
   const meta = (db.dayMeta && db.dayMeta[day]) || {};
 

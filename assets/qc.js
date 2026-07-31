@@ -434,7 +434,20 @@ function viewCharts() {
 /* ------------------------------------------------------------ Plan & data */
 function viewPlan() {
   const p = db.plan, pr = db.project;
+  const enDemo = db.demo && db.demo === todayISO();
   return `
+    ${enDemo ? `<div class="panel" style="border-color:rgba(245,184,61,.4)">
+      <div class="panel-head"><h2>Simulación en curso</h2><div class="spacer"></div>
+        <button class="btn small" onclick="reiniciarDemo(); render(); toast('Simulación reiniciada')">Reiniciar</button>
+        <button class="btn small danger" onclick="apagarDemo(); render(); toast('Simulación apagada')">Apagar y empezar en blanco</button>
+      </div>
+      <div class="panel-body" style="font-size:13.5px" class="muted">
+        El tiro de hoy es una <b>demostración</b>: se sembró al entrar para poder enseñar el
+        sistema en marcha. Todo lo que se haga encima —recibir camiones, entrar muestras— es
+        real y se guarda. <b>Apagar</b> borra el tiro simulado y deja el día en blanco para
+        arrancar uno de verdad; los 397 ensayos históricos del proyecto no se tocan.
+      </div>
+    </div>` : ""}
     <div class="grid cols-2">
       <div class="panel">
         <div class="panel-head"><h2>Proyecto</h2><div class="spacer"></div><button class="btn small" onclick="formProject()">Editar</button></div>

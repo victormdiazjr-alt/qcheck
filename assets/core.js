@@ -11,7 +11,7 @@ let db;
 function loadDB() {
   try {
     const raw = localStorage.getItem(DB_KEY);
-    if (raw) { db = JSON.parse(raw); migrateDB(); return; }
+    if (raw) { db = JSON.parse(raw); migrateDB(); sembrarDia(); return; }
   } catch (e) { console.error(e); }
   db = {
     version: 2,
@@ -22,7 +22,16 @@ function loadDB() {
     humidity: [],
   };
   migrateDB();
+  sembrarDia();
   saveDB();
+}
+
+/* La simulación: si hoy no tiene ni un camión, se arranca con un tiro ya en
+   marcha para que el sistema se pueda enseñar. Ver assets/demo.js. */
+function sembrarDia() {
+  if (db.demo === false) return;                       // alguien la apagó
+  if (typeof sembrarTiroDemo !== "function") return;   // pantalla sin demo.js
+  if (sembrarTiroDemo(db)) saveDB();
 }
 /* Esquema v2: record por conduce (compañía + número), humedades, plan del día */
 function migrateDB() {
@@ -639,7 +648,15 @@ function estadoTiro(day) {
 function dayProgress(day) {
   const meta = db.dayMeta[day] || {};
   const rows = testsOfDate(day);
-  const placed = rows.filter((t) => !t.rejected).reduce((a, t) => a + (num(t.vol) || 0), 0);
+  const recibido = rows.filter((t) => !t.rejected).reduce((a, t) => a + (num(t.vol) || 0), 0);
+  /* Un camión que llegó y no ha terminado de descargar todavía no ha colocado
+     nada: sus yardas van aparte. Esto solo aplica al día en curso — 95 de los
+     registros históricos vienen del Excel sin hora de fin, y ahí el tiro ya se
+     cerró: lo recibido es lo colocado. */
+  const enCurso = day === todayISO()
+    ? rows.filter((t) => !t.rejected && t.arrive && !t.end).reduce((a, t) => a + (num(t.vol) || 0), 0)
+    : 0;
+  const placed = recibido - enCurso;
   const cyPlan = num(meta.cyPlan);
   const losasPlan = num(meta.losasPlan);
   const done = new Set();
@@ -649,7 +666,7 @@ function dayProgress(day) {
   const evaluated = rows.filter((t) => worstZone(t) != null);
   const conforming = evaluated.filter((t) => !t.rejected && worstZone(t) !== "susp").length;
   return {
-    placed,
+    placed, enCurso, recibido,
     cyPlan,
     pending: cyPlan != null ? Math.max(0, cyPlan - placed) : null,
     pct: cyPlan ? Math.min(100, placed / cyPlan * 100) : null,

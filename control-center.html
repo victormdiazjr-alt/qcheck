@@ -62,6 +62,7 @@
 .pt-barra i { display: block; height: 100%; border-radius: 3px; background: var(--vc);
   box-shadow: 0 0 12px -2px var(--vc); transition: width .6s cubic-bezier(.25,.6,.25,1); }
 .pt-nota { font-size: 11.5px; color: #8ea6bd; }
+.pt-nota b { color: var(--vc); font-weight: 700; }
 .cc-hero h1 { font-size: 23px; margin: 0; font-weight: 700; letter-spacing: -.01em; color: var(--vc); }
 .cc-hero .sub { font-size: 12.5px; color: #9fb6cc; margin-top: 7px; }
 /* --- especificaciones del tiro --- */
@@ -205,6 +206,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js"></script>
 <script src="assets/seed.js"></script>
 <script src="assets/core.js"></script>
+<script src="assets/demo.js"></script>
 <script src="assets/clima.js"></script>
 <script src="assets/auth.js"></script>
 <script>
@@ -257,6 +259,7 @@ function progresoHTML(p) {
     </div>
     ${hayPlan ? `<div class="pt-barra"><i style="width:${p.pct.toFixed(1)}%"></i></div>` : ""}
     <div class="pt-nota">${p.loads} ${p.loads === 1 ? "camión recibido" : "camiones recibidos"}${
+      p.enCurso ? ` · <b>${fmt(p.enCurso, 1)} CY en el camión</b>` : ""}${
       hayPlan ? ` · faltan ${fmt(p.pending, 1)} CY` : ""}${
       p.rejected ? ` · ${p.rejected} rechazado${p.rejected === 1 ? "" : "s"}` : ""}</div>
   </div>`;
@@ -269,8 +272,10 @@ function progresoHTML(p) {
 function especsHTML(day, meta) {
   const planificada = hora12(meta.horaInicio);
   const real = hora12(inicioReal(day));
+  const arrancado = testsOfDate(day).some((t) => t.start || t.arrive);
   const partes = [];
-  if (planificada) partes.push(`<span class="ex"><b>${planificada}</b><i>comienza</i></span>`);
+  // con camiones ya recibidos, la hora es la de arranque, no una promesa
+  if (planificada) partes.push(`<span class="ex"><b>${planificada}</b><i>${arrancado ? "comenzó" : "comienza"}</i></span>`);
   else if (real)   partes.push(`<span class="ex"><b>${real}</b><i>comenzó</i></span>`);
   const sitio = [meta.fase ? "Fase " + esc(meta.fase) : null, meta.lane ? esc(meta.lane) : null,
                  meta.km ? "Km " + esc(meta.km) : null].filter(Boolean).join(" · ");

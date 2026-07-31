@@ -176,6 +176,29 @@ la contraseña de administrador. Las de escritorio llevan la equis normal.
 Igual que el acceso, el candado es **una puerta de demostración**: frena un toque accidental,
 no a alguien decidido.
 
+## 8b. La simulación — el tiro de hoy ya en marcha
+
+`assets/demo.js`. Al entrar, si **hoy no tiene ni un camión**, el sistema siembra un vaciado
+ya empezado: **120 yardas de un plan de 260, doce camiones recibidos y todo a la espera del
+próximo**. Un tablero vacío no demuestra nada, y QCheck se enseña antes de usarse.
+
+- **Nunca pisa datos**: solo siembra si el día está vacío. Lo que crea lleva `source: "demo"`.
+- **Las horas son relativas a AHORA**, no fijas: se abra a la hora que se abra, el último
+  camión acaba de irse y el estado es *Esperando camión*. El paso entre camiones se aprieta
+  para que el tiro no acabe «empezando» de madrugada.
+- A partir de ahí **no hay nada falso**: se recibe el camión en Recepción, se entran las
+  muestras, el Field Display canta el veredicto y el progreso sube. Es la herramienta de
+  verdad sobre un día ya empezado.
+- En **Plan & Datos** hay un panel para **reiniciarla** o **apagarla** (apagar deja el día en
+  blanco y no vuelve a sembrar; los 397 ensayos históricos no se tocan).
+- Recepción sugiere el **próximo conduce** y la **primera losa pendiente** — son marcadores
+  de posición en gris, no se guarda nada hasta que el técnico lo confirme.
+
+**Yardas colocadas ≠ recibidas.** Un camión que llegó y no ha terminado de descargar todavía
+no colocó nada: `dayProgress` lo lleva en `enCurso`, aparte de `placed`. Eso **solo aplica al
+día en curso** — 95 de los registros históricos vienen del Excel sin hora de fin, y ahí el
+tiro ya se cerró: lo recibido es lo colocado.
+
 ## 9a. El clima — la única salida a internet
 
 `assets/clima.js` pinta el tiempo del sitio del tiro en el héroe del Control Center:

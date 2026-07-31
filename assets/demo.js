@@ -1,0 +1,147 @@
+/* ============================================================
+   SIMULACIÓN — el tiro de hoy, ya en marcha.
+
+   QCheck se enseña antes de usarse. Un tablero vacío no demuestra
+   nada, así que al entrar el sistema arranca con un vaciado de hoy
+   ya empezado: 120 yardas colocadas, doce camiones recibidos y
+   TODO A LA ESPERA DEL PRÓXIMO CAMIÓN.
+
+   A partir de ahí no hay nada falso: se recibe el camión en
+   Recepción, se entran las muestras en el iPad, el Field Display
+   canta el veredicto y el progreso sube. Es la herramienta de
+   verdad corriendo sobre un día ya empezado.
+
+   Reglas:
+   - Solo siembra si HOY no tiene ningún camión. Nunca pisa datos.
+   - Los ensayos que crea llevan `source: "demo"`, así que se
+     distinguen y se pueden borrar sin tocar nada más.
+   - Las horas son relativas a AHORA, no fijas: se abra a la hora
+     que se abra, el último camión acaba de irse y el tiro está
+     esperando al siguiente.
+   ============================================================ */
+"use strict";
+
+const DEMO_CY_CAMION = 10;
+const DEMO_CAMIONES = 12;              /* 12 x 10 = 120 yardas colocadas */
+const DEMO_CY_LOSA = 20;               /* dos camiones por losa */
+const DEMO_LOSAS = [
+  "L3-0.443", "L3-0.437", "L3-0.429", "L3-0.421", "L3-0.413", "L3-0.405", "L3-0.397",
+  "L3-0.389", "L3-0.381", "L3-0.373", "L3-0.365", "L3-0.357", "L3-0.349",
+];                                     /* 13 losas x 20 = 260 yardas de plan */
+const DEMO_PASO_MIN = 22;              /* ritmo entre camiones */
+const DEMO_ULTIMO_HACE = 8;            /* el último terminó hace 8 min */
+
+/* Lecturas creíbles: rondan el objetivo y alguna se acerca al límite,
+   que es justo lo que hay que saber enseñar. */
+const DEMO_LECTURAS = [
+  { slump: 3.0,  air: 1.8, uw: 150.2, temp: 88 },
+  { slump: 3.25, air: 1.6, uw: 149.8, temp: 89 },
+  { slump: 2.75, air: 2.0, uw: 150.6, temp: 90 },
+  { slump: 3.5,  air: 1.4, uw: 149.4, temp: 91 },
+  { slump: 3.0,  air: 1.9, uw: 150.0, temp: 90 },
+  { slump: 4.0,  air: 1.2, uw: 148.9, temp: 93 },   /* revenimiento en zona de acción */
+  { slump: 3.25, air: 1.7, uw: 150.3, temp: 91 },
+  { slump: 3.0,  air: 2.1, uw: 150.8, temp: 92 },
+  { slump: 2.5,  air: 1.5, uw: 151.0, temp: 92 },
+  { slump: 3.25, air: 1.8, uw: 150.1, temp: 94 },   /* temperatura en zona de acción */
+  { slump: 3.0,  air: 1.6, uw: 149.9, temp: 93 },
+  { slump: 3.5,  air: 1.3, uw: 149.6, temp: 94 },
+];
+
+function demoHM(fecha) {
+  return String(fecha.getHours()).padStart(2, "0") + ":" + String(fecha.getMinutes()).padStart(2, "0");
+}
+function demoMenos(fecha, min) { return new Date(fecha.getTime() - min * 60000); }
+
+/* ¿Hay ya algo de hoy? Entonces esto no se toca. */
+function demoYaHayTiro(base, hoy) {
+  return base.tests.some((t) => t.date === hoy);
+}
+
+function sembrarTiroDemo(base) {
+  const hoy = todayISO();
+  if (demoYaHayTiro(base, hoy)) return false;
+
+  const ahora = new Date();
+  const finUltimo = demoMenos(ahora, DEMO_ULTIMO_HACE);
+
+  /* El paso entre camiones se aprieta si hace falta, para que el tiro no
+     acabe "empezando" de madrugada cuando la demo se abre por la mañana.
+     Lo que no se toca es que el último camión se acaba de ir: de eso depende
+     que el sistema esté esperando al siguiente. */
+  const DESDE_LAS_6 = 6 * 60;
+  const minutosHoy = finUltimo.getHours() * 60 + finUltimo.getMinutes();
+  const sitio = minutosHoy - DESDE_LAS_6 - 23;          // 23 = descarga + llegada del primero
+  let paso = DEMO_PASO_MIN;
+  if (sitio > 0) paso = Math.min(DEMO_PASO_MIN, Math.max(6, sitio / (DEMO_CAMIONES - 1)));
+  const nBase = base.tests.reduce((a, t) => Math.max(a, t.n || 0), 0);
+  const ticket0 = base.tests.reduce((a, t) => Math.max(a, +t.ticket || 0), 0) + 17;
+  const camiones = ["101", "118", "121", "122", "126", "128", "129", "130"];
+  const objetivoUW = (base.plan && base.plan.uw && base.plan.uw.target) || 150.1;
+
+  const nuevos = [];
+  for (let i = 0; i < DEMO_CAMIONES; i++) {
+    /* el último camión es el que acaba de terminar; los demás van hacia atrás */
+    const fin = demoMenos(finUltimo, Math.round((DEMO_CAMIONES - 1 - i) * paso));
+    const inicio = demoMenos(fin, 18);
+    const llegada = demoMenos(inicio, 5);
+    const batch = demoMenos(llegada, 34);
+    const muestra = demoMenos(inicio, 2);
+    const L = DEMO_LECTURAS[i % DEMO_LECTURAS.length];
+    const planta = i % 2 === 0 ? "01-SAN JUAN" : "02-GURABO";
+
+    nuevos.push({
+      n: nBase + i + 1,
+      date: hoy,
+      ticket: String(ticket0 + i),
+      truck: camiones[i % camiones.length],
+      vol: DEMO_CY_CAMION,
+      plant: planta,
+      company: plantCompany(planta),
+      batch: demoHM(batch),
+      arrive: demoHM(llegada),
+      start: demoHM(inicio),
+      end: demoHM(fin),
+      lot: "29",
+      ident: "Phase 10 - Slab " + DEMO_LOSAS[Math.floor(i / 2)],
+      testTime: demoHM(muestra),
+      slump: L.slump, air: L.air, uw: L.uw, temp: L.temp,
+      cs1: null, cs5: null, cs28: null,
+      uwTarget: objetivoUW,
+      rejected: false,
+      source: "demo",
+    });
+  }
+
+  base.tests = base.tests.concat(nuevos);
+  base.dayMeta[hoy] = {
+    horaInicio: nuevos[0].start,
+    cyPlan: DEMO_LOSAS.length * DEMO_CY_LOSA,
+    losasPlan: DEMO_LOSAS.length,
+    losas: DEMO_LOSAS.map((c) => `${c}:${DEMO_CY_LOSA}`).join(", "),
+    fase: "10",
+    lane: "L3",
+    km: DEMO_LOSAS[0].replace("L3-", "") + " – " + DEMO_LOSAS[DEMO_LOSAS.length - 1].replace("L3-", ""),
+  };
+  base.demo = hoy;
+  return true;
+}
+
+/* Vuelve a dejar el tiro como al entrar: borra lo de la simulación
+   —y lo que se haya añadido encima hoy— y lo siembra de nuevo. */
+function reiniciarDemo() {
+  const hoy = todayISO();
+  db.tests = db.tests.filter((t) => t.date !== hoy);
+  delete db.dayMeta[hoy];
+  sembrarTiroDemo(db);
+  saveDB();
+}
+
+/* Deja el sistema en blanco para el día de hoy: sin simulación, para
+   arrancar un tiro de verdad desde cero. */
+function apagarDemo() {
+  const hoy = todayISO();
+  db.tests = db.tests.filter((t) => !(t.date === hoy && t.source === "demo"));
+  db.demo = false;
+  saveDB();
+}
