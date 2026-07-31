@@ -1068,6 +1068,61 @@ function notifyReject(n) {
   location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
+/* ------------------------------------------------------------ dashboards
+   Concretero, contratista y Autoridad son la misma clase de cosa: mirar cómo va
+   el tiro desde fuera, cada quien con lo suyo. Como tres botones sueltos
+   llenaban el Control Center y el portal de puertas que la mayoría no abre, van
+   detrás de una sola —«Dashboards»— que pregunta cuál (Víctor, 31 jul 2026).
+
+   Vive aquí porque lo usan DOS pantallas y en este proyecto lo que usan dos
+   pantallas no se duplica. Los estilos están en `qc.css`, que ambas cargan. */
+const QC_DASHBOARDS = [
+  { href: "produccion.html", n: "Concretero", r: "Ritmo, ciclos y calidad de sus camiones",
+    ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="8" width="3.4" height="12" rx="1"/><rect x="16.6" y="4.5" width="3.4" height="15.5" rx="1"/></svg>` },
+  { href: "contratista.html", n: "Contratista", r: "Avance del tiro, losas y cumplimiento",
+    ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V10l9-6 9 6v10"/><rect x="8.5" y="13" width="7" height="7" rx="1"/></svg>` },
+  { href: "autoridad.html", n: "Autoridad", r: "Cumplimiento para ACT y FHWA",
+    ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 20 6v6c0 5-3.4 8.4-8 9.5C7.4 20.4 4 17 4 12V6z"/><polyline points="8.8,12 11,14.2 15.4,9.6"/></svg>` },
+];
+
+/* Aguja de indicador: el arco, las marcas y la aguja marcando alto.
+   Lleva los atributos de trazo en el propio SVG, como el resto de los iconos
+   del proyecto: sin ellos el navegador los rellena de negro. Cada pantalla
+   puede recolorearlo desde CSS, que gana a los atributos de presentación. */
+const ICONO_DASHBOARDS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 18.4a10 10 0 1 1 16.8 0"/><path d="M12 14.6 16.6 9"/><path d="M5.6 14.2l1.5-.5M7.7 9.6l1.1 1.2M12 7.6v1.6M16.3 9.6l-1.1 1.2M18.4 14.2l-1.5-.5"/></svg>`;
+
+function abrirDashboards() {
+  if (document.getElementById("qcd")) return;
+  const ov = document.createElement("div");
+  ov.id = "qcd";
+  ov.className = "qcd";
+  ov.innerHTML = `<div class="qcd-caja" role="dialog" aria-modal="true" aria-label="Dashboards">
+      <div class="qcd-cab">
+        <div>
+          <div class="qcd-k">Dashboards</div>
+          <div class="qcd-t">¿Cuál quiere ver?</div>
+        </div>
+        <button class="qcd-x" type="button" aria-label="Cerrar">✕</button>
+      </div>
+      ${QC_DASHBOARDS.map((d) => `<a class="qcd-op" href="${d.href}">
+        ${d.ic}
+        <div><div class="n">${esc(d.n)}</div><div class="r">${esc(d.r)}</div></div>
+        <span class="fl">›</span>
+      </a>`).join("")}
+    </div>`;
+  ov.addEventListener("click", (e) => { if (e.target === ov || e.target.closest(".qcd-x")) cerrarDashboards(); });
+  document.body.appendChild(ov);
+  /* se guarda la referencia para poder quitar el oyente al cerrar */
+  qcdEsc = (e) => { if (e.key === "Escape") cerrarDashboards(); };
+  document.addEventListener("keydown", qcdEsc);
+}
+let qcdEsc = null;
+function cerrarDashboards() {
+  const ov = document.getElementById("qcd");
+  if (ov) ov.remove();
+  if (qcdEsc) { document.removeEventListener("keydown", qcdEsc); qcdEsc = null; }
+}
+
 /* ------------------------------------------------------------ modal form builder */
 function openForm({ title, fields, initial = {}, onSave, onDelete = null, submitLabel = "Guardar", liveEval = null }) {
   const root = document.getElementById("modal-root");

@@ -357,3 +357,51 @@ tr.rejected td { background: var(--susp-bg); color: var(--susp); }
 }
 .print-title { display: none; margin: 0 0 12px; }
 .print-title h1 { margin: 0 0 2px; font-size: 18px; }
+
+/* ============================================================
+   DASHBOARDS — la puerta única a los tableros de indicadores.
+   La usan el Control Center y el portal del teléfono; el marcado
+   lo arma `abrirDashboards()` en core.js.
+   ============================================================ */
+.qcd {
+  position: fixed; inset: 0; z-index: 400; display: flex;
+  align-items: center; justify-content: center;
+  background: rgba(6,9,13,.74);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  padding: 18px calc(18px + env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) calc(18px + env(safe-area-inset-left));
+}
+/* en el teléfono sube desde abajo, que es donde llega el pulgar */
+@media (max-width: 640px) { .qcd { align-items: flex-end; } }
+.qcd-caja {
+  width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto;
+  background: linear-gradient(168deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--line); border-radius: 20px; padding: 18px;
+  box-shadow: var(--shadow);
+}
+.qcd-cab { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.qcd-k { font-size: 10px; font-weight: 800; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--ink-soft); }
+.qcd-t { font-size: 18px; font-weight: 700; letter-spacing: -.01em; margin-top: 3px; }
+.qcd-x {
+  margin-left: auto; flex: none; width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+  font-size: 15px; font-family: inherit; cursor: pointer;
+}
+.qcd-x:hover { color: var(--ink); border-color: var(--ink-soft); }
+.qcd-op {
+  display: flex; align-items: center; gap: 15px; text-decoration: none; color: var(--ink);
+  padding: 15px 16px; border-radius: 16px; border: 1px solid var(--line);
+  background: linear-gradient(168deg, var(--panel-2), var(--panel));
+  box-shadow: var(--shadow); margin-bottom: 11px;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color .18s, transform .14s;
+}
+.qcd-op:last-child { margin-bottom: 0; }
+.qcd-op:hover { border-color: var(--accent); }
+.qcd-op:active { transform: scale(.985); }
+.qcd-op svg { width: 28px; height: 28px; flex: none; fill: none;
+  stroke: var(--logo-blue, #4a7ef0); stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round; }
+.qcd-op .n { font-size: 16.5px; font-weight: 700; letter-spacing: -.005em; }
+.qcd-op .r { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; line-height: 1.35; }
+.qcd-op .fl { margin-left: auto; color: var(--ink-soft); font-size: 17px; }

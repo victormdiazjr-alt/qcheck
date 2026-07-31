@@ -5,6 +5,23 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.8] — 31 de julio · «una puerta, tres tableros»
+
+### Cambiado
+- **Concretero, contratista y Autoridad dejan de ser tres botones sueltos** en el Control
+  Center y en el portal del teléfono. Entran por una sola puerta —**Dashboards**, con una
+  aguja de indicador— que pregunta cuál y lleva, con una línea que dice qué se ve dentro.
+  Eran la misma clase de cosa —mirar cómo va el tiro desde fuera— y llenaban las dos
+  pantallas de puertas que la mayoría no abre.
+- La lista y la elección viven en **`core.js`** y los estilos en **`qc.css`**: las usan dos
+  pantallas y en este proyecto lo que usan dos pantallas no se duplica.
+
+### Arreglado
+- El icono del gauge salía **relleno de negro**: le faltaban los atributos de trazo que
+  llevan los demás iconos del proyecto.
+
+---
+
 ## [0.7] — 31 de julio · «enseñar y trabajar»
 
 ### Añadido

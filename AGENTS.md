@@ -132,6 +132,12 @@ si además hubo cargas repartidas, la cifra se lee como un mínimo (`≥`). Cuan
 solo recibió cargas repartidas no se pinta una barra al 0 %: se dice cuántas cargas
 compartidas la tocaron. Y una losa que nadie ha tocado enseña su código y nada más.
 
+**Concretero, contratista y Autoridad no van sueltos**: entran por una sola puerta,
+«Dashboards», que pregunta cuál. La lista y la elección viven en `core.js`
+(`QC_DASHBOARDS`, `abrirDashboards()`) y los estilos en `qc.css`, porque las comparten el
+Control Center y el portal del teléfono. Si añades un tablero de indicadores, va a esa
+lista y aparece en las dos pantallas solo.
+
 El **Control Center** es la pantalla principal: muestra en widgets lo que Rubén mira de
 verdad y cada widget entra al detalle en `results.html#<pestaña>` (`daily`, `tests`,
 `strength`, `charts`, `live`, `plan`). Si añades una pantalla de usuario, **agrégala al

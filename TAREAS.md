@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-21 | **Dashboards también en el Control Center**: fuera los tres botones sueltos, una sola puerta compartida que pregunta cuál | claude | 2026-07-31 |
+_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 
 ---
 
@@ -52,6 +52,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-07-31 | **Q-21 — Dashboards también en el Control Center**: fuera los tres botones sueltos; la puerta y la elección viven en `core.js` y las comparten las dos pantallas | claude |
 | 2026-07-31 | **Q-19 — El mixer de Víctor como icono único**: `assets/mixer.png`, blanco sobre transparente, por máscara para que tome el color del estado | claude |
 | 2026-07-31 | **Q-20 — Los tres tableros entran por una sola puerta**, «Dashboards» con aguja de indicador, que pregunta cuál | claude |
 | 2026-07-31 | **Q-18 — Tiro nuevo en cada acceso** (yarda 90, último camión hace 3 min) y **«Programar tiro»** desde el Control Center: la frontera entre enseñar y trabajar | claude |
