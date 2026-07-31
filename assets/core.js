@@ -210,6 +210,7 @@ function mountStatusBar(day, opciones) {
       <a class="qcs-tiro" id="qcs-tiro" href="results.html#daily"></a>
       <div class="qcs-conn" id="qcs-conn"><i></i><span></span></div>`;
     document.body.appendChild(bar);
+    if (document.querySelector("header.qc-header")) document.documentElement.classList.add("qcs-fija");
     addEventListener("online", pintarConexion);
     addEventListener("offline", pintarConexion);
     mountCloseButton({ kiosco: !!o.kiosco });
@@ -283,10 +284,11 @@ function inyectarEstilosStatus() {
 .qcs-tiro { display: flex; align-items: center; gap: calc(8px * var(--qcs-e,1)); text-decoration: none; color: inherit; }
 .qcs-tiro:hover .qcs-seg i.on { filter: brightness(1.25); }
 .qcs-lb, .qcs-pc {
+  white-space: nowrap;
   font-size: calc(9.5px * var(--qcs-e,1)); text-transform: uppercase;
   letter-spacing: .18em; font-weight: 800; color: rgba(238,242,246,.52);
 }
-.qcs-pc { letter-spacing: .06em; color: #96c93d; }
+.qcs-pc { letter-spacing: .06em; color: #96c93d; white-space: nowrap; }
 .qcs-seg { display: flex; align-items: flex-end; gap: calc(2px * var(--qcs-e,1)); height: calc(13px * var(--qcs-e,1)); }
 .qcs-seg i {
   display: block; width: calc(3px * var(--qcs-e,1)); height: 100%;
@@ -294,7 +296,7 @@ function inyectarEstilosStatus() {
   transition: background .45s ease;
 }
 .qcs-seg i.on { background: #96c93d; box-shadow: 0 0 calc(5px * var(--qcs-e,1)) rgba(150,201,61,.55); }
-.qcs-cy { font-size: calc(12.5px * var(--qcs-e,1)); font-weight: 300; letter-spacing: -.01em; }
+.qcs-cy { font-size: calc(12.5px * var(--qcs-e,1)); font-weight: 300; letter-spacing: -.01em; white-space: nowrap; }
 .qcs-cy b { font-size: calc(9.5px * var(--qcs-e,1)); font-weight: 700; color: rgba(238,242,246,.5); letter-spacing: .1em; text-transform: uppercase; }
 .qcs-tiro.sin-plan .qcs-pc { color: rgba(238,242,246,.42); }
 .qcs-conn { display: flex; align-items: center; gap: calc(6px * var(--qcs-e,1));
@@ -307,7 +309,25 @@ function inyectarEstilosStatus() {
 .qcs-conn.off { color: #ff5a52; }
 .qcs-conn.off i { animation: none; }
 @keyframes qcsLatir { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
-@media (max-width: 720px) { .qcs-lb, .qcs-conn span { display: none; } .qcs-conn { padding-left: calc(8px * var(--qcs-e,1)); } }
+/* En el teléfono deja de ser una píldora en la esquina y pasa a ser la franja
+   de arriba, como la barra de estado de iOS: así no le roba ancho al
+   encabezado — que era lo que desbordaba la página a lo ancho. */
+@media (max-width: 820px) {
+  .qcs {
+    top: 0; left: 0; right: 0; border-radius: 0; border-width: 0 0 1px 0;
+    gap: 10px;
+    padding: calc(6px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right))
+             6px calc(13px + env(safe-area-inset-left));
+  }
+  .qcs-lb, .qcs-conn span { display: none; }
+  .qcs-conn { padding-left: 10px; }
+  /* los segmentos conservan su grosor de barra de señal; lo que se estira
+     es el hueco, para que la conexión quede pegada al borde derecho */
+  .qcs-tiro { flex: 1; min-width: 0; }
+  /* el contenido baja para no quedar debajo de la franja */
+  html.qcs-fija body { padding-top: calc(42px + env(safe-area-inset-top)); }
+  html.qcs-fija header.qc-header { top: calc(42px + env(safe-area-inset-top)); }
+}
 @media print { .qcs { display: none !important; } }
 @media (prefers-reduced-motion: reduce) { .qcs-conn i { animation: none; } }
 

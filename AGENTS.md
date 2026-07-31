@@ -148,6 +148,27 @@ la contraseña de administrador. Las de escritorio llevan la equis normal.
 Igual que el acceso, el candado es **una puerta de demostración**: frena un toque accidental,
 no a alguien decidido.
 
+## 9b. iPhone y iPad — reglas que no se rompen
+
+Las pantallas de campo se abren en una tableta o un teléfono, así que **cada cambio
+se prueba a 390×844 (iPhone), 768×1024 (iPad de pie) y 1024×768 (iPad acostado)**.
+
+- **La página nunca se desplaza a lo ancho.** `scrollWidth` tiene que ser igual al
+  ancho de la ventana. Lo que sea más ancho —una tabla, una gráfica, la hoja del
+  reporte— se desplaza **dentro de su propio contenedor** con `overflow-x: auto`.
+  Las columnas de rejilla necesitan `min-width: 0` o se estiran hasta el ancho de
+  lo que llevan dentro.
+- **Hasta 820 px la barra de estado es la franja de arriba**, no una píldora en la
+  esquina: en un teléfono robarle 400 px al encabezado desbordaba la página.
+- **`100dvh`, no `100vh`**: en iOS la barra de Safari entra y sale y `100vh` deja el
+  pie fuera de la pantalla.
+- **Field Display y Muestras están pensadas acostadas.** De pie se apilan con un
+  bloque `@media (orientation: portrait)`, y ahí los tamaños salen del **ancho**
+  (`vw`, o `min(vw, vh)` cuando también hay que caber a lo alto). Mezclar `vh` para
+  el texto con `vw` para las columnas es lo que las rompía en vertical.
+- **`env(safe-area-inset-*)`** en todo lo fijo: la franja de arriba, los botones
+  flotantes y los pies. Las pantallas de kiosco llevan `viewport-fit=cover`.
+
 ## 10. Lenguaje visual — una sola identidad
 
 **Todo QCheck usa el mismo lenguaje del Field Display y de Muestras.** Los tokens viven

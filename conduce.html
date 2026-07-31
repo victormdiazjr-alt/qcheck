@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Conduce — QC PR-52</title>
 <link rel="stylesheet" href="assets/qc.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0d12'/><text x='50' y='70' font-size='52' text-anchor='middle' fill='white'>▤</text></svg>">
@@ -38,6 +38,8 @@ body { background: var(--bg); }
   padding: 12px 16px; border-bottom: 1px solid var(--line);
 }
 .truck-row .tno { font-size: 22px; font-weight: 900; min-width: 56px; }
+.truck-row .tinfo { min-width: 130px; flex: 1 1 130px; }
+@media (max-width: 520px) { .truck-row .tinfo { min-width: 0; } .truck-row { padding: 12px 12px; } }
 .truck-row .meta { font-size: 12.5px; color: var(--ink-soft); }
 .tstep {
   border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
@@ -283,7 +285,7 @@ function render() {
       : `<button class="tstep" onclick="stamp(${t.n},'${field}')">${label} — AHORA</button>`;
     return `<div class="truck-row ${t.rejected ? "rejected" : ""}">
       <div class="tno">${esc(t.truck || "—")}</div>
-      <div style="min-width:130px">
+      <div class="tinfo">
         <div><b>Ticket ${esc(t.ticket || "—")}</b> ${t.photo ? "📎" : ""}</div>
         <div class="meta">${fmt(t.vol, 1)} CY · llegó ${esc(t.arrive || "—")}${t.ident ? " · " + esc(shortIdent(t.ident)) : ""}</div>
       </div>

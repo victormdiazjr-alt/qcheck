@@ -89,7 +89,9 @@
 
 /* ---------- theme toggle button ---------- */
 .theme-toggle {
-  position: fixed; bottom: 18px; right: 18px; z-index: 300;
+  position: fixed; z-index: 300;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  right: calc(18px + env(safe-area-inset-right));
   display: flex; align-items: center; justify-content: center; padding: 0;
   width: 52px; height: 52px; border-radius: 50%;
   border: 2px solid var(--accent);
@@ -138,9 +140,11 @@ nav.tabs a.tab-link {
 }
 nav.tabs a.tab-link:hover { color: #fff; }
 nav.tabs a.tab-link::after { content: "↗"; font-size: 10px; opacity: .6; }
-@media (max-width: 720px) { header.qc-header { padding-right: 252px; } }
+@media (max-width: 820px) { header.qc-header { padding-right: 20px; } }
 
 main { max-width: 1280px; margin: 0 auto; padding: 20px 20px 90px; }
+/* una llave o una URL larga no debe empujar la página fuera del teléfono */
+code, kbd { overflow-wrap: anywhere; word-break: break-word; }
 
 /* ---------- panels, stats ---------- */
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; }
@@ -151,11 +155,14 @@ main { max-width: 1280px; margin: 0 auto; padding: 20px 20px 90px; }
 .panel-body.flush { padding: 0; }
 
 .grid { display: grid; gap: 14px; }
+.grid > * { min-width: 0; }
 .cols-2 { grid-template-columns: repeat(2,1fr); }
 .cols-3 { grid-template-columns: repeat(3,1fr); }
 .cols-6 { grid-template-columns: repeat(6,1fr); }
 @media (max-width: 1000px) { .cols-6 { grid-template-columns: repeat(3,1fr); } }
-@media (max-width: 640px)  { .cols-6, .cols-3, .cols-2 { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 640px)  { .cols-6, .cols-3 { grid-template-columns: repeat(2,1fr); } }
+/* en el teléfono, una tarjeta por fila: dos no caben sin apretujar la cifra */
+@media (max-width: 560px)  { .cols-6, .cols-3, .cols-2 { grid-template-columns: 1fr; } }
 
 .stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 11px 14px; }
 .stat .label { font-size: 10.5px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .18em; font-weight: 800; }
@@ -261,7 +268,7 @@ tr.rejected td { background: var(--susp-bg); color: var(--susp); }
 
 /* ---------- charts ---------- */
 .chart-block { margin-bottom: 6px; }
-.chart-scroll { overflow-x: auto; padding: 2px 0 8px; }
+.chart-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 2px 0 8px; }
 .chart-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); padding: 4px 2px 10px; }
 .chart-legend .sw { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
 

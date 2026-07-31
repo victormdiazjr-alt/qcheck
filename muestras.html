@@ -48,7 +48,7 @@ html, body { height: 100%; overflow: hidden; }
 body {
   background: var(--bg); color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  height: 100vh; display: flex; flex-direction: column;
+  height: 100vh; height: 100dvh; display: flex; flex-direction: column;
   user-select: none; -webkit-user-select: none;
 }
 
@@ -128,6 +128,50 @@ header .spacer { flex: 1; }
 .key.wide { grid-column: span 1; font-size: 2.4vh; font-weight: 800; }
 .key.del { color: var(--act); }
 .key.clr { color: var(--susp); }
+
+/* ---------- vertical: la pantalla se apila ----------
+   Todo el tamaño de esta pantalla sale de la altura (vh), que es lo correcto
+   acostada. De pie la altura crece y el ancho se encoge, así que el teclado
+   de tres columnas ya no cabe al lado: baja, y el centro se desplaza. */
+@media (orientation: portrait) {
+  .body {
+    grid-template-columns: 1fr;
+    grid-auto-rows: min-content;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    gap: 2.2vw; padding: 2vw 3vw 3vw;
+  }
+  header { padding-top: calc(46px + env(safe-area-inset-top)); }
+  .left, .right { gap: 2vw; }
+  .vals { grid-template-columns: repeat(2, 1fr); gap: 2vw; }
+  .val { min-height: 22vw; padding: 3vw 2vw; gap: .4vw; }
+  .val .k { font-size: 2vw; }
+  .val .v { font-size: 11vw; }
+  /* el límite deja de ir anclado al fondo: de pie choca con la unidad */
+  .val .lim { position: static; }
+  .val .u, .val .lim { font-size: 1.9vw; }
+  .truck-card .tnum { font-size: 9vw; }
+  .truck-card .tlbl, .truck-card .tplant { font-size: 1.9vw; }
+  .truck-card .tmeta { font-size: 2.4vw; }
+  .kp-head .f { font-size: 2vw; } .kp-head .n { font-size: 4.4vw; }
+  .steppers { gap: 2vw; } .step { font-size: 3.2vw; padding: 2.4vw 0; }
+  .keypad { gap: 2vw; }
+  .key { font-size: 4.6vw; aspect-ratio: 5 / 3; }
+  .key.wide { font-size: 3.2vw; }
+  .htitle { font-size: 3.4vw; } .hsub { font-size: 1.9vw; }
+  .logo { height: 7vw; }
+  footer { gap: 2.4vw; padding: 2vw 3vw calc(2.4vw + env(safe-area-inset-bottom)); }
+  .verdict-pre .ring { width: 9vw; height: 9vw; font-size: 4.4vw; border-width: .7vw; flex: none; }
+  .verdict-pre .txt .w { font-size: 3.6vw; }
+  /* la coletilla del veredicto se parte en tres líneas y estorba: fuera */
+  .verdict-pre .txt .s { display: none; }
+  /* el botón de enviar cede antes que salirse del borde */
+  .btn-sub { font-size: 3vw; padding: 3vw 3vw; min-width: 0; }
+  footer .spacer { display: none; }
+  .verdict-pre { min-width: 0; }
+  .verdict-pre .txt .w { white-space: nowrap; }
+  .btn-truck { width: 15vw; height: 11vw; border-radius: 3vw; flex: none; }
+  .btn-ghost, .icon-btn { flex: none; }
+}
 
 /* ---------- pie: veredicto + submit ---------- */
 footer {
