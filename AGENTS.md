@@ -188,7 +188,12 @@ donde se definen. **No inventes un total.**
 **Recepción no** — Víctor la sacó el 31 jul 2026: se usa entrando y saliendo de otras
 pantallas, y ponerse a pantalla completa al tocarla estorbaba.
 
-El botón de cerrar **no pide contraseña en ninguna pantalla**: llegó a tener un candado en
+El botón de la esquina **lleva al Control Center**, que es la casa — no cierra la pestaña.
+Si la pantalla está a pantalla completa, `cerrarVentana()` **sale de fullscreen primero**:
+navegar sin salir dejaría el Control Center ocupando la pantalla entera, sin barra del
+navegador ni forma de volver. Desde la propia casa, el botón sale de la sesión.
+
+No pide contraseña en ninguna pantalla: llegó a tener un candado en
 las de campo y Víctor lo quitó el 31 jul 2026 por estorboso. Si algún día hace falta blindar
 la salida de un iPad montado en obra, eso va con la autenticación real (Q-07), no con una
 clave escrita en el navegador.

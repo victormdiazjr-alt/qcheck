@@ -108,24 +108,30 @@ function mountThemeToggle() {
   applyTheme(document.documentElement.dataset.theme || "light");
 }
 
-/* ------------------------------------------------------------ cerrar ventana
-   Si la pantalla se abrió en pestaña propia, la cierra. Si no se puede
-   (el navegador solo deja cerrar lo que abrió un script), vuelve al
-   Control Center, que es la casa.                                    */
-function cerrarVentana() {
+/* ------------------------------------------------------------ volver a la casa
+   El botón de la esquina lleva al Control Center, que es la casa. Antes
+   intentaba cerrar la pestaña primero y eso no es lo que se busca.
+
+   Si la pantalla está a pantalla completa —el Field Display y Muestras lo
+   están— hay que SALIR primero: navegar sin salir dejaría el Control Center
+   ocupando la pantalla entera, sin barra del navegador ni forma de volver. */
+async function cerrarVentana() {
   const casa = "control-center.html";
-  if (location.pathname.split("/").pop() === casa) { location.href = "index.html"; return; }
-  const antes = Date.now();
-  window.close();
-  setTimeout(() => { if (Date.now() - antes < 900 && !window.closed) location.href = casa; }, 120);
+  const salir = document.exitFullscreen || document.webkitExitFullscreen;
+  if (salir && (document.fullscreenElement || document.webkitFullscreenElement)) {
+    try { await salir.call(document); } catch (_) {}
+  }
+  // desde la propia casa, el botón sale de la sesión
+  location.href = location.pathname.split("/").pop() === casa ? "index.html" : casa;
 }
 function mountCloseButton() {
   if (document.getElementById("close-btn")) return;
   const b = document.createElement("button");
   b.id = "close-btn";
   b.className = "close-btn";
-  b.title = "Cerrar";
-  b.setAttribute("aria-label", "Cerrar");
+  const enCasa = location.pathname.split("/").pop() === "control-center.html";
+  b.title = enCasa ? "Salir" : "Volver al Control Center";
+  b.setAttribute("aria-label", b.title);
   b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>`;
   b.onclick = (e) => { e.stopPropagation(); cerrarVentana(); };
   (document.getElementById("qc-status") || document.body).appendChild(b);
