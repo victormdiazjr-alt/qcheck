@@ -58,7 +58,8 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
   transition: border-color .18s, box-shadow .18s, transform .14s;
 }
 .mv-btn:active { transform: scale(.985); }
-.mv-btn .ic { width: 30px; height: 30px; flex: none; fill: none; stroke: var(--accent2);
+.mv-btn .ic { width: 30px; height: 30px; flex: none; fill: none;
+  stroke: var(--logo-blue, #4a7ef0);
   stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 /* el logotipo de Segarra es una marca rellena, no un icono de trazo */
 .mv-btn .ic.marca { stroke: none; width: 32px; height: 30px; }
@@ -68,13 +69,13 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
 /* el color entra por el resplandor, como en el resto de la interfaz */
 .mv-btn.destaca { border-color: rgba(74,99,216,.5);
   box-shadow: 0 0 0 3px rgba(74,99,216,.09), 0 0 22px -7px rgba(74,99,216,.95); }
-.mv-btn.destaca .ic { stroke: #7d92ea; }
+.mv-btn.destaca .ic { stroke: #8ba4f5; }   /* un punto más claro: es el destacado */
 
 .mv-inicio { display: flex; gap: 11px; margin-top: 18px; padding: 13px 15px;
   border-radius: 14px; border: 1px dashed var(--line); color: var(--ink-soft);
   font-size: 12px; line-height: 1.5; }
 .mv-inicio svg { width: 20px; height: 20px; flex: none; margin-top: 1px; fill: none;
-  stroke: var(--accent2); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  stroke: var(--logo-blue, #4a7ef0); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .mv-inicio b { color: var(--ink); font-weight: 700; }
 .mv-pie { margin-top: 26px; text-align: center; }
 .mv-pie a { font-size: 12px; color: var(--ink-soft); text-decoration: none;
@@ -139,7 +140,7 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
    El logotipo son los chevrons apilados de Segarra Engineering — el mismo
    elemento que lleva el logo de QCheck dentro, recortado y sin texto. */
 const MARCA_SEGARRA = `<svg viewBox="125 500 447 425" class="ic marca">
-  <path fill="#57c94f" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+  <path fill="var(--logo-blue,#4a7ef0)" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
   <path fill="#8a95a3" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
   <path fill="#6b7683" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
 </svg>`;
