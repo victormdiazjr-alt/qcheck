@@ -48,13 +48,6 @@ temperatura y de tiempo de viaje.
 ### Q-09 · Aire en el tablero del productor — pequeño
 El contrato ya publica los límites de aire y nadie los muestra.
 
-### Q-12 · Guía de usuario ilustrada — pequeño
-`docs/guia-qcheck.html` es la hoja de operación, pensada **para papel**. Falta la guía
-**para pantalla**: el circuito de los aparatos del proyecto (Recepción → Muestras →
-Field Display → indicadores → Control Center), qué hace cada uno, y la arquitectura del
-sistema, en el lenguaje visual oscuro de QCheck. Son documentos distintos y no se
-duplican: uno se imprime y se lleva en el bolsillo, el otro se enseña.
-
 ### Q-11 · Avance exacto por losa — pequeño
 Un camión que reparte su carga entre varias losas no registra cuánto dejó en cada una.
 Hoy se atribuyen solo las yardas de los camiones que sirvieron una sola losa, y la
