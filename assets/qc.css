@@ -144,6 +144,18 @@ main { max-width: 1280px; margin: 0 auto; padding: 20px 20px 90px; }
 /* una llave o una URL larga no debe empujar la página fuera del teléfono */
 code, kbd { overflow-wrap: anywhere; word-break: break-word; }
 
+/* ---------- marca de una parte (contratista, concretera, Autoridad) ----------
+   Con archivo, el logo. Sin archivo, un monograma: nunca un hueco. */
+.marca-parte { flex: none; display: inline-flex; align-items: center; justify-content: center;
+  height: 34px; width: auto; max-width: 132px; object-fit: contain; vertical-align: middle;
+  border-radius: 8px; background: #fff; padding: 4px 7px; }
+.marca-parte.mono { background: rgba(255,255,255,.10); color: currentColor;
+  min-width: 34px; padding: 0 9px; font-size: 12.5px; font-weight: 800;
+  letter-spacing: .1em; border: 1px solid rgba(255,255,255,.16); }
+.marca-parte.grande { height: 44px; max-width: 168px; }
+.marca-parte.grande.mono { font-size: 15px; min-width: 44px; }
+@media print { .marca-parte.mono { border-color: #cfd8e2; background: #eef2f6; color: #16222e; } }
+
 /* ---------- panels, stats ---------- */
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; }
 .panel-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }

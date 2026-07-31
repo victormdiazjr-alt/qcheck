@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>QCheck — Móvil</title>
-<link rel="stylesheet" href="assets/qc.css?v=db2f38e2">
+<link rel="stylesheet" href="assets/qc.css?v=c2147da2">
 <style>
 /* ============================================================
    PORTAL DE TELÉFONO — para quien mira el tiro desde afuera.
@@ -64,7 +64,6 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
 /* el logotipo de Segarra es una marca rellena, no un icono de trazo */
 .mv-btn .ic.marca { stroke: none; width: 32px; height: 30px; }
 .mv-btn .n { font-size: 17px; font-weight: 700; letter-spacing: -.005em; }
-.mv-btn .r { font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
 .mv-btn .fl { margin-left: auto; color: var(--ink-soft); font-size: 17px; }
 /* el color entra por el resplandor, como en el resto de la interfaz */
 .mv-btn.destaca { border-color: rgba(74,99,216,.5);
@@ -128,7 +127,7 @@ main.mv { max-width: 520px; margin: 0 auto; padding: 22px 18px calc(40px + env(s
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=8eb1382c"></script>
+<script src="assets/core.js?v=f52eea8e"></script>
 <script src="assets/demo.js?v=5b7d9943"></script>
 <script src="assets/auth.js?v=b007de04"></script>
 <script>
@@ -145,18 +144,17 @@ const MARCA_SEGARRA = `<svg viewBox="125 500 447 425" class="ic marca">
   <path fill="#6b7683" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
 </svg>`;
 
-const PUERTA_RESULTADOS = { href: "results.html", n: "Resultados",
-  r: "Vaciado, pruebas, resistencias y cartas", ic: MARCA_SEGARRA, soloAdmin: true };
+const PUERTA_RESULTADOS = { href: "results.html", n: "Resultados", ic: MARCA_SEGARRA, soloAdmin: true };
 
 /* Las demás puertas: quien consulta desde el teléfono no entra datos. */
 const PUERTAS = [
-  { href: "produccion.html", n: "Concretera", r: "Rendimiento y ciclos de sus camiones",
+  { href: "produccion.html", n: "Concretera",
     ic: `<svg viewBox="0 0 24 24" class="ic"><path d="M3 20h18"/><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="8" width="3.4" height="12" rx="1"/><rect x="16.6" y="4.5" width="3.4" height="15.5" rx="1"/></svg>` },
-  { href: "contratista.html", n: "Contratista", r: "Avance del tiro y cumplimiento",
+  { href: "contratista.html", n: "Contratista",
     ic: `<svg viewBox="0 0 24 24" class="ic"><path d="M3 20V10l9-6 9 6v10"/><rect x="8.5" y="13" width="7" height="7" rx="1"/></svg>` },
-  { href: "autoridad.html", n: "Autoridad", r: "ACT · FHWA — cumplimiento del proyecto",
+  { href: "autoridad.html", n: "Autoridad",
     ic: `<svg viewBox="0 0 24 24" class="ic"><path d="M12 2.5 20 6v6c0 5-3.4 8.4-8 9.5C7.4 20.4 4 17 4 12V6z"/><polyline points="8.8,12 11,14.2 15.4,9.6"/></svg>` },
-  { href: "display.html?acostar=1", n: "Field Display", r: "Se abre a lo ancho, pantalla completa",
+  { href: "display.html?acostar=1", n: "Field Display",
     destaca: true,
     ic: `<svg viewBox="0 0 24 24" class="ic"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M12 16.5v4M8.5 20.5h7"/></svg>` },
 ];
@@ -194,7 +192,7 @@ function pintar() {
   document.getElementById("mv-menu").innerHTML = puertas.map((x) => `
     <a class="mv-btn${x.destaca ? " destaca" : ""}" href="${x.href}">
       ${x.ic}
-      <div><div class="n">${x.n}</div><div class="r">${x.r}</div></div>
+      <div class="n">${x.n}</div>
       <span class="fl">›</span>
     </a>`).join("");
 }

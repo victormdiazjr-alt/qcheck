@@ -269,6 +269,20 @@ no colocó nada: `dayProgress` lo lleva en `enCurso`, aparte de `placed`. Eso **
 día en curso** — 95 de los registros históricos vienen del Excel sin hora de fin, y ahí el
 tiro ya se cerró: lo recibido es lo colocado.
 
+## 8c. Las marcas de las partes
+
+El contratista, la concretera y la Autoridad salen con su logo donde aparece su nombre
+(`marcaHTML()` en `core.js`). **Los archivos los pone Víctor** en `db.project.logos`, desde
+Plan & Datos → Proyecto: son marcas registradas de cada empresa y **no se bajan de sus webs
+por nuestra cuenta**. Mientras no haya archivo no se deja un hueco — se dibuja un monograma
+con las iniciales (DVG, CT, ACT), que se ve intencionado.
+
+`inicialesDe()` deja caer la forma jurídica siempre y los conectores solo si van en
+minúscula: «Del Valle Group» da DVG porque «Del» es parte del nombre, mientras que
+«Autoridad de Carreteras y Transportación» da ACT.
+
+**La concretera se llama Concre-Tech**, no «Concretec» — era un error mío en `plantCompany()`.
+
 ## 9a. El clima — la única salida a internet
 
 `assets/clima.js` pinta el tiempo del sitio del tiro en el héroe del Control Center:

@@ -566,8 +566,18 @@ function formProject() {
       { key: "place", label: "Sitio del tiro (para el tiempo)", full: true, placeholder: "Ponce · PR-52" },
       { key: "lat", label: "Latitud", type: "number", step: "0.0001", half: true, hint: "Corríjala si el tiro no está donde dice" },
       { key: "lon", label: "Longitud", type: "number", step: "0.0001", half: true },
+      { key: "logoContratista", label: "Logo del contratista", full: true,
+        placeholder: "assets/logo-contratista.png",
+        hint: "Archivo del logo oficial. En blanco, se dibuja un monograma con las iniciales." },
+      { key: "logoConcretera", label: "Logo de la concretera", full: true, placeholder: "assets/logo-concretera.png" },
+      { key: "logoAutoridad", label: "Logo de la Autoridad", full: true, placeholder: "assets/logo-act.png" },
     ],
-    onSave: (v) => { Object.assign(db.project, v); saveDB(); render(); toast("Proyecto actualizado"); },
+    onSave: (v) => {
+      Object.assign(db.project, v);
+      db.project.logos = { contratista: v.logoContratista || "", concretera: v.logoConcretera || "",
+                           autoridad: v.logoAutoridad || "" };
+      saveDB(); render(); toast("Proyecto actualizado");
+    },
   });
 }
 function formPlan() {

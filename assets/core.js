@@ -47,7 +47,7 @@ function migrateDB() {
 /* La compañía sale de la planta cuando no viene declarada (histórico) */
 function plantCompany(plant) {
   if (!plant) return "—";
-  return /san juan|gurabo/i.test(plant) ? "Concretec" : String(plant).replace(/^\d+\s*-\s*/, "");
+  return /san juan|gurabo/i.test(plant) ? "Concre-Tech" : String(plant).replace(/^\d+\s*-\s*/, "");
 }
 /* Clave única del conduce: nunca chocan tickets de plantas distintas */
 function conduceKey(t) { return (t.company || "—") + "·" + (t.ticket || "?"); }
@@ -145,6 +145,38 @@ function mountCloseButton() {
   b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>`;
   b.onclick = (e) => { e.stopPropagation(); cerrarVentana(); };
   (document.getElementById("qc-status") || document.body).appendChild(b);
+}
+
+/* ------------------------------------------------------------ marca de una parte
+   El contratista, la concretera y la Autoridad salen con su logo donde aparece
+   su nombre. Los archivos los pone Víctor en `db.project.logos` — son marcas
+   registradas de cada empresa y no se bajan de la web por nuestra cuenta.
+
+   Mientras no haya archivo NO se deja un hueco: se dibuja un monograma con las
+   iniciales, que se ve intencionado y no roto.                              */
+function inicialesDe(nombre) {
+  /* Se cae la forma jurídica siempre, y los conectores solo si van en
+     minúscula: "Del Valle Group" da DVG —"Del" es parte del nombre—, mientras
+     que "Autoridad de Carreteras y Transportación" da ACT. */
+  const palabras = String(nombre || "").replace(/[^\wÁÉÍÓÚÑáéíóúñ\s-]/g, " ")
+    .split(/[\s-]+/)
+    .filter((x) => x && !/^(inc|corp|corporation|llc|sp|s\.?p|srl|co)$/i.test(x))
+    .filter((x) => !/^(de|del|la|el|los|las|y|e|and|of|the)$/.test(x));   // solo minúsculas
+  if (!palabras.length) return "—";
+  return palabras.slice(0, 3).map((x) => x[0].toUpperCase()).join("");
+}
+
+function logoDeParte(parte) {
+  const l = (db.project && db.project.logos) || {};
+  return l[parte] || "";
+}
+
+/* `parte` = contratista | concretera | autoridad | qc */
+function marcaHTML(parte, nombre, clase) {
+  const src = logoDeParte(parte);
+  const n = esc(nombre || "");
+  if (src) return `<img class="marca-parte ${clase || ""}" src="${esc(src)}" alt="${n}" title="${n}">`;
+  return `<span class="marca-parte mono ${clase || ""}" title="${n}">${esc(inicialesDe(nombre))}</span>`;
 }
 
 /* ------------------------------------------------------------ ¿es un teléfono?
