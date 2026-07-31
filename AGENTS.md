@@ -67,8 +67,15 @@ shared/               ← contrato del conduce (copia — ver §5)
 docs/                 ← arquitectura, hoja de ruta, despliegue, contrato
 ```
 
-En el héroe del Control Center: a la izquierda el estado del proyecto y **las losas del
-tiro**, a la derecha el tiempo del sitio.
+En el héroe del Control Center, de arriba abajo: **el estado del tiro** con su aro, **el
+progreso en grande**, las especificaciones y **las losas**; a la derecha, el tiempo del sitio.
+
+`estadoTiro(day)` en `core.js` deduce en qué anda el vaciado — *Vaciando, Camión esperando,
+Esperando camión, Detenido, Tiro completado, Sin comenzar* — **de los camiones**, sin ningún
+interruptor que alguien tenga que acordarse de mover. «Detenido» no usa un umbral inventado:
+compara el tiempo sin novedad con **el ritmo del propio día** (el doble de la mediana entre
+camiones), así que un día de camiones cada 20 min se da por detenido antes que uno de cada
+hora. Un día que no es hoy siempre sale cerrado.
 
 Las losas (`losasDelDia` en `core.js`) salen **solo** del plan del día, `dayMeta.losas`,
 que se escribe `L3-0.943:24, L3-0.936:18, L3-0.929` — el número tras los dos puntos son

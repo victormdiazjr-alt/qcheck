@@ -20,29 +20,59 @@
   box-shadow: 0 8px 30px rgba(10,30,50,.34);
   border: 1px solid rgba(255,255,255,.08);
 }
-.cc-hero.s-ok   { --tinte: rgba(52,210,123,.20); }
-.cc-hero.s-act  { --tinte: rgba(245,184,61,.20); }
-.cc-hero.s-susp { --tinte: rgba(255,90,82,.22); }
+/* el tinte del fondo y el color del aro salen del estado del tiro */
+.cc-hero.t-vaciando { --tinte: rgba(52,210,123,.20); --vc: #56e08e; }
+.cc-hero.t-espera   { --tinte: rgba(245,184,61,.18); --vc: #f7c65c; }
+.cc-hero.t-detenido { --tinte: rgba(255,90,82,.20); --vc: #ff7a72; }
+.cc-hero.t-fin      { --tinte: rgba(74,99,216,.20);  --vc: #8fa6f2; }
+.cc-hero.t-quieto   { --tinte: rgba(255,255,255,.06); --vc: #8ea6bd; }
 .cc-hero .mark2 {
   /* a la altura de la cifra grande, no en el centro del bloque */
-  width: 46px; height: 46px; border-radius: 50%; flex: none; margin-top: 12px;
+  width: 50px; height: 50px; border-radius: 50%; flex: none; margin-top: 14px;
   border: 2.5px solid var(--vc); color: var(--vc);
   display: flex; align-items: center; justify-content: center;
-  font-size: 22px; box-shadow: 0 0 26px -6px var(--vc);
+  box-shadow: 0 0 26px -6px var(--vc);
 }
-.cc-hero.s-ok   { --vc: #56e08e; }
-.cc-hero.s-act  { --vc: #f7c65c; }
-.cc-hero.s-susp { --vc: #ff7a72; }
+.cc-hero .ic-t { width: 25px; height: 25px; fill: none; stroke: currentColor;
+  stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+/* mientras se vacía, el aro respira y el hormigón cae */
+.cc-hero.t-vaciando .mark2 { animation: tLatir 2.2s ease-in-out infinite; }
+.cc-hero.t-vaciando .ic-cae { animation: tCaer 1.1s linear infinite; }
+@keyframes tLatir { 0%,100% { box-shadow: 0 0 24px -7px var(--vc); }
+                    50%     { box-shadow: 0 0 34px -5px var(--vc); } }
+@keyframes tCaer  { 0% { opacity: .25; transform: translateY(-2px); }
+                    45% { opacity: 1; } 100% { opacity: .25; transform: translateY(3px); } }
+.cc-hero.t-detenido .mark2 { animation: tLatir 1.5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .cc-hero .mark2, .cc-hero .ic-cae { animation: none; }
+}
+
+/* --- estado y progreso del tiro --- */
+.cc-hero .t-estado { font-size: 10px; font-weight: 800; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--vc); }
+.prog-tiro { margin-top: 6px; }
+.pt-cifra { display: flex; align-items: baseline; gap: 8px; color: #fff;
+  font-variant-numeric: tabular-nums; }
+.pt-cifra b { font-size: 44px; font-weight: 250; letter-spacing: -.025em; line-height: 1; }
+.pt-de { font-size: 25px; font-weight: 250; color: #9fb6cc; letter-spacing: -.02em; }
+.pt-u { font-size: 12px; font-weight: 800; letter-spacing: .16em; color: #8ea6bd; }
+.pt-pc { margin-left: 4px; font-size: 17px; font-weight: 700; color: var(--vc); }
+.pt-barra { height: 5px; border-radius: 3px; background: rgba(255,255,255,.13);
+  margin: 10px 0 6px; overflow: hidden; max-width: 460px; }
+.pt-barra i { display: block; height: 100%; border-radius: 3px; background: var(--vc);
+  box-shadow: 0 0 12px -2px var(--vc); transition: width .6s cubic-bezier(.25,.6,.25,1); }
+.pt-nota { font-size: 11.5px; color: #8ea6bd; }
 .cc-hero h1 { font-size: 23px; margin: 0; font-weight: 700; letter-spacing: -.01em; color: var(--vc); }
 .cc-hero .sub { font-size: 12.5px; color: #9fb6cc; margin-top: 7px; }
 /* --- especificaciones del tiro --- */
-.cc-hero .ex-fila { display: flex; align-items: baseline; gap: 26px; flex-wrap: wrap; color: #fff; }
+.cc-hero .ex-fila { display: flex; align-items: baseline; gap: 22px; flex-wrap: wrap;
+  color: #dce7f2; margin: 14px 0 0; }
 .cc-hero .ex { display: flex; flex-direction: column-reverse; gap: 2px; }
-.cc-hero .ex b { font-size: 25px; font-weight: 300; letter-spacing: -.015em;
-  font-variant-numeric: tabular-nums; line-height: 1.1; }
-.cc-hero .ex i { font-style: normal; font-size: 9.5px; font-weight: 800; letter-spacing: .2em;
+.cc-hero .ex b { font-size: 15px; font-weight: 600; letter-spacing: -.005em;
+  font-variant-numeric: tabular-nums; line-height: 1.2; }
+.cc-hero .ex i { font-style: normal; font-size: 9px; font-weight: 800; letter-spacing: .18em;
   text-transform: uppercase; color: #8ea6bd; }
-.cc-hero .ex-mezcla { font-size: 11.5px; color: #8ea6bd; margin-top: 8px;
+.cc-hero .ex-mezcla { font-size: 11px; color: #8ea6bd; margin-top: 7px;
   letter-spacing: .04em; }
 .cc-hero .cc-izq { min-width: 0; flex: 1 1 300px; }
 .cc-hero .cc-der { margin-left: auto; display: flex; align-items: flex-start; gap: 22px; flex-wrap: wrap; margin-top: 4px; }
@@ -52,8 +82,8 @@
 }
 @media (max-width: 720px) {
   /* en el teléfono el tramo se comía dos líneas a tamaño de titular */
-  .cc-hero .ex-fila { gap: 8px 20px; }
-  .cc-hero .ex b { font-size: 19px; }
+  .cc-hero .ex-fila { gap: 8px 18px; }
+  .pt-cifra b { font-size: 36px; }
 }
 /* --- losas del tiro --- */
 .losas { margin-top: 14px; }
@@ -203,17 +233,45 @@ const PANTALLAS = [
     ic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h8l4 4v15H6z"/><path d="M14 2.5v4h4"/><path d="M9 12h6M9 16h4"/></svg>` },
 ];
 
+/* Iconos del estado del tiro. Trazo, como el resto de la interfaz. */
+const ICONO_TIRO = {
+  // hormigón cayendo por la canaleta
+  flujo: `<svg viewBox="0 0 24 24" class="ic-t"><path d="M5 5h9l4.2 5.6"/><path d="M8.6 13.4v2.2M12 13.4v3.6M15.4 13.4v2.2" class="ic-cae"/></svg>`,
+  camion: `<svg viewBox="0 0 24 24" class="ic-t"><path d="M2.6 16.4V8.2h9.2v8.2"/><path d="M11.8 10.6h4l3.6 3.4v2.4"/><circle cx="7.4" cy="18.2" r="1.8"/><circle cx="16.6" cy="18.2" r="1.8"/></svg>`,
+  reloj: `<svg viewBox="0 0 24 24" class="ic-t"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.2V12l3.2 2"/></svg>`,
+  pausa: `<svg viewBox="0 0 24 24" class="ic-t"><path d="M9.4 6.6v10.8M14.6 6.6v10.8"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" class="ic-t"><path d="M5.6 12.4l4.2 4.2 8.6-9"/></svg>`,
+  raya: `<svg viewBox="0 0 24 24" class="ic-t"><path d="M6.4 12h11.2"/></svg>`,
+};
+
+/* El progreso del tiro, que es la cifra que Rubén mira primero. Sin yardas
+   planificadas no hay contra qué medir: se enseña lo colocado y ya, sin barra
+   ni porcentaje inventados. */
+function progresoHTML(p) {
+  const hayPlan = p.cyPlan != null && p.cyPlan > 0;
+  return `<div class="prog-tiro">
+    <div class="pt-cifra">
+      <b>${fmt(p.placed, 1)}</b>${hayPlan ? `<span class="pt-de">/ ${fmt(p.cyPlan, 0)}</span>` : ""}
+      <span class="pt-u">CY</span>
+      ${hayPlan ? `<span class="pt-pc">${Math.round(p.pct)}%</span>` : ""}
+    </div>
+    ${hayPlan ? `<div class="pt-barra"><i style="width:${p.pct.toFixed(1)}%"></i></div>` : ""}
+    <div class="pt-nota">${p.loads} ${p.loads === 1 ? "camión recibido" : "camiones recibidos"}${
+      hayPlan ? ` · faltan ${fmt(p.pending, 1)} CY` : ""}${
+      p.rejected ? ` · ${p.rejected} rechazado${p.rejected === 1 ? "" : "s"}` : ""}</div>
+  </div>`;
+}
+
 /* Las especificaciones del tiro: a qué hora empieza, cuántas yardas son y de
    qué mezcla. Cada dato aparece solo si existe — nada se rellena a ojo.
    La hora planificada manda; si no se declaró, se dice a qué hora arrancó
    de verdad, que eso sí lo saben los camiones. */
-function especsHTML(day, meta, prog) {
+function especsHTML(day, meta) {
   const planificada = hora12(meta.horaInicio);
   const real = hora12(inicioReal(day));
   const partes = [];
   if (planificada) partes.push(`<span class="ex"><b>${planificada}</b><i>comienza</i></span>`);
   else if (real)   partes.push(`<span class="ex"><b>${real}</b><i>comenzó</i></span>`);
-  if (prog.cyPlan) partes.push(`<span class="ex"><b>${fmt(prog.cyPlan, 0)} CY</b><i>del tiro</i></span>`);
   const sitio = [meta.fase ? "Fase " + esc(meta.fase) : null, meta.lane ? esc(meta.lane) : null,
                  meta.km ? "Km " + esc(meta.km) : null].filter(Boolean).join(" · ");
   if (sitio) partes.push(`<span class="ex"><b>${sitio}</b><i>tramo</i></span>`);
@@ -302,6 +360,8 @@ function render() {
       detalle: `${prog.loads} camiones · ${fmt(prog.placed, 1)} CY · sin rechazos` };
   }
 
+  const tiro = estadoTiro(day);
+
   // veredicto del último camión
   let lt = { cls: "idle", w: "Sin camiones", s: "—", num: "—", meta: "" };
   if (last) {
@@ -317,11 +377,12 @@ function render() {
   }
 
   document.getElementById("app").innerHTML = `
-    <div class="cc-hero s-${est.cls}">
-      <div class="mark2">${est.mark}</div>
+    <div class="cc-hero t-${tiro.cls}">
+      <div class="mark2">${ICONO_TIRO[tiro.icono]}</div>
       <div class="cc-izq">
-        ${especsHTML(day, meta, prog)}
-        <div class="sub">${est.titulo} — ${est.detalle}</div>
+        <div class="t-estado">${esc(tiro.txt)}</div>
+        ${progresoHTML(prog)}
+        ${especsHTML(day, meta)}
         ${losasHTML(day)}
       </div>
       <div class="cc-der"><div id="clima"></div></div>

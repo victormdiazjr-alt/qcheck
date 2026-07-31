@@ -581,6 +581,61 @@ function trucksDischarging(day) {
   return testsOfDate(day).filter((t) => t.start && !t.end && !t.rejected);
 }
 
+/* ------------------------------------------------------------ estado del tiro
+   En qué anda el vaciado ahora mismo, deducido de los camiones — no hay ningún
+   interruptor que alguien tenga que acordarse de mover.
+
+   "Detenido" no usa un umbral inventado: se compara el tiempo sin novedad con
+   el ritmo del propio día (el doble de la mediana entre camiones). Un día de
+   camiones cada 20 min se considera detenido antes que uno de cada hora.  */
+function minutosDesde(hhmm) {
+  const m = String(hhmm || "").match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const d = new Date();
+  return Math.round((d.getHours() * 60 + d.getMinutes()) - (+m[1] * 60 + +m[2]));
+}
+function ritmoDelDia(day) {
+  const t = testsOfDate(day).filter((x) => !x.rejected).map((x) => x.arrive).filter(Boolean).sort();
+  if (t.length < 3) return null;
+  const huecos = [];
+  for (let i = 1; i < t.length; i++) {
+    const a = minutosDesde(t[i - 1]), b = minutosDesde(t[i]);
+    if (a != null && b != null) huecos.push(a - b);
+  }
+  if (!huecos.length) return null;
+  huecos.sort((x, y) => x - y);
+  return huecos[Math.floor(huecos.length / 2)];   // mediana
+}
+
+/* "45 min", "2 h 20 min" — a partir de hora y media el minutero cansa */
+function duracionCorta(min) {
+  if (min < 90) return `${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  return m ? `${h} h ${m} min` : `${h} h`;
+}
+
+function estadoTiro(day) {
+  const p = dayProgress(day);
+  const completo = p.cyPlan != null && p.cyPlan > 0 && p.placed >= p.cyPlan;
+
+  if (day !== todayISO())
+    return { cls: "fin", icono: "check", txt: completo || p.loads ? "Tiro cerrado" : "Sin actividad" };
+  if (p.discharging.length) return { cls: "vaciando", icono: "flujo", txt: "Vaciando" };
+  if (p.waiting.length)
+    return { cls: "espera", icono: "camion",
+             txt: p.waiting.length === 1 ? "Camión esperando" : `${p.waiting.length} camiones esperando` };
+  if (completo) return { cls: "fin", icono: "check", txt: "Tiro completado" };
+  if (!p.loads) return { cls: "quieto", icono: "raya", txt: "Sin comenzar" };
+
+  const ultimo = testsOfDate(day).filter((t) => !t.rejected)
+    .map((t) => t.end || t.start || t.arrive).filter(Boolean).sort().pop();
+  const sinNovedad = minutosDesde(ultimo);
+  const ritmo = ritmoDelDia(day);
+  if (sinNovedad != null && ritmo && sinNovedad > ritmo * 2)
+    return { cls: "detenido", icono: "pausa", txt: `Detenido · ${duracionCorta(sinNovedad)} sin camión` };
+  return { cls: "espera", icono: "reloj", txt: "Esperando camión" };
+}
+
 function dayProgress(day) {
   const meta = db.dayMeta[day] || {};
   const rows = testsOfDate(day);
