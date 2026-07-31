@@ -10,7 +10,7 @@
 /* ============================================================
    REPORTE — el paquete que Rubén entrega.
    Reemplaza el armado manual desde Excel: tabla matriz,
-   media móvil y cartas de control, listo para imprimir.
+   Moving Average y Control Charts, listo para imprimir.
    ============================================================ */
 .rep-toolbar { position: sticky; top: 0; z-index: 40; background: var(--bg); padding: 12px 0; }
 .rep-toolbar .field { display: inline-block; margin-right: 12px; }
@@ -133,7 +133,7 @@ table.rep td.z-susp { background: #fbe4e2; font-weight: 700; color: #a01c19; }
     </a>
     <div>
       <div class="title">Reporte de Control de Calidad</div>
-      <div class="subtitle">Tabla matriz · media móvil · cartas de control</div>
+      <div class="subtitle">Tabla matriz · Moving Average · Control Charts</div>
     </div>
   </div>
   <nav class="tabs">
@@ -151,8 +151,8 @@ table.rep td.z-susp { background: #fbe4e2; font-weight: 700; color: #a01c19; }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=399b84e7"></script>
-<script src="assets/demo.js?v=61eea5eb"></script>
+<script src="assets/core.js?v=8eb1382c"></script>
+<script src="assets/demo.js?v=5b7d9943"></script>
 <script>
 "use strict";
 
@@ -168,7 +168,7 @@ function rangeTests() {
   });
 }
 
-/* Media móvil recalculada SOLO sobre lo incluido en el reporte */
+/* Moving Average recalculada SOLO sobre lo incluido en el reporte */
 function maRows(rows) {
   const w = db.plan.maWindow;
   const sets = rows.filter((t) => t.cs5 != null);
@@ -179,7 +179,7 @@ function maRows(rows) {
   });
 }
 
-/* Carta de control dibujada solo con los ensayos del reporte */
+/* Control Chart dibujado solo con los ensayos del reporte */
 function repChart(def, rows) {
   const pts = rows.filter((t) => def.get(t) != null).map((t) => ({
     n: t.n, date: t.date, ticket: t.ticket, v: def.get(t), rejected: t.rejected,
@@ -263,7 +263,7 @@ function render() {
   const minMA = ma.filter((s) => s.ma != null).map((s) => s.ma);
   const p = db.plan;
 
-  // páginas: 1 portada+resumen, N de matriz, 1 media móvil, 2 cartas, 1 rechazos+firmas
+  // páginas: 1 portada+resumen, N de matriz, 1 Moving Average, 2 cartas, 1 rechazos+firmas
   const PER = 30;
   const chunks = [];
   for (let i = 0; i < rows.length; i += PER) chunks.push(rows.slice(i, i + PER));
@@ -293,22 +293,22 @@ function render() {
         <div class="v">${evaluated.length ? fmt(conf / evaluated.length * 100, 1) : "—"}%</div><div class="s">${conf} de ${evaluated.length} evaluados</div></div>
       <div class="kpi ${rej.length ? "bad" : "ok"}"><div class="k">Rechazados</div><div class="v">${rej.length}</div>
         <div class="s">${fmt(rej.reduce((a, t) => a + (num(t.vol) || 0), 0), 1)} yd³</div></div>
-      <div class="kpi ${minMA.length && Math.min(...minMA) >= p.cs.target ? "ok" : "bad"}"><div class="k">Media móvil mínima</div>
+      <div class="kpi ${minMA.length && Math.min(...minMA) >= p.cs.target ? "ok" : "bad"}"><div class="k">Moving Average mínima</div>
         <div class="v">${minMA.length ? fmt(Math.min(...minMA), 0) : "—"}</div><div class="s">objetivo ${fmt(p.cs.target, 0)} psi</div></div>
     </div>
 
     <h2 class="sec">Criterios de aceptación aplicados</h2>
     <table class="rep">
       <tr><th>Parámetro</th><th>Objetivo</th><th>Límites de acción</th><th>Límites de suspensión</th></tr>
-      <tr><td>Revenimiento (in)</td><td class="n">${p.slump.target}</td><td class="n">${p.slump.actLo} – ${p.slump.actHi}</td><td class="n">${p.slump.suspLo} – ${p.slump.suspHi}</td></tr>
+      <tr><td>Slump (in)</td><td class="n">${p.slump.target}</td><td class="n">${p.slump.actLo} – ${p.slump.actHi}</td><td class="n">${p.slump.suspLo} – ${p.slump.suspHi}</td></tr>
       <tr><td>Contenido de aire (%)</td><td class="n">${p.air.target}</td><td class="n">${p.air.actLo} – ${p.air.actHi}</td><td class="n">${p.air.suspLo} – ${p.air.suspHi}</td></tr>
-      <tr><td>Peso unitario (pcf)</td><td class="n">${p.uw.target}</td><td class="n">± ${p.uw.act}</td><td class="n">± ${p.uw.susp}</td></tr>
+      <tr><td>Unit Weight (pcf)</td><td class="n">${p.uw.target}</td><td class="n">± ${p.uw.act}</td><td class="n">± ${p.uw.susp}</td></tr>
       <tr><td>Temperatura (°F)</td><td class="n">—</td><td class="n">&gt; ${p.tempMax - 3}</td><td class="n">&gt; ${p.tempMax}</td></tr>
       <tr><td>Resistencia @ ${p.cs.age} días (psi)</td><td class="n">${fmt(p.cs.target, 0)}</td><td class="n">&lt; ${fmt(p.cs.target, 0)}</td><td class="n">&lt; ${fmt(p.cs.action, 0)}</td></tr>
       <tr><td>Apertura al tráfico (psi)</td><td class="n">${fmt(p.cs.openTarget, 0)}</td><td class="n" colspan="2">mínimo ${fmt(p.cs.openLow, 0)}</td></tr>
     </table>
-    <div class="tbl-note">Ensayos de hormigón fresco según ASTM C143 (revenimiento), C231 (aire), C138 (peso unitario) y C1064 (temperatura).
-      Resistencia a compresión según ASTM C39. Media móvil de ${p.maWindow} ensayos consecutivos.</div>
+    <div class="tbl-note">Ensayos de hormigón fresco según ASTM C143 (Slump), C231 (aire), C138 (Unit Weight) y C1064 (temperatura).
+      Resistencia a compresión según ASTM C39. Moving Average de ${p.maWindow} ensayos consecutivos.</div>
     ${sheetFoot(pg, total)}
   </div>`);
 
@@ -341,18 +341,18 @@ function render() {
     </div>`);
   });
 
-  // ---------- media móvil ----------
+  // ---------- Moving Average ----------
   pg++;
   out.push(`<div class="sheet">
-    ${sheetHead("Media móvil de resistencia", pg, total)}
-    <h2 class="sec">Resistencia a compresión y media móvil de ${p.maWindow} ensayos</h2>
+    ${sheetHead("Moving Average de resistencia", pg, total)}
+    <h2 class="sec">Resistencia a compresión y Moving Average de ${p.maWindow} ensayos</h2>
     <div class="chart-box">
       <h3>Resistencia @ ${p.cs.age} días (psi)</h3>
-      <div class="lim">Objetivo ${fmt(p.cs.target, 0)} psi · límite de acción ${fmt(p.cs.action, 0)} psi · línea punteada oscura = media móvil</div>
+      <div class="lim">Objetivo ${fmt(p.cs.target, 0)} psi · límite de acción ${fmt(p.cs.action, 0)} psi · línea punteada oscura = Moving Average</div>
       ${chartCS5(ma.map((s) => ({ ...s, _ma5: s.ma })), "all")}
     </div>
     <table class="rep">
-      <tr><th>Set</th><th>Fecha</th><th>Conduce</th><th class="n">1 día</th><th class="n">${p.cs.age} días</th><th class="n">28 días</th><th class="n">Media móvil</th><th>Evaluación</th></tr>
+      <tr><th>Set</th><th>Fecha</th><th>Conduce</th><th class="n">1 día</th><th class="n">${p.cs.age} días</th><th class="n">28 días</th><th class="n">Moving Average</th><th>Evaluación</th></tr>
       ${cs5.map((s, i) => `<tr>
         <td class="n">${i + 1}</td><td>${esc(s.date)}</td><td>${esc(s.ticket || "—")}</td>
         <td class="n">${fmt(s.cs1, 0)}</td>
@@ -363,16 +363,16 @@ function render() {
       </tr>`).join("")}
     </table>
     <div class="tbl-note">${cs5.length} ensayos con resistencia a ${p.cs.age} días · ${bajo} por debajo del objetivo.
-      La media móvil se calcula sobre los ${p.maWindow} ensayos consecutivos incluidos en este reporte.</div>
+      La Moving Average se calcula sobre los ${p.maWindow} ensayos consecutivos incluidos en este reporte.</div>
     ${sheetFoot(pg, total)}
   </div>`);
 
-  // ---------- cartas de control (2 hojas) ----------
+  // ---------- Control Charts (2 hojas) ----------
   const defs = CHART_DEFS;
   [[0, 1], [2, 3]].forEach((pair) => {
     pg++;
     out.push(`<div class="sheet">
-      ${sheetHead("Cartas de control", pg, total)}
+      ${sheetHead("Control Charts", pg, total)}
       ${pair.map((idx) => {
         const d = defs[idx];
         const b = bandsFor(d.key);
@@ -401,8 +401,8 @@ function render() {
           <th class="n">Rev.</th><th class="n">P.U.</th><th class="n">Temp</th><th>Motivo</th></tr>
       ${rej.map((t) => {
         const m = [];
-        if (zoneSlump(t) === "susp") m.push("Revenimiento fuera de límite");
-        if (zoneUW(t) === "susp") m.push("Peso unitario fuera de tolerancia");
+        if (zoneSlump(t) === "susp") m.push("Slump fuera de límite");
+        if (zoneUW(t) === "susp") m.push("Unit Weight fuera de tolerancia");
         if (zoneAir(t) === "susp") m.push("Aire fuera de límite");
         if (zoneTemp(t) === "susp") m.push("Temperatura sobre el máximo");
         return `<tr class="rej"><td class="n">${t.n}</td><td>${esc(t.date)}</td><td>${esc(t.ticket || "—")}</td>

@@ -87,8 +87,8 @@ body { background: var(--bg); }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=399b84e7"></script>
-<script src="assets/demo.js?v=61eea5eb"></script>
+<script src="assets/core.js?v=8eb1382c"></script>
+<script src="assets/demo.js?v=5b7d9943"></script>
 <script>
 "use strict";
 const state = { day: null };
@@ -217,7 +217,7 @@ function render() {
         <div class="panel-body"><div class="chart-scroll">${chartForDay(CHART_DEFS[0], state.day, 24)}</div></div>
       </div>
       <div class="panel">
-        <div class="panel-head"><h2>Control del día — Peso unitario</h2><div class="spacer"></div><span class="muted" style="font-size:12px">${trendLabel(state.day, "uw")}</span></div>
+        <div class="panel-head"><h2>Control del día — Unit Weight</h2><div class="spacer"></div><span class="muted" style="font-size:12px">${trendLabel(state.day, "uw")}</span></div>
         <div class="panel-body"><div class="chart-scroll">${chartForDay(CHART_DEFS[2], state.day, 24)}</div></div>
       </div>
     </div>

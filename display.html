@@ -361,8 +361,8 @@ footer {
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=399b84e7"></script>
-<script src="assets/demo.js?v=61eea5eb"></script>
+<script src="assets/core.js?v=8eb1382c"></script>
+<script src="assets/demo.js?v=5b7d9943"></script>
 <script>
 "use strict";
 
@@ -473,7 +473,7 @@ function render() {
     verdict.className = "verdict v-idle";
     verdict.innerHTML = `<div class="ring">—</div><div class="word">EN ESPERA</div><div class="note">QC en vivo</div>`;
     document.getElementById("indics").innerHTML =
-      cell("Slump", null, "in", null) + cell("Peso Unit", null, "pcf", null) +
+      cell("Slump", null, "in", null) + cell("Unit Weight", null, "pcf", null) +
       cell("Aire", null, "%", null) + cell("Temp", null, "°F", null) + cell("Hora", null, "", null);
   } else {
     const w = worstZone(last);
@@ -503,7 +503,7 @@ function render() {
     const hora = last.end || last.testTime || last.start || last.arrive || null;
     document.getElementById("indics").innerHTML =
       cell("Slump", num(last.slump), "in", proximity("slump", last), 2) +
-      cell("Peso Unit", num(last.uw), "pcf", proximity("uw", last), 1) +
+      cell("Unit Weight", num(last.uw), "pcf", proximity("uw", last), 1) +
       cell("Aire", num(last.air), "%", proximity("air", last), 1) +
       cell("Temp", num(last.temp), "°F", proximity("temp", last), 0) +
       `<div class="cell"><div class="k"><i></i>Hora</div><div class="v" style="font-size:7.6vh">${fmt12(hora) || "—"}</div><div class="u">último registro</div></div>`;
@@ -624,7 +624,7 @@ function simIndics(t, hora) {
   const pseudo = { slump: t.slump, uw: t.uw, air: t.air, temp: t.temp, uwTarget: db.plan.uw.target };
   document.getElementById("indics").innerHTML =
     cell("Slump", t.slump, "in", proximity("slump", pseudo), 2) +
-    cell("Peso Unit", t.uw, "pcf", proximity("uw", pseudo), 1) +
+    cell("Unit Weight", t.uw, "pcf", proximity("uw", pseudo), 1) +
     cell("Aire", t.air, "%", proximity("air", pseudo), 1) +
     cell("Temp", t.temp, "°F", proximity("temp", pseudo), 0) +
     `<div class="cell"><div class="k"><i></i>Hora</div><div class="v" style="font-size:7.6vh">${fmt12(hora)}</div><div class="u">llegada</div></div>`;
@@ -647,7 +647,7 @@ function simArrival(t, hora) {
     <div class="word">EN PRUEBAS</div><div class="note">Tomando muestras · QC</div>`;
   // aún no hay resultados — se toman durante esta fase
   document.getElementById("indics").innerHTML =
-    cell("Slump", null, "in", null) + cell("Peso Unit", null, "pcf", null) +
+    cell("Slump", null, "in", null) + cell("Unit Weight", null, "pcf", null) +
     cell("Aire", null, "%", null) + cell("Temp", null, "°F", null) +
     `<div class="cell"><div class="k"><i></i>Hora</div><div class="v" style="font-size:7.6vh">${fmt12(hora)}</div><div class="u">llegada</div></div>`;
   simTotals();

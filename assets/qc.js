@@ -49,7 +49,7 @@ function viewDashboard() {
   const lastDayTests = lastDay ? testsOfDate(lastDay) : [];
   const alerts = [];
   if (lastMA && lastMA._ma5 < db.plan.cs.target)
-    alerts.push({ level: "susp", text: `Media móvil (${db.plan.maWindow}) de 5 días = ${fmt(lastMA._ma5, 0)} psi — POR DEBAJO del objetivo ${fmt(db.plan.cs.target, 0)} psi.` });
+    alerts.push({ level: "susp", text: `Moving Average (${db.plan.maWindow}) de 5 días = ${fmt(lastMA._ma5, 0)} psi — POR DEBAJO del objetivo ${fmt(db.plan.cs.target, 0)} psi.` });
   const recentSusp = tests.slice(-15).filter((t) => !t.rejected && worstZone(t) === "susp");
   if (recentSusp.length)
     alerts.push({ level: "susp", text: `${recentSusp.length} prueba(s) reciente(s) fuera de límite de suspensión sin marcar como rechazadas — revisar.` });
@@ -63,7 +63,7 @@ function viewDashboard() {
       <div class="stat"><div class="label">Hormigón</div><div class="value">${fmt(totalCY, 0)}</div><div class="sub">yardas cúbicas</div></div>
       <div class="stat ${rejected ? "alert" : ""}"><div class="label">Rechazados</div><div class="value">${rejected}</div><div class="sub">camiones</div></div>
       <div class="stat"><div class="label">Sets resistencia</div><div class="value">${sets.length}</div><div class="sub">${sets.filter((s) => s.cs5 != null).length} con 5 días</div></div>
-      <div class="stat ${lastMA ? (lastMA._ma5 >= db.plan.cs.target ? "good" : "alert") : ""}"><div class="label">Media móvil 5d</div>
+      <div class="stat ${lastMA ? (lastMA._ma5 >= db.plan.cs.target ? "good" : "alert") : ""}"><div class="label">Moving Average 5d</div>
         <div class="value">${lastMA ? fmt(lastMA._ma5, 0) : "—"}</div><div class="sub">objetivo ${fmt(db.plan.cs.target, 0)} psi</div></div>
       <div class="stat ${okCount / (last30.length || 1) >= 0.8 ? "good" : ""}"><div class="label">Zona OK</div>
         <div class="value">${last30.length ? Math.round(okCount / last30.length * 100) + "%" : "—"}</div><div class="sub">últimas ${last30.length} pruebas</div></div>
@@ -106,7 +106,7 @@ function viewDashboard() {
     </div>
 
     <div class="panel">
-      <div class="panel-head"><h2>Carta rápida — Resistencia @ 5 días + media móvil</h2><div class="spacer"></div>
+      <div class="panel-head"><h2>Carta rápida — Resistencia @ 5 días + Moving Average</h2><div class="spacer"></div>
         <button class="btn small" onclick="switchTab('charts')">Todas las cartas</button></div>
       <div class="panel-body"><div class="chart-scroll">${chartCS5(sets, 60)}</div></div>
     </div>`;
@@ -199,7 +199,7 @@ function viewLive() {
         <div class="panel-body"><div class="chart-scroll">${chartForDay(CHART_DEFS[0], day)}</div></div>
       </div>
       <div class="panel">
-        <div class="panel-head"><h2>Peso unitario — en vivo</h2><div class="spacer"></div>
+        <div class="panel-head"><h2>Unit Weight — en vivo</h2><div class="spacer"></div>
           <span class="muted" style="font-size:12px">${trendLabel(day, "uw")}</span></div>
         <div class="panel-body"><div class="chart-scroll">${chartForDay(CHART_DEFS[2], day)}</div></div>
       </div>
@@ -363,7 +363,7 @@ function viewStrength() {
   const p = db.plan.cs;
   return `
     <div class="toolbar">
-      <h2>Resistencias &amp; media móvil</h2>
+      <h2>Resistencias &amp; Moving Average</h2>
       <div class="spacer"></div>
       <span class="muted" style="font-size:12.5px">Objetivo: ${fmt(p.target, 0)} psi @ ${p.age} días · Acción &lt; ${fmt(p.target, 0)} · Suspensión &lt; ${fmt(p.action, 0)} · Apertura al tráfico: ${fmt(p.openTarget, 0)} (mín ${fmt(p.openLow, 0)})</span>
     </div>
@@ -371,7 +371,7 @@ function viewStrength() {
       ${sets.length ? `<div class="table-wrap" style="max-height:70vh; overflow-y:auto"><table class="data">
         <tr><th>Set</th><th>Fecha</th><th>Ticket</th><th>Camión</th><th>Identificación</th>
             <th class="num">1 día</th><th>Apertura (1d)</th><th class="num">${p.age} días</th><th class="num">28 días</th>
-            <th class="num">Media móvil (${db.plan.maWindow})</th></tr>
+            <th class="num">Moving Average (${db.plan.maWindow})</th></tr>
         ${sets.map((s, i) => {
           const zma = s._ma5 == null ? null : (s._ma5 >= p.target ? "ok" : "susp");
           let open = "—";
@@ -395,7 +395,7 @@ function viewStrength() {
         }).join("")}
       </table></div>` : `<div class="empty">Sin resultados de resistencia.</div>`}
     </div></div>
-    <p class="muted" style="font-size:12px">Cada resultado es el promedio del set de cilindros rotos a esa edad (ASTM C39). La media móvil cubre los últimos ${db.plan.maWindow} sets con resultado a ${p.age} días.</p>`;
+    <p class="muted" style="font-size:12px">Cada resultado es el promedio del set de cilindros rotos a esa edad (ASTM C39). La Moving Average cubre los últimos ${db.plan.maWindow} sets con resultado a ${p.age} días.</p>`;
 }
 
 /* ------------------------------------------------------------ Charts */
@@ -408,7 +408,7 @@ function viewCharts() {
   </select>`;
   return `
     <div class="toolbar">
-      <h2>Cartas de control</h2>
+      <h2>Control Charts</h2>
       ${rangeSel}
       <a class="btn primary" href="reporte.html">📄 Generar reporte</a>
       <div class="spacer"></div>
@@ -426,7 +426,7 @@ function viewCharts() {
         <div class="panel-body"><div class="chart-scroll">${chartFor(d, r)}</div></div>
       </div>`).join("")}
     <div class="panel chart-block">
-      <div class="panel-head"><h2>Resistencia @ ${db.plan.cs.age} días (psi) — puntos + media móvil (línea oscura)</h2></div>
+      <div class="panel-head"><h2>Resistencia @ ${db.plan.cs.age} días (psi) — puntos + Moving Average (línea oscura)</h2></div>
       <div class="panel-body"><div class="chart-scroll">${chartCS5(sets, r)}</div></div>
     </div>`;
 }
@@ -464,7 +464,7 @@ function viewPlan() {
           <tr><th>Parámetro</th><th class="num">Objetivo</th><th class="num">Acción</th><th class="num">Suspensión</th></tr>
           <tr><td>Slump (in)</td><td class="num mono">${p.slump.target}</td><td class="num mono">${p.slump.actLo} – ${p.slump.actHi}</td><td class="num mono">${p.slump.suspLo} – ${p.slump.suspHi}</td></tr>
           <tr><td>Aire (%)</td><td class="num mono">${p.air.target}</td><td class="num mono">${p.air.actLo} – ${p.air.actHi}</td><td class="num mono">${p.air.suspLo} – ${p.air.suspHi}</td></tr>
-          <tr><td>Peso unitario (pcf)</td><td class="num mono">${p.uw.target}</td><td class="num mono">± ${p.uw.act}</td><td class="num mono">± ${p.uw.susp}</td></tr>
+          <tr><td>Unit Weight (pcf)</td><td class="num mono">${p.uw.target}</td><td class="num mono">± ${p.uw.act}</td><td class="num mono">± ${p.uw.susp}</td></tr>
           <tr><td>Temperatura (°F)</td><td class="num mono">—</td><td class="num mono">&gt; ${p.tempMax - 3}</td><td class="num mono">&gt; ${p.tempMax}</td></tr>
           <tr><td>Resistencia @ ${p.cs.age}d (psi)</td><td class="num mono">${fmt(p.cs.target, 0)}</td><td class="num mono">&lt; ${fmt(p.cs.target, 0)}</td><td class="num mono">&lt; ${fmt(p.cs.action, 0)}</td></tr>
           <tr><td>Apertura al tráfico (psi)</td><td class="num mono">${fmt(p.cs.openTarget, 0)}</td><td class="num mono" colspan="2">mínimo ${fmt(p.cs.openLow, 0)}</td></tr>
@@ -594,7 +594,7 @@ function formPlan() {
       { key: "aAH", label: "Acción máx", type: "number", step: "0.1" },
       { key: "aSL", label: "Suspensión mín", type: "number", step: "0.1" },
       { key: "aSH", label: "Suspensión máx", type: "number", step: "0.1" },
-      { type: "label", label: "Peso unitario (pcf)" },
+      { type: "label", label: "Unit Weight (pcf)" },
       { key: "uT", label: "Objetivo", type: "number", step: "0.1" },
       { key: "uA", label: "Acción ±", type: "number", step: "0.1" },
       { key: "uS", label: "Suspensión ±", type: "number", step: "0.1" },
@@ -607,7 +607,7 @@ function formPlan() {
       { key: "cA", label: "Límite acción (susp. si <)", type: "number", step: "50" },
       { key: "cOT", label: "Apertura tráfico objetivo", type: "number", step: "50" },
       { key: "cOL", label: "Apertura tráfico mínimo", type: "number", step: "50" },
-      { key: "maW", label: "Ventana media móvil", type: "number", step: "1" },
+      { key: "maW", label: "Ventana Moving Average", type: "number", step: "1" },
     ],
     onSave: (v) => {
       db.plan = {

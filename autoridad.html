@@ -84,8 +84,8 @@ h2.sec-title { font-size: 18px; margin: 26px 0 12px; }
 
   <div class="sec-nav">
     <a href="#compliance">Cumplimiento</a>
-    <a href="#strength">Resistencia y media móvil</a>
-    <a href="#spc">Cartas de control</a>
+    <a href="#strength">Resistencia y Moving Average</a>
+    <a href="#spc">Control Charts</a>
     <a href="#lots">Resumen por lote</a>
     <a href="#rejects">Camiones rechazados</a>
   </div>
@@ -98,8 +98,8 @@ h2.sec-title { font-size: 18px; margin: 26px 0 12px; }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=399b84e7"></script>
-<script src="assets/demo.js?v=61eea5eb"></script>
+<script src="assets/core.js?v=8eb1382c"></script>
+<script src="assets/demo.js?v=5b7d9943"></script>
 <script>
 "use strict";
 const state = { chartRange: "all" };
@@ -139,7 +139,7 @@ function render() {
     <div class="hk"><div class="v">${tests.length}</div><div class="k">Ensayos de QC</div></div>
     <div class="hk"><div class="v">${fmt(totalCY, 0)}<span class="u"> CY</span></div><div class="k">Hormigón colocado</div></div>
     <div class="hk"><div class="v">${days.length}</div><div class="k">Días de vaciado</div></div>
-    <div class="hk"><div class="v">${lastMA ? fmt(lastMA._ma5, 0) : "—"}<span class="u"> psi</span></div><div class="k">Media móvil actual (objetivo ${fmt(db.plan.cs.target, 0)})</div></div>
+    <div class="hk"><div class="v">${lastMA ? fmt(lastMA._ma5, 0) : "—"}<span class="u"> psi</span></div><div class="k">Moving Average actual (objetivo ${fmt(db.plan.cs.target, 0)})</div></div>
     <div class="hk compliance-ring">${donut(compliancePct, "#4fe085")}<div><div class="k" style="margin-bottom:2px">Ensayos en fresco<br>dentro de límites de acción</div></div></div>
     <div class="hk compliance-ring">${donut(strengthPct, strengthPct >= 95 ? "#4fe085" : "#ffc93d")}<div><div class="k" style="margin-bottom:2px">Resistencia a 5 días<br>≥ objetivo f\'c</div></div></div>`;
 
@@ -175,22 +175,22 @@ function render() {
         <div class="value">${rejected.length}</div><div class="sub">${fmt(rejected.reduce((a, t) => a + (num(t.vol) || 0), 0), 0)} CY devueltos</div></div>
       <div class="stat ${strengthPct >= 95 ? "good" : ""}"><div class="label">Conformidad de resistencia</div>
         <div class="value">${fmt(strengthPct, 1)}%</div><div class="sub">${passing}/${cs5sets.length} sets ≥ ${fmt(db.plan.cs.target, 0)} psi a ${db.plan.cs.age} días</div></div>
-      <div class="stat ${minMA >= db.plan.cs.target ? "good" : "alert"}"><div class="label">Media móvil mínima</div>
+      <div class="stat ${minMA >= db.plan.cs.target ? "good" : "alert"}"><div class="label">Moving Average mínima</div>
         <div class="value">${Number.isFinite(minMA) ? fmt(minMA, 0) : "—"}</div><div class="sub">MA de 6 sets, todo el proyecto</div></div>
     </div>
 
-    <h2 class="sec-title" id="strength">Resistencia y media móvil — f'c ${fmt(db.plan.cs.target, 0)} psi a ${db.plan.cs.age} días</h2>
+    <h2 class="sec-title" id="strength">Resistencia y Moving Average — f'c ${fmt(db.plan.cs.target, 0)} psi a ${db.plan.cs.age} días</h2>
     <div class="panel"><div class="panel-body">
       <div class="chart-legend">
         <span><span class="sw" style="background:var(--chart-ok)"></span>≥ objetivo</span>
         <span><span class="sw" style="background:var(--chart-act)"></span>acción (&lt; ${fmt(db.plan.cs.target, 0)})</span>
         <span><span class="sw" style="background:var(--chart-susp)"></span>suspensión (&lt; ${fmt(db.plan.cs.action, 0)})</span>
-        <span>▪▪ punteado oscuro = media móvil de ${db.plan.maWindow} sets</span>
+        <span>▪▪ punteado oscuro = Moving Average de ${db.plan.maWindow} sets</span>
       </div>
       <div class="chart-scroll">${chartCS5(sets, "all")}</div>
     </div></div>
 
-    <h2 class="sec-title" id="spc">Cartas de control estadístico — hormigón fresco</h2>
+    <h2 class="sec-title" id="spc">Control Charts SPC — hormigón fresco</h2>
     <div class="toolbar">
       <select onchange="state.chartRange=this.value==='all'?'all':Number(this.value); render()">
         <option value="all" ${r === "all" ? "selected" : ""}>Todo el proyecto</option>
@@ -227,8 +227,8 @@ function render() {
             <th class="num">Slump</th><th class="num">UW</th><th class="num">Temp</th><th>Motivo</th></tr>
         ${rejected.map((t) => {
           const reasons = [];
-          if (zoneSlump(t) === "susp") reasons.push("Revenimiento fuera de límites de suspensión");
-          if (zoneUW(t) === "susp") reasons.push("Peso unitario fuera de tolerancia");
+          if (zoneSlump(t) === "susp") reasons.push("Slump fuera de límites de suspensión");
+          if (zoneUW(t) === "susp") reasons.push("Unit Weight fuera de tolerancia");
           if (zoneAir(t) === "susp") reasons.push("Contenido de aire fuera de límites");
           if (zoneTemp(t) === "susp") reasons.push("Temperatura sobre el máximo");
           return `<tr class="rejected">
@@ -245,9 +245,9 @@ function render() {
     </div></div>
 
     <p class="muted" style="font-size:12px; margin-top:18px">
-      Plan de control: revenimiento ${db.plan.slump.target}" (acción ${db.plan.slump.actLo}–${db.plan.slump.actHi}", suspensión ${db.plan.slump.suspLo}–${db.plan.slump.suspHi}") ·
+      Plan de control: Slump ${db.plan.slump.target}" (acción ${db.plan.slump.actLo}–${db.plan.slump.actHi}", suspensión ${db.plan.slump.suspLo}–${db.plan.slump.suspHi}") ·
       aire ${db.plan.air.target}% (${db.plan.air.actLo}–${db.plan.air.actHi} / ${db.plan.air.suspLo}–${db.plan.air.suspHi}) ·
-      peso unitario ±${db.plan.uw.act}/±${db.plan.uw.susp} pcf del objetivo de planta ·
+      Unit Weight ±${db.plan.uw.act}/±${db.plan.uw.susp} pcf del objetivo de planta ·
       resistencia ${fmt(db.plan.cs.target, 0)} psi a ${db.plan.cs.age} días (suspensión &lt; ${fmt(db.plan.cs.action, 0)}) ·
       apertura al tráfico ${fmt(db.plan.cs.openTarget, 0)} psi (mín. ${fmt(db.plan.cs.openLow, 0)}).
       Datos entrados en vivo en el campo por ${esc(db.project.qcFirm || "QC")} — esta vista es de solo lectura.

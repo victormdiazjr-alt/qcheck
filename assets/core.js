@@ -708,26 +708,26 @@ function trendAlerts(day) {
   const uw = rows.filter((t) => num(t.uw) != null);
   const sl = rows.filter((t) => num(t.slump) != null);
 
-  // --- Regla del agua: peso unitario bajando + slump subiendo ---
+  // --- Regla del agua: Unit Weight bajando + slump subiendo ---
   if (uw.length >= 6 && sl.length >= 6) {
     const dUW = avg(uw.slice(-3).map((t) => num(t.uw))) - avg(uw.slice(-6, -3).map((t) => num(t.uw)));
     const dSL = avg(sl.slice(-3).map((t) => num(t.slump))) - avg(sl.slice(-6, -3).map((t) => num(t.slump)));
     if (dUW <= -0.8 && dSL >= 0.4) {
       out.push({
         level: "susp", icon: "💧", title: "Posible exceso de agua",
-        text: `Peso unitario bajó ${fmt(Math.abs(dUW), 1)} pcf mientras el slump subió ${fmt(dSL, 2)}" en las últimas 3 pruebas.`,
+        text: `Unit Weight bajó ${fmt(Math.abs(dUW), 1)} pcf mientras el slump subió ${fmt(dSL, 2)}" en las últimas 3 pruebas.`,
         action: "Avisar a la planta: verificar humedades de los agregados.",
       });
     } else if (dUW >= 0.8 && dSL <= -0.4) {
       out.push({
         level: "act", icon: "🧱", title: "Mezcla secándose",
-        text: `Peso unitario subió ${fmt(dUW, 1)} pcf y el slump bajó ${fmt(Math.abs(dSL), 2)}".`,
+        text: `Unit Weight subió ${fmt(dUW, 1)} pcf y el slump bajó ${fmt(Math.abs(dSL), 2)}".`,
         action: "Verificar dosificación de agua y humedades en planta.",
       });
     }
   }
 
-  // --- Tendencia sostenida de peso unitario hacia un límite ---
+  // --- Tendencia sostenida de Unit Weight hacia un límite ---
   if (uw.length >= 4) {
     const last = uw.slice(-4).map((t) => num(t.uw));
     const target = num(uw[uw.length - 1].uwTarget) ?? db.plan.uw.target;
@@ -737,7 +737,7 @@ function trendAlerts(day) {
                       last.every((v, i) => i === 0 || v >= last[i - 1]);
     if (monotonic && Math.abs(drift) >= 1.0 && dist > db.plan.uw.act * 0.6) {
       out.push({
-        level: "act", icon: "📉", title: `Peso unitario se está yendo ${drift < 0 ? "hacia abajo" : "hacia arriba"}`,
+        level: "act", icon: "📉", title: `Unit Weight se está yendo ${drift < 0 ? "hacia abajo" : "hacia arriba"}`,
         text: `4 lecturas seguidas en la misma dirección (${fmt(drift, 1)} pcf). Objetivo ${fmt(target, 1)}.`,
         action: "Avisar a la planta antes de que se salga de límite.",
       });
@@ -803,7 +803,7 @@ function trendLabel(day, key) {
 const CHART_DEFS = [
   { key: "slump", label: 'Slump (in)', get: (t) => num(t.slump), dp: 2 },
   { key: "air", label: "Aire (%)", get: (t) => num(t.air), dp: 1 },
-  { key: "uw", label: "Peso Unitario (pcf)", get: (t) => num(t.uw), dp: 1 },
+  { key: "uw", label: "Unit Weight (pcf)", get: (t) => num(t.uw), dp: 1 },
   { key: "temp", label: "Temperatura (°F)", get: (t) => num(t.temp), dp: 0 },
 ];
 function bandsFor(key) {
@@ -1122,7 +1122,7 @@ function formTest(_ignored, n, opts = {}) {
       { key: "end", label: "Termina vaciado", type: "time" },
       { type: "label", label: "Pruebas frescas" },
       { key: "slump", label: "Slump (in)", type: "number", step: "0.25" },
-      { key: "uw", label: "Peso unitario (pcf)", type: "number", step: "0.01" },
+      { key: "uw", label: "Unit Weight (pcf)", type: "number", step: "0.01" },
       { key: "air", label: "Aire (%)", type: "number", step: "0.1" },
       { key: "temp", label: "Temp (°F)", type: "number", step: "1" },
       { key: "rejected", label: "¿Rechazado?", type: "checkbox" },

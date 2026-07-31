@@ -222,8 +222,8 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=399b84e7"></script>
-<script src="assets/demo.js?v=61eea5eb"></script>
+<script src="assets/core.js?v=8eb1382c"></script>
+<script src="assets/demo.js?v=5b7d9943"></script>
 <script src="assets/clima.js?v=d5c4fb65"></script>
 <script src="assets/auth.js?v=b007de04"></script>
 <script>
@@ -435,7 +435,7 @@ function render() {
         <div class="sub">${conf} de ${evaluated.length} ensayos del proyecto</div>
       </a>
       <a class="w ${lastMA ? (lastMA._ma5 >= db.plan.cs.target ? "ok" : "bad") : ""}" href="results.html#strength">
-        <div class="lbl">Media móvil ${db.plan.cs.age}d</div>
+        <div class="lbl">Moving Average ${db.plan.cs.age}d</div>
         <div class="big">${lastMA ? fmt(lastMA._ma5, 0) : "—"}</div>
         <div class="sub">objetivo ${fmt(db.plan.cs.target, 0)} psi</div>
       </a>
@@ -481,11 +481,11 @@ function render() {
     <!-- fila 3: lo que Rubén realmente mira -->
     <div class="grid cols-2">
       <a class="w" href="results.html#charts">
-        <div class="lbl">Revenimiento — en vivo <span class="trend">${trendLabel(day, "slump")}</span></div>
+        <div class="lbl">Slump — en vivo <span class="trend">${trendLabel(day, "slump")}</span></div>
         <div class="chart-scroll" style="margin-top:6px">${chartForDay(CHART_DEFS[0], day, 22)}</div>
       </a>
       <a class="w" href="results.html#charts">
-        <div class="lbl">Peso unitario — en vivo <span class="trend">${trendLabel(day, "uw")}</span></div>
+        <div class="lbl">Unit Weight — en vivo <span class="trend">${trendLabel(day, "uw")}</span></div>
         <div class="chart-scroll" style="margin-top:6px">${chartForDay(CHART_DEFS[2], day, 22)}</div>
       </a>
     </div>`;

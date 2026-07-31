@@ -39,7 +39,7 @@ const DEMO_LECTURAS = [
   { slump: 2.75, air: 2.0, uw: 150.6, temp: 90 },
   { slump: 3.5,  air: 1.4, uw: 149.4, temp: 91 },
   { slump: 3.0,  air: 1.9, uw: 150.0, temp: 90 },
-  { slump: 4.0,  air: 1.2, uw: 148.9, temp: 93 },   /* revenimiento en zona de acción */
+  { slump: 4.0,  air: 1.2, uw: 148.9, temp: 93 },   /* Slump en zona de acción */
   { slump: 3.25, air: 1.7, uw: 150.3, temp: 91 },
   { slump: 3.0,  air: 2.1, uw: 150.8, temp: 92 },
   { slump: 2.5,  air: 1.5, uw: 151.0, temp: 92 },

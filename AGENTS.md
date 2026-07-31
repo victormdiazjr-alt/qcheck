@@ -136,7 +136,13 @@ los campos de origen, el formato del QR y la publicación de límites.
   que no viste funcionar.
 - **Borra los datos de prueba** que crees. La base sembrada tiene 397 ensayos reales
   del proyecto; debe quedar como estaba.
-- **Español de Puerto Rico** en toda la interfaz —incluida la pantalla de la Autoridad— y en
+- **Los términos técnicos que nacieron en inglés se quedan en inglés**, con mayúscula
+  inicial: **Slump**, **Unit Weight**, **Moving Average**, **Control Charts**, Batch,
+  Ticket, Set, PSI, CY. Es como se dicen en la obra aunque la frase sea en español, y así
+  cuadran con el Excel de Rubén. Lo que sí es español se queda en español —resistencia,
+  aire, lote, vaciado, losa, mezcla, conduce, camión— y **los comentarios del Excel
+  histórico no se tocan nunca**.
+- **Español de Puerto Rico** en el resto de la interfaz —incluida la pantalla de la Autoridad— y en
   los comentarios. No vale con que la palabra esté en el diccionario: tiene que ser la que
   se usa aquí. «Calima» es correcto en España y nadie la entiende en la isla; se dice
   **polvo del Sahara**. Igual **aguaceros**, no «chubascos». Los nombres de pantalla que
