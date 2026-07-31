@@ -113,9 +113,11 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
 .ficha {
   margin-top: 26px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.13);
   display: grid; gap: 16px 24px;
-  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
 }
 .ficha > div { min-width: 0; }
+@media (max-width: 700px) { .ficha { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 430px) { .ficha { grid-template-columns: 1fr; } }
 .ficha .v { font-size: 16px; font-weight: 300; margin-top: 3px; font-variant-numeric: tabular-nums;
   letter-spacing: -.01em; }
 .ficha .v b { font-weight: 600; }
@@ -203,6 +205,22 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
   .traza { animation: none; stroke-dasharray: none; }
 }
 
+/* ---------- antes / con QCheck ---------- */
+.antes-ahora {
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+.antes-ahora > * { min-width: 0; }
+.aa {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel); box-shadow: var(--shadow); padding: 14px 16px 10px;
+}
+.aa.destaca {
+  border-color: rgba(74,99,216,.42);
+  box-shadow: 0 0 0 2px rgba(74,99,216,.08), 0 0 26px -8px rgba(74,99,216,.85);
+}
+.aa svg { display: block; width: 100%; height: auto; margin-top: 8px; }
+
 /* ---------- regla destacada ---------- */
 .regla {
   margin-top: 18px; display: grid; gap: 14px;
@@ -278,7 +296,7 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
 }
 .lista li b { color: var(--ink); font-weight: 600; }
 
-/* mini carta de control */
+/* mini Control Chart */
 .mini-carta { width: 100%; height: auto; display: block; border-radius: 10px; }
 
 /* ---------- notas de arquitectura ---------- */
@@ -298,6 +316,125 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
 .nota code { font-size: 12.4px; color: #a9b6c2; background: var(--panel-2);
   border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
 .nota.pendiente { border-style: dashed; background: transparent; }
+
+/* ---------- botón Run ---------- */
+.run-panel {
+  border: 1px solid rgba(74,99,216,.34); border-radius: var(--radius);
+  background:
+    radial-gradient(420px 180px at 92% 120%, rgba(74,99,216,.16), transparent 70%),
+    var(--panel);
+  box-shadow: var(--shadow);
+  padding: 20px 22px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+.run-panel .run-txt { flex: 1 1 260px; min-width: 0; }
+.run-destino { font-size: 19px; font-weight: 300; letter-spacing: -.02em; margin-top: 6px; }
+.run-destino b { font-weight: 600; }
+.run-nota { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; }
+/* el color entra por el resplandor, no por el relleno */
+.btn-run {
+  --bc: var(--accent);
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--panel-2); color: #a8bbff;
+  border: 1px solid color-mix(in srgb, var(--bc) 62%, transparent);
+  border-radius: 999px; padding: 13px 26px 13px 22px; cursor: pointer;
+  font: inherit; font-size: 15px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; text-decoration: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bc) 11%, transparent),
+              0 0 26px -6px var(--bc);
+  transition: box-shadow .18s, border-color .18s, transform .18s;
+}
+.btn-run:hover, .btn-run:focus-visible {
+  border-color: var(--bc); transform: translateY(-1px);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--bc) 18%, transparent), 0 0 34px -6px var(--bc);
+}
+.btn-run svg { width: 17px; height: 17px; fill: none; stroke: currentColor;
+  stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- capa guiada de «añadir a inicio» ---------- */
+.ov {
+  position: fixed; inset: 0; z-index: 90;
+  background: rgba(6,9,13,.80);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: max(16px, env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom));
+  overflow-y: auto; overscroll-behavior: contain;
+}
+.ov[hidden] { display: none; }
+.ov-caja {
+  position: relative; width: 100%; max-width: 900px;
+  border: 1px solid rgba(74,99,216,.32); border-radius: 18px;
+  background: linear-gradient(160deg, #141b2b 0%, #101720 60%, #0d131b 100%);
+  box-shadow: 0 20px 60px rgba(0,0,0,.55);
+  padding: 24px 24px 20px; margin: auto 0;
+}
+.ov-caja h3 { font-size: clamp(19px, 3.6vw, 26px); font-weight: 300; letter-spacing: -.025em;
+  margin-top: 8px; }
+.ov-caja h3 b { font-weight: 700; }
+.ov-lead { margin-top: 9px; color: var(--ink-soft); font-size: 13.6px; max-width: 56em; }
+.ov-x {
+  position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--line); background: rgba(255,255,255,.05); color: var(--ink-soft);
+  display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;
+}
+.ov-x:hover { color: #fff; border-color: var(--susp); background: var(--susp-bg); }
+.ov-x svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.1;
+  stroke-linecap: round; }
+
+.pasos-inicio {
+  margin-top: 20px; display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+}
+.pasos-inicio > * { min-width: 0; }
+.paso-i {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: rgba(255,255,255,.025); padding: 14px 15px 15px;
+}
+.paso-i .n {
+  width: 24px; height: 24px; border-radius: 50%; margin-bottom: 10px;
+  border: 1px solid rgba(74,99,216,.55); color: #8ea6f2;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+  box-shadow: 0 0 16px -5px rgba(74,99,216,.9);
+}
+.paso-i .art { border-radius: 10px; background: rgba(0,0,0,.26); padding: 8px; margin-bottom: 11px; }
+.paso-i .art svg { display: block; width: 100%; max-width: 178px; height: auto; margin: 0 auto; }
+.paso-i .tt { font-size: 14.5px; font-weight: 700; margin-bottom: 4px; }
+.paso-i .dd { font-size: 12.8px; color: var(--ink-soft); }
+.paso-i .dd b { color: var(--ink); font-weight: 600; }
+
+/* el arte del aparato cambia según lo que se detectó */
+/* la especificidad tiene que ganarle a «.paso-i .art svg» */
+.paso-i .art svg.av { display: none; }
+.ov[data-ap="iphone"]  svg.av-iphone,
+.ov[data-ap="ipad"]    svg.av-ipad,
+.ov[data-ap="android"] svg.av-android { display: block; }
+.flecha-v { animation: apuntaV 1.7s ease-in-out infinite; }
+@keyframes apuntaV { 0%,100% { transform: translateY(5px); opacity:.55 } 50% { transform: translateY(-1px); opacity:1 } }
+.flecha-d { animation: apuntaD 1.7s ease-in-out infinite; }
+@keyframes apuntaD { 0%,100% { transform: translate(-4px,5px); opacity:.55 } 50% { transform: translate(1px,-1px); opacity:1 } }
+.late { animation: latir 1.9s ease-in-out infinite; }
+@keyframes latir { 0%,100% { opacity:.45 } 50% { opacity:1 } }
+@media (prefers-reduced-motion: reduce) {
+  .flecha-v, .flecha-d, .late { animation: none; opacity: 1; }
+}
+
+.ov-honesto {
+  margin-top: 18px; border: 1px solid var(--line); border-left: 2px solid var(--accent);
+  background: rgba(74,99,216,.07); border-radius: 0 12px 12px 0;
+  padding: 12px 16px; font-size: 13px; color: #b6c3d0;
+}
+.ov-honesto b { color: var(--ink); }
+.ov-pie {
+  margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--line);
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+}
+.ov-pie .sigue {
+  color: var(--ink-soft); text-decoration: none; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px;
+  background: var(--panel);
+}
+.ov-pie .sigue:hover { color: var(--ink); border-color: rgba(255,255,255,.24); }
+.ov-pie .reco { font-size: 12.4px; color: var(--ink-soft); margin-left: auto; }
 
 /* ---------- pie ---------- */
 .pie {
@@ -338,6 +475,7 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
       <a href="#circuito">El circuito</a>
       <a href="#core">Core features</a>
       <a href="#arquitectura">Arquitectura</a>
+      <a href="#run">Empezar</a>
     </nav>
   </div>
 </header>
@@ -397,11 +535,60 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
 <section class="sec">
   <div class="sec-cab">
     <span class="sec-n">01 — La idea</span>
-    <h2>Un dato, <b>entrado una sola vez</b></h2>
-    <p class="sec-lead">Hoy el técnico llena una hoja en papel en el campo y después otra
-    persona vuelve a escribir lo mismo en Excel. Se trabaja dos veces, y entre una cosa y la
-    otra pasan horas en las que nadie sabe cómo va el tiro. QCheck sustituye ese Excel: el
-    dato se entra en el campo, en el momento, y de ahí lo ven todos al instante.</p>
+    <h2>El mismo dato, <b>escrito una sola vez</b></h2>
+    <p class="sec-lead">QCheck sustituye el Excel donde hoy se vuelve a copiar a mano lo que
+    ya se escribió en el campo.</p>
+  </div>
+
+  <div class="antes-ahora">
+    <div class="aa">
+      <span class="k">Antes</span>
+      <svg viewBox="0 0 320 90" role="img" aria-label="Antes: hoja en papel, luego Excel otra vez, y el resultado horas después.">
+        <g class="ilus-2" transform="translate(26,10)">
+          <path d="M0 0h20l8 8v26H0z"/><path d="M20 0v8h8"/><path d="M6 15h14M6 22h10"/>
+        </g>
+        <g class="ilus-2" transform="translate(144,10)">
+          <rect x="0" y="0" width="32" height="34" rx="2.5"/><path d="M0 11h32M11 11v23M0 22h32"/>
+        </g>
+        <g class="ilus-2" transform="translate(266,10)">
+          <circle cx="17" cy="17" r="16"/><path d="M17 8v9l6 4"/>
+        </g>
+        <path class="hilo-gris" d="M74 27 H124" marker-end="url(#aa1)"/>
+        <path class="hilo-gris" d="M194 27 H244" marker-end="url(#aa1)"/>
+        <defs><marker id="aa1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#4a5561"/></marker></defs>
+        <g class="sv-p2" text-anchor="middle" font-size="10.6">
+          <text x="40" y="62">Hoja en papel</text><text x="40" y="76" fill="#5f6b76">en el campo</text>
+          <text x="160" y="62">Excel, otra vez</text><text x="160" y="76" fill="#5f6b76">otra persona</text>
+          <text x="283" y="62">Horas después</text><text x="283" y="76" fill="#5f6b76">nadie sabe cómo va</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="aa destaca">
+      <span class="k" style="color:#8ea6f2">Con QCheck</span>
+      <svg viewBox="0 0 320 90" role="img" aria-label="Con QCheck: se entra una vez en el iPad, queda un solo registro y todos lo ven.">
+        <g class="ilus" transform="translate(27,8)">
+          <rect x="0" y="0" width="26" height="36" rx="3.6"/><path d="M9.5 32.5h7"/>
+          <path d="M6 9h14M6 15h14M6 21h9" stroke-width="1.4" opacity=".6"/>
+        </g>
+        <g transform="translate(144,10)">
+          <circle cx="16" cy="17" r="15" fill="#12171f" stroke="rgba(74,99,216,.6)" style="filter:drop-shadow(0 0 12px rgba(74,99,216,.45))"/>
+          <path d="M9 17l5 5 9-10" fill="none" stroke="#8ea6f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <g class="ilus" transform="translate(262,11)">
+          <rect x="0" y="0" width="18" height="14" rx="2"/><rect x="24" y="0" width="18" height="14" rx="2"/>
+          <rect x="0" y="18" width="18" height="14" rx="2"/><rect x="24" y="18" width="18" height="14" rx="2"/>
+        </g>
+        <path class="hilo" d="M72 27 H124" marker-end="url(#aa2)"/>
+        <path class="hilo" d="M188 27 H240" marker-end="url(#aa2)"/>
+        <defs><marker id="aa2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#4a63d8"/></marker></defs>
+        <g class="sv-p2" text-anchor="middle" font-size="10.6">
+          <text x="40" y="62">Se entra una vez</text><text x="40" y="76" fill="#5f6b76">en el campo</text>
+          <text x="160" y="62">Un solo registro</text><text x="160" y="76" fill="#5f6b76">por conduce</text>
+          <text x="283" y="62">Todos lo ven</text><text x="283" y="76" fill="#5f6b76">al instante</text>
+        </g>
+      </svg>
+    </div>
   </div>
 </section>
 
@@ -434,9 +621,11 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
           <path d="M8 48 H118"/>
           <path d="M86 48 V24 H106 L118 36 V48"/>
           <path d="M92 27 h11 l7 7 h-18 z"/>
-          <path d="M22 46 L30 16 L80 12 L86 44 Z"/>
-          <path d="M38 15 L44 45 M52 14 L58 44 M66 13 L72 43" stroke-width="1.3" opacity=".65"/>
-          <path d="M22 32 L10 40 L13 47"/>
+          <g transform="rotate(-7 54 29)">
+            <rect x="24" y="15" width="62" height="28" rx="13"/>
+            <path d="M38 15.6 L34 42.6 M51 15.2 L47 42.8 M64 15 L60 43" stroke-width="1.3" opacity=".55"/>
+          </g>
+          <path d="M21 35 L10 41 L13 47"/>
           <circle cx="34" cy="52" r="5"/><circle cx="76" cy="52" r="5"/><circle cx="100" cy="52" r="5"/>
         </g>
         <path class="cae" d="M11 52 v5 M11 60 v3" stroke="#8ea6bd" stroke-width="1.6" stroke-linecap="round" fill="none"/>
@@ -461,10 +650,6 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
         <text class="sv-p" x="18" y="136">de llegada — QR, foto o a mano.</text>
         <text class="sv-p2" x="18" y="160">La pantalla ya sugiere el próximo</text>
         <text class="sv-p2" x="18" y="173">conduce y la próxima losa.</text>
-        <circle cx="232" cy="-0" r="0"/>
-        <g>
-          <circle cx="18" cy="0" r="0"/>
-        </g>
       </g>
       <g transform="translate(179,36)">
         <circle cx="16" cy="12" r="13" fill="#12171f" stroke="rgba(74,99,216,.55)"/>
@@ -495,8 +680,8 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
           <path d="M14 12 l4 4 7.5-8" fill="none" stroke="#34d27b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <text x="33" y="16" fill="#34d27b" font-size="10.5" font-weight="800" letter-spacing="1.3">APROBAR</text>
         </g>
-        <text class="sv-p2" x="122" y="159">el botón lo dice</text>
-        <text class="sv-p2" x="122" y="171">antes de enviar, y por qué</text>
+        <text class="sv-p2" x="122" y="158">el botón lo dice</text>
+        <text class="sv-p2" x="122" y="170">antes de enviar</text>
       </g>
       <g transform="translate(454,36)">
         <circle cx="16" cy="12" r="13" fill="#12171f" stroke="rgba(74,99,216,.55)"/>
@@ -602,7 +787,8 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
           <rect x="0" y="0" width="26" height="18" rx="2"/><path d="M13 18v4M8 22h10"/>
         </g>
         <text class="sv-t2" x="16" y="62">Control Center</text>
-        <text class="sv-p2" x="16" y="79">estado, avisos, losas, tiempo</text>
+        <text class="sv-p2" x="16" y="79">estado, avisos y losas</text>
+        <text class="sv-p2" x="16" y="91">del tiro de hoy</text>
       </g>
       <line class="hilo" x1="830" y1="481" x2="844" y2="481" marker-end="url(#fb)"/>
       <g transform="translate(846,432)">
@@ -611,8 +797,8 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
           <rect x="0" y="0" width="26" height="18" rx="2"/><polyline points="5,14 9,9 12,11.5 20,3"/>
         </g>
         <text class="sv-t2" x="16" y="62">Results · en la PC</text>
-        <text class="sv-p2" x="16" y="79">Control Charts, resistencias,</text>
-        <text class="sv-p2" x="16" y="91">el histórico completo</text>
+        <text class="sv-p2" x="16" y="79">Control Charts y</text>
+        <text class="sv-p2" x="16" y="91">resistencias · histórico</text>
       </g>
     </svg>
   </div>
@@ -621,19 +807,17 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
   <div class="regla">
     <div class="r destaca">
       <h3>Un registro por conduce</h3>
-      <p>La llave es <b>compañía + conduce</b>, así que dos plantas nunca chocan. Recepción
-      abre el registro, Muestras le escribe las pruebas y el Field Display lo lee. Nadie
-      copia nada de nuevo.</p>
-    </div>
-    <div class="r">
-      <h3>Esto reemplaza el doble trabajo</h3>
-      <p>La hoja de papel y el Excel que alguien vuelve a escribir horas después. Excel queda
-      como formato de exportación, no como el sitio donde se trabaja.</p>
+      <p>Recepción lo abre, Muestras le escribe las pruebas, el Field Display lo lee. Nadie
+      vuelve a copiar nada.</p>
     </div>
     <div class="r">
       <h3>Dos iPads, no uno</h3>
-      <p>Uno se queda en el Check Point recibiendo camiones; el otro va donde se toma la
-      muestra. Son dos sitios distintos de la obra y dos momentos distintos del camión.</p>
+      <p>Uno se queda en el Check Point recibiendo camiones. El otro va donde se toma la
+      muestra.</p>
+    </div>
+    <div class="r">
+      <h3>Excel queda atrás</h3>
+      <p>Sigue existiendo como formato de exportación, no como el sitio donde se trabaja.</p>
     </div>
   </div>
 </section>
@@ -657,8 +841,8 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
         <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2.5 20 6v6c0 5-3.4 8.4-8 9.5C7.4 20.4 4 17 4 12V6z"/><polyline points="8.8,12 11,14.2 15.4,9.6"/></svg></div>
         <h3>El veredicto antes de enviar</h3>
       </div>
-      <p>Al entrar los datos, el botón ya dice qué va a pasar y por qué. <b>worstZone()</b> es
-      el juez: coge la peor de todas las lecturas del camión y devuelve una de tres.</p>
+      <p>Según se entran los datos, el botón ya dice qué va a pasar y por qué.
+      <b>worstZone()</b> es el juez: coge la peor lectura del camión y devuelve una de tres.</p>
       <div class="zonas">
         <span class="z"><i></i>Dentro de límites</span>
         <span class="z act"><i></i>Zona de acción</span>
@@ -673,9 +857,10 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
         <div class="ic"><svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="14" rx="2"/><polyline points="6,14 10,10 13,12.5 18,7"/></svg></div>
         <h3>Control Charts con zonas SPC</h3>
       </div>
-      <p>Las mismas cartas de Rubén, con las bandas pintadas detrás del trazo. La
-      <b>Moving Average de 6 sets se validó contra su Excel y coincide al dígito</b>.</p>
-      <svg class="mini-carta" viewBox="0 0 640 150" role="img" aria-label="Carta de control con bandas de zona, línea de objetivo y Moving Average">
+      <p>Las mismas cartas de Rubén: cada punto es un camión y el color de fondo dice si esa
+      lectura va bien. La <b>Moving Average de 6 sets se validó contra su Excel y coincide al
+      dígito</b>.</p>
+      <svg class="mini-carta" viewBox="0 0 640 150" role="img" aria-label="Control Chart con bandas de zona, línea de objetivo y Moving Average">
         <rect x="0" y="0" width="640" height="150" rx="10" fill="#0d1219"/>
         <rect x="1" y="6"   width="638" height="22" fill="rgba(255,90,82,.11)"/>
         <rect x="1" y="28"  width="638" height="24" fill="rgba(245,184,61,.13)"/>
@@ -698,8 +883,9 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
         <circle cx="564" cy="104" r="3.2" fill="#f5b83d"/>
         <circle cx="600" cy="88" r="3.2" fill="#5b9dff"/>
       </svg>
-      <p style="margin-top:10px">Trazo azul, la lectura de cada camión. Punteada, la Moving
-      Average. La banda ámbar avisa antes de que nada se salga.</p>
+      <p style="margin-top:10px">Trazo continuo: la lectura de cada camión. Punteado: la
+      Moving Average, el promedio que suaviza el ruido. La banda ámbar avisa antes de que
+      nada se salga.</p>
     </div>
 
     <!-- estado del tiro -->
@@ -736,14 +922,13 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
         <h3>El reporte que se entrega</h3>
       </div>
       <p>Al cerrar el tiro sale el <b>reporte del vaciado</b>: cómo cerró, las losas, la
-      bitácora de camiones, las Control Charts del día y las incidencias, listo para firmar.</p>
-      <p>El <b>acumulado del proyecto</b> —tabla matriz y Moving Average— usa el mismo papel.
-      Ninguno de los dos calcula nada por su cuenta: salen del mismo motor que pinta el
-      tablero.</p>
+      bitácora de camiones, las Control Charts del día y las incidencias, listo para firmar.
+      El <b>acumulado del proyecto</b> usa el mismo papel.</p>
+      <p>Ninguno calcula nada por su cuenta: salen del mismo motor que pinta el tablero.</p>
     </div>
 
     <!-- no se inventan datos -->
-    <div class="tarjeta">
+    <div class="tarjeta ancha">
       <div class="cab">
         <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.6v5.2"/><path d="M12 16.2h.01"/></svg></div>
         <h3>No se inventan datos</h3>
@@ -809,7 +994,7 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
         <rect class="sv-panel" x="0" y="0" width="186" height="88" rx="12"/>
         <g class="ilus" transform="translate(14,20)"><rect x="0" y="0" width="30" height="20" rx="2.6"/><polyline points="6,15 11,10 14,12.5 24,4"/></g>
         <text class="sv-t2" x="54" y="36">Control Center</text>
-        <text class="sv-p2" x="54" y="52">PC · y Results</text>
+        <text class="sv-p2" x="54" y="52">PC · con Results</text>
         <text class="sv-p2" x="54" y="68" fill="#5f6b76">control-center.html</text>
       </g>
       <g transform="translate(850,36)">
@@ -832,7 +1017,7 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
       <text class="sv-k" x="275" y="222" fill="#8ea6f2">EL MISMO REGISTRO</text>
       <text x="275" y="250" fill="#eef2f6" font-size="19" font-weight="600" letter-spacing="-.3">Un registro por conduce</text>
       <text class="sv-mono" x="275" y="272">localStorage["qc-pr52-db-v1"]</text>
-      <text class="sv-p2" x="600" y="272" fill="#5f6b76">evento storage → las demás pestañas se repintan</text>
+      <text class="sv-p2" x="771" y="272" text-anchor="end" fill="#5f6b76">las demás pantallas se repintan solas</text>
 
       <!-- limitación de fondo: hoy vive en el navegador -->
       <line class="hilo-punteado" x1="251" y1="243" x2="228" y2="243" marker-end="url(#ag)"/>
@@ -895,46 +1080,231 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
 
   <div class="notas">
     <div class="nota">
-      <span class="k">Todos hablan con el mismo registro</span>
-      <p>Los iPads, la TV, la PC y el teléfono no se hablan entre ellos: <b>todos escriben y
-      leen del mismo sitio</b>. Por eso el Field Display canta el veredicto en el momento en
-      que Muestras lo envía.</p>
+      <span class="k">Todos leen del mismo sitio</span>
+      <p>Los aparatos no se hablan entre ellos. Por eso el Field Display canta el veredicto
+      en el momento en que Muestras lo envía.</p>
     </div>
     <div class="nota pendiente">
       <span class="k">La limitación de fondo · Q-02</span>
-      <p>Ese registro vive hoy en el navegador (<code>localStorage</code>), así que
-      <b>cada aparato guarda lo suyo</b> y no se sincronizan entre sí. Está en la hoja de
-      ruta: <b>Q-02, backend en la nube</b>. Es la primera de la lista, y la capa de datos
-      está aislada a propósito para que el cambio toque un solo sitio.</p>
+      <p>Ese registro vive hoy en el navegador (<code>localStorage</code>): <b>cada aparato
+      guarda lo suyo</b> y no se sincronizan entre sí. El backend en la nube es <b>Q-02</b>,
+      la primera de la hoja de ruta.</p>
     </div>
     <div class="nota">
       <span class="k">El motor</span>
-      <p><code>assets/core.js</code> lleva el almacenamiento, las zonas SPC, los cálculos
-      derivados, las gráficas SVG, los formularios, la barra de estado y la sincronía entre
-      pestañas. Si una función la usan dos pantallas, vive ahí. <b>Nunca se duplica.</b></p>
+      <p><code>assets/core.js</code>. Si una función la usan dos pantallas, vive ahí.
+      <b>Nunca se duplica.</b></p>
     </div>
     <div class="nota">
       <span class="k">La única salida a internet</span>
-      <p>El tiempo del sitio, del <b>NWS de San Juan</b> — la fuente oficial para Puerto Rico.
-      Para hormigón no es adorno: el sol y la lluvia de la próxima hora deciden si se tira o
-      se espera. Sin red la tarjeta lo dice y el resto sigue igual.</p>
+      <p>El tiempo del sitio, del <b>NWS de San Juan</b>. Para hormigón no es adorno: la
+      lluvia de la próxima hora decide si se tira o se espera. Sin red lo dice y no inventa.</p>
     </div>
     <div class="nota">
       <span class="k">El contrato del conduce</span>
-      <p><code>shared/conduce-contract.js</code> es el idioma común con <b>Concre-Ticket</b>,
-      la herramienta hermana de la planta: la llave del conduce, los campos de origen, el
-      formato del QR y la publicación de límites.</p>
-      <p>No es una dependencia. La mayoría de las concreteras llegan con conduce en papel, y
-      QCheck funciona completo igual.</p>
+      <p><code>shared/conduce-contract.js</code>: el idioma común con <b>Concre-Ticket</b>, la
+      herramienta hermana de la planta. No es una dependencia — la mayoría de las concreteras
+      llegan con conduce en papel y QCheck funciona igual.</p>
     </div>
     <div class="nota">
-      <span class="k">Las once pantallas</span>
-      <p>Acceso, portal del teléfono, Control Center, Results, Recepción, Muestras, Field
-      Display, Contratista, Concretera, Autoridad y Reportes. Todas llevan la misma barra de
-      estado arriba, con el avance del tiro siempre a la vista.</p>
+      <span class="k">Once pantallas, una sola barra</span>
+      <p>Todas llevan arriba la misma franja de estado, con el avance del tiro siempre a la
+      vista.</p>
     </div>
   </div>
 </section>
+
+<!-- ============================================================
+     05 · EMPEZAR — el botón Run
+     ============================================================ -->
+<section class="sec" id="run">
+  <div class="sec-cab">
+    <span class="sec-n">05 — Empezar</span>
+    <h2>Ábralo en <b>su aparato</b></h2>
+    <p class="sec-lead">En iPad y iPhone, primero hay que añadir QCheck a la pantalla de
+    inicio. El botón se lo explica y después lo lleva a la pantalla que le toca.</p>
+  </div>
+
+  <div class="run-panel">
+    <div class="run-txt">
+      <span class="k" id="aparato">Mirando en qué aparato está…</span>
+      <div class="run-destino" id="destino">&nbsp;</div>
+      <div class="run-nota" id="run-nota"></div>
+    </div>
+    <button class="btn-run" id="run" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5.2 18.6 12 7.5 18.8z"/></svg>
+      Run
+    </button>
+  </div>
+</section>
+
+<!-- ============================================================
+     CAPA GUIADA · AÑADIR A LA PANTALLA DE INICIO
+     En iOS no existe API para añadir nada a la pantalla de inicio:
+     Safari obliga a que la persona toque Compartir. Aquí se guía,
+     no se finge. Los pasos son los mismos de docs/guia-qcheck.html.
+     ============================================================ -->
+<div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="ov-t" hidden>
+  <div class="ov-caja">
+    <button class="ov-x" id="ov-x" type="button" aria-label="Cerrar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+    </button>
+
+    <span class="k" id="ov-ap"></span>
+    <h3 id="ov-t">Primero: añada QCheck a la <b>pantalla de inicio</b></h3>
+    <p class="ov-lead" id="ov-lead"></p>
+
+    <div class="pasos-inicio">
+
+      <!-- paso 1: dónde está el botón, según el aparato -->
+      <div class="paso-i">
+        <div class="n">1</div>
+        <div class="art">
+          <!-- iPhone: Compartir abajo, en el centro -->
+          <svg class="av av-iphone" viewBox="0 0 180 214" role="img"
+               aria-label="En el iPhone el botón Compartir está abajo, en el centro de la barra de Safari.">
+            <g class="ilus"><rect x="50" y="6" width="80" height="156" rx="13"/></g>
+            <path class="ilus" d="M78 13h24" stroke-width="2.6" opacity=".45"/>
+            <g class="ilus-2" opacity=".42" stroke-width="1.4">
+              <path d="M62 40h44M62 50h56M62 60h34"/>
+              <rect x="62" y="72" width="56" height="28" rx="3"/>
+            </g>
+            <path class="ilus-2" d="M50 130H130" stroke-width="1.1" opacity=".5"/>
+            <g class="ilus-2" opacity=".55" stroke-width="1.5">
+              <path d="M60 149l-4-4 4-4"/><path d="M70 141l4 4-4 4"/>
+              <rect x="108" y="140" width="9" height="9" rx="1.8"/>
+            </g>
+            <circle class="late" cx="90" cy="145" r="13" fill="none" stroke="#8ea6f2" stroke-width="1.4"
+                    style="filter:drop-shadow(0 0 10px rgba(74,99,216,.85))"/>
+            <g transform="translate(82.8,137.8) scale(.6)" fill="none" stroke="#8ea6f2"
+               stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 15.5V3.2"/><path d="M8.2 7 12 3.2 15.8 7"/>
+              <path d="M6.5 11H5a1.6 1.6 0 0 0-1.6 1.6v6.6A1.6 1.6 0 0 0 5 20.8h14a1.6 1.6 0 0 0 1.6-1.6v-6.6A1.6 1.6 0 0 0 19 11h-1.5"/>
+            </g>
+            <g class="flecha-v" fill="none" stroke="#4a63d8" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round">
+              <path d="M90 194V168"/><path d="M84 174 90 166 96 174"/>
+            </g>
+            <text x="90" y="211" text-anchor="middle" class="sv-p2" font-size="9.8">abajo, en el centro</text>
+          </svg>
+
+          <!-- iPad: Compartir arriba, a la derecha -->
+          <svg class="av av-ipad" viewBox="0 0 180 214" role="img"
+               aria-label="En el iPad el botón Compartir está arriba, a la derecha de la barra de Safari.">
+            <g class="ilus"><rect x="22" y="10" width="136" height="170" rx="11"/></g>
+            <path class="ilus-2" d="M22 42H158" stroke-width="1.1" opacity=".5"/>
+            <g class="ilus-2" opacity=".5" stroke-width="1.5">
+              <path d="M38 30l-4-4 4-4"/><path d="M50 22l4 4-4 4"/>
+              <rect x="62" y="21" width="48" height="10" rx="5"/>
+            </g>
+            <circle class="late" cx="134" cy="26" r="12" fill="none" stroke="#8ea6f2" stroke-width="1.4"
+                    style="filter:drop-shadow(0 0 10px rgba(74,99,216,.85))"/>
+            <g transform="translate(126.8,18.8) scale(.6)" fill="none" stroke="#8ea6f2"
+               stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 15.5V3.2"/><path d="M8.2 7 12 3.2 15.8 7"/>
+              <path d="M6.5 11H5a1.6 1.6 0 0 0-1.6 1.6v6.6A1.6 1.6 0 0 0 5 20.8h14a1.6 1.6 0 0 0 1.6-1.6v-6.6A1.6 1.6 0 0 0 19 11h-1.5"/>
+            </g>
+            <g class="ilus-2" opacity=".38" stroke-width="1.4">
+              <path d="M38 62h72M38 74h96M38 86h54"/>
+              <rect x="38" y="100" width="98" height="48" rx="4"/>
+            </g>
+            <g class="flecha-d" fill="none" stroke="#4a63d8" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round">
+              <path d="M92 88C108 74 120 56 128 45"/><path d="M121 47 130 41 128 51"/>
+            </g>
+            <text x="90" y="205" text-anchor="middle" class="sv-p2" font-size="9.8">arriba, a la derecha</text>
+          </svg>
+
+          <!-- Android: el menú de los tres puntos -->
+          <svg class="av av-android" viewBox="0 0 180 214" role="img"
+               aria-label="En Android el menú de los tres puntos está arriba, a la derecha de Chrome.">
+            <g class="ilus"><rect x="50" y="6" width="80" height="156" rx="11"/></g>
+            <path class="ilus-2" d="M50 34H130" stroke-width="1.1" opacity=".5"/>
+            <g class="ilus-2" opacity=".5" stroke-width="1.5"><rect x="60" y="15" width="44" height="9" rx="4.5"/></g>
+            <g fill="#8ea6f2"><circle cx="118" cy="15.6" r="1.7"/><circle cx="118" cy="20" r="1.7"/><circle cx="118" cy="24.4" r="1.7"/></g>
+            <circle class="late" cx="118" cy="20" r="11" fill="none" stroke="#8ea6f2" stroke-width="1.4"
+                    style="filter:drop-shadow(0 0 10px rgba(74,99,216,.85))"/>
+            <g class="ilus-2" opacity=".38" stroke-width="1.4">
+              <path d="M62 50h48M62 62h56M62 74h34"/><rect x="62" y="88" width="56" height="30" rx="3"/>
+            </g>
+            <g class="flecha-d" fill="none" stroke="#4a63d8" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round">
+              <path d="M84 78C96 64 106 48 112 39"/><path d="M105 41 114 35 112 45"/>
+            </g>
+            <text x="90" y="205" text-anchor="middle" class="sv-p2" font-size="9.8">arriba, a la derecha</text>
+          </svg>
+        </div>
+        <div class="tt" id="ov-t1">Toque Compartir</div>
+        <div class="dd" id="ov-d1"></div>
+      </div>
+
+      <!-- paso 2: la fila del menú -->
+      <div class="paso-i">
+        <div class="n">2</div>
+        <div class="art">
+          <svg viewBox="0 0 180 130" role="img" aria-label="En la lista, la fila «Añadir a pantalla de inicio».">
+            <rect x="8" y="8" width="164" height="114" rx="12" fill="#12171f" stroke="rgba(255,255,255,.10)"/>
+            <g class="ilus-2" opacity=".42" stroke-width="1.4">
+              <rect x="20" y="20" width="20" height="20" rx="5.4"/><path d="M50 26h58M50 34h38"/>
+            </g>
+            <rect x="16" y="50" width="148" height="34" rx="9" fill="#1a2029" stroke="rgba(74,99,216,.55)"
+                  style="filter:drop-shadow(0 0 14px rgba(74,99,216,.45))"/>
+            <g transform="translate(26,59)" fill="none" stroke="#8ea6f2" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round">
+              <rect x="0" y="0" width="16" height="16" rx="4.6"/><path d="M8 4.6v6.8M4.6 8h6.8"/>
+            </g>
+            <text x="52" y="72" fill="#eef2f6" font-size="11.4" font-weight="700">Añadir a inicio</text>
+            <g class="ilus-2" opacity=".32" stroke-width="1.4">
+              <rect x="20" y="94" width="20" height="20" rx="5.4"/><path d="M50 100h50M50 108h32"/>
+            </g>
+          </svg>
+        </div>
+        <div class="tt">Baje hasta «Añadir a inicio»</div>
+        <div class="dd">Si el aparato está en inglés, <i>Add to Home Screen</i>.</div>
+      </div>
+
+      <!-- paso 3: el icono ya en la pantalla -->
+      <div class="paso-i">
+        <div class="n">3</div>
+        <div class="art">
+          <svg viewBox="0 0 180 130" role="img" aria-label="El icono de QCheck ya en la pantalla de inicio.">
+            <defs>
+              <mask id="iq"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
+              <mask id="ic"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
+            </defs>
+            <rect x="62" y="14" width="56" height="56" rx="14" fill="#0d1219" stroke="rgba(255,255,255,.13)"/>
+            <g transform="translate(72,24) scale(.036)">
+              <path fill="var(--logo-blue)" fill-rule="evenodd" mask="url(#iq)" d="M 509 63 A 337 337 0 1 1 508.9 63 Z M 509 174 A 226 226 0 1 0 509.1 174 Z"/>
+              <path fill="var(--logo-blue)" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+              <g mask="url(#ic)">
+                <path fill="var(--logo-green)" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+                <path fill="var(--logo-g1)" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+                <path fill="var(--logo-g2)" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+              </g>
+              <path fill="var(--logo-blue)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
+            </g>
+            <text x="90" y="87" text-anchor="middle" fill="#eef2f6" font-size="11.4" font-weight="700">QCheck</text>
+            <g transform="translate(58,99)">
+              <rect x="0" y="0" width="64" height="22" rx="11" fill="#1a2029" stroke="rgba(74,99,216,.55)"
+                    style="filter:drop-shadow(0 0 12px rgba(74,99,216,.45))"/>
+              <text x="32" y="15" text-anchor="middle" fill="#8ea6f2" font-size="10.4" font-weight="800" letter-spacing="1.3">AÑADIR</text>
+            </g>
+          </svg>
+        </div>
+        <div class="tt">Póngale nombre y añada</div>
+        <div class="dd">Corto, que se lea bajo el icono: <b>QCheck</b>. Desde ahí abre a
+        pantalla completa, sin las barras del navegador.</div>
+      </div>
+    </div>
+
+    <div class="ov-honesto" id="ov-honesto"></div>
+
+    <div class="ov-pie">
+      <a class="sigue" id="ov-seguir" href="#">Seguir sin añadirlo por ahora →</a>
+      <span class="reco">Lo recomendado es añadirlo: se hace una sola vez por aparato.</span>
+    </div>
+  </div>
+</div>
 
 <!-- ============================================================
      PIE
@@ -960,6 +1330,146 @@ nav.mapa a:hover { color: var(--ink); background: var(--panel); border-color: va
 </div>
 
 </div>
+
+<script>
+"use strict";
+(function () {
+  /* ------------------------------------------------------------
+     1. En qué aparato está
+
+     El criterio está COPIADO de assets/core.js — esTelefono(), y de
+     ahí sale también casaDe(). No se importa core.js: esta guía tiene
+     que abrir con doble clic, sin nada más.
+
+     Mira el AGENTE DE USUARIO, nunca el ancho: el iPad de pie mide
+     768 px y NO debe caer en el portal del teléfono, que es para
+     mirar y no para entrar datos. iPadOS se anuncia como «Macintosh»,
+     así que se delata por el táctil.
+  ------------------------------------------------------------ */
+  var ua = navigator.userAgent || "";
+  var esIPhone  = /iPhone|iPod/.test(ua);
+  var esIPad    = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var esAndroid = /Android/.test(ua);
+  var esTelefono = esIPhone || (esAndroid && /Mobile/.test(ua));   // idéntico a core.js
+  var esIOS = esIPhone || esIPad;
+
+  /* casaDe() de core.js: el teléfono al portal, el iPad y la PC al
+     Control Center. Si no hay sesión abierta, auth.js manda al acceso
+     y desde ahí sigue solo — aquí no se reimplementa nada de eso. */
+  var casa = esTelefono ? "../movil.html" : "../control-center.html";
+
+  /* ¿Ya se abrió desde el icono? Entonces el paso de añadirlo sobra. */
+  var desdeElIcono = navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+
+  var ap = esIPhone ? "iphone" : esIPad ? "ipad" : esAndroid ? "android" : "pc";
+  var nombreAparato = { iphone: "un iPhone", ipad: "un iPad",
+                        android: "un aparato Android", pc: "una computadora" }[ap];
+  var nombreDestino = esTelefono ? "el portal del teléfono" : "el Control Center";
+  var hayQueAnadir = (esIOS || esAndroid) && !desdeElIcono;
+
+  /* ------------------------------------------------------------
+     2. El panel del botón
+  ------------------------------------------------------------ */
+  var $ = function (id) { return document.getElementById(id); };
+  $("aparato").textContent = "Está en " + nombreAparato;
+  $("destino").innerHTML = "Le toca <b>" + nombreDestino + "</b>";
+  $("run-nota").textContent = hayQueAnadir
+    ? "Antes hay que añadirlo a la pantalla de inicio. El botón se lo explica."
+    : desdeElIcono ? "Ya está abierto desde el icono. El botón entra directo."
+                   : "El botón lo lleva directo.";
+
+  /* En Android sí hay instalación de verdad. Si el navegador la ofrece,
+     se guarda para que el botón la dispare. Si no llega, se guía igual. */
+  var instalar = null;
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault(); instalar = e;
+  });
+
+  /* ------------------------------------------------------------
+     3. La capa guiada
+  ------------------------------------------------------------ */
+  var ov = $("ov");
+  var textos = {
+    iphone: {
+      ap: "ESTÁ EN UN iPHONE",
+      lead: "Añadirlo a la pantalla de inicio es un <b>requisito</b>, no una sugerencia. " +
+            "Son tres toques, una sola vez por aparato, y tiene que ser en <b>Safari</b>.",
+      t1: "Toque Compartir",
+      d1: "El cuadradito con la flecha para arriba. En el iPhone está <b>abajo, en el " +
+          "centro</b> de la barra de Safari.",
+    },
+    ipad: {
+      ap: "ESTÁ EN UN iPAD",
+      lead: "Añadirlo a la pantalla de inicio es un <b>requisito</b>, no una sugerencia. " +
+            "Son tres toques, una sola vez por aparato, y tiene que ser en <b>Safari</b>.",
+      t1: "Toque Compartir",
+      d1: "El cuadradito con la flecha para arriba. En el iPad está <b>arriba, a la " +
+          "derecha</b>.",
+    },
+    android: {
+      ap: "ESTÁ EN UN APARATO ANDROID",
+      lead: "Añadirlo a la pantalla de inicio es un <b>requisito</b>, no una sugerencia. " +
+            "Son tres toques y se hace una sola vez por aparato.",
+      t1: "Abra el menú",
+      d1: "Los <b>tres puntos</b>, arriba a la derecha de Chrome.",
+    },
+  };
+  var honesto = {
+    ios: "En iPhone y en iPad <b>este es el único camino que existe</b>: ninguna página web " +
+         "puede añadirse sola a la pantalla de inicio, ni ponerse a lo ancho por su cuenta. " +
+         "Es un límite de Safari, no de QCheck. Y la primera vez que abra desde el icono le " +
+         "va a pedir el usuario y la clave otra vez: cada icono guarda su propia sesión. Es " +
+         "normal, no se perdió nada.",
+    android: "Si Chrome le ofrece instalarla solo, acepte y listo. Si no lo ofrece, este es " +
+             "el camino.",
+  };
+
+  function abrirCapa() {
+    var t = textos[ap] || textos.iphone;
+    ov.setAttribute("data-ap", ap);
+    $("ov-ap").textContent = t.ap;
+    $("ov-lead").innerHTML = t.lead;
+    $("ov-t1").textContent = t.t1;
+    $("ov-d1").innerHTML = t.d1;
+    $("ov-honesto").innerHTML = esIOS ? honesto.ios : honesto.android;
+    $("ov-seguir").setAttribute("href", casa);
+    ov.hidden = false;
+    document.body.style.overflow = "hidden";
+    $("ov-x").focus();
+  }
+  function cerrarCapa() {
+    ov.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  $("ov-x").addEventListener("click", cerrarCapa);
+  ov.addEventListener("click", function (e) { if (e.target === ov) cerrarCapa(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !ov.hidden) cerrarCapa();
+  });
+
+  /* ------------------------------------------------------------
+     4. Run
+  ------------------------------------------------------------ */
+  $("run").addEventListener("click", function () {
+    // Ya añadido, o una computadora: entra directo a lo suyo.
+    if (!hayQueAnadir) { location.href = casa; return; }
+    // Android con instalación de verdad: se dispara la del navegador.
+    if (esAndroid && instalar) {
+      var e = instalar; instalar = null;
+      e.prompt();
+      var seguir = function () { location.href = casa; };
+      if (e.userChoice && e.userChoice.then) e.userChoice.then(seguir, seguir);
+      else seguir();
+      return;
+    }
+    // iOS, y Android sin instalación ofrecida: se guía. No se finge nada.
+    abrirCapa();
+  });
+})();
+</script>
+
 </body>
 </html>
 </content>
