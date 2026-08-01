@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Aplicación en la pantalla de inicio (iOS y Android). Sin estas etiquetas
+     y sin el manifest, el icono guardado abre como un MARCADOR de Safari, con
+     una franja arriba enseñando el dominio en vez de la aplicación limpia. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QCheck">
+<link rel="apple-touch-icon" href="assets/icono-180.png">
+<meta name="theme-color" content="#0a0d12">
+<title>Estado del sistema — QCheck</title>
+<link rel="stylesheet" href="assets/qc.css?v=ab4b9718">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
+<style>
+/* ============================================================
+   ESTADO DEL SISTEMA — la pantalla del administrador.
+
+   Quién está usando QCheck ahora mismo: qué aparatos, en qué
+   pantalla y desde cuándo. Se alimenta del latido que manda cada
+   aparato cada 20 segundos (`QCSync._latir`).
+
+   NO enseña ningún dato del proyecto. Es la sala de máquinas:
+   sirve para saber si el iPad de la obra sigue vivo y si el
+   técnico está donde debería, no para mirar hormigón.
+
+   Solo la ve quien lleve `config: true` — la misma llave que
+   «Plan & Datos» (AGENTS.md §3).
+   ============================================================ */
+body { background: var(--bg); }
+
+.res { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.res .caja { background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 15px 18px; box-shadow: var(--shadow); }
+.res .k { font-size: 9.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-soft); }
+.res .v { font-size: 34px; font-weight: 250; line-height: 1.1; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.res .caja.vivo .v { color: var(--ok); }
+.res .s { font-size: 11.5px; color: var(--ink-soft); }
+
+/* una tarjeta por aparato */
+.aps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.ap {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 15px 17px; box-shadow: var(--shadow); position: relative;
+}
+/* El color entra por el resplandor, no por el relleno (AGENTS.md §10) */
+.ap.vivo { border-color: rgba(52,210,123,.45); box-shadow: 0 0 0 3px rgba(52,210,123,.07), var(--shadow); }
+.ap.ido { opacity: .55; }
+.ap .cab { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+.ap .luz { width: 9px; height: 9px; border-radius: 50%; background: var(--ink-soft); flex: none; }
+.ap.vivo .luz { background: var(--ok); box-shadow: 0 0 10px var(--ok); animation: latido 2.2s ease-in-out infinite; }
+@keyframes latido { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ap.vivo .luz { animation: none; } }
+.ap .nom { font-weight: 750; font-size: 16px; letter-spacing: -.01em; }
+.ap .quien { margin-left: auto; font-size: 11px; font-weight: 800; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-soft); }
+.ap .pant { font-size: 20px; font-weight: 300; letter-spacing: -.01em; }
+.ap .filas { margin-top: 10px; display: grid; gap: 5px; font-size: 12.5px; color: var(--ink-soft); }
+.ap .filas b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+
+.vacio { text-align: center; padding: 46px 20px; color: var(--ink-soft); font-size: 14px; }
+.aviso-sync {
+  border: 1px solid var(--susp); background: var(--susp-bg); color: var(--susp);
+  border-radius: 12px; padding: 13px 16px; font-size: 13.5px; font-weight: 600; margin-bottom: 16px;
+}
+.pie-nota { margin-top: 18px; font-size: 12px; color: var(--ink-soft); }
+</style>
+<script src="assets/usuarios.js?v=7f884800"></script>
+<script src="assets/auth.js?v=c77eb346"></script>
+</head>
+<body>
+
+<header class="qc-header">
+  <div class="brand">
+    <a href="control-center.html" style="text-decoration:none"><svg class="mark" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
+      <defs>
+        <mask id="qcm-q1"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
+        <mask id="qcm-c1"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
+      </defs>
+      <path fill="var(--logo-blue,#0f46b5)" fill-rule="evenodd" mask="url(#qcm-q1)" d="M 509 63 A 337 337 0 1 1 508.9 63 Z M 509 174 A 226 226 0 1 0 509.1 174 Z"/>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+      <g mask="url(#qcm-c1)">
+        <path fill="var(--logo-green,#39a935)" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+        <path fill="var(--logo-g1,#68727f)" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+        <path fill="var(--logo-g2,#4f5a66)" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+      </g>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
+    </svg></a>
+    <div>
+      <div class="title">Estado del sistema</div>
+      <div class="subtitle" id="sub">Quién está usando QCheck ahora mismo</div>
+    </div>
+  </div>
+</header>
+
+<main style="max-width:1100px">
+  <div id="aviso"></div>
+  <div class="res" id="resumen"></div>
+  <div class="aps" id="aparatos"></div>
+  <div class="pie-nota" id="pie"></div>
+</main>
+
+<script src="assets/sync.js?v=fd988803"></script>
+<script src="assets/seed.js?v=acf41aba"></script>
+<script src="assets/core.js?v=00be346f"></script>
+<script>
+"use strict";
+
+/* Esta pantalla es de la sala de máquinas. Quien no lleve `config: true` no
+   pinta nada aquí: se va a su casa. Es la misma llave de «Plan & Datos». */
+if (typeof qcVeConfig === "function" && !qcVeConfig()) location.replace("control-center.html");
+
+/* Las pantallas por su nombre de archivo. Lo que no esté en la lista se
+   enseña tal cual — es preferible un nombre feo a inventarse uno bonito. */
+const PANTALLA = {
+  "index.html": "Acceso",
+  "conectar.html": "Conectar aparato",
+  "control-center.html": "Control Center",
+  "movil.html": "Portal",
+  "conduce.html": "Recepción",
+  "muestras.html": "Muestras",
+  "display.html": "Field Display",
+  "results.html": "Results",
+  "reporte.html": "Reportes",
+  "contratista.html": "Dashboard · Contratista",
+  "produccion.html": "Dashboard · Concretero",
+  "autoridad.html": "Dashboard · Autoridad",
+  "estado.html": "Estado del sistema",
+};
+
+/* Un aparato se da por conectado si latió hace menos de un minuto. El latido
+   va cada 20 s, así que se puede perder dos seguidos antes de darlo por ido —
+   en obra la señal parpadea y no por eso alguien dejó de trabajar. */
+const VIVO_MS = 60 * 1000;
+
+function hace(ms) {
+  if (ms == null) return "—";
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (s < 60) return s + " s";
+  const m = Math.round(s / 60);
+  if (m < 60) return m + " min";
+  const h = Math.floor(m / 60);
+  return h + " h " + String(m % 60).padStart(2, "0") + " min";
+}
+
+function pintar(datos) {
+  const ahora = Date.parse(datos.ahora);
+  const aps = (datos.aparatos || []).map((a) => ({
+    ...a,
+    inactivo: ahora - Date.parse(a.visto),
+    usando: ahora - Date.parse(a.desde),
+  }));
+  const vivos = aps.filter((a) => a.inactivo < VIVO_MS);
+
+  document.getElementById("resumen").innerHTML = `
+    <div class="caja vivo"><div class="k">Conectados ahora</div>
+      <div class="v">${vivos.length}</div>
+      <div class="s">${vivos.length === 1 ? "aparato" : "aparatos"} latiendo</div></div>
+    <div class="caja"><div class="k">Aparatos conocidos</div>
+      <div class="v">${aps.length}</div>
+      <div class="s">han usado QCheck alguna vez</div></div>
+    <div class="caja"><div class="k">Sesión más larga</div>
+      <div class="v" style="font-size:26px">${vivos.length ? hace(Math.max(...vivos.map((a) => a.usando))) : "—"}</div>
+      <div class="s">llevan trabajando</div></div>`;
+
+  document.getElementById("aparatos").innerHTML = aps.length
+    ? aps.map((a) => {
+        const vivo = a.inactivo < VIVO_MS;
+        return `<div class="ap ${vivo ? "vivo" : "ido"}">
+          <div class="cab">
+            <i class="luz"></i>
+            <span class="nom">${esc(a.dev)}</span>
+            <span class="quien">${esc(a.usr || "—")}</span>
+          </div>
+          <div class="pant">${esc(PANTALLA[a.pagina] || a.pagina || "—")}</div>
+          <div class="filas">
+            <div>Usando QCheck desde hace <b>${hace(a.usando)}</b></div>
+            <div>${vivo ? `Última señal hace <b>${hace(a.inactivo)}</b>` : `Sin señal desde hace <b>${hace(a.inactivo)}</b>`}</div>
+          </div>
+        </div>`;
+      }).join("")
+    : `<div class="vacio">Ningún aparato ha latido todavía.<br>Aparecen solos en cuanto alguien abre QCheck conectado.</div>`;
+
+  document.getElementById("pie").textContent =
+    `Se refresca sola cada 5 segundos · un aparato se da por ido si pasa un minuto sin latir · hora del servidor ${new Date(ahora).toLocaleTimeString("es-PR")}`;
+}
+
+function fallo(msg) {
+  document.getElementById("aviso").innerHTML = `<div class="aviso-sync">${esc(msg)}</div>`;
+}
+
+async function refrescar() {
+  if (!qcSyncActivo()) {
+    fallo("Este aparato no está conectado al servidor, así que no puede preguntar quién más lo está. Conéctelo primero.");
+    document.getElementById("aparatos").innerHTML = "";
+    document.getElementById("resumen").innerHTML = "";
+    return;
+  }
+  try {
+    const cab = {};
+    const tk = qcApiToken();
+    if (tk) cab["X-QC-Token"] = tk;
+    const r = await fetch(qcApiURL() + "/api/presencia", { headers: cab });
+    if (r.status === 401) throw new Error("La llave de este aparato no es la del proyecto.");
+    if (!r.ok) throw new Error("El servidor contestó " + r.status + ".");
+    document.getElementById("aviso").innerHTML = "";
+    pintar(await r.json());
+  } catch (e) {
+    fallo(e.message === "Failed to fetch" ? "No se está llegando al servidor." : e.message);
+  }
+}
+
+loadDB();
+initTheme();
+mountThemeToggle();
+mountStatusBar();
+enableLiveSync(() => {});   // el latido de este aparato también sale de aquí
+refrescar();
+setInterval(refrescar, 5000);
+</script>
+</body>
+</html>

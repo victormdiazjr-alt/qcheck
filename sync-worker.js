@@ -61,6 +61,42 @@ export default {
 
     if (protegido && req.headers.get("X-QC-Token") !== env.QC_TOKEN) return json({ error: "token" }, 401);
 
+    /* ------------------------------------------------------- quién está dentro
+
+       El latido pisa la fila del aparato: esto es una foto del momento, no un
+       expediente. Las horas las pone el SERVIDOR — el reloj de un iPad en la
+       obra puede ir descuadrado y «conectado hace 3 horas» sería mentira.
+
+       `desde` solo se reinicia si el aparato llevaba más de 5 minutos callado:
+       así cambiar de pantalla no cuenta como sesión nueva, y el tiempo que se
+       enseña es de verdad el rato que lleva usando QCheck. */
+    if (url.pathname === "/api/latido" && req.method === "POST") {
+      let d;
+      try { d = await req.json(); } catch (_) { return json({ error: "json" }, 400); }
+      const dev = String(d.dev || "?").slice(0, 60);
+      const ahora = new Date().toISOString();
+      const prev = await env.DB.prepare("SELECT desde, visto FROM presencia WHERE dev = ?").bind(dev).first();
+      const CORTE = 5 * 60 * 1000;
+      const sigue = prev && (Date.parse(ahora) - Date.parse(prev.visto)) < CORTE;
+      await env.DB.prepare(
+        "INSERT INTO presencia (dev, usr, pagina, desde, visto) VALUES (?,?,?,?,?) " +
+        "ON CONFLICT(dev) DO UPDATE SET usr = excluded.usr, pagina = excluded.pagina, " +
+        "desde = excluded.desde, visto = excluded.visto"
+      ).bind(dev, String(d.usr || "?").slice(0, 40), String(d.pagina || "?").slice(0, 60),
+             sigue ? prev.desde : ahora, ahora).run();
+      return json({ ok: true, ahora });
+    }
+
+    if (url.pathname === "/api/presencia" && req.method === "GET") {
+      const { results } = await env.DB.prepare(
+        "SELECT * FROM presencia ORDER BY visto DESC LIMIT 100"
+      ).all();
+      /* Se manda también la hora del servidor: el navegador que pinta la
+         pantalla calcula los «hace cuánto» contra ella y no contra su propio
+         reloj, que es otro que puede ir descuadrado. */
+      return json({ ahora: new Date().toISOString(), aparatos: results || [] });
+    }
+
     if (url.pathname === "/api/cambios" && req.method === "GET") {
       const desde = Number(url.searchParams.get("desde") || 0) || 0;
       /* El tope evita que un aparato apagado un mes se traiga medio proyecto

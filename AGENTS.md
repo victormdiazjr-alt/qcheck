@@ -630,6 +630,16 @@ Reglas que no se rompen aquí:
   aparato nuevo, antes de que nadie tenga sesión— y no enseña ni un dato del proyecto: solo
   dice si el servidor contesta. La alternativa era teclear una llave de 32 caracteres en un
   iPad, de pie, en la obra. Ese enlace **no se comparte por fuera**: quien lo tenga entra.
+- **Quién está dentro va aparte y SÍ se pisa.** `estado.html` —la sala de máquinas del
+  administrador— enseña qué aparatos están conectados, en qué pantalla y desde cuándo. Se
+  alimenta de un latido cada 20 s (`QCSync._latir` → `POST /api/latido`) que **no lleva
+  ningún dato del proyecto**: nombre del aparato, quién tiene la sesión y la pantalla. La
+  tabla `presencia` es una foto del momento, no un expediente: una fila por aparato y se
+  sobrescribe. **Las horas las pone el servidor** — el reloj de un iPad en la obra puede ir
+  descuadrado y «conectado hace 3 horas» sería mentira. Un aparato se da por ido tras un
+  minuto sin latir: con el latido a 20 s, puede perder dos seguidos sin que nadie lo dé por
+  muerto, porque en obra la señal parpadea. La pantalla va detrás de `qcVeConfig()`, la
+  misma llave que «Plan & Datos».
 - **Nada se borra.** El registro solo crece. Un dato que quedó mal se corrige con otra
   línea encima y las dos quedan; un expediente de calidad que se puede reescribir por
   detrás no vale nada.

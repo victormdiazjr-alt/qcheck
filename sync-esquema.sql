@@ -25,3 +25,20 @@ CREATE INDEX IF NOT EXISTS ops_seq ON ops (seq);
 
 -- Para la línea de tiempo de un conduce (Q-05).
 CREATE INDEX IF NOT EXISTS ops_registro ON ops (ent, id, seq);
+
+-- Quién está usando QCheck ahora mismo.
+--
+-- Una fila por aparato, y se PISA: aquí no hay expediente que guardar, es una
+-- foto del momento. Cada aparato manda un latido cada 20 segundos diciendo en
+-- qué pantalla está; el que deja de latir desaparece solo.
+--
+-- Las horas las pone el SERVIDOR, no el aparato. El reloj de un iPad en la
+-- obra puede ir descuadrado, y entonces «conectado hace 3 horas» sería mentira.
+CREATE TABLE IF NOT EXISTS presencia (
+  dev    TEXT PRIMARY KEY,   -- el nombre que se le puso al aparato
+  usr    TEXT,               -- quién tiene la sesión abierta
+  pagina TEXT,               -- en qué pantalla está
+  desde  TEXT NOT NULL,      -- cuándo empezó ESTA sesión
+  visto  TEXT NOT NULL       -- último latido
+);
+CREATE INDEX IF NOT EXISTS presencia_visto ON presencia (visto);

@@ -300,7 +300,25 @@ const QCSync = {
     }
   },
 
+  /* Un latido cada 20 s diciendo en qué pantalla está este aparato. Es lo que
+     alimenta la pantalla de estado del administrador. No lleva ningún dato del
+     proyecto: nombre del aparato, quién tiene la sesión abierta y la pantalla.
+     Si falla no se reintenta ni se encola — es una foto del momento, y una foto
+     que se perdió ya no interesa. */
+  _latir() {
+    if (!qcSyncActivo()) return;
+    const ahora = Date.now();
+    if (this._ultimoLatido && ahora - this._ultimoLatido < 20000) return;
+    this._ultimoLatido = ahora;
+    const pagina = (location.pathname.split("/").pop() || "index.html");
+    this._pedir("/api/latido", {
+      method: "POST",
+      body: JSON.stringify({ dev: qcAparato(), usr: sessionStorage.getItem("qc-user") || "?", pagina }),
+    }).catch(() => {});
+  },
+
   async _ciclo() {
+    this._latir();
     await this._empujar();
     await this._bajar();
     /* La franja de arriba lleva el estado real de la sincronización, y está en

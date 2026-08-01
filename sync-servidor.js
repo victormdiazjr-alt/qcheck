@@ -114,6 +114,8 @@ function crearAlmacen(archivo) {
    Tres rutas y nada más. Devuelve `true` si atendió la petición, para
    que `serve.js` sepa si le toca servir un archivo. */
 function montarAPI(almacen, token) {
+  const presencia = new Map();   // dev → { dev, usr, pagina, desde, visto }
+
   function responder(res, codigo, cuerpo) {
     const texto = JSON.stringify(cuerpo);
     res.writeHead(codigo, {
@@ -143,6 +145,34 @@ function montarAPI(almacen, token) {
     }
 
     if (!autorizado(req)) { responder(res, 401, { error: "token" }); return true; }
+
+    /* Quién está dentro. Vive en memoria a propósito: es una foto del momento,
+       no un expediente, y si se reinicia el servidor los aparatos vuelven a
+       aparecer al siguiente latido. Ver `sync-worker.js` para el mismo trato. */
+    if (url.pathname === "/api/latido" && req.method === "POST") {
+      let cuerpo = "";
+      req.on("data", (c) => { cuerpo += c; if (cuerpo.length > 1e5) req.destroy(); });
+      req.on("end", () => {
+        let d;
+        try { d = JSON.parse(cuerpo || "{}"); } catch (_) { responder(res, 400, { error: "json" }); return; }
+        const dev = String(d.dev || "?").slice(0, 60);
+        const ahora = new Date().toISOString();
+        const prev = presencia.get(dev);
+        const sigue = prev && (Date.parse(ahora) - Date.parse(prev.visto)) < 5 * 60 * 1000;
+        presencia.set(dev, {
+          dev, usr: String(d.usr || "?").slice(0, 40), pagina: String(d.pagina || "?").slice(0, 60),
+          desde: sigue ? prev.desde : ahora, visto: ahora,
+        });
+        responder(res, 200, { ok: true, ahora });
+      });
+      return true;
+    }
+
+    if (url.pathname === "/api/presencia" && req.method === "GET") {
+      const aparatos = [...presencia.values()].sort((a, b) => b.visto.localeCompare(a.visto));
+      responder(res, 200, { ahora: new Date().toISOString(), aparatos });
+      return true;
+    }
 
     if (url.pathname === "/api/cambios" && req.method === "GET") {
       const desde = Number(url.searchParams.get("desde") || 0) || 0;
