@@ -255,7 +255,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=2e48ba53"></script>
-<script src="assets/core.js?v=59e8b68d"></script>
+<script src="assets/core.js?v=6f0df782"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script src="assets/clima.js?v=d5c4fb65"></script>
 <script src="assets/usuarios.js?v=7f884800"></script>
@@ -402,6 +402,18 @@ function menu() {
     <button class="accion" onclick="programarTiro()" title="Declarar el plan del tiro de hoy: hora de comienzo, yardas y losas">
       ${ICONO_PROGRAMAR}<span class="n">Programar tiro</span>
     </button>
+    <!-- Programar y cerrar son los dos extremos del día, así que van juntos y
+         primero. El sistema NO puede deducir que el tiro terminó: acabar en 120
+         de 150 yardas puede ser que se acabara el hormigón, que lloviera o que
+         se decidiera parar, y desde fuera eso no se distingue de una pausa
+         larga. Lo dice quien está allí. -->
+    ${tiroCerrado() ? `
+    <button class="accion" onclick="if (reabrirTiro()) render()" title="El tiro está cerrado. Reabrirlo para seguir recibiendo camiones">
+      ${ICONO_CERRAR}<span class="n">Reabrir tiro</span>
+    </button>` : `
+    <button class="accion" onclick="if (cerrarTiro()) render()" title="Dar por terminado el vaciado de hoy">
+      ${ICONO_CERRAR}<span class="n">Cerrar tiro</span>
+    </button>`}
     ${PANTALLAS.map((p) => `
     <a href="${p.href}"${p.nueva ? ' target="_blank"' : ""} title="${p.r}">
       ${p.ic}<span class="n">${p.n}</span>

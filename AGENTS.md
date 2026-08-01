@@ -134,6 +134,20 @@ el progreso y el tiempo — si un dato no existe, su casilla simplemente no se p
 yardas colocadas contra el tiempo desde el primer camión. No es una promesa: se enseña con
 «≈». Con menos de tres camiones o menos de media hora no da número.
 
+**Cerrar el tiro lo dice una persona, no lo deduce el sistema.** Un vaciado puede acabar en
+120 de 150 yardas porque se acabó el hormigón, cayó un aguacero o se decidió parar, y desde
+fuera eso **no se distingue de una pausa larga**. Por eso hay un botón —«Cerrar tiro» en el
+Control Center y otro pequeño en Muestras, que es donde está el técnico— y `cerrarTiro()`
+vive en `core.js`, que es lo que hacen dos pantallas. Guarda `dayMeta[día].cerradoA` y
+`cerradoPor`, **viaja a los demás aparatos** como cualquier cambio, y manda sobre lo que
+deduzcan los camiones. Se puede reabrir.
+
+La confirmación **enseña lo que se está cerrando** —yardas, camiones— y avisa de los
+camiones sin muestrear o sin terminar de descargar. Un «¿está seguro?» a secas se contesta
+que sí sin leerlo, y cerrar con un camión sin muestrear deja en el expediente un hueco que
+ya no se rellena. El reporte también lo respeta: deja de avisar de «tiro en curso» y anota
+la hora de cierre y quién lo cerró.
+
 `estadoTiro(day)` en `core.js` deduce en qué anda el vaciado — *Vaciando, Camión esperando,
 Esperando camión, Detenido, Tiro completado, Sin comenzar* — **de los camiones**, sin ningún
 interruptor que alguien tenga que acordarse de mover. «Detenido» no usa un umbral inventado:

@@ -76,6 +76,20 @@ header .spacer { flex: 1; }
   border-radius: 14px; padding: 1.4vh 1.6vw; font-size: 2vh; font-weight: 700;
   font-family: inherit; min-width: 26vw;
 }
+/* Cerrar el tiro: chico, discreto y lejos del teclado. El color entra por el
+   resplandor, nunca por el relleno (AGENTS.md §10). */
+.cerrar-tiro {
+  margin-left: 1.2vw; flex: none;
+  background: var(--surface); border: 1px solid var(--hairline); color: var(--muted);
+  border-radius: 10px; padding: 1vh 1.1vw; font-size: 1.4vh; font-weight: 800;
+  letter-spacing: .14em; text-transform: uppercase; font-family: inherit; cursor: pointer;
+  transition: border-color .16s, color .16s, box-shadow .18s;
+}
+.cerrar-tiro:hover { color: var(--text); border-color: rgba(255,255,255,.28); }
+.cerrar-tiro:active { transform: scale(.97); }
+/* Ya cerrado: verde apagado, que es un estado, no una alarma */
+.cerrar-tiro.hecho { color: var(--ok); border-color: rgba(52,210,123,.45);
+  box-shadow: 0 0 0 2px rgba(52,210,123,.08); }
 
 /* ---------- cuerpo ---------- */
 .body { flex: 1; display: grid; grid-template-columns: 1fr 30vw; gap: 1.6vw; padding: 1.8vh 2.4vw; min-height: 0; }
@@ -296,6 +310,10 @@ footer .spacer { flex: 1; }
   </div>
   <div class="spacer"></div>
   <select class="truck-pick" id="truck-pick" onchange="pickTruck(this.value)"></select>
+  <!-- Pequeño y aparte del teclado a propósito: cerrar el tiro es la última
+       acción del día, no una que se busque con la mano sucia entre camión y
+       camión. Pide confirmación con los números delante. -->
+  <button class="cerrar-tiro" id="btn-cerrar" onclick="cerrarDesdeMuestras()"></button>
 </header>
 
 <div class="body" id="body"></div>
@@ -319,7 +337,7 @@ footer .spacer { flex: 1; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=2e48ba53"></script>
-<script src="assets/core.js?v=59e8b68d"></script>
+<script src="assets/core.js?v=6f0df782"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -514,6 +532,15 @@ function render() {
   document.getElementById("hsub").textContent =
     `${db.project.qcFirm || "QCheck"} · ${fmtDate(state.day)} · ${all.length} camiones`;
 
+  /* El botón de cerrar cambia de cara según esté el tiro abierto o cerrado.
+     Se pinta en cada render porque el cierre puede venir de otro aparato. */
+  const bc = document.getElementById("btn-cerrar");
+  const cerrado = tiroCerrado(state.day);
+  bc.textContent = cerrado ? "Tiro cerrado" : "Cerrar tiro";
+  bc.className = "cerrar-tiro" + (cerrado ? " hecho" : "");
+  bc.title = cerrado ? `Cerrado a las ${cerrado} · tocar para reabrir`
+                     : "Dar por terminado el vaciado de hoy";
+
   const t = currentTest();
   const body = document.getElementById("body");
   const foot = document.getElementById("foot");
@@ -639,6 +666,17 @@ function doSubmit(rejected) {
      entonces enviar no se distingue de no haber enviado. */
   state.n = null; state.buf = {}; state._typing = null; state._str = ""; state.field = "slump";
   render();
+}
+
+/* Cerrar o reabrir el tiro desde el iPad. La confirmación con los números
+   delante la pone `cerrarTiro()` en core.js, que la comparte con el Control
+   Center: lo que usan dos pantallas no se duplica. */
+function cerrarDesdeMuestras() {
+  const estaba = tiroCerrado(state.day);
+  const ok = estaba ? reabrirTiro(state.day) : cerrarTiro(state.day);
+  if (!ok) return;
+  render();
+  toast(estaba ? "Tiro reabierto" : "Tiro cerrado");
 }
 
 function toast(msg) {

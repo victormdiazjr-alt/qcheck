@@ -184,7 +184,7 @@ table.rep td.dif { font-weight: 700; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=2e48ba53"></script>
-<script src="assets/core.js?v=59e8b68d"></script>
+<script src="assets/core.js?v=6f0df782"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -636,7 +636,13 @@ function renderDiario() {
   const lotes = [...new Set(rows.map((t) => t.lot).filter((x) => x != null))];
   const inicio = inicioReal(day);
   const ritmoReal = st.hours ? prog.placed / st.hours : null;
-  const cerrado = prog.cyPlan != null && prog.cyPlan > 0 && prog.placed >= prog.cyPlan;
+  /* Un tiro se da por terminado de dos maneras: porque se colocaron las yardas
+     planificadas, o porque **alguien lo cerró a mano** — que es lo normal
+     cuando se acaba el hormigón, llueve o se decide parar antes del plan. Sin
+     esto, la hoja seguía avisando de «tiro en curso» sobre un vaciado que ya
+     había terminado, y eso se firma. */
+  const cerradoAMano = tiroCerrado(day);
+  const cerrado = !!cerradoAMano || (prog.cyPlan != null && prog.cyPlan > 0 && prog.placed >= prog.cyPlan);
   const enCurso = hoy && !cerrado;
 
   /* Cuántas losas hay que enseñar: la lista declarada manda. Sin lista
@@ -734,6 +740,8 @@ function renderDiario() {
     <table class="rep">
       <tr><td class="lbl">Primer camión / última descarga</td>
         <td>${hm(st.firstStart)} — ${hm(st.lastEnd)}${st.hours ? ` · ${duracionCorta(Math.round(st.hours * 60))}` : ""}</td></tr>
+      ${cerradoAMano ? `<tr><td class="lbl">Tiro cerrado</td>
+        <td>${esc(cerradoAMano)}${meta.cerradoPor ? ` · por ${esc(meta.cerradoPor)}` : ""}</td></tr>` : ""}
       <tr><td class="lbl">Ritmo de colocación</td>
         <td>${ritmoReal != null ? `${fmt(ritmoReal, 1)} yd³/h · ${fmt(st.loadsPerHr, 1)} camiones/h` : "—"}</td></tr>
       <tr><td class="lbl">Ciclo Batch → fin de descarga</td>

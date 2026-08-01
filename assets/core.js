@@ -854,9 +854,25 @@ function ritmoTiro(day) {
   return { cyHora, fin };
 }
 
+/* ¿Alguien cerró el tiro a mano? Es la hora a la que se dio por terminado.
+
+   Hace falta porque **el sistema no puede deducirlo**: un tiro puede acabar en
+   120 de 150 yardas porque se acabó el hormigón, cayó un aguacero o se decidió
+   parar, y desde fuera eso no se distingue de una pausa larga. Lo dice quien
+   está allí. Lo demás del estado sí se deduce de los camiones. */
+function tiroCerrado(day) {
+  const m = db.dayMeta[day || todayISO()];
+  return (m && m.cerradoA) || null;
+}
+
 function estadoTiro(day) {
   const p = dayProgress(day);
   const completo = p.cyPlan != null && p.cyPlan > 0 && p.placed >= p.cyPlan;
+  const cerradoA = tiroCerrado(day);
+
+  /* Cerrado a mano manda sobre todo lo demás: si el técnico dijo que terminó,
+     la pantalla no va a discutírselo porque falten yardas del plan. */
+  if (cerradoA) return { cls: "fin", icono: "check", txt: `Tiro cerrado · ${cerradoA}` };
 
   if (day !== todayISO())
     return { cls: "fin", icono: "check", txt: completo || p.loads ? "Tiro cerrado" : "Sin actividad" };
@@ -1393,6 +1409,51 @@ function closeForm() { const r = document.getElementById("modal-root"); if (r) r
 
    `onSave` fusiona en vez de reemplazar: este formulario y el del contratista
    escriben el mismo día, y sustituir el objeto le borraba el plan al otro. */
+/* ------------------------------------------------------------ cerrar el tiro
+
+   Vive aquí porque lo usan DOS pantallas —el Control Center y Muestras— y en
+   este proyecto lo que usan dos pantallas no se duplica.
+
+   La confirmación no pregunta «¿está seguro?» a secas: enseña **lo que se está
+   cerrando** —yardas, camiones— y avisa de lo que quedaría a medias. Un
+   «¿seguro?» sin datos se contesta que sí sin leerlo, y cerrar con un camión
+   sin muestrear deja un hueco en el expediente que ya no se puede rellenar. */
+function cerrarTiro(day) {
+  const d = day || todayISO();
+  const p = dayProgress(d);
+  const sinResultados = testsOfDate(d)
+    .filter((t) => !t.rejected && (num(t.slump) == null || num(t.uw) == null)).length;
+  const sinDescargar = p.waiting.length;
+
+  const texto = [`Cerrar el vaciado del ${fmtDate(d)}.`, ""];
+  texto.push(`Colocadas ${fmt(p.placed, 1)} CY${p.cyPlan ? ` de ${fmt(p.cyPlan, 0)} planificadas` : ""} · ${p.loads} camiones.`);
+  if (sinResultados) texto.push(`⚠ ${sinResultados} camión${sinResultados === 1 ? "" : "es"} sin resultados de muestra.`);
+  if (sinDescargar) texto.push(`⚠ ${sinDescargar} camión${sinDescargar === 1 ? "" : "es"} sin terminar de descargar.`);
+  texto.push("", "El tablero dejará de esperar camiones y el reporte se firma como cerrado.",
+             "Se puede reabrir si hace falta.", "", "¿Cerrar el tiro?");
+
+  if (!confirm(texto.join("\n"))) return false;
+  if (!db.dayMeta[d]) db.dayMeta[d] = {};
+  db.dayMeta[d].cerradoA = nowHM();
+  db.dayMeta[d].cerradoPor = sessionStorage.getItem("qc-user") || "?";
+  saveDB();
+  return true;
+}
+
+function reabrirTiro(day) {
+  const d = day || todayISO();
+  if (!confirm(`El vaciado del ${fmtDate(d)} está cerrado desde las ${tiroCerrado(d)}.\n\n` +
+               "¿Reabrirlo para seguir recibiendo camiones?")) return false;
+  if (!db.dayMeta[d]) db.dayMeta[d] = {};
+  db.dayMeta[d].cerradoA = null;
+  db.dayMeta[d].cerradoPor = null;
+  saveDB();
+  return true;
+}
+
+/* El icono lo comparten las dos pantallas, como la función. */
+const ICONO_CERRAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-3.2-6.6"/><polyline points="8.6,12 11,14.4 16.4,8.2"/></svg>`;
+
 function formDayMeta(day) {
   const meta = db.dayMeta[day] || {};
   openForm({
