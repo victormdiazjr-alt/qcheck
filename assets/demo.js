@@ -256,7 +256,16 @@ function programarTiro() {
     retirarDia(hoy);
   }
 
-  delete db.dayMeta[hoy];
+  /* El plan del día NO se borra aquí. Se borraba antes de abrir el formulario,
+     para que saliera en blanco, y eso tenía un precio que solo se vio con la
+     sincronización puesta: quien tocaba «Programar tiro» y cerraba el
+     formulario sin guardar **perdía el plan**, y desde que los aparatos se
+     hablan, lo perdía en todos a la vez. Pasó de verdad el 1 de agosto: el
+     plan del tiro se borró de la PC de Rubén y del resto.
+
+     El formulario abre con lo que haya y al guardar lo reemplaza. Además viene
+     bien: de un tiro al siguiente cambian el tramo y las yardas, no la fase ni
+     el carril. */
   saveDB();
   formDayMeta(hoy);
 }
