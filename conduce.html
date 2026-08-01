@@ -75,6 +75,12 @@ body { background: var(--bg); }
 }
 #video-wrap .close-scan { position: absolute; top: 10px; right: 10px; }
 .photo-chip { height: 42px; border-radius: 6px; border: 1px solid var(--line); }
+/* El campo que falta se señala donde está el dedo, no solo en el aviso de
+   abajo: el resplandor, nunca el relleno (AGENTS.md §10). */
+.field input.falta {
+  border-color: var(--susp);
+  box-shadow: 0 0 0 3px rgba(255,90,82,.16), 0 0 20px -6px var(--susp);
+}
 </style>
 <script src="assets/usuarios.js?v=dfd5ecc0"></script>
 <script src="assets/auth.js?v=c77eb346"></script>
@@ -140,19 +146,24 @@ body { background: var(--bg); }
       <span class="badge info" id="next-load">—</span></div>
     <div class="panel-body big-form">
       <div class="form-grid">
+        <!-- Los seis hacen falta. No es rigor de oficina: sin cualquiera de
+             ellos algo del sistema deja de funcionar, y el hueco no se nota
+             hasta que se cierra el tiro. Ver CAMPOS_CAMION. -->
         <div class="field"><label>Ticket / Conduce *</label><input id="f-ticket" inputmode="numeric" placeholder="66861"></div>
-        <div class="field"><label>Camión</label><input id="f-truck" inputmode="numeric" placeholder="102"></div>
-        <div class="field"><label>Volumen (CY)</label><input id="f-vol" inputmode="decimal" value="10"></div>
-        <div class="field"><label>Hora batch (del conduce)</label><input id="f-batch" type="time">
+        <div class="field"><label>Camión *</label><input id="f-truck" inputmode="numeric" placeholder="102"></div>
+        <div class="field"><label>Volumen (CY) *</label><input id="f-vol" inputmode="decimal" value="10"></div>
+        <div class="field"><label>Hora batch (del conduce) *</label><input id="f-batch" type="time">
           <button class="now-btn" onclick="setNow('f-batch')">AHORA</button></div>
-        <div class="field"><label>Llegada</label><input id="f-arrive" type="time">
+        <div class="field"><label>Llegada *</label><input id="f-arrive" type="time">
           <button class="now-btn" onclick="setNow('f-arrive')">AHORA</button></div>
-        <div class="field"><label>Losa / Identificación</label><input id="f-ident" placeholder="L3-0.443"></div>
+        <div class="field"><label>Losa / Identificación *</label><input id="f-ident" placeholder="L3-0.443"></div>
       </div>
       <div style="display:flex; gap:10px; margin-top:14px; align-items:center">
         <span id="photo-slot"></span>
         <div style="flex:1"></div>
-        <button class="btn orange" style="font-size:16px; padding:12px 26px" onclick="saveArrival()">✔ Registrar llegada</button>
+        <!-- Sin naranja: el naranja es la marca de Concre-Ticket, no la de
+             QCheck (AGENTS.md §10). Era un descuido de las primeras versiones. -->
+        <button class="btn primary" style="font-size:16px; padding:12px 26px" onclick="saveArrival()">✔ Registrar llegada</button>
       </div>
     </div>
   </div>
@@ -171,7 +182,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=79ee8f37"></script>
-<script src="assets/core.js?v=53b70925"></script>
+<script src="assets/core.js?v=00be346f"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -249,9 +260,34 @@ function photoCapture(input) {
 }
 
 /* ---------- save arrival ---------- */
+/* Lo que QCheck NECESITA de un camión para que el resto funcione. No es una
+   lista de buenos deseos: sin cada uno de estos, algo concreto deja de andar,
+   y en la columna de al lado está qué. Un dato que falta aquí no se nota hasta
+   que se cierra el tiro y el reporte no cuadra — y entonces ya no hay a quién
+   preguntarle a qué hora salió ese camión de planta. */
+const CAMPOS_CAMION = [
+  ["f-ticket", "el número de conduce", "es la llave del registro: sin él no hay expediente"],
+  ["f-truck", "el número de camión", "es lo que canta el Field Display al chofer"],
+  ["f-vol", "las yardas", "sin ellas el avance del tiro no sube"],
+  ["f-batch", "la hora de batch", "sin ella no se puede medir el tiempo de viaje"],
+  ["f-arrive", "la hora de llegada", "sin ella no hay ritmo ni ciclo"],
+  ["f-ident", "la losa", "sin ella no se sabe dónde cayó el hormigón"],
+];
+
 function saveArrival() {
+  /* Se avisa del PRIMERO que falta y se lleva el cursor ahí. Enseñar los seis
+     errores de golpe no ayuda a nadie con la mano sucia. */
+  for (const [id, que, porque] of CAMPOS_CAMION) {
+    const el = document.getElementById(id);
+    if (!String(el.value).trim()) {
+      toast(`Falta ${que} — ${porque}`);
+      el.focus();
+      el.classList.add("falta");
+      setTimeout(() => el.classList.remove("falta"), 2000);
+      return;
+    }
+  }
   const ticket = document.getElementById("f-ticket").value.trim();
-  if (!ticket) { toast("Falta el número de ticket"); document.getElementById("f-ticket").focus(); return; }
 
   /* Un conduce no se registra dos veces. La llave es compañía + ticket, no el
      ticket solo: dos plantas pueden emitir el mismo número. Esta comprobación

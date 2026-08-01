@@ -1326,18 +1326,29 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
     </div>`;
   document.getElementById(fid + "-save").onclick = () => {
     const form = document.getElementById(fid);
-    const values = {}; let ok = true;
+    const values = {}; const faltan = [];
     for (const f of fields) {
       if (f.type === "label") continue;
       const el = form.elements[f.key];
       const v = el.value.trim();
       el.closest(".field").classList.remove("invalid");
-      if (f.required && !v) { el.closest(".field").classList.add("invalid"); ok = false; continue; }
+      if (f.required && !v) { el.closest(".field").classList.add("invalid"); faltan.push({ f, el }); continue; }
       if (f.type === "number") values[f.key] = v === "" ? null : Number(v);
       else if (f.type === "checkbox") values[f.key] = v === "1";
       else values[f.key] = v;
     }
-    if (!ok) { toast("Complete los campos requeridos"); return; }
+    /* Se nombra el que falta y se lleva el cursor ahí. «Complete los campos
+       requeridos» obliga a buscarlo, y en un formulario de nueve campos, de
+       pie y con prisa, eso es exactamente cuando alguien escribe cualquier
+       cosa para salir del paso. */
+    if (faltan.length) {
+      toast(faltan.length === 1
+        ? `Falta ${faltan[0].f.label.toLowerCase()}`
+        : `Faltan ${faltan.length} datos: ${faltan.map((x) => x.f.label.toLowerCase()).join(", ")}`);
+      faltan[0].el.focus();
+      faltan[0].el.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
     onSave(values); closeForm();
   };
   if (onDelete) document.getElementById(fid + "-del").onclick = () => { onDelete(); closeForm(); };
@@ -1378,16 +1389,21 @@ function formDayMeta(day) {
     title: `Datos del vaciado — ${fmtDate(day)}`,
     initial: meta,
     fields: [
-      { key: "horaInicio", label: "Hora de comienzo", type: "time", half: true,
+      /* Obligatorios los tres que el sistema NECESITA. Sin la hora no hay plan
+         contra lo real; sin las yardas la barra de estado no puede enseñar
+         avance y dice «sin plan»; sin el tramo no hay losas ni se puede cantar
+         un camión vaciado fuera. Lo demás es contexto para el papel y puede
+         faltar sin que nada deje de andar. */
+      { key: "horaInicio", label: "Hora de comienzo", type: "time", half: true, required: true,
         hint: "A qué hora arranca el tiro" },
-      { key: "cyPlan", label: "Yardas planificadas (CY)", type: "number", step: "5", half: true,
+      { key: "cyPlan", label: "Yardas planificadas (CY)", type: "number", step: "5", half: true, required: true,
         hint: "Sin esto la barra de estado no puede mostrar el avance del tiro" },
       /* Los dos campos se llamaban igual —«Losas a tirar hoy»— y no había forma
          de saber cuál pedía qué. Uno es el conteo y el otro la lista; si se
          escribe la lista, el conteo sale de ella y este campo sobra. */
       { key: "losasPlan", label: "Cuántas losas", type: "number", step: "1", half: true,
         hint: "Opcional. Sin esto, del tramo sale una estimación y se enseña con «≈»." },
-      { key: "losas", label: "Tramo del día", type: "textarea", full: true,
+      { key: "losas", label: "Tramo del día", type: "textarea", full: true, required: true,
         placeholder: "L3-0.431@L3-0.252",
         hint: "El tramo tal como se lo dan: de la primera losa a la última. También acepta la lista completa separada por coma, si la tiene." },
       { key: "fase", label: "Fase" },
@@ -1448,8 +1464,14 @@ function formTest(_ignored, n, opts = {}) {
       { type: "label", label: "Camión / entrega" },
       { key: "date", label: "Fecha", type: "date", required: true },
       { key: "ticket", label: "Ticket", required: true },
-      { key: "truck", label: "Camión" },
-      { key: "vol", label: "Volumen (CY)", type: "number", step: "0.5" },
+      /* Aquí solo se exigen camión y volumen. Este formulario también sirve
+         para CORREGIR ensayos del histórico, y de los 397 del Excel algunos
+         vienen sin hora de batch o sin losa —así los entregó la inspección—:
+         exigirlas dejaría un expediente antiguo imposible de arreglar. La
+         puerta estricta va en Recepción (`CAMPOS_CAMION`), que es por donde
+         entran los camiones nuevos y donde el error se evita en el origen. */
+      { key: "truck", label: "Camión", required: true },
+      { key: "vol", label: "Volumen (CY)", type: "number", step: "0.5", required: true },
       { key: "plant", label: "Planta" },
       { key: "lot", label: "Lote" },
       { key: "ident", label: "Losa / Identificación", full: true, placeholder: "p.ej. Phase 10 - Slab L3-0.943" },
