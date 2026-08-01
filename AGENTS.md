@@ -168,7 +168,9 @@ solo recibió cargas repartidas no se pinta una barra al 0 %: se dice cuántas c
 compartidas la tocaron. Y una losa que nadie ha tocado enseña su código y nada más.
 
 **Concretero, contratista y Autoridad no van sueltos**: entran por una sola puerta,
-«Dashboards», que pregunta cuál. La lista y la elección viven en `core.js`
+«Dashboards», **que va la última de todos los botones** —en el Control Center y en el
+portal— porque no es una pantalla de trabajo: es para que miren desde fuera. Quien usa
+QCheck todo el día entra por las de arriba (Víctor, 1 ago 2026). La puerta pregunta cuál. La lista y la elección viven en `core.js`
 (`QC_DASHBOARDS`, `abrirDashboards()`) y los estilos en `qc.css`, porque las comparten el
 Control Center y el portal del teléfono. Si añades un tablero de indicadores, va a esa
 lista y aparece en las dos pantallas solo.

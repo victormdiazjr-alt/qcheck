@@ -149,11 +149,15 @@ const PUERTA_RESULTADOS = { href: "results.html", n: "Resultados", ic: MARCA_SEG
 /* Los tres tableros de indicadores no van sueltos: entran por «Dashboards», que
    pregunta cuál. La lista y la elección viven en `core.js` porque las comparte
    con el Control Center. */
+/* Dashboards va el ÚLTIMO, aquí y en el Control Center (Víctor, 1 ago 2026).
+   No es una pantalla de trabajo: es la puerta para que miren desde fuera el
+   concretero, el contratista y la Autoridad. Quien usa QCheck todo el día
+   entra por las de arriba; esta se abre de vez en cuando. */
 const PUERTAS = [
-  { tableros: true, n: "Dashboards", ic: ICONO_DASHBOARDS.replace("<svg", `<svg class="ic"`) },
   { href: "display.html?acostar=1", n: "Field Display",
     destaca: true,
     ic: `<svg viewBox="0 0 24 24" class="ic"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M12 16.5v4M8.5 20.5h7"/></svg>` },
+  { tableros: true, n: "Dashboards", ic: ICONO_DASHBOARDS.replace("<svg", `<svg class="ic"`) },
 ];
 
 function pintar() {

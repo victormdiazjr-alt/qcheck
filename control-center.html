@@ -400,13 +400,17 @@ function menu() {
     <button class="accion" onclick="programarTiro()" title="Declarar el plan del tiro de hoy: hora de comienzo, yardas y losas">
       ${ICONO_PROGRAMAR}<span class="n">Programar tiro</span>
     </button>
-    <button onclick="abrirDashboards()" title="Los tableros de indicadores: concretero, contratista y Autoridad">
-      ${ICONO_DASHBOARDS}<span class="n">Dashboards</span>
-    </button>
     ${PANTALLAS.map((p) => `
     <a href="${p.href}"${p.nueva ? ' target="_blank"' : ""} title="${p.r}">
       ${p.ic}<span class="n">${p.n}</span>
-    </a>`).join("")}</div>`;
+    </a>`).join("")}
+    <!-- Dashboards va el ÚLTIMO, aquí y en el portal (Víctor, 1 ago 2026).
+         No es una pantalla de trabajo: es la puerta para que miren desde fuera
+         el concretero, el contratista y la Autoridad. Quien usa QCheck todo el
+         día entra por las de arriba; esta se abre de vez en cuando. -->
+    <button onclick="abrirDashboards()" title="Los tableros de indicadores: concretero, contratista y Autoridad">
+      ${ICONO_DASHBOARDS}<span class="n">Dashboards</span>
+    </button></div>`;
 }
 
 /* ---------- dashboard ---------- */
