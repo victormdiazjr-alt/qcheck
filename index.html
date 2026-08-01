@@ -138,6 +138,13 @@ button:active { transform: scale(.98); }
 
   <button type="submit">Entrar</button>
 
+  <!-- Solo se enseña si este aparato NO tiene servidor puesto. Es la puerta
+       para conectarlo, y hace falta que viva aquí: en el iPhone, la aplicación
+       guardada en la pantalla de inicio no comparte almacenamiento con Safari
+       —conectar desde Safari no conecta el icono— y desde dentro del icono no
+       hay barra de direcciones donde pegar el enlace. Se entra por aquí. -->
+  <a class="back" id="ir-conectar" href="conectar.html" style="display:none">Conectar este aparato al servidor</a>
+
   <!-- Aquí vivían las credenciales de demostración y la explicación de qué ve
        cada cuenta. Víctor las sacó el 31 jul 2026: la aplicación no da
        instrucciones — van todas en la guía de usuario. -->
@@ -161,7 +168,7 @@ button:active { transform: scale(.98); }
 function pintarRed() {
   const el = document.getElementById("estado-red");
   const api = (localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
-  if (!api) return;
+  if (!api) { document.getElementById("ir-conectar").style.display = "block"; return; }
   const cab = {};
   const tk = localStorage.getItem("qc-token");
   if (tk) cab["X-QC-Token"] = tk;

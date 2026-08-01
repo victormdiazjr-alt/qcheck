@@ -114,10 +114,21 @@ button.esperando { color: var(--muted); border-color: var(--hairline); box-shado
 
   <div class="estado" id="estado"><i></i><span>Comprobando el servidor…</span></div>
 
+  <!-- Los tres campos se pueden escribir a mano. El enlace los trae puestos y
+       normalmente no hay que tocarlos, pero en el iPhone hace falta poder:
+       una aplicación guardada en la pantalla de inicio NO comparte el
+       almacenamiento con Safari, así que conectar desde Safari no conecta el
+       icono. Desde dentro del icono no se puede pegar un URL — se entra aquí. -->
+  <label for="srv">Servidor</label>
+  <input id="srv" placeholder="https://qcheck-api.qcheck.workers.dev" spellcheck="false" autocapitalize="off" autocorrect="off">
+
+  <label for="key">Llave del proyecto</label>
+  <input id="key" placeholder="—" spellcheck="false" autocapitalize="off" autocorrect="off">
+
   <label for="dev">Nombre de este aparato</label>
   <input id="dev" placeholder="iPad de Rubén" autocapitalize="words">
 
-  <button id="btn" onclick="guardar()">Conectar</button>
+  <button id="btn" onclick="guardar()">Probar y conectar</button>
   <a class="ir" id="ir" href="index.html">Entrar sin conectar</a>
 </div>
 
@@ -127,46 +138,64 @@ button.esperando { color: var(--muted); border-color: var(--hairline); box-shado
    en un iPad. Se guardan y se BORRAN del URL en el acto: así no se quedan
    en el historial ni se van de paseo si alguien comparte la pantalla. */
 const par = new URLSearchParams(location.search);
-const api = (par.get("api") || localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
-const llave = par.get("llave") || localStorage.getItem("qc-token") || "";
-if (par.get("api") || par.get("llave")) {
-  history.replaceState(null, "", location.pathname);
-}
-
+const elSrv = document.getElementById("srv");
+const elKey = document.getElementById("key");
+const elDev = document.getElementById("dev");
 const elEstado = document.getElementById("estado");
-const elBtn = document.getElementById("btn");
+
+/* El enlace rellena los campos; si no trae nada, vale lo que ya estuviera
+   guardado y, si tampoco, se escriben a mano. Los datos se BORRAN del URL en
+   el acto: así no se quedan en el historial del teléfono. */
+elSrv.value = (par.get("api") || localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
+elKey.value = par.get("llave") || localStorage.getItem("qc-token") || "";
+elDev.value = localStorage.getItem("qc-dev") || "";
+if (par.get("api") || par.get("llave")) history.replaceState(null, "", location.pathname);
+
 function decir(clase, texto) {
   elEstado.className = "estado " + clase;
   elEstado.querySelector("span").textContent = texto;
 }
 
-document.getElementById("dev").value = localStorage.getItem("qc-dev") || "";
-
-/* Se prueba antes de guardar nada: conectar un aparato a un servidor que no
-   contesta y que lo diga después, en medio del tiro, no sirve de nada. */
-if (!api) {
-  decir("mal", "Este enlace no trae servidor. Pida el enlace de conexión.");
-  elBtn.disabled = true;
-  elBtn.className = "esperando";
-} else {
-  fetch(api + "/api/salud")
+/* Se prueba ANTES de guardar nada: conectar un aparato a un servidor que no
+   contesta, y que lo diga después en medio del tiro, no sirve de nada. */
+function probar(alGuardar) {
+  const api = elSrv.value.trim().replace(/\/+$/, "");
+  const llave = elKey.value.trim();
+  if (!api) { decir("mal", "Falta la dirección del servidor."); elSrv.focus(); return; }
+  decir("espera", "Probando…");
+  const cab = {};
+  if (llave) cab["X-QC-Token"] = llave;
+  fetch(api + "/api/salud", { headers: cab })
     .then((r) => r.json())
     .then((s) => {
       if (!s.ok) throw new Error("respuesta");
-      if (s.protegido && !llave) decir("espera", "El servidor pide llave y el enlace no la trae.");
-      else decir("ok", `Servidor al habla · ${s.cambios} cambios guardados`);
+      if (s.protegido && !llave) { decir("espera", "El servidor pide llave y falta escribirla."); elKey.focus(); return; }
+      /* La llave se comprueba de verdad, no se da por buena: `/api/salud`
+         contesta a cualquiera, así que se pide algo que sí esté protegido.
+         Guardar una llave mal escrita y descubrirlo en obra es el fallo que
+         esta pantalla existe para evitar. */
+      return fetch(api + "/api/cambios?desde=999999999", { headers: cab }).then((r2) => {
+        if (r2.status === 401) { decir("mal", "La llave no es la de este proyecto."); elKey.focus(); return; }
+        if (!r2.ok) throw new Error("http " + r2.status);
+        decir("ok", `Servidor al habla · ${s.cambios} cambios guardados`);
+        if (alGuardar) guardarYa(api, llave);
+      });
     })
     .catch(() => decir("mal", "El servidor no contesta. Revise el internet del aparato."));
 }
 
-function guardar() {
+function guardarYa(api, llave) {
   localStorage.setItem("qc-api", api);
   localStorage.setItem("qc-token", llave);
-  const d = document.getElementById("dev").value.trim();
+  const d = elDev.value.trim();
   if (d) localStorage.setItem("qc-dev", d);
   decir("ok", "Aparato conectado.");
-  location.href = "index.html";
+  setTimeout(() => { location.href = "index.html"; }, 700);
 }
+
+function guardar() { probar(true); }
+
+if (elSrv.value) probar(false);   // con el enlace puesto, se comprueba solo al abrir
 </script>
 </body>
 </html>
