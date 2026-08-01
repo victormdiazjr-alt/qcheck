@@ -14,7 +14,7 @@ const state = { tab: "dashboard", day: null, search: "", showAll: false, chartRa
    `config: true` (`qcVeConfig()`), y la comprobación se hace en TRES sitios
    porque esconder el botón no es esconder la pantalla: la pestaña no se pinta,
    el enrutador no la acepta desde la dirección, y `switchTab` la rechaza. */
-const TABS_BASE = ["dashboard", "live", "daily", "tests", "strength", "charts"];
+const TABS_BASE = ["dashboard", "live", "daily", "losas", "tests", "strength", "charts"];
 function tabsVisibles() {
   return typeof qcVeConfig === "function" && qcVeConfig() ? TABS_BASE.concat("plan") : TABS_BASE;
 }
@@ -46,6 +46,7 @@ function render() {
   if (state.tab === "dashboard") app.innerHTML = viewDashboard();
   else if (state.tab === "live") app.innerHTML = viewLive();
   else if (state.tab === "daily") app.innerHTML = viewDaily();
+  else if (state.tab === "losas") app.innerHTML = viewLosas();
   else if (state.tab === "tests") app.innerHTML = viewTests();
   else if (state.tab === "strength") app.innerHTML = viewStrength();
   else if (state.tab === "charts") app.innerHTML = viewCharts();
@@ -453,6 +454,90 @@ function viewCharts() {
     <div class="panel chart-block">
       <div class="panel-head"><h2>Resistencia @ ${db.plan.cs.age} días (psi) — puntos + Moving Average (línea oscura)</h2></div>
       <div class="panel-body"><div class="chart-scroll">${chartCS5(sets, r)}</div></div>
+    </div>`;
+}
+
+/* ------------------------------------------------------------ Losas del tiro
+
+   El detalle de lo que la banda del Control Center enseña resumido: cada losa
+   con su avance y **qué camiones la sirvieron**, que es lo que hace falta
+   cuando un número no cuadra y hay que ir al conduce.
+
+   Se respeta aquí la misma regla que en el tablero: un camión que reparte su
+   carga entre varias losas **no dice cuánto dejó en cada una**, así que su
+   volumen no se reparte a ojo. Esas losas salen marcadas como compartidas y
+   sus yardas se leen como un mínimo. */
+function viewLosas() {
+  const day = state.day && testDates().includes(state.day) ? state.day : testDates()[0];
+  const L = losasDelDia(day);
+  const p = dayProgress(day);
+  const r = L.rango;
+  const rows = testsOfDate(day).filter((t) => !t.rejected);
+  /* Qué camiones tocaron cada losa. Del propio ensayo, no de una lista aparte. */
+  const camiones = {};
+  for (const t of rows) {
+    for (const c of slabCodes(t.ident)) (camiones[c] = camiones[c] || []).push(t);
+  }
+
+  const cab = r
+    ? `Tramo <b>${esc(r.carril)}-${r.desde.toFixed(3)} → ${r.hasta.toFixed(3)}</b> ·
+       ${r.metros} m${r.estimadas ? ` · ≈${r.estimadas} losas` : ""}`
+    : L.lista.length ? `<b>${L.lista.length}</b> losas declaradas` : "Sin losas declaradas";
+
+  return `
+    <div class="toolbar">
+      <h2>Losas del vaciado</h2>
+      <div class="spacer"></div>
+      <select onchange="state.day=this.value; render()">
+        ${testDates().map((d) => `<option value="${d}" ${d === day ? "selected" : ""}>${fmtDate(d)}</option>`).join("")}
+      </select>
+    </div>
+
+    <div class="panel"><div class="panel-body" style="font-size:13.5px">
+      ${cab} · <b>${L.hechas}</b> vaciada${L.hechas === 1 ? "" : "s"} ·
+      <b>${fmt(p.placed, 1)}</b> CY colocadas
+      ${r ? `<div class="muted" style="margin-top:8px; font-size:12.5px">
+        El tramo declara los dos extremos, no las losas de en medio: en este proyecto el paso entre
+        losas va de 4 a 8 m y cambia dentro del mismo tiro, así que generarlas sería inventarlas.
+        Las de abajo son las que <b>de verdad recibieron hormigón</b>, sacadas de los camiones.</div>` : ""}
+    </div></div>
+
+    ${L.fuera && L.fuera.length ? `<div class="panel" style="border-color:rgba(245,184,61,.45)">
+      <div class="panel-body" style="font-size:13.5px; color:var(--act)">
+        <b>Vaciadas fuera del tramo declarado:</b> ${L.fuera.map(esc).join(", ")}
+      </div></div>` : ""}
+
+    <div class="panel"><div class="panel-body flush">
+      ${L.lista.length ? `<div class="table-wrap"><table class="data">
+        <tr><th>Losa</th><th>Estado</th><th class="num">Yardas</th><th class="num">Plan</th>
+            <th class="num">Cargas</th><th>Camiones (ticket · CY)</th></tr>
+        ${L.lista.map((l) => {
+          const est = l.estado === "vaciada" ? `<span class="badge ok">Vaciada</span>`
+            : l.estado === "curso" ? `<span class="badge act">En curso</span>`
+            : `<span class="badge">Pendiente</span>`;
+          const cs = (camiones[l.codigo] || []);
+          return `<tr>
+            <td class="mono"><b>${esc(l.codigo)}</b></td>
+            <td>${est}</td>
+            <td class="num mono">${l.cargas ? `${l.compartida ? "≥ " : ""}${fmt(l.cy, 1)}` : "—"}</td>
+            <td class="num mono">${l.cyPlan != null ? fmt(l.cyPlan, 0) : "—"}</td>
+            <td class="num mono">${l.cargas || 0}</td>
+            <td style="white-space:normal; min-width:220px; font-size:12px">
+              ${cs.length ? cs.map((t) => `${esc(t.truck || "—")} · ${esc(t.ticket || "—")} · ${fmt(num(t.vol), 1)}`).join(" &nbsp;|&nbsp; ") : "—"}
+            </td>
+          </tr>`;
+        }).join("")}
+      </table></div>`
+      : `<div class="empty" style="padding:26px; text-align:center; color:var(--ink-soft)">
+           ${r ? "Ningún camión ha vaciado todavía. Las losas aparecen según llegan."
+               : "Este día no tiene losas ni tramo declarados en el plan."}
+         </div>`}
+    </div></div>
+
+    <div class="muted" style="font-size:12px; margin-top:10px">
+      Un camión que reparte su carga entre varias losas no registra cuánto dejó en cada una: esas
+      yardas se leen como un mínimo (≥) y no se reparten a ojo. Es la misma regla del tablero y
+      del reporte.
     </div>`;
 }
 

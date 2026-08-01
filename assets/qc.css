@@ -198,6 +198,39 @@ table.data tr:last-child td { border-bottom: none; }
 table.data td.num, table.data th.num { text-align: right; }
 table.data tr.clickable { cursor: pointer; }
 table.data tr.clickable:hover td { background: var(--hover); }
+
+/* ---------- número de referencia de la fila ----------
+
+   Al pasar por encima, cada fila enseña su número. Sirve para lo que pasa
+   todos los días: alguien mira una tabla de cuarenta ensayos y tiene que decir
+   por teléfono CUÁL — «la catorce» se entiende, «la del camión 116, el segundo»
+   no, porque el 116 sale cuatro veces.
+
+   Es CSS puro, con un contador. `tr + tr` cuenta desde la SEGUNDA fila hacia
+   abajo, que son justo las de datos: la primera lleva los encabezados. Así no
+   hace falta ni `tbody` ni tocar una sola de las tablas que ya existen.
+
+   El hueco se reserva SIEMPRE aunque el número no se vea: si apareciera al
+   pasar por encima, empujaría el contenido y la tabla temblaría bajo el dedo. */
+table.data { counter-reset: qcfila; }
+table.data tr + tr { counter-increment: qcfila; }
+table.data tr + tr td:first-child { position: relative; padding-left: 26px; }
+table.data tr + tr td:first-child::before {
+  content: counter(qcfila);
+  position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
+  min-width: 16px; text-align: right;
+  font-size: 9.5px; font-weight: 800; letter-spacing: .04em;
+  color: var(--ink-soft); font-variant-numeric: tabular-nums;
+  opacity: 0; transition: opacity .12s;
+  pointer-events: none;
+}
+table.data tr + tr:hover td:first-child::before { opacity: .85; }
+table.data tr + tr:hover td { background: var(--hover); }
+/* En un iPad no hay ratón que pase por encima: ahí los números se quedan
+   puestos, que es lo más útil cuando se lee de pie. */
+@media (hover: none) {
+  table.data tr + tr td:first-child::before { opacity: .5; }
+}
 td.z-ok   { background: var(--ok-bg); }
 td.z-act  { background: var(--act-bg); font-weight: 700; color: var(--act); }
 td.z-susp { background: var(--susp-bg); font-weight: 700; color: var(--susp); }

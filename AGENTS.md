@@ -286,6 +286,20 @@ surten vaciados que Segarra inspecciona. La pantalla de QCheck es lo que Segarra
 entrega en ese caso — información que hoy Rubén les pasa por teléfono. Es, además, la
 puerta comercial hacia Concre-Ticket.
 
+## 8d. Las tablas llevan número de fila
+
+Al pasar por encima, cada fila de `table.data` —y de `table.rep`, solo en pantalla— enseña
+**su número**. Sirve para lo que pasa a diario: alguien mira una tabla de cuarenta ensayos y
+tiene que decir por teléfono **cuál**; «la catorce» se entiende y «la del camión 116, el
+segundo» no, porque el 116 sale cuatro veces.
+
+Es CSS puro con un contador (`qcfila`). **`tr + tr` cuenta desde la segunda fila**, que son
+justo las de datos porque la primera lleva los encabezados — así no hizo falta ni `tbody` ni
+tocar una sola de las tablas que ya existían. **El hueco se reserva siempre** aunque el
+número esté invisible: si apareciera al pasar por encima, empujaría el contenido y la tabla
+temblaría bajo el dedo. En pantalla táctil, donde no hay ratón que pase por encima, los
+números se quedan puestos (`@media (hover: none)`). **En papel no salen.**
+
 ## 9. La barra de estado y el modo kiosco
 
 **Todas las pantallas llevan la misma barra** — `mountStatusBar(dia, {kiosco})` en `core.js`.
@@ -308,6 +322,13 @@ donde se definen. **No inventes un total.**
 (`pantallaCompletaAlTocar()`; iOS Safari no implementa la API y ahí simplemente no ocurre).
 **Recepción no** — Víctor la sacó el 31 jul 2026: se usa entrando y saliendo de otras
 pantallas, y ponerse a pantalla completa al tocarla estorbaba.
+
+**El botón de cerrar SIEMPRE lleva a casa y NUNCA cierra la sesión** (Víctor, 1 ago 2026).
+Antes, desde la propia casa, sacaba de la sesión: el mismo botón significaba «volver» en
+diez pantallas y «cerrar sesión» en una, y así es como uno se desloguea sin querer en mitad
+de un tiro. Ahora, estando en casa, **el botón ni siquiera se pinta** —no hay a dónde
+volver— y salir tiene su propia puerta con todas las letras: «Salir» en el menú del Control
+Center y en el pie del portal (`salirDeQCheck()`, que además pregunta).
 
 El botón de la esquina **lleva a la casa** — no cierra la pestaña. Cuál es la casa lo
 decide `casaDe()`: en un teléfono, **el portal** (`movil.html`), porque el Control Center no

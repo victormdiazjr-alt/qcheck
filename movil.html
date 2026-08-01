@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>QCheck — Móvil</title>
-<link rel="stylesheet" href="assets/qc.css?v=7f3bc2f4">
+<link rel="stylesheet" href="assets/qc.css?v=efc6c085">
 <style>
 /* ============================================================
    PORTAL DE TELÉFONO — para quien mira el tiro desde afuera.
@@ -119,13 +119,16 @@ button.mv-btn { width: 100%; text-align: left; font-family: inherit; cursor: poi
   <!-- La puerta al tablero completo solo la ve quien tenga `tablero` en la lista
        de usuarios. Rubén NO: el Control Center no cabe en la mano. -->
   <div class="mv-pie" id="mv-pie" hidden><a href="control-center.html">Ver el Control Center completo</a></div>
+  <!-- Salir tiene su propia puerta desde el 1 ago 2026: la ✕ de la barra ya no
+       cierra la sesión en ningún sitio, solo lleva a casa. -->
+  <div class="mv-pie"><a href="#" onclick="event.preventDefault(); salirDeQCheck()">Salir de QCheck</a></div>
 </main>
 
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=2e48ba53"></script>
-<script src="assets/core.js?v=9dc9d52f"></script>
+<script src="assets/core.js?v=8acf8749"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script src="assets/usuarios.js?v=7f884800"></script>
 <script src="assets/auth.js?v=c77eb346"></script>

@@ -175,18 +175,37 @@ async function cerrarVentana() {
   if (salir && (document.fullscreenElement || document.webkitFullscreenElement)) {
     try { await salir.call(document); } catch (_) {}
   }
-  // desde la propia casa, el botón sale de la sesión
-  location.href = location.pathname.split("/").pop() === casa ? "index.html" : casa;
+  /* **El botón de cerrar SIEMPRE lleva a casa. Nunca cierra la sesión.**
+
+     Antes, desde la propia casa, sacaba de la sesión. Era una trampa: el mismo
+     botón significaba «volver» en diez pantallas y «cerrar sesión» en una, y
+     así es como uno se desloguea sin querer en mitad de un tiro y se encuentra
+     la pantalla de acceso (Víctor, 1 ago 2026).
+
+     Salir tiene ahora su propia puerta, escrita con todas las letras, en el
+     menú del Control Center y en el pie del portal. */
+  location.href = casa;
 }
+
+/* Salir de la sesión, que ya no se hace por descuido con la ✕. */
+function salirDeQCheck() {
+  if (!confirm("¿Salir de QCheck?\n\nHabrá que entrar otra vez con usuario y clave.")) return;
+  sessionStorage.removeItem("qc-auth");
+  sessionStorage.removeItem("qc-user");
+  location.href = "index.html";
+}
+const ICONO_SALIR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5H19a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5h-4.5"/><path d="M9.5 16 5.5 12l4-4"/><path d="M5.5 12h9"/></svg>`;
+
 function mountCloseButton() {
   if (document.getElementById("close-btn")) return;
+  const casa = casaDe();
+  /* En la propia casa no hay a dónde volver: el botón sobra y se queda fuera.
+     Antes ahí era donde sacaba de la sesión. */
+  if (location.pathname.split("/").pop() === casa) return;
   const b = document.createElement("button");
   b.id = "close-btn";
   b.className = "close-btn";
-  const casa = casaDe();
-  const enCasa = location.pathname.split("/").pop() === casa;
-  b.title = enCasa ? "Salir"
-    : casa === "movil.html" ? "Volver al portal" : "Volver al Control Center";
+  b.title = casa === "movil.html" ? "Volver al portal" : "Volver al Control Center";
   b.setAttribute("aria-label", b.title);
   b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>`;
   b.onclick = (e) => { e.stopPropagation(); cerrarVentana(); };

@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Control Center — QCheck</title>
-<link rel="stylesheet" href="assets/qc.css?v=7f3bc2f4">
+<link rel="stylesheet" href="assets/qc.css?v=efc6c085">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%2396c93d' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -123,7 +123,13 @@
   .pt-cifra b { font-size: 36px; }
 }
 /* --- losas del tiro --- */
-.losas { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.10); }
+/* La banda es un enlace al detalle, pero no se disfraza de botón: se ilumina
+   al pasar por encima y nada más. El color entra por el resplandor. */
+.losas { display: block; text-decoration: none; color: inherit;
+  margin-top: 16px; padding: 14px 12px 12px; border-top: 1px solid rgba(255,255,255,.10);
+  border-radius: 0 0 12px 12px; transition: background .18s; }
+.losas:hover { background: rgba(255,255,255,.04); }
+.losas:hover .lz-k b { text-decoration: underline; text-underline-offset: 3px; }
 .losas .lz-k { font-size: 10px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase;
   color: #9fb6cc; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .losas .lz-k b { color: #fff; font-size: 12px; letter-spacing: .04em; white-space: nowrap; }
@@ -255,7 +261,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=2e48ba53"></script>
-<script src="assets/core.js?v=9dc9d52f"></script>
+<script src="assets/core.js?v=8acf8749"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script src="assets/clima.js?v=d5c4fb65"></script>
 <script src="assets/usuarios.js?v=7f884800"></script>
@@ -381,12 +387,15 @@ function losasHTML(day) {
     ? `<div class="lz-fuera">Fuera del tramo declarado: <b>${L.fuera.map(esc).join(", ")}</b></div>`
     : "";
 
-  return `<div class="losas">
+  /* La banda entera es un enlace al detalle, como el resto de los widgets del
+     Control Center: cada uno lleva a su pestaña de Results. Aquí, a la lista de
+     losas con los camiones que sirvieron cada una. */
+  return `<a class="losas" href="results.html#losas" title="Ver el detalle de las losas y qué camión sirvió cada una">
     <div class="lz-k">${enc}</div>
     ${L.lista.length ? `<div class="lz-tira">${tarjetas}</div>`
       : `<div class="lz-vacio">Ningún camión ha vaciado todavía. Las losas aparecen según llegan.</div>`}
     ${fuera}
-  </div>`;
+  </a>`;
 }
 
 /* Programar el tiro va primero porque es lo primero del día: la simulación
@@ -451,6 +460,12 @@ function menu() {
          día entra por las de arriba; esta se abre de vez en cuando. -->
     <button onclick="abrirDashboards()" title="Los tableros de indicadores: concretero, contratista y Autoridad">
       ${ICONO_DASHBOARDS}<span class="n">Dashboards</span>
+    </button>
+    <!-- Salir tiene su propia puerta desde el 1 ago 2026. Antes se salía con
+         la ✕ de la barra estando en esta pantalla, y el mismo botón que en
+         todas las demás significa «volver» aquí cerraba la sesión. -->
+    <button onclick="salirDeQCheck()" title="Cerrar la sesión de QCheck">
+      ${ICONO_SALIR}<span class="n">Salir</span>
     </button></div>`;
 }
 
