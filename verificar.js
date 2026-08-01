@@ -15,6 +15,7 @@
 const fs = require("fs");
 const path = require("path");
 const cp = require("child_process");
+const os = require("os");
 
 const raiz = __dirname;
 const html = fs.readdirSync(raiz).filter((f) => f.endsWith(".html"));
@@ -32,14 +33,40 @@ const titulo = (t) => console.log("\n" + t);
 
 const leer = (rel) => fs.readFileSync(path.join(raiz, rel), "utf8");
 
-/* ---------- 1. ¿parsea todo el JavaScript? ---------- */
+/* ---------- 1. ¿parsea todo el JavaScript? ----------
+
+   Los archivos .js Y **el código que va dentro de las pantallas**. Esto último
+   faltaba, y costó caro: el 1 ago 2026 un comentario HTML con acentos graves
+   dentro de una plantilla cerró la cadena, el script entero de
+   `control-center.html` dejó de parsear, y esta comprobación dijo «sin fallos»
+   mientras la pantalla salía en blanco en producción. La mitad del código de
+   este proyecto vive dentro del HTML: no mirarlo era mirar a medias. */
 titulo("JavaScript");
 let malJS = 0;
-for (const f of js) {
-  const r = cp.spawnSync(process.execPath, ["--check", path.join(raiz, f)], { encoding: "utf8" });
-  if (r.status !== 0) { mal(`${f} no parsea: ${(r.stderr || "").split("\n")[0]}`); malJS++; }
+const revisar = (nombre, codigo) => {
+  const tmp = path.join(os.tmpdir(), "qc-check-" + process.pid + ".js");
+  fs.writeFileSync(tmp, codigo);
+  const r = cp.spawnSync(process.execPath, ["--check", tmp], { encoding: "utf8" });
+  fs.unlinkSync(tmp);
+  if (r.status !== 0) {
+    const linea = (r.stderr || "").split("\n").find((l) => l.includes("Error")) || "";
+    mal(`${nombre} no parsea: ${linea.trim()}`);
+    malJS++;
+  }
+};
+for (const f of js) revisar(f, leer(f));
+let bloques = 0;
+for (const f of html) {
+  const fuente = leer(f);
+  const re = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g;
+  let m, i = 0;
+  while ((m = re.exec(fuente))) {
+    if (!m[1].trim()) continue;
+    bloques++;
+    revisar(`${f} (script ${++i})`, m[1]);
+  }
 }
-if (!malJS) bien(`${js.length} archivos parsean`);
+if (!malJS) bien(`${js.length} archivos y ${bloques} scripts dentro de pantallas parsean`);
 
 /* ---------- 2. ¿existe todo lo que se referencia? ---------- */
 titulo("Referencias");

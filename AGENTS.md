@@ -28,6 +28,14 @@ Lo único que comparten es `shared/conduce-contract.js` — ver §5.
 
 Antes de dar nada por bueno: **`node verificar.js`**.
 
+**Cuidado con los comentarios dentro de las plantillas.** La mitad del código de este
+proyecto vive en un `<script>` dentro del HTML, y mucho de él devuelve plantillas con
+acentos graves. Un comentario `<!-- … -->` metido dentro de una plantilla **no puede llevar
+acentos graves**: cierran la cadena y el archivo entero deja de parsear. El 1 ago 2026 eso
+dejó el Control Center **en blanco en producción** —se entraba y no se veía nada— y
+`verificar.js` decía «sin fallos», porque solo miraba los `.js` sueltos. Ahora también
+parsea el código de dentro de cada pantalla; si tocas esa comprobación, no la quites.
+
 ## 2. Regla de oro: la bitácora manda
 
 **`TAREAS.md` es la única fuente de verdad sobre quién está haciendo qué.**
