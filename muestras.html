@@ -90,6 +90,14 @@ header .spacer { flex: 1; }
 /* Ya cerrado: verde apagado, que es un estado, no una alarma */
 .cerrar-tiro.hecho { color: var(--ok); border-color: rgba(52,210,123,.45);
   box-shadow: 0 0 0 2px rgba(52,210,123,.08); }
+/* Con camiones pendientes no se puede cerrar desde aquí: apagado y sin cursor,
+   pero se queda a la vista para que se entienda que existe y por qué no. */
+.cerrar-tiro:disabled { opacity: .32; cursor: not-allowed; }
+.cerrar-tiro:disabled:hover { color: var(--muted); border-color: var(--hairline); }
+/* Ya está todo muestreado: el botón se enciende un punto. Es lo que toca
+   ahora, y el color entra por el resplandor (AGENTS.md §10). */
+.cerrar-tiro.listo { color: var(--text); border-color: rgba(74,99,216,.5);
+  box-shadow: 0 0 0 2px rgba(74,99,216,.10), 0 0 16px -6px rgba(74,99,216,.9); }
 
 /* ---------- cuerpo ---------- */
 .body { flex: 1; display: grid; grid-template-columns: 1fr 30vw; gap: 1.6vw; padding: 1.8vh 2.4vw; min-height: 0; }
@@ -532,14 +540,29 @@ function render() {
   document.getElementById("hsub").textContent =
     `${db.project.qcFirm || "QCheck"} · ${fmtDate(state.day)} · ${all.length} camiones`;
 
-  /* El botón de cerrar cambia de cara según esté el tiro abierto o cerrado.
-     Se pinta en cada render porque el cierre puede venir de otro aparato. */
+  /* El botón de cerrar. Se pinta en cada render porque el cierre puede venir
+     de otro aparato.
+
+     **Desde aquí solo se cierra cuando no queda nada por muestrear.** El tiro
+     puede acabar por debajo de lo planificado —se acabó el hormigón, llovió,
+     se decidió parar— y eso es normal; lo que no puede es cerrarse con un
+     camión esperando resultados, porque ese hueco en el expediente ya no se
+     rellena. Con camiones pendientes el botón queda apagado y dice cuántos.
+     Si de verdad hay que cerrar así, se hace desde el Control Center, que es
+     donde se toma esa decisión a sabiendas. */
   const bc = document.getElementById("btn-cerrar");
   const cerrado = tiroCerrado(state.day);
+  const pendientes = pend.length;
   bc.textContent = cerrado ? "Tiro cerrado" : "Cerrar tiro";
-  bc.className = "cerrar-tiro" + (cerrado ? " hecho" : "");
-  bc.title = cerrado ? `Cerrado a las ${cerrado} · tocar para reabrir`
-                     : "Dar por terminado el vaciado de hoy";
+  bc.disabled = !cerrado && pendientes > 0;
+  bc.className = "cerrar-tiro"
+    + (cerrado ? " hecho" : "")
+    + (!cerrado && !pendientes && all.length ? " listo" : "");
+  bc.title = cerrado
+    ? `Cerrado a las ${cerrado} · tocar para reabrir`
+    : pendientes
+      ? `Quedan ${pendientes} camión${pendientes === 1 ? "" : "es"} sin resultados`
+      : "Dar por terminado el vaciado de hoy";
 
   const t = currentTest();
   const body = document.getElementById("body");
@@ -673,6 +696,13 @@ function doSubmit(rejected) {
    Center: lo que usan dos pantallas no se duplica. */
 function cerrarDesdeMuestras() {
   const estaba = tiroCerrado(state.day);
+  /* La misma regla, comprobada también aquí y no solo en el botón: apagar un
+     botón esconde la acción, no la impide. */
+  const pendientes = pendingTrucks(state.day).length;
+  if (!estaba && pendientes) {
+    toast(`Quedan ${pendientes} camión${pendientes === 1 ? "" : "es"} sin resultados`);
+    return;
+  }
   const ok = estaba ? reabrirTiro(state.day) : cerrarTiro(state.day);
   if (!ok) return;
   render();

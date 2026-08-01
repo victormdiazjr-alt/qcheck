@@ -142,6 +142,17 @@ vive en `core.js`, que es lo que hacen dos pantallas. Guarda `dayMeta[día].cerr
 `cerradoPor`, **viaja a los demás aparatos** como cualquier cambio, y manda sobre lo que
 deduzcan los camiones. Se puede reabrir.
 
+**Desde Muestras solo se cierra cuando no queda nada por muestrear**, y desde el Control
+Center siempre. No es lo mismo: que el tiro acabe **por debajo de lo planificado** es
+normal —se acabó el hormigón, llovió, se decidió parar—, y el total final no tiene por qué
+ser el que se declaró al crearlo. Lo que no puede pasar es cerrarlo **con un camión
+esperando resultados**, porque ese hueco en el expediente ya no se rellena. Con camiones
+pendientes el botón de Muestras queda apagado y dice cuántos faltan; en cuanto entra el
+último resultado se enciende, que es justo el momento. Si aun así hay que cerrar con algo
+pendiente, se hace desde el Control Center, que es donde se toma esa decisión a sabiendas.
+La comprobación está en el botón **y** en la función: apagar un botón esconde la acción, no
+la impide.
+
 La confirmación **enseña lo que se está cerrando** —yardas, camiones— y avisa de los
 camiones sin muestrear o sin terminar de descargar. Un «¿está seguro?» a secas se contesta
 que sí sin leerlo, y cerrar con un camión sin muestrear deja en el expediente un hueco que
