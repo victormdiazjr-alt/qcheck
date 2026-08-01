@@ -614,6 +614,14 @@ Reglas que no se rompen aquí:
   configurado, «Sin señal · N sin subir» cuando no sube, y «Llave rechazada» si la puerta
   la cierra el token. En obra, un «En línea» falso es peor que no decir nada: el técnico
   sigue entrando muestras convencido de que la PC las está viendo.
+- **EL ENLACE DE RUBÉN NO SE TOCA.** Víctor se lo dio el 1 ago 2026 y quedó en que ese
+  sigue siendo el enlace pase lo que pase con el código:
+  `…/conectar.html?api=…&llave=…`. Queda congelado que `conectar.html` **existe siempre**,
+  que sigue aceptando esos dos parámetros, y que **con el aparato ya conectado pasa de
+  largo a `index.html` sin preguntar** — si vuelve a pedir confirmación, deja de servir
+  para el uso diario. La llave **no se rota** sin repartir el enlace de nuevo, aparato por
+  aparato. En obra, un enlace que cambia es un enlace que nadie encuentra. Ver
+  `DECISIONS.md` §16.
 - **`conectar.html` conecta un aparato con un solo enlace.** Lleva la dirección y la llave
   en el URL y las **borra del URL en el acto** (`history.replaceState`), así que no se
   quedan en el historial. **No lleva candado a propósito** —es lo primero que se abre en un

@@ -186,3 +186,39 @@ Y **sale de pantalla completa antes de navegar**.
 
 **Por qué:** sin salir del fullscreen, volver desde el Field Display dejaba el Control
 Center ocupando la pantalla entera, sin barra del navegador ni forma de salir.
+
+---
+
+## 16. El enlace de Rubén no se toca
+
+**Decidido:** este enlace es **permanente** y ningún cambio lo puede romper:
+
+```
+https://victormdiazjr-alt.github.io/qcheck/conectar.html?api=…&llave=…
+```
+
+Víctor se lo dio a Rubén el 1 ago 2026 y quedó en que **ese sigue siendo el enlace**
+pase lo que pase con el código, para no andar repartiendo direcciones nuevas cada vez.
+
+**Qué queda congelado, y no es negociable:**
+
+- `conectar.html` **existe siempre** y sigue aceptando `?api=` y `?llave=`.
+- Con el aparato ya conectado a lo mismo, **pasa de largo a `index.html`** sin
+  preguntar. Si algún día vuelve a pedir confirmación, el enlace deja de servir para
+  el uso diario y Rubén se encuentra una pantalla que no entiende.
+- La **llave del proyecto no se rota** sin volver a repartir el enlace a mano, aparato
+  por aparato. Rotarla y no avisar deja a todo el mundo fuera en mitad de un tiro.
+- El sitio sigue colgando de `victormdiazjr-alt.github.io/qcheck/`.
+
+**Por qué:** en obra, un enlace que cambia es un enlace que nadie encuentra. El técnico
+lo tiene guardado en el teléfono y lo abre con las manos sucias; no va a buscar en el
+correo cuál era el bueno. La estabilidad del enlace vale más que cualquier mejora que
+obligue a cambiarlo.
+
+**Precio, y hay que verlo venir:** **mudarse al dominio rompe el enlace.** El día que
+QCheck pase a `qcheck.dcreationspr.com` hay que repartir uno nuevo. Se hace **una vez**,
+avisando, y GitHub Pages se queda sirviendo el viejo con una redirección mientras tanto
+— no se apaga el mismo día.
+
+**Cuándo reconsiderarlo:** con la autenticación real (Q-07). Entonces la llave en el
+enlace sobra: cada quien entra con su cuenta y el aparato se conecta solo.
