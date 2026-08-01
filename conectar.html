@@ -195,7 +195,16 @@ function guardarYa(api, llave) {
 
 function guardar() { probar(true); }
 
-if (elSrv.value) probar(false);   // con el enlace puesto, se comprueba solo al abrir
+/* UN SOLO ENLACE para siempre. Si este aparato ya está conectado a lo mismo
+   que trae el enlace, no hay nada que preguntar: se sigue de largo al acceso.
+   Así Rubén guarda un enlace y lo usa todos los días — la primera vez conecta
+   el aparato y las demás entra directo, sin una pantalla de por medio que le
+   pida confirmar algo que ya está hecho. */
+const yaConectado = par.get("api")
+  && localStorage.getItem("qc-api") === elSrv.value
+  && (localStorage.getItem("qc-token") || "") === elKey.value;
+if (yaConectado) location.replace("index.html");
+else if (elSrv.value) probar(false);   // con el enlace puesto, se comprueba solo al abrir
 </script>
 </body>
 </html>
