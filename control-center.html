@@ -408,7 +408,11 @@ function menu() {
     </a>`).join("")}
     <!-- La sala de máquinas, solo para el administrador: quién está usando
          QCheck ahora mismo. No enseña ningún dato del proyecto, así que va
-         detrás de la misma llave que «Plan & Datos» (`qcVeConfig()`). -->
+         detrás de la misma llave que «Plan & Datos» — qcVeConfig().
+         OJO: este comentario vive DENTRO de una plantilla de JavaScript.
+         Nada de acentos graves aquí: cierran la cadena y se lleva por delante
+         el archivo entero. Pasó el 1 ago 2026 y dejó el Control Center en
+         blanco en producción. -->
     ${typeof qcVeConfig === "function" && qcVeConfig() ? `
     <a href="estado.html" title="Qué aparatos están conectados, en qué pantalla y desde cuándo">
       ${ICONO_ESTADO}<span class="n">Estado del sistema</span>
