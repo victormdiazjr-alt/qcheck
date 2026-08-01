@@ -298,12 +298,26 @@ function mountStatusBar(day, opciones) {
   return bar;
 }
 
+/* La barra dice la verdad sobre la sincronización, no sobre el WiFi.
+   `navigator.onLine` solo sabe si hay red; llegó a decir «En línea» con el
+   servidor caído y los cambios amontonándose sin subir. En obra eso es peor
+   que no decir nada: el técnico sigue entrando muestras convencido de que
+   la PC de Rubén las está viendo. */
 function pintarConexion() {
   const el = document.getElementById("qcs-conn");
   if (!el) return;
-  const on = navigator.onLine !== false;
-  el.className = "qcs-conn" + (on ? "" : " off");
-  el.querySelector("span").textContent = on ? "En línea" : "Sin conexión";
+  const red = navigator.onLine !== false;
+  const s = typeof QCSync !== "undefined" ? QCSync.estado : "apagado";
+  const pend = typeof QCSync !== "undefined" ? QCSync.pendientes : 0;
+  let bien = true, texto;
+  if (!red) { bien = false; texto = "Sin conexión"; }
+  else if (s === "apagado") { texto = "Solo este aparato"; }   // sin servidor: no es un fallo, es un hecho
+  else if (s === "al-dia") { texto = "En línea"; }
+  else if (s === "sin-llave") { bien = false; texto = "Llave rechazada"; }
+  else if (s === "sin-senal") { bien = false; texto = pend ? `Sin señal · ${pend} sin subir` : "Sin señal"; }
+  else { texto = "Conectando…"; }
+  el.className = "qcs-conn" + (bien ? "" : " off");
+  el.querySelector("span").textContent = texto;
 }
 
 function pintarTiro(day) {

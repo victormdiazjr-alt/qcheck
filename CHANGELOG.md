@@ -45,6 +45,20 @@ verdad. Camión recibido en uno → **EN PRUEBAS** en el otro. Muestras entradas
 **ACEPTADO** con Slump 3.25 y Unit Weight 150.4 en el otro. Servidor apagado a media faena →
 «sin señal», dos cambios encolados, y al volver subieron solos.
 
+### Añadido después del despliegue
+- **`conectar.html`** — un enlace por aparato y queda conectado. Trae la dirección y la
+  llave en el URL y **las borra del URL en el acto**. La alternativa era teclear una llave
+  de 32 caracteres en un iPad, de pie, en la obra.
+- **La franja de arriba deja de mentir.** Decía «En línea» mirando el WiFi, con el servidor
+  caído y los cambios amontonándose sin subir. Ahora dice «Solo este aparato», «Sin señal ·
+  N sin subir» o «Llave rechazada». En obra un «En línea» falso es peor que no decir nada.
+
+### Arreglado
+- **`_ma5` viajaba al servidor.** La Moving Average se guarda encima del ensayo como caché,
+  y abrir las Control Charts mandaba **99 líneas** al registro — cifras calculadas metidas
+  en el expediente como si alguien las hubiera medido. Ahora nada que empiece por `_` sale
+  del aparato, ni de ida ni de vuelta.
+
 ### Desplegado
 **`https://qcheck-api.qcheck.workers.dev`** — Cloudflare Workers + D1, cuenta de Víctor.
 Probado además entre el **sitio publicado** (`victormdiazjr-alt.github.io`) y un segundo

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Aplicación en la pantalla de inicio (iOS y Android). Sin estas etiquetas
+     y sin el manifest, el icono guardado abre como un MARCADOR de Safari, con
+     una franja arriba enseñando el dominio en vez de la aplicación limpia. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QCheck">
+<link rel="apple-touch-icon" href="assets/icono-180.png">
+<meta name="theme-color" content="#0a0d12">
+<title>Conectar aparato — QCheck</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%2396c93d' stroke-width='8'/></svg>">
+<style>
+/* ============================================================
+   CONECTAR APARATO — se abre UNA vez por aparato y no se vuelve a ver.
+
+   Existe porque la alternativa era teclear una dirección larga y una
+   llave de 32 caracteres en el teclado de un iPad, de pie, en la obra.
+   El enlace las trae puestas y la pantalla las guarda.
+
+   NO lleva candado a propósito: es lo primero que se abre en un
+   aparato nuevo, antes de que nadie tenga sesión. No enseña ni un dato
+   del proyecto — solo dice si el servidor contesta.
+   ============================================================ */
+:root {
+  --bg: #0a0d12; --surface: #12171f; --surface-2: #1a2029;
+  --logo-blue:#4a7ef0; --logo-green:#57c94f; --logo-g1:#8a95a3; --logo-g2:#6b7683;
+  --text: #eef2f6; --muted: #77848f; --hairline: rgba(255,255,255,.11);
+  --ok: #34d27b; --act: #f5b83d; --susp: #ff5a52; --navy: #4a63d8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; }
+body {
+  background:
+    radial-gradient(900px 520px at 78% -8%, rgba(74,99,216,.20), transparent 62%),
+    radial-gradient(700px 420px at 12% 108%, rgba(150,201,61,.12), transparent 60%),
+    var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  padding: 6vh 6vw;
+}
+.card {
+  width: 100%; max-width: 460px;
+  background: linear-gradient(168deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--hairline); border-radius: 22px;
+  padding: 38px 32px 28px;
+  box-shadow: 0 22px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.brand { display: flex; align-items: center; gap: 13px; margin-bottom: 6px; }
+.brand svg { height: 44px; width: auto; }
+.brand .n { font-size: 26px; font-weight: 800; letter-spacing: -.01em; }
+.sub { color: var(--muted); font-size: 12.5px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; margin-bottom: 26px; }
+label { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+input {
+  width: 100%; background: rgba(0,0,0,.28); border: 1.5px solid var(--hairline);
+  color: var(--text); border-radius: 12px; padding: 14px 15px;
+  font-size: 16px; font-family: inherit; margin-bottom: 18px;
+}
+input:focus { outline: none; border-color: var(--navy); background: rgba(0,0,0,.4); }
+button {
+  width: 100%; background: linear-gradient(168deg, var(--surface-2), var(--surface));
+  color: var(--ok); border: 1px solid rgba(52,210,123,.5);
+  border-radius: 12px; padding: 16px; font-size: 15px; font-weight: 850;
+  letter-spacing: .14em; text-transform: uppercase; font-family: inherit; cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(52,210,123,.10), 0 0 26px -6px rgba(52,210,123,.75),
+              inset 0 1px 0 rgba(255,255,255,.06);
+  transition: transform .14s, box-shadow .2s, border-color .2s;
+}
+button:active { transform: scale(.98); }
+button.esperando { color: var(--muted); border-color: var(--hairline); box-shadow: none; }
+.estado {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--hairline); border-radius: 12px;
+  padding: 13px 15px; margin-bottom: 20px; font-size: 13.5px; font-weight: 600;
+}
+.estado i { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+.estado.ok    { border-color: rgba(52,210,123,.45); color: var(--ok); }
+.estado.ok i    { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+.estado.mal   { border-color: rgba(255,90,82,.45); color: var(--susp); }
+.estado.mal i   { background: var(--susp); box-shadow: 0 0 10px var(--susp); }
+.estado.espera { border-color: rgba(245,184,61,.45); color: var(--act); }
+.estado.espera i { background: var(--act); box-shadow: 0 0 10px var(--act); }
+.ir { display: block; text-align: center; margin-top: 18px; color: var(--muted); font-size: 12.5px; text-decoration: none; }
+.ir:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="brand">
+    <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
+      <defs>
+        <mask id="qcm-q1"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
+        <mask id="qcm-c1"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
+      </defs>
+      <path fill="var(--logo-blue,#0f46b5)" fill-rule="evenodd" mask="url(#qcm-q1)" d="M 509 63 A 337 337 0 1 1 508.9 63 Z M 509 174 A 226 226 0 1 0 509.1 174 Z"/>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+      <g mask="url(#qcm-c1)">
+        <path fill="var(--logo-green,#39a935)" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+        <path fill="var(--logo-g1,#68727f)" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+        <path fill="var(--logo-g2,#4f5a66)" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+      </g>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
+    </svg>
+    <span class="n">QCheck</span>
+  </div>
+  <div class="sub">Conectar aparato</div>
+
+  <div class="estado" id="estado"><i></i><span>Comprobando el servidor…</span></div>
+
+  <label for="dev">Nombre de este aparato</label>
+  <input id="dev" placeholder="iPad de Rubén" autocapitalize="words">
+
+  <button id="btn" onclick="guardar()">Conectar</button>
+  <a class="ir" id="ir" href="index.html">Entrar sin conectar</a>
+</div>
+
+<script>
+"use strict";
+/* Los datos llegan en el enlace para no teclear una llave de 32 caracteres
+   en un iPad. Se guardan y se BORRAN del URL en el acto: así no se quedan
+   en el historial ni se van de paseo si alguien comparte la pantalla. */
+const par = new URLSearchParams(location.search);
+const api = (par.get("api") || localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
+const llave = par.get("llave") || localStorage.getItem("qc-token") || "";
+if (par.get("api") || par.get("llave")) {
+  history.replaceState(null, "", location.pathname);
+}
+
+const elEstado = document.getElementById("estado");
+const elBtn = document.getElementById("btn");
+function decir(clase, texto) {
+  elEstado.className = "estado " + clase;
+  elEstado.querySelector("span").textContent = texto;
+}
+
+document.getElementById("dev").value = localStorage.getItem("qc-dev") || "";
+
+/* Se prueba antes de guardar nada: conectar un aparato a un servidor que no
+   contesta y que lo diga después, en medio del tiro, no sirve de nada. */
+if (!api) {
+  decir("mal", "Este enlace no trae servidor. Pida el enlace de conexión.");
+  elBtn.disabled = true;
+  elBtn.className = "esperando";
+} else {
+  fetch(api + "/api/salud")
+    .then((r) => r.json())
+    .then((s) => {
+      if (!s.ok) throw new Error("respuesta");
+      if (s.protegido && !llave) decir("espera", "El servidor pide llave y el enlace no la trae.");
+      else decir("ok", `Servidor al habla · ${s.cambios} cambios guardados`);
+    })
+    .catch(() => decir("mal", "El servidor no contesta. Revise el internet del aparato."));
+}
+
+function guardar() {
+  localStorage.setItem("qc-api", api);
+  localStorage.setItem("qc-token", llave);
+  const d = document.getElementById("dev").value.trim();
+  if (d) localStorage.setItem("qc-dev", d);
+  decir("ok", "Aparato conectado.");
+  location.href = "index.html";
+}
+</script>
+</body>
+</html>

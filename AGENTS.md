@@ -546,6 +546,24 @@ Reglas que no se rompen aquí:
   trabajar sobre una copia — una migración, dos usos.
 - **La base actualiza ANTES de guardar lo que llega de fuera.** Si no, un cambio recibido
   se lee como propio en el siguiente diff y vuelve a subir, en bucle.
+- **Lo que empieza por `_` es calculado y no viaja nunca** (`qcDerivado()`). `_ma5`, la
+  Moving Average, se guarda encima del ensayo como caché para no recalcularla en cada
+  repintado — pero se deduce de los ensayos que ya están, así que cada aparato la saca
+  sola. Sin esta regla, **abrir las Control Charts mandaba 99 líneas** al registro y metía
+  en el expediente cifras que nadie midió. Si cacheas un cálculo en un registro, nómbralo
+  con `_` delante.
+- **La franja de arriba dice la verdad sobre la sincronización, no sobre el WiFi.**
+  `navigator.onLine` solo sabe si hay red, y llegó a decir «En línea» con el servidor
+  caído y los cambios amontonándose. Ahora sale «Solo este aparato» sin servidor
+  configurado, «Sin señal · N sin subir» cuando no sube, y «Llave rechazada» si la puerta
+  la cierra el token. En obra, un «En línea» falso es peor que no decir nada: el técnico
+  sigue entrando muestras convencido de que la PC las está viendo.
+- **`conectar.html` conecta un aparato con un solo enlace.** Lleva la dirección y la llave
+  en el URL y las **borra del URL en el acto** (`history.replaceState`), así que no se
+  quedan en el historial. **No lleva candado a propósito** —es lo primero que se abre en un
+  aparato nuevo, antes de que nadie tenga sesión— y no enseña ni un dato del proyecto: solo
+  dice si el servidor contesta. La alternativa era teclear una llave de 32 caracteres en un
+  iPad, de pie, en la obra. Ese enlace **no se comparte por fuera**: quien lo tenga entra.
 - **Nada se borra.** El registro solo crece. Un dato que quedó mal se corrige con otra
   línea encima y las dos quedan; un expediente de calidad que se puede reescribir por
   detrás no vale nada.

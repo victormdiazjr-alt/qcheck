@@ -73,6 +73,15 @@ function qcIdDe(reg, prefijo) {
   return reg.id;
 }
 
+/* Lo que empieza por `_` es CALCULADO, no medido, y no viaja nunca.
+
+   `_ma5` —la Moving Average de la resistencia a 5 días— se guarda encima del
+   ensayo para no recalcularla en cada repintado. Es un caché, no un dato: se
+   deduce de los ensayos que ya están, así que cada aparato la saca sola. Sin
+   esta regla, abrir las Control Charts mandaba **99 líneas** al registro y
+   metía en el expediente cifras que nadie midió. */
+function qcDerivado(campo) { return campo.charAt(0) === "_"; }
+
 /* ------------------------------------------------------------ la proyección
 
    La base, aplanada a `entidad → id → campo → valor`. Es lo que se
@@ -84,7 +93,7 @@ function qcProyectar(base) {
   for (const t of base.tests || []) {
     if (t.source === "demo") continue;               // la simulación no viaja
     const o = {};
-    for (const k of Object.keys(t)) if (k !== "id") o[k] = t[k];
+    for (const k of Object.keys(t)) if (k !== "id" && !qcDerivado(k)) o[k] = t[k];
     p.test[qcIdDe(t, "t")] = o;
   }
   for (const [dia, m] of Object.entries(base.dayMeta || {})) {
@@ -136,6 +145,7 @@ function qcCambios(antes, ahora) {
 /* Mete un cambio recibido dentro de `db`. Crea el registro si no existía:
    un camión recibido en el iPad tiene que aparecer en la PC. */
 function qcAplicarOp(o) {
+  if (qcDerivado(o.campo)) return;   // un calculado que llegue de fuera se ignora
   if (o.ent === "test") {
     let t = (db.tests || []).find((x) => x.id === o.id);
     if (!t) { t = { id: o.id }; db.tests.push(t); }
@@ -280,6 +290,10 @@ const QCSync = {
   async _ciclo() {
     await this._empujar();
     await this._bajar();
+    /* La franja de arriba lleva el estado real de la sincronización, y está en
+       todas las pantallas: es donde el técnico se entera de que lleva media
+       hora entrando muestras que no salen del aparato. */
+    if (typeof pintarConexion === "function") pintarConexion();
   },
 
   arrancar() {
