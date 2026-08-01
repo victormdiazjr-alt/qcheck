@@ -1313,8 +1313,11 @@ function abrirEleccion(cfg) {
         <button class="qcd-x" type="button" aria-label="Cerrar">✕</button>
       </div>
       ${cfg.opciones.map((d, i) => {
+        /* La coletilla es opcional. Los dashboards la llevan porque hay que
+           saber cuál es cuál; «Programar tiro» y «Cerrar tiro» se explican
+           solos y una línea de más solo estorba (Víctor, 1 ago 2026). */
         const dentro = `${d.ic}
-        <div><div class="n">${esc(d.n)}</div><div class="r">${esc(d.r)}</div></div>
+        <div><div class="n">${esc(d.n)}</div>${d.r ? `<div class="r">${esc(d.r)}</div>` : ""}</div>
         <span class="fl">›</span>`;
         return d.href
           ? `<a class="qcd-op" href="${d.href}">${dentro}</a>`

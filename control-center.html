@@ -255,7 +255,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=2e48ba53"></script>
-<script src="assets/core.js?v=3203d062"></script>
+<script src="assets/core.js?v=9dc9d52f"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script src="assets/clima.js?v=d5c4fb65"></script>
 <script src="assets/usuarios.js?v=7f884800"></script>
@@ -408,14 +408,14 @@ function abrirTiro() {
   abrirEleccion({
     titulo: "Tiro",
     pregunta: "¿Qué quiere hacer?",
+    /* Sin coletilla: los dos se explican solos. La única que queda es la hora
+       en «Reabrir», porque ahí sí hace falta saber cuándo se cerró. */
     opciones: [
-      { n: "Programar tiro", r: "Declarar hora de comienzo, yardas y tramo del día",
-        ic: ICONO_PROGRAMAR, hacer: () => programarTiro() },
+      { n: "Programar tiro", ic: ICONO_PROGRAMAR, hacer: () => programarTiro() },
       cerrado
-        ? { n: "Reabrir tiro", r: `Cerrado a las ${cerrado} · volver a recibir camiones`,
+        ? { n: "Reabrir tiro", r: `Cerrado a las ${cerrado}`,
             ic: ICONO_CERRAR, hacer: () => { if (reabrirTiro()) render(); } }
-        : { n: "Cerrar tiro", r: "Dar por terminado el vaciado de hoy",
-            ic: ICONO_CERRAR, hacer: () => { if (cerrarTiro()) render(); } },
+        : { n: "Cerrar tiro", ic: ICONO_CERRAR, hacer: () => { if (cerrarTiro()) render(); } },
     ],
   });
 }
