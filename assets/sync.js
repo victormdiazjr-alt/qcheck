@@ -335,15 +335,28 @@ const QCSync = {
     clearInterval(this._timer);
     const paso = () => this._ciclo();
     paso();
-    /* Cada 3 s con la pantalla delante; cada 20 s si está escondida, que
-       un Field Display en una TV no necesita gastar peticiones cuando
-       nadie cambió de pestaña. */
+
+    /* **Las pantallas de campo miran siempre rápido, escondidas o no.**
+       El Field Display y Muestras existen para verse en vivo: uno cuelga en la
+       obra sin que nadie lo toque y el otro está en la mano del técnico. Y
+       resulta que `document.hidden` sale `true` en sitios donde la pantalla se
+       está viendo perfectamente —una aplicación guardada en la pantalla de
+       inicio del iPhone es el caso—, así que bajarlas a 20 s las dejaba
+       muertas: Rubén entraba datos en la PC y el Field Display del teléfono
+       tardaba en enterarse. Las demás sí se relajan cuando nadie mira. */
+    const RAPIDA = /(display|muestras)\.html/.test(location.pathname);
     const arrancarTimer = () => {
       clearInterval(this._timer);
-      this._timer = setInterval(paso, document.hidden ? 20000 : 3000);
+      this._timer = setInterval(paso, (!RAPIDA && document.hidden) ? 20000 : 3000);
     };
     arrancarTimer();
+
+    /* iOS congela el JavaScript de una página que pasa a segundo plano y la
+       descongela al volver. Sin estos avisos, volver a la aplicación enseñaba
+       lo de hace un rato hasta que saltara el próximo intervalo. */
     document.addEventListener("visibilitychange", () => { arrancarTimer(); if (!document.hidden) paso(); });
+    window.addEventListener("pageshow", paso);
+    window.addEventListener("focus", paso);
     window.addEventListener("online", paso);
   },
 };
