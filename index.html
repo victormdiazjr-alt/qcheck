@@ -45,6 +45,36 @@ body {
 .brand svg { height: 46px; width: auto; }
 .brand .n { font-size: 27px; font-weight: 800; letter-spacing: -.01em; }
 .sub { color: var(--muted); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; margin-bottom: 30px; }
+
+/* ---------- «Online», como exponente del logotipo ----------
+   Dice de un vistazo si ESTE aparato está corriendo contra el servidor —o
+   sea, si lo que se entre aquí lo van a ver los demás—. Nació de un fallo
+   real: el 1 ago 2026 un aparato llevaba horas sin conectar y no había forma
+   de saberlo hasta abrir la configuración.
+
+   Va en la pantalla de acceso a propósito: es lo primero que se ve al llegar
+   y lo último que se puede mirar antes de empezar a trabajar. Dentro de la
+   aplicación el mismo dato vive en la franja de estado.
+
+   El color entra por el resplandor, no por el relleno (AGENTS.md §10). */
+.brand .estado {
+  display: none; vertical-align: super; margin-left: 4px;
+  font-size: 9.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase;
+}
+.brand .estado.si {
+  display: inline; color: var(--ok);
+  animation: respirar 2.4s ease-in-out infinite;
+}
+/* Configurado pero sin contestar: se dice, no se calla. Un aparato que cree
+   estar en la red y no lo está es peor que uno que se sabe solo. */
+.brand .estado.no { display: inline; color: var(--susp); text-shadow: 0 0 12px rgba(255,90,82,.5); }
+@keyframes respirar {
+  0%, 100% { text-shadow: 0 0 6px rgba(52,210,123,.45); opacity: .82; }
+  50%      { text-shadow: 0 0 16px rgba(52,210,123,1), 0 0 30px rgba(52,210,123,.55); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand .estado.si { animation: none; text-shadow: 0 0 12px rgba(52,210,123,.8); }
+}
 label { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
 input {
   width: 100%; background: rgba(0,0,0,.28); border: 1.5px solid var(--hairline);
@@ -94,7 +124,7 @@ button:active { transform: scale(.98); }
       </g>
       <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
     </svg>
-    <span class="n">QCheck</span>
+    <span class="n">QCheck<sup class="estado" id="estado-red"></sup></span>
   </div>
   <div class="sub">Control de Hormigón · PR-52</div>
 
@@ -116,6 +146,41 @@ button:active { transform: scale(.98); }
 <script src="assets/usuarios.js?v=7f884800"></script>
 <script>
 "use strict";
+
+/* ------------------------------------------------------------ ¿en la red?
+
+   Se pregunta al servidor directamente, sin cargar el motor: esta pantalla
+   son dos campos y no va a arrastrar 150 KB para encender una palabra.
+
+   Tres estados, y el silencio también dice algo:
+     - contesta          → «Online» en verde, respirando
+     - configurado y no contesta → «Sin conexión» en rojo. Callarlo sería peor:
+                           el aparato cree estar en la red y no lo está.
+     - sin servidor      → nada. Ese aparato trabaja solo a propósito y no
+                           hay nada que avisar. */
+function pintarRed() {
+  const el = document.getElementById("estado-red");
+  const api = (localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
+  if (!api) return;
+  const cab = {};
+  const tk = localStorage.getItem("qc-token");
+  if (tk) cab["X-QC-Token"] = tk;
+  fetch(api + "/api/salud", { headers: cab })
+    .then((r) => r.json())
+    .then((s) => {
+      if (!s.ok) throw new Error("respuesta");
+      el.textContent = "Online";
+      el.className = "estado si";
+      el.title = `${s.cambios} cambios guardados en el servidor`;
+    })
+    .catch(() => {
+      el.textContent = "Sin conexión";
+      el.className = "estado no";
+      el.title = "Este aparato no está alcanzando el servidor";
+    });
+}
+pintarRed();
+
 function entrar(e) {
   e.preventDefault();
   const u = document.getElementById("u").value.trim().toLowerCase();
