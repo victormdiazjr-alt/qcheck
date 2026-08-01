@@ -127,7 +127,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=68974c58"></script>
-<script src="assets/core.js?v=ca642bf4"></script>
+<script src="assets/core.js?v=126851d7"></script>
 <script src="assets/demo.js?v=e4b84ffd"></script>
 <script>
 "use strict";
@@ -250,7 +250,8 @@ function formDayPlan() {
     title: `Plan del día — ${fmtDate(state.day)}`,
     initial: meta,
     fields: [
-      { key: "losasPlan", label: "Losas a tirar hoy", type: "number", step: "1", hint: "Ej. 23" },
+      { key: "losasPlan", label: "Cuántas losas", type: "number", step: "1",
+        hint: "Solo el número — ej. 23. Si QC declaró la lista de losas, manda esa." },
       { key: "cyPlan", label: "Yardas planificadas (CY)", type: "number", step: "5" },
       { key: "fase", label: "Fase" },
       { key: "lane", label: "Carril" },

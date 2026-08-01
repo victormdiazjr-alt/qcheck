@@ -125,6 +125,14 @@ que se escribe `L3-0.943:24, L3-0.936:18, L3-0.929` — el número tras los dos 
 las yardas planificadas de esa losa, y es opcional. **Sin lista declarada no se pinta
 nada, ni un aviso**: deducir el plan de lo que los camiones sirvieron sería inventarlo.
 
+**Hay dos formas de declarar las losas y no pueden contradecirse.** `dayMeta.losas` es la
+lista con sus códigos, la que llena QC; `dayMeta.losasPlan` es el simple conteo, lo único
+que sabe el contratista desde su pantalla. **Si hay lista, manda la lista** —contarla es
+exacto, y un número escrito a mano se queda viejo en cuanto alguien añade una losa—; el
+conteo solo se usa cuando no hay lista. Los dos campos llegaron a llamarse igual en el
+formulario («Losas a tirar hoy») y era imposible saber cuál pedía qué: ahora son
+**«Cuántas losas»** y **«Cuáles losas — la lista»**.
+
 El avance de cada losa sale de los camiones, y aquí hay una trampa: **un camión que
 reparte su carga entre varias losas no dice cuánto dejó en cada una.** Ese volumen NO se
 reparte a ojo. Solo se atribuyen las yardas de los camiones que sirvieron una sola losa;

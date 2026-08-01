@@ -769,7 +769,12 @@ function dayProgress(day) {
     : 0;
   const placed = recibido - enCurso;
   const cyPlan = num(meta.cyPlan);
-  const losasPlan = num(meta.losasPlan);
+  /* Hay dos formas de declarar las losas del día y NO pueden contradecirse:
+     la lista con sus códigos (`losas`, la que llena QC) y el simple conteo
+     (`losasPlan`, lo único que sabe el contratista desde su pantalla). Si hay
+     lista, manda la lista — contarla es exacto y el número escrito a mano se
+     queda viejo en cuanto alguien añade una losa. El reporte ya lo hacía así. */
+  const losasPlan = losasDelDia(day).lista.length || num(meta.losasPlan);
   const done = new Set();
   for (const t of rows) if (!t.rejected && t.end) slabCodes(t.ident).forEach((c) => done.add(c));
   const losasDone = done.size;
@@ -1255,10 +1260,14 @@ function formDayMeta(day) {
         hint: "A qué hora arranca el tiro" },
       { key: "cyPlan", label: "Yardas planificadas (CY)", type: "number", step: "5", half: true,
         hint: "Sin esto la barra de estado no puede mostrar el avance del tiro" },
-      { key: "losasPlan", label: "Losas a tirar hoy", type: "number", step: "1", half: true },
-      { key: "losas", label: "Losas a tirar hoy", type: "textarea", full: true,
-        placeholder: "L3-0.943:24, L3-0.936:18, L3-0.929 …",
-        hint: "Tras los dos puntos, las yardas planificadas de esa losa (opcional). En blanco, el tablero no muestra losas." },
+      /* Los dos campos se llamaban igual —«Losas a tirar hoy»— y no había forma
+         de saber cuál pedía qué. Uno es el conteo y el otro la lista; si se
+         escribe la lista, el conteo sale de ella y este campo sobra. */
+      { key: "losasPlan", label: "Cuántas losas", type: "number", step: "1", half: true,
+        hint: "Solo el número. Si escribe la lista abajo, se cuentan solas y esto sobra." },
+      { key: "losas", label: "Cuáles losas — la lista", type: "textarea", full: true,
+        placeholder: "L3-0.943:24, L3-0.936:18, L3-0.929",
+        hint: "Los códigos separados por coma. Tras los dos puntos, las yardas planificadas de esa losa (opcional). En blanco, el tablero no muestra losas." },
       { key: "fase", label: "Fase" },
       { key: "cierre", label: "Cierre" },
       { key: "lane", label: "Carril", placeholder: "L1 / L2 / L3" },
