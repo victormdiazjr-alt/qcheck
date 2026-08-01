@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-02 | **Sincronización multi-aparato**: registro de cambios por campo, servidor sin dependencias y cliente con cola offline. iPad entra datos, PC y teléfono miran, Field Display en vivo | claude | 2026-07-31 |
 
 ---
 
