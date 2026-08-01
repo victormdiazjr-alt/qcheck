@@ -42,6 +42,10 @@ function sembrarDia() {
      programó un tiro de verdad la simulación está apagada y ya salimos arriba. */
   if (sessionStorage.getItem(QC_NUEVO_TIRO) === "1") {
     sessionStorage.removeItem(QC_NUEVO_TIRO);
+    /* `reiniciarDemo()` se planta solo si hoy hay camiones de verdad: esto corre
+       en CADA acceso y `sessionStorage` es de cada pestaña y cada aparato, así
+       que abrir el Field Display en otra tableta a media mañana no puede
+       llevarse por delante el trabajo del día. */
     if (typeof reiniciarDemo === "function") { reiniciarDemo(); return; }
   }
   if (sembrarTiroDemo(db)) saveDB();

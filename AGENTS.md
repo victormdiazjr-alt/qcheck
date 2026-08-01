@@ -296,6 +296,13 @@ demuestra nada, y QCheck se enseña antes de usarse.
   no puede sembrarlo —no carga el motor ni los 397 ensayos, y meterlos en una pantalla de dos
   campos serían 150 KB de nada—, así que deja la marca `qc-nuevo-tiro` en `sessionStorage` y
   la recoge `sembrarDia()` en la primera pantalla que sí carga el motor.
+- **Pero la simulación NUNCA pisa trabajo real, y esta guarda no se toca.**
+  `reiniciarDemo()` se planta si hoy hay algún ensayo sin `source: "demo"`. Sin ella el
+  reinicio automático borraba el día entero, y corre en **cada** acceso: `sessionStorage` es
+  de cada pestaña y de cada aparato, así que abrir el Field Display en la tableta a media
+  mañana —o volver a entrar porque caducó la sesión— se llevaba por delante los camiones ya
+  recibidos. Solo el botón «Reiniciar» de Plan & Datos puede forzarlo, y pregunta antes
+  (`reiniciarDemoPreguntando()`).
 - **Esto solo escribe sobre HOY.** El histórico del proyecto —los 397 ensayos del Excel y
   todos los días anteriores— sigue entero y analizable en Results y en las Control Charts.
 - **Fuera de eso, nunca pisa datos**: solo siembra si el día está vacío. Lo que crea lleva
@@ -491,6 +498,14 @@ Muestras **no da de alta camiones**. Se muestrea lo que ya llegó: el selector d
 lista los camiones del día y arranca en el primero pendiente. Tenía su propia alta —mixer,
 escaneo de QR, foto y entrada manual— y era un duplicado de Recepción; Víctor la quitó el
 31 jul 2026. Si un camión no aparece en Muestras, lo que falta es recibirlo en Recepción.
+
+**La pantalla solo engancha sola un camión que esté ESPERANDO resultados** —el que lleva más
+tiempo en la fila, que es por orden de llegada—. Si no hay ninguno, se queda en espera y lo
+dice; a un camión ya muestreado se llega **a mano** por el selector, para corregirlo. Caer
+por defecto en uno cerrado fue un fallo real y caro de ver: «Aprobar» guardaba encima del
+mismo camión, la pantalla se repintaba idéntica y **parecía que el botón no hacía nada**.
+Por lo mismo, al enviar se sueltan los cuatro campos y se vuelve a la fila (`state.n = null`):
+si la pantalla siguiera enseñando lo recién enviado, enviar no se distinguiría de no enviar.
 
 **La comprobación de conduce repetido vive ahora en `saveArrival()` de `conduce.html`.**
 Estaba en la alta de Muestras y se fue con ella; sin ella, el mismo conduce entrado dos

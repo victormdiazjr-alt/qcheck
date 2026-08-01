@@ -137,14 +137,43 @@ function sembrarTiroDemo(base) {
   return true;
 }
 
-/* Vuelve a dejar el tiro como al entrar: borra lo de la simulación
-   —y lo que se haya añadido encima hoy— y lo siembra de nuevo. */
-function reiniciarDemo() {
+/* ¿Hay trabajo de verdad hoy? Lo que siembra la simulación lleva
+   `source: "demo"`; un camión recibido en Recepción, no. */
+function hayTrabajoReal(hoy) {
+  const d = hoy || todayISO();
+  return db.tests.some((t) => t.date === d && t.source !== "demo");
+}
+
+/* Vuelve a dejar el tiro como al entrar: borra el día y lo siembra de nuevo.
+
+   **Se planta si hoy hay trabajo de verdad**, y esa guarda no es un detalle:
+   esto corre solo en CADA acceso (`sembrarDia`), y `sessionStorage` es de cada
+   pestaña y de cada aparato. Sin ella, abrir el Field Display en la tableta a
+   media mañana —o volver a entrar porque caducó la sesión— borraba los
+   camiones ya recibidos. La demostración nunca pisa trabajo real.
+
+   `forzar` es solo para el botón de Plan & Datos, que sí puede querer barrer
+   el día entero, y ahí se pregunta antes. */
+function reiniciarDemo(forzar) {
   const hoy = todayISO();
+  if (!forzar && hayTrabajoReal(hoy)) return false;
   db.tests = db.tests.filter((t) => t.date !== hoy);
   delete db.dayMeta[hoy];
   sembrarTiroDemo(db);
   saveDB();
+  return true;
+}
+
+/* El botón «Reiniciar» de Plan & Datos. Si hoy solo hay simulación, reinicia
+   sin molestar; si hay camiones de verdad, avisa de lo que se lleva por
+   delante antes de hacerlo. */
+function reiniciarDemoPreguntando() {
+  if (reiniciarDemo()) return true;
+  if (!confirm(
+      "Hoy hay camiones recibidos de verdad, no de la simulación.\n\n" +
+      "Reiniciar borra TODO el vaciado de hoy, incluidos esos camiones.\n" +
+      "El histórico del proyecto no se toca. ¿Seguimos?")) return false;
+  return reiniciarDemo(true);
 }
 
 /* Deja el sistema en blanco para el día de hoy: sin simulación, para

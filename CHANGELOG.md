@@ -5,6 +5,31 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.10] — 31 de julio · «el ciclo cierra»
+
+Dos fallos encontrados probando el ciclo completo la víspera del primer tiro en obra.
+Ninguno de los dos daba error: los dos se veían como que la aplicación no hacía nada.
+
+### Arreglado
+- **Muestras: «Aprobar» no hacía nada.** La pantalla arrancaba en el último camión de la
+  lista aunque ya estuviera muestreado —al abrirla sobre la simulación, los nueve camiones
+  tienen resultados—, así que enviar guardaba encima de ese mismo camión y todo se repintaba
+  igual. Ahora solo engancha sola un camión que **esté esperando resultados**; al enviar
+  suelta los cuatro campos y vuelve a la fila, y si no hay nadie esperando lo dice.
+- **La simulación borraba el trabajo del día.** `reiniciarDemo()` barría *todos* los ensayos
+  de hoy y corría en **cada acceso**. Como `sessionStorage` es de cada pestaña y de cada
+  aparato, abrir el Field Display en la tableta a media mañana —o volver a entrar tras una
+  sesión caducada— borraba los camiones ya recibidos. Ahora se planta en cuanto hay un
+  ensayo que no sea de la simulación; solo el botón de Plan & Datos puede forzarlo, y avisa.
+
+### Verificado en el navegador, de punta a punta
+Recepción → Muestras → Field Display → Control Center, con dos camiones nuevos: uno dentro
+de límites (**ACEPTADO**, yardas 90 → 100 al cerrar la descarga) y uno fuera (**RECHAZADO**,
+Slump 5.5", Unit Weight 145 pcf). El Field Display cantó **EN PRUEBAS** al recibir y el
+veredicto al enviar, sin tocarlo. Un acceso nuevo en otra pestaña ya no borra nada.
+
+---
+
 ## [0.9] — 31 de julio · «el mixer de Víctor»
 
 ### Cambiado

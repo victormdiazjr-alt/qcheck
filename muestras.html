@@ -318,8 +318,8 @@ footer .spacer { flex: 1; }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=61c88c52"></script>
-<script src="assets/demo.js?v=43d3e3ad"></script>
+<script src="assets/core.js?v=10dad113"></script>
+<script src="assets/demo.js?v=949853c0"></script>
 <script>
 "use strict";
 
@@ -423,10 +423,11 @@ function pendingTrucks(day) {
 function currentTest() { return state.n == null ? null : db.tests.find((t) => t.n === state.n) || null; }
 
 function pickTruck(n) {
-  state.n = Number(n);
+  state.n = n === "" || n == null ? null : Number(n);
   const t = currentTest();
   state.buf = t ? { slump: num(t.slump), uw: num(t.uw), air: num(t.air), temp: num(t.temp) } : {};
   state.field = "slump";
+  state._typing = null; state._str = "";   // el tecleo no se arrastra de un camión a otro
   render();
 }
 
@@ -489,20 +490,26 @@ function render() {
   const all = testsOfDate(state.day);
 
   // selector de camión
-  const pick = document.getElementById("truck-pick");
-  const list = all.slice().reverse();
-  pick.innerHTML = list.length
-    ? list.map((t) => {
-        const done = num(t.slump) != null && num(t.uw) != null;
-        return `<option value="${t.n}" ${t.n === state.n ? "selected" : ""}>Camión ${esc(t.truck || "—")} · ticket ${esc(t.ticket || "—")}${done ? "  ✓" : "  ·  pendiente"}</option>`;
-      }).join("")
-    : `<option>Sin camiones hoy</option>`;
-  if (state.n == null && list.length) {
-    const first = pend.length ? pend[pend.length - 1] : list[0];
+  /* La pantalla arranca en el camión que está ESPERANDO resultados, y solo en
+     ese. Caer por defecto en uno ya muestreado era el fallo que hacía que
+     «Aprobar» no pareciera hacer nada: se guardaba encima del mismo camión y
+     todo se repintaba idéntico. Sin nadie esperando, la pantalla espera; el
+     técnico todavía puede escoger a mano un camión cerrado para corregirlo. */
+  if (state.n == null && pend.length) {
+    const first = pend[0];   // el que lleva más tiempo esperando — la fila es por orden de llegada
     state.n = first.n;
     state.buf = { slump: num(first.slump), uw: num(first.uw), air: num(first.air), temp: num(first.temp) };
-    pick.value = state.n;
   }
+  const pick = document.getElementById("truck-pick");
+  const list = all.slice().reverse();
+  const opciones = list.map((t) => {
+    const done = num(t.slump) != null && num(t.uw) != null;
+    return `<option value="${t.n}" ${t.n === state.n ? "selected" : ""}>Camión ${esc(t.truck || "—")} · ticket ${esc(t.ticket || "—")}${done ? "  ✓" : "  ·  pendiente"}</option>`;
+  }).join("");
+  pick.innerHTML = list.length
+    ? (state.n == null ? `<option value="">Escoja un camión</option>` : "") + opciones
+    : `<option value="">Sin camiones hoy</option>`;
+  pick.value = state.n == null ? "" : state.n;
   document.getElementById("hsub").textContent =
     `${db.project.qcFirm || "QCheck"} · ${fmtDate(state.day)} · ${all.length} camiones`;
 
@@ -514,7 +521,9 @@ function render() {
     /* Muestras ya no da de alta camiones: se muestrea lo que llegó por
        Recepción. Sin camiones recibidos no hay nada que muestrear, y la
        pantalla lo dice — no es una instrucción, es de dónde sale el dato. */
-    body.innerHTML = `<div class="empty-state">No hay camiones recibidos hoy.<br>Los camiones entran por Recepción.</div>`;
+    body.innerHTML = all.length
+      ? `<div class="empty-state">Los ${all.length} camiones de hoy están muestreados.<br>Esperando el próximo.</div>`
+      : `<div class="empty-state">No hay camiones recibidos hoy.<br>Los camiones entran por Recepción.</div>`;
     foot.innerHTML = "";
     return;
   }
@@ -622,10 +631,13 @@ function doSubmit(rejected) {
   saveDB();
   rejected ? snd.bad() : snd.ok();
   toast(rejected ? `Camión ${t.truck || ""} RECHAZADO` : `Resultados enviados · camión ${t.truck || ""}`);
-  // pasar al próximo camión pendiente
-  const pend = pendingTrucks(state.day);
-  if (pend.length) pickTruck(pend[pend.length - 1].n);
-  else render();
+  /* El camión queda cerrado: se sueltan los cuatro campos y la pantalla vuelve
+     a la fila. `render()` engancha solo al próximo camión que esté esperando;
+     si no hay ninguno, se queda en espera. Lo que NO puede hacer es seguir
+     enseñando el camión recién enviado con sus lecturas puestas, porque
+     entonces enviar no se distingue de no haber enviado. */
+  state.n = null; state.buf = {}; state._typing = null; state._str = ""; state.field = "slump";
+  render();
 }
 
 function toast(msg) {

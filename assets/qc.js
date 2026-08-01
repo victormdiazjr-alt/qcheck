@@ -439,7 +439,7 @@ function viewPlan() {
   return `
     ${enDemo ? `<div class="panel" style="border-color:rgba(245,184,61,.4)">
       <div class="panel-head"><h2>Simulación en curso</h2><div class="spacer"></div>
-        <button class="btn small" onclick="reiniciarDemo(); render(); toast('Simulación reiniciada')">Reiniciar</button>
+        <button class="btn small" onclick="if (reiniciarDemoPreguntando()) { render(); toast('Simulación reiniciada'); }">Reiniciar</button>
         <button class="btn small danger" onclick="apagarDemo(); render(); toast('Simulación apagada')">Apagar y empezar en blanco</button>
       </div>
       <div class="panel-body" style="font-size:13.5px" class="muted">

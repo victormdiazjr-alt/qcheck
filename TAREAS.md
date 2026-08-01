@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-28 | **El ciclo completo no cierra**: en Muestras «Aprobar» no hace nada y el Field Display no anuncia ni el camión en espera ni el resultado. Prueba de campo mañana | claude | 2026-07-31 |
+_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 
 ---
 
@@ -52,6 +52,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-07-31 | **Q-28 — El ciclo cierra**: Muestras solo engancha camiones que esperan resultados y se limpia al enviar; la simulación deja de borrar el trabajo real en cada acceso | claude |
 | 2026-07-31 | **Q-27 — La marca**: «Smart Quality Control» como descripción del nombre y «Build Connected» como lema | claude |
 | 2026-07-31 | **Q-26 — La portada de la guía dice lo que hace la herramienta**: «Se mide una vez. Lo ve toda la obra», y fuera el párrafo | claude |
 | 2026-07-31 | **Q-19 (cerrada) — El vector del mixer de Víctor** es ya el icono del camión hormigonera, y toma el color del estado | claude |
