@@ -112,7 +112,7 @@ body { background: var(--bg); }
 
 <script src="assets/sync.js?v=2e48ba53"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=00be346f"></script>
+<script src="assets/core.js?v=59e8b68d"></script>
 <script>
 "use strict";
 
@@ -195,13 +195,17 @@ function pintar(datos) {
     `Se refresca sola cada 5 segundos · un aparato se da por ido si pasa un minuto sin latir · hora del servidor ${new Date(ahora).toLocaleTimeString("es-PR")}`;
 }
 
-function fallo(msg) {
-  document.getElementById("aviso").innerHTML = `<div class="aviso-sync">${esc(msg)}</div>`;
+/* Un aviso que dice «conéctelo primero» y no dice por dónde deja a alguien
+   mirando una pantalla roja. El aviso trae su puerta. */
+function fallo(msg, puerta) {
+  document.getElementById("aviso").innerHTML =
+    `<div class="aviso-sync">${esc(msg)}${puerta
+      ? ` <a class="btn small" href="conectar.html" style="margin-left:10px">Conectar este aparato</a>` : ""}</div>`;
 }
 
 async function refrescar() {
   if (!qcSyncActivo()) {
-    fallo("Este aparato no está conectado al servidor, así que no puede preguntar quién más lo está. Conéctelo primero.");
+    fallo("Este aparato no está conectado al servidor, así que no puede preguntar quién más lo está.", true);
     document.getElementById("aparatos").innerHTML = "";
     document.getElementById("resumen").innerHTML = "";
     return;

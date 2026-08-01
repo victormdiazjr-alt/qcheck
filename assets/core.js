@@ -314,14 +314,20 @@ function pintarConexion() {
   const red = navigator.onLine !== false;
   const s = typeof QCSync !== "undefined" ? QCSync.estado : "apagado";
   const pend = typeof QCSync !== "undefined" ? QCSync.pendientes : 0;
-  let bien = true, texto;
-  if (!red) { bien = false; texto = "Sin conexión"; }
-  else if (s === "apagado") { texto = "Solo este aparato"; }   // sin servidor: no es un fallo, es un hecho
+  /* Tres colores, y el del medio importa: **verde es SOLO cuando está en la
+     red**. «Solo este aparato» salía en verde porque no es un error, y así se
+     leía como que todo iba bien — justo el estado que ya despistó dos veces.
+     No es un fallo, pero tampoco es lo normal: va en gris apagado, que es como
+     se ve algo que está por hacer. */
+  let clase = "", texto;
+  if (!red) { clase = " off"; texto = "Sin conexión"; }
+  else if (s === "apagado") { clase = " solo"; texto = "Solo este aparato"; }
   else if (s === "al-dia") { texto = "En línea"; }
-  else if (s === "sin-llave") { bien = false; texto = "Llave rechazada"; }
-  else if (s === "sin-senal") { bien = false; texto = pend ? `Sin señal · ${pend} sin subir` : "Sin señal"; }
-  else { texto = "Conectando…"; }
-  el.className = "qcs-conn" + (bien ? "" : " off");
+  else if (s === "sin-llave") { clase = " off"; texto = "Llave rechazada"; }
+  else if (s === "sin-senal") { clase = " off"; texto = pend ? `Sin señal · ${pend} sin subir` : "Sin señal"; }
+  else { clase = " solo"; texto = "Conectando…"; }
+  el.className = "qcs-conn" + clase;
+  el.title = s === "apagado" ? "Este aparato guarda solo lo suyo. Nadie más lo ve." : "";
   el.querySelector("span").textContent = texto;
 }
 
@@ -419,6 +425,10 @@ html.qcs-fija header.qc-header { top: var(--qcs-h); }
   animation: qcsLatir 1.9s ease-in-out infinite; }
 .qcs-conn.off { color: #ff5a52; }
 .qcs-conn.off i { animation: none; }
+/* «Solo este aparato»: ni verde ni rojo. No está roto, pero tampoco está en la
+   red — y el punto no late, porque no hay nada latiendo. */
+.qcs-conn.solo { color: rgba(238,242,246,.45); }
+.qcs-conn.solo i { animation: none; box-shadow: none; }
 @keyframes qcsLatir { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 @media (max-width: 820px) {
   .qcs { gap: 10px; padding-left: calc(13px + env(safe-area-inset-left)); }
