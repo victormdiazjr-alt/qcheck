@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-28 | **El ciclo completo no cierra**: en Muestras «Aprobar» no hace nada y el Field Display no anuncia ni el camión en espera ni el resultado. Prueba de campo mañana | claude | 2026-07-31 |
 
 ---
 
