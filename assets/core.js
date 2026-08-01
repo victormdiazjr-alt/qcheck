@@ -897,10 +897,21 @@ function dayProgress(day) {
   const rows = testsOfDate(day);
   const recibido = rows.filter((t) => !t.rejected).reduce((a, t) => a + (num(t.vol) || 0), 0);
   /* Un camión que llegó y no ha terminado de descargar todavía no ha colocado
-     nada: sus yardas van aparte. Esto solo aplica al día en curso — 95 de los
-     registros históricos vienen del Excel sin hora de fin, y ahí el tiro ya se
-     cerró: lo recibido es lo colocado. */
-  const enCurso = day === todayISO()
+     nada: sus yardas van aparte.
+
+     Esto vale mientras el tiro está ABIERTO. En un tiro terminado no queda
+     nadie descargando, así que **lo recibido es lo colocado** — es la misma
+     regla que ya se aplicaba a los días pasados, donde 95 de los registros
+     históricos vienen del Excel sin hora de fin.
+
+     Faltaba aplicarla al día de hoy una vez cerrado, y se notó: el 1 ago 2026
+     el tiro acabó con 157 yardas y el tablero decía 147, porque a un camión no
+     se le llegó a marcar «Termina vaciado». Diez yardas que no estaban en
+     ningún sitio. Al cerrar el tiro aparecen — y la confirmación de cierre
+     avisa de cuántos camiones quedan sin descarga cerrada, para que nadie las
+     dé por buenas sin saberlo. */
+  const abierto = day === todayISO() && !tiroCerrado(day);
+  const enCurso = abierto
     ? rows.filter((t) => !t.rejected && t.arrive && !t.end).reduce((a, t) => a + (num(t.vol) || 0), 0)
     : 0;
   const placed = recibido - enCurso;
@@ -1282,30 +1293,50 @@ const QC_DASHBOARDS = [
    puede recolorearlo desde CSS, que gana a los atributos de presentación. */
 const ICONO_DASHBOARDS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 18.4a10 10 0 1 1 16.8 0"/><path d="M12 14.6 16.6 9"/><path d="M5.6 14.2l1.5-.5M7.7 9.6l1.1 1.2M12 7.6v1.6M16.3 9.6l-1.1 1.2M18.4 14.2l-1.5-.5"/></svg>`;
 
-function abrirDashboards() {
+/* La puerta que pregunta. La estrenó «Dashboards» y ahora la usa también
+   «Tiro», así que dejó de ser suya: mismo dibujo, mismas teclas, mismo cierre.
+   Cada opción lleva `href` —se va a otra pantalla— o `hacer`, que se ejecuta.
+
+   Al escoger una acción la puerta **se cierra primero**: casi todas abren su
+   propia confirmación detrás, y dos ventanas encima de otra no se entienden. */
+function abrirEleccion(cfg) {
   if (document.getElementById("qcd")) return;
   const ov = document.createElement("div");
   ov.id = "qcd";
   ov.className = "qcd";
-  ov.innerHTML = `<div class="qcd-caja" role="dialog" aria-modal="true" aria-label="Dashboards">
+  ov.innerHTML = `<div class="qcd-caja" role="dialog" aria-modal="true" aria-label="${esc(cfg.titulo)}">
       <div class="qcd-cab">
         <div>
-          <div class="qcd-k">Dashboards</div>
-          <div class="qcd-t">¿Cuál quiere ver?</div>
+          <div class="qcd-k">${esc(cfg.titulo)}</div>
+          <div class="qcd-t">${esc(cfg.pregunta)}</div>
         </div>
         <button class="qcd-x" type="button" aria-label="Cerrar">✕</button>
       </div>
-      ${QC_DASHBOARDS.map((d) => `<a class="qcd-op" href="${d.href}">
-        ${d.ic}
+      ${cfg.opciones.map((d, i) => {
+        const dentro = `${d.ic}
         <div><div class="n">${esc(d.n)}</div><div class="r">${esc(d.r)}</div></div>
-        <span class="fl">›</span>
-      </a>`).join("")}
+        <span class="fl">›</span>`;
+        return d.href
+          ? `<a class="qcd-op" href="${d.href}">${dentro}</a>`
+          : `<button class="qcd-op" type="button" data-i="${i}">${dentro}</button>`;
+      }).join("")}
     </div>`;
-  ov.addEventListener("click", (e) => { if (e.target === ov || e.target.closest(".qcd-x")) cerrarDashboards(); });
+  ov.addEventListener("click", (e) => {
+    if (e.target === ov || e.target.closest(".qcd-x")) { cerrarDashboards(); return; }
+    const b = e.target.closest("button.qcd-op");
+    if (!b) return;
+    const op = cfg.opciones[+b.dataset.i];
+    cerrarDashboards();
+    if (op && op.hacer) op.hacer();
+  });
   document.body.appendChild(ov);
   /* se guarda la referencia para poder quitar el oyente al cerrar */
   qcdEsc = (e) => { if (e.key === "Escape") cerrarDashboards(); };
   document.addEventListener("keydown", qcdEsc);
+}
+
+function abrirDashboards() {
+  abrirEleccion({ titulo: "Dashboards", pregunta: "¿Cuál quiere ver?", opciones: QC_DASHBOARDS });
 }
 let qcdEsc = null;
 function cerrarDashboards() {

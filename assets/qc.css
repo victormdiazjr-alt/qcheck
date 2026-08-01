@@ -396,6 +396,10 @@ tr.rejected td { background: var(--susp-bg); color: var(--susp); }
   -webkit-tap-highlight-color: transparent;
   transition: border-color .18s, transform .14s;
 }
+/* Una opción puede ser un enlace (se va a otra pantalla) o un botón (ejecuta
+   una acción). Se ven igual a propósito: quien elige no tiene por qué saber
+   la diferencia. */
+button.qcd-op { width: 100%; text-align: left; font-family: inherit; cursor: pointer; }
 .qcd-op:last-child { margin-bottom: 0; }
 .qcd-op:hover { border-color: var(--accent); }
 .qcd-op:active { transform: scale(.985); }
