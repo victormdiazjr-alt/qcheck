@@ -30,6 +30,11 @@ function loadDB() {
    marcha para que el sistema se pueda enseñar. Ver assets/demo.js. */
 const QC_NUEVO_TIRO = "qc-nuevo-tiro";
 function sembrarDia() {
+  /* La simulación se retiró para la primera prueba real (`DEMO_ACTIVA` en
+     demo.js). Además de no sembrar, limpia el aparato: cuando se apagó ya
+     estaba dentro del iPad, de la PC y del teléfono, y cada uno guarda lo
+     suyo. Ver `retirarSimulacion()`. */
+  if (typeof retirarSimulacion === "function" && retirarSimulacion()) return;
   if (db.demo === false) return;                       // alguien la apagó
   if (typeof sembrarTiroDemo !== "function") return;   // pantalla sin demo.js
 
@@ -533,8 +538,25 @@ function estadoBadge(t) {
 function zClass(z) { return z ? ` class="num z-${z}"` : ` class="num"`; }
 
 /* ------------------------------------------------------------ derived */
-function sortedTests() { return [...db.tests].sort((a, b) => a.n - b.n); }
-function testDates() { return [...new Set(db.tests.map((t) => t.date))].sort().reverse(); }
+/* Un registro retirado lleva `borrado: true` y deja de contar en todas partes,
+   pero NO se saca del archivo: el registro de cambios es un expediente y un
+   expediente del que se pueden hacer desaparecer renglones no vale nada. Se
+   retira, que es otra cosa, y queda quién lo retiró y cuándo. Además así el
+   retiro viaja a los demás aparatos como cualquier otro cambio — un borrado
+   de verdad no tendría cómo. */
+function vivos(lista) { return lista.filter((t) => !t.borrado); }
+function sortedTests() { return vivos(db.tests).sort((a, b) => a.n - b.n); }
+function testDates() { return [...new Set(vivos(db.tests).map((t) => t.date))].sort().reverse(); }
+
+/* Retira todo lo registrado en un día. Es lo que hace falta antes del primer
+   tiro de verdad: durante las pruebas se reciben camiones que no son del
+   proyecto, y arrancar la jornada con ellos dentro falsea el reporte. */
+function retirarDia(day) {
+  let n = 0;
+  for (const t of db.tests) if (t.date === day && !t.borrado) { t.borrado = true; n++; }
+  if (n) saveDB();
+  return n;
+}
 function testsOfDate(d) { return sortedTests().filter((t) => t.date === d); }
 function nextTestN() { return db.tests.length ? Math.max(...db.tests.map((t) => t.n)) + 1 : 1; }
 function shortIdent(s) {
@@ -624,22 +646,105 @@ function slabCodes(ident) {
    losa aporta sus yardas enteras; uno que reparte su carga entre varias no
    dice cuánto dejó en cada una, así que su volumen NO se reparte a ojo: la
    losa queda marcada como "compartida" y sus yardas se leen como un mínimo. */
+/* ------------------------------------------------------------ el tramo del día
+
+   En obra el plan no llega como una lista de losas: llega como un TRAMO,
+   `L3-0.431@L3-0.252`. Y de ahí **no se pueden sacar los códigos de las losas
+   que hay en medio.** En este proyecto el paso entre losas consecutivas va de
+   4 a 8 metros y cambia dentro de un mismo tiro —está en los 397 ensayos del
+   Excel, se puede comprobar—, así que generarlas sería inventar losas que no
+   existen: ninguna cuadraría con la que trae el camión, el tablero enseñaría
+   un plan lleno de losas que nunca se llenan y las de verdad saldrían como
+   "fuera de plan". Justo al revés de lo que se busca.
+
+   Así que el tramo se guarda como lo que es —los dos extremos— y las losas se
+   descubren de los camiones, que sí traen el código bueno. Lo que el tramo SÍ
+   permite, y es lo que vale: **cantar el camión que se vació fuera del tramo
+   del día**. Eso antes no se podía ver. */
+function rangoDeLosas(texto) {
+  const m = String(texto || "").match(
+    /^\s*(L\s?\d+)\s*-\s*(\d+\.\d+)\s*(?:@|→|->|\bto\b|\ba\b)\s*(?:L\s?\d+\s*-\s*)?(\d+\.\d+)\s*$/i);
+  if (!m) return null;
+  const desde = Number(m[2]), hasta = Number(m[3]);
+  const paso = pasoTipicoLosa();
+  const metros = Math.round(Math.abs(desde - hasta) * 1000);
+  return {
+    carril: m[1].replace(/\s+/g, "").toUpperCase(),
+    desde, hasta, metros,
+    /* Cuántas losas caben: es una ESTIMACIÓN y se enseña con «≈». Sale del paso
+       típico del propio proyecto, no de un número escogido a dedo. */
+    estimadas: paso ? Math.round(metros / paso) + 1 : null,
+    paso,
+  };
+}
+
+/* El paso típico entre losas, sacado del histórico del propio proyecto.
+   Se descartan los saltos de más de 12 m: esos no son una losa más larga,
+   son una losa que nadie muestreó en medio. Se calcula una vez. */
+function pasoTipicoLosa() {
+  if (pasoTipicoLosa._v !== undefined) return pasoTipicoLosa._v;
+  const porCarril = {};
+  for (const t of db.tests) {
+    for (const c of slabCodes(t.ident)) {
+      const m = c.match(/^(L\d+)-(\d+\.\d+)$/);
+      if (m) (porCarril[m[1]] = porCarril[m[1]] || new Set()).add(Number(m[2]));
+    }
+  }
+  const saltos = [];
+  for (const s of Object.values(porCarril)) {
+    const v = [...s].sort((a, b) => a - b);
+    for (let i = 1; i < v.length; i++) {
+      const d = Math.round((v[i] - v[i - 1]) * 1000);
+      if (d >= 3 && d <= 12) saltos.push(d);
+    }
+  }
+  if (!saltos.length) return (pasoTipicoLosa._v = null);
+  saltos.sort((a, b) => a - b);
+  return (pasoTipicoLosa._v = saltos[Math.floor(saltos.length / 2)]);
+}
+
+/* ¿Cae esta losa dentro del tramo del día? Los extremos cuentan, y el tramo
+   puede ir de mayor a menor —que es como se tira— o al revés. */
+function losaEnRango(codigo, r) {
+  const m = String(codigo).match(/^(L\d+)-(\d+\.\d+)$/);
+  if (!m || !r) return true;
+  if (m[1] !== r.carril) return false;
+  const v = Number(m[2]);
+  return v >= Math.min(r.desde, r.hasta) - 1e-9 && v <= Math.max(r.desde, r.hasta) + 1e-9;
+}
+
 function losasDelDia(day) {
   const meta = db.dayMeta[day] || {};
-  const dec = String(meta.losas || "").match(/L\s?\d+\s?-\s?\d+\.\d+(?:\s*:\s*\d+(?:\.\d+)?)?/gi);
-  if (!dec) return { lista: [], hechas: 0 };
+  const texto = String(meta.losas || "");
+  const rango = rangoDeLosas(texto);
+  const dec = rango ? null : texto.match(/L\s?\d+\s?-\s?\d+\.\d+(?:\s*:\s*\d+(?:\.\d+)?)?/gi);
+  if (!rango && !dec) return { lista: [], hechas: 0, rango: null, fuera: [] };
+
+  const rows = testsOfDate(day).filter((t) => !t.rejected);
 
   const plan = [];
   const vistos = new Set();
-  for (const x of dec) {
-    const [c, cy] = x.split(":");
-    const codigo = c.replace(/\s+/g, "").toUpperCase();
-    if (vistos.has(codigo)) continue;
-    vistos.add(codigo);
-    plan.push({ codigo, cyPlan: cy == null ? null : num(cy.trim()) });
+  if (rango) {
+    /* Con un tramo, el plan lo escriben los camiones: se toma cada código que
+       llegó y cae dentro, en el orden en que se tira. Sin yardas por losa,
+       porque el tramo no las declara y repartirlas a ojo sería inventarlas. */
+    const dentro = new Set();
+    for (const t of rows) for (const c of slabCodes(t.ident)) if (losaEnRango(c, rango)) dentro.add(c);
+    const orden = [...dentro].sort((a, b) => {
+      const va = Number(a.split("-")[1]), vb = Number(b.split("-")[1]);
+      return rango.desde >= rango.hasta ? vb - va : va - vb;
+    });
+    for (const codigo of orden) { vistos.add(codigo); plan.push({ codigo, cyPlan: null }); }
+  } else {
+    for (const x of dec) {
+      const [c, cy] = x.split(":");
+      const codigo = c.replace(/\s+/g, "").toUpperCase();
+      if (vistos.has(codigo)) continue;
+      vistos.add(codigo);
+      plan.push({ codigo, cyPlan: cy == null ? null : num(cy.trim()) });
+    }
   }
 
-  const rows = testsOfDate(day).filter((t) => !t.rejected);
   const estado = {}, cy = {}, cargas = {}, compartida = {};
   for (const t of rows) {
     const cs = slabCodes(t.ident);
@@ -662,7 +767,12 @@ function losasDelDia(day) {
     compartida: !!compartida[l.codigo],
     pct: l.cyPlan ? Math.min(100, (cy[l.codigo] || 0) / l.cyPlan * 100) : null,
   }));
-  return { lista, hechas: lista.filter((l) => l.estado === "vaciada").length };
+  /* Las losas que recibieron hormigón y NO están en el plan del día. Con un
+     tramo declarado esto es una comprobación de verdad: un camión vaciado
+     fuera del tramo es un error que hoy nadie ve hasta que se cierra el lote. */
+  const fuera = [...new Set(rows.flatMap((t) => slabCodes(t.ident)))].filter((c) => !vistos.has(c));
+
+  return { lista, hechas: lista.filter((l) => l.estado === "vaciada").length, rango, fuera };
 }
 
 /* Camión "esperando": llegó, no fue rechazado y todavía no terminó de descargar */
@@ -774,7 +884,15 @@ function dayProgress(day) {
      (`losasPlan`, lo único que sabe el contratista desde su pantalla). Si hay
      lista, manda la lista — contarla es exacto y el número escrito a mano se
      queda viejo en cuanto alguien añade una losa. El reporte ya lo hacía así. */
-  const losasPlan = losasDelDia(day).lista.length || num(meta.losasPlan);
+  /* Con LISTA declarada, contarla es exacto y manda sobre el número a mano.
+     Con TRAMO no se puede contar —las losas se descubren según llegan, así que
+     contarlas daría siempre el 100 %—: vale el número que declararon y, si no
+     lo declararon, la estimación del tramo, que se enseña con «≈». */
+  const L = losasDelDia(day);
+  const losasPlan = L.rango
+    ? (num(meta.losasPlan) || L.rango.estimadas)
+    : (L.lista.length || num(meta.losasPlan));
+  const losasPlanEstim = !!(L.rango && !num(meta.losasPlan) && L.rango.estimadas);
   const done = new Set();
   for (const t of rows) if (!t.rejected && t.end) slabCodes(t.ident).forEach((c) => done.add(c));
   const losasDone = done.size;
@@ -786,7 +904,7 @@ function dayProgress(day) {
     cyPlan,
     pending: cyPlan != null ? Math.max(0, cyPlan - placed) : null,
     pct: cyPlan ? Math.min(100, placed / cyPlan * 100) : null,
-    losasPlan, losasDone,
+    losasPlan, losasDone, losasPlanEstim, rango: L.rango, losasFuera: L.fuera,
     losasPct: losasPlan ? Math.min(100, losasDone / losasPlan * 100) : null,
     waiting, waitingCY: waiting.reduce((a, t) => a + (num(t.vol) || 0), 0),
     discharging: trucksDischarging(day),
@@ -1175,7 +1293,11 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
   const root = document.getElementById("modal-root");
   const fid = "f-" + uid();
   root.innerHTML = `
-    <div class="modal-backdrop" onclick="if(event.target===this) closeForm()">
+    <!-- El fondo NO cierra el formulario. Cerraba al primer roce y se llevaba
+         todo lo escrito: en el iPad, llenando el plan del día con la mano
+         sucia, un toque de más costaba empezar de cero. Se sale por Cancelar
+         o por la ✕, que es donde uno mira cuando quiere salir. -->
+    <div class="modal-backdrop">
       <div class="modal">
         <div class="modal-head">${esc(title)}<div class="spacer"></div><button class="btn small" onclick="closeForm()">✕</button></div>
         <div class="modal-body"><form id="${fid}" onsubmit="return false"><div class="form-grid">
@@ -1264,10 +1386,10 @@ function formDayMeta(day) {
          de saber cuál pedía qué. Uno es el conteo y el otro la lista; si se
          escribe la lista, el conteo sale de ella y este campo sobra. */
       { key: "losasPlan", label: "Cuántas losas", type: "number", step: "1", half: true,
-        hint: "Solo el número. Si escribe la lista abajo, se cuentan solas y esto sobra." },
-      { key: "losas", label: "Cuáles losas — la lista", type: "textarea", full: true,
-        placeholder: "L3-0.943:24, L3-0.936:18, L3-0.929",
-        hint: "Los códigos separados por coma. Tras los dos puntos, las yardas planificadas de esa losa (opcional). En blanco, el tablero no muestra losas." },
+        hint: "Opcional. Sin esto, del tramo sale una estimación y se enseña con «≈»." },
+      { key: "losas", label: "Tramo del día", type: "textarea", full: true,
+        placeholder: "L3-0.431@L3-0.252",
+        hint: "El tramo tal como se lo dan: de la primera losa a la última. También acepta la lista completa separada por coma, si la tiene." },
       { key: "fase", label: "Fase" },
       { key: "cierre", label: "Cierre" },
       { key: "lane", label: "Carril", placeholder: "L1 / L2 / L3" },

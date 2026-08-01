@@ -5,6 +5,35 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.12] — 1 de agosto · «la primera prueba real»
+
+La simulación sale y entra el trabajo de verdad.
+
+### Cambiado
+- **La simulación está apagada** (`DEMO_ACTIVA = false`). El sistema arranca con el
+  histórico del proyecto y el día en blanco, listo para «Programar tiro». No basta con
+  dejar de sembrarla: ya estaba dentro del iPad, de la PC y del teléfono, así que cada
+  aparato **se limpia solo al abrir** y solo toca lo que lleva `source: "demo"`.
+- **Las losas se declaran por TRAMO**, que es como llegan en obra: `L3-0.431@L3-0.252`.
+  De ahí **no** se generan los códigos de en medio —el paso entre losas en este proyecto va
+  de 4 a 8 m y cambia dentro del mismo tiro—, porque una losa inventada nunca cuadraría con
+  la que trae el camión. Las losas se descubren de los camiones; el total sale con «≈» de
+  la mediana del propio proyecto (7 m). Y el tramo permite algo que antes no se podía ver:
+  **cantar el camión vaciado fuera del tramo del día**, en el tablero y en el reporte.
+- **«Programar tiro» ofrece retirar los camiones que ya haya**, que es lo que hace falta
+  tras una jornada de pruebas. Se **retiran**, no se borran: quedan marcados en el
+  expediente y el retiro viaja a los demás aparatos.
+
+### Arreglado
+- **El formulario se cerraba al tocar fuera y se llevaba todo lo escrito.** En el iPad,
+  llenando el plan con la mano sucia, un toque de más costaba empezar de cero. Ahora se
+  sale por Cancelar o por la ✕.
+- **Quitar un dato no viajaba.** Reprogramar el tiro borra el plan del día para empezar
+  limpio, pero los demás aparatos se quedaban con el plan viejo: el iPad enseñando 19 losas
+  de un tiro que ya no existía. Ahora lo que se quita se anota como quitado.
+
+---
+
 ## [0.11] — 1 de agosto · «los aparatos se ven»
 
 Q-02, la pieza que faltaba: hasta hoy cada navegador guardaba lo suyo y el iPad de la obra

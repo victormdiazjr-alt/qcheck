@@ -31,6 +31,38 @@
    ============================================================ */
 "use strict";
 
+/* ------------------------------------------------------------ EL INTERRUPTOR
+
+   **Apagada desde el 1 de agosto de 2026** — Víctor, para la primera prueba
+   real en obra. El sistema arranca con el histórico del proyecto y el día de
+   hoy en blanco, listo para «Programar tiro».
+
+   No se borró el archivo a propósito: QCheck se enseña antes de venderse, y
+   para el próximo cliente esto se vuelve a encender poniendo `true` aquí. Lo
+   que NO puede pasar es que un dato inventado se cuele en un expediente de
+   verdad, y por eso el interruptor es una sola línea y está arriba del todo. */
+const DEMO_ACTIVA = false;
+
+/* Retira la simulación de un aparato que ya la tenía sembrada.
+
+   Dejar de sembrar no basta: para cuando se apagó, la demostración ya estaba
+   dentro del iPad, de la PC y del teléfono, y cada uno guarda lo suyo. Cada
+   aparato se limpia solo al abrir. Solo toca lo que lleva `source: "demo"` —
+   los 397 ensayos del proyecto y cualquier camión recibido de verdad se
+   quedan donde están. */
+function retirarSimulacion() {
+  if (DEMO_ACTIVA) return false;
+  const antes = db.tests.length;
+  db.tests = db.tests.filter((t) => t.source !== "demo");
+  let toco = db.tests.length !== antes;
+  for (const [dia, m] of Object.entries(db.dayMeta || {})) {
+    if (m && m.source === "demo") { delete db.dayMeta[dia]; toco = true; }
+  }
+  if (db.demo !== false) { db.demo = false; toco = true; }
+  if (toco) saveDB();
+  return true;
+}
+
 const DEMO_CY_CAMION = 10;
 const DEMO_CAMIONES = 9;               /* 9 x 10 = 90 yardas colocadas */
 const DEMO_CY_LOSA = 20;               /* dos camiones por losa */
@@ -210,6 +242,20 @@ function programarTiro() {
       "El histórico del proyecto no se toca. ¿Seguimos?")) return;
 
   apagarDemo();
+
+  /* Si hoy ya hay camiones registrados, se pregunta si van fuera. Es el caso
+     de la primera prueba de verdad: durante los ensayos se reciben camiones
+     que no son del proyecto, y arrancar la jornada con ellos dentro falsea el
+     reporte que se firma. Se RETIRAN, no se borran — quedan en el expediente
+     marcados, y el retiro viaja a los demás aparatos. */
+  const hay = testsOfDate(hoy).length;
+  if (hay && confirm(
+      `Hoy ya hay ${hay} camión${hay === 1 ? "" : "es"} registrado${hay === 1 ? "" : "s"}.\n\n` +
+      "¿Retirarlos y arrancar el tiro en blanco?\n" +
+      "Quedan marcados en el expediente, no se borran. El histórico no se toca.")) {
+    retirarDia(hoy);
+  }
+
   delete db.dayMeta[hoy];
   saveDB();
   formDayMeta(hoy);

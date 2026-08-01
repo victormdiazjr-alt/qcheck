@@ -183,9 +183,9 @@ table.rep td.dif { font-weight: 700; }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/sync.js?v=68974c58"></script>
-<script src="assets/core.js?v=126851d7"></script>
-<script src="assets/demo.js?v=e4b84ffd"></script>
+<script src="assets/sync.js?v=79ee8f37"></script>
+<script src="assets/core.js?v=53b70925"></script>
+<script src="assets/demo.js?v=395abd93"></script>
 <script>
 "use strict";
 
@@ -623,7 +623,7 @@ function renderDiario() {
 
   const prog = dayProgress(day);
   const st = dayStats(day);
-  const { lista: losas, hechas } = losasDelDia(day);
+  const { lista: losas, hechas, rango: tramo, fuera: losasFuera } = losasDelDia(day);
   const avisos = trendAlerts(day);
   const rej = rows.filter((t) => t.rejected);
   const hums = (db.humidity || []).filter((h) => h.date === day)
@@ -640,9 +640,14 @@ function renderDiario() {
   const enCurso = hoy && !cerrado;
 
   /* Cuántas losas hay que enseñar: la lista declarada manda. Sin lista
-     declarada solo se sabe cuántas tocaron los camiones (`losasDone`). */
+     declarada solo se sabe cuántas tocaron los camiones (`losasDone`).
+     Con un TRAMO no se puede contar la lista —las losas se descubren según
+     llegan, así que contarlas daría siempre el 100 %—: vale lo que declararon
+     o la estimación del tramo, y en la hoja va con «≈» para que quien firme
+     sepa que ese denominador no es un plan declarado losa por losa. */
   const losasReal = losas.length ? hechas : prog.losasDone;
-  const losasPlan = losas.length || prog.losasPlan;
+  const losasPlan = tramo ? prog.losasPlan : (losas.length || prog.losasPlan);
+  const losasAprox = prog.losasPlanEstim ? "≈" : "";
 
   /* Las cartas van de dos en dos por hoja: cuatro no caben en una página de
      carta. Slump y Unit Weight primero, que es lo que Rubén mira. Una lectura
@@ -703,8 +708,8 @@ function renderDiario() {
         <div class="v">${prog.compliancePct != null ? fmt(prog.compliancePct, 1) + "%" : "—"}</div>
         <div class="s">${prog.conforming} de ${prog.evaluated} evaluados</div></div>
       <div class="kpi"><div class="k">Losas vaciadas</div>
-        <div class="v">${losasReal}${losasPlan ? ` <span style="font-size:11pt; color:#5a6b7c">/ ${losasPlan}</span>` : ""}</div>
-        <div class="s">${losasPlan ? "de las planificadas" : "sin plan de losas"}</div></div>
+        <div class="v">${losasReal}${losasPlan ? ` <span style="font-size:11pt; color:#5a6b7c">/ ${losasAprox}${losasPlan}</span>` : ""}</div>
+        <div class="s">${!losasPlan ? "sin plan de losas" : tramo ? `tramo ${esc(tramo.carril)}-${tramo.desde.toFixed(3)} → ${tramo.hasta.toFixed(3)}` : "de las planificadas"}</div></div>
     </div>
 
     <h2 class="sec">Plan contra lo real</h2>
@@ -713,8 +718,10 @@ function renderDiario() {
       <tr><td class="lbl">Yardas (yd³)</td>
         <td class="n">${prog.cyPlan != null ? fmt(prog.cyPlan, 1) : "—"}</td>
         <td class="n">${fmt(prog.placed, 1)}</td>${dif(prog.placed, prog.cyPlan)}</tr>
-      <tr><td class="lbl">Losas</td>
-        <td class="n">${losasPlan || "—"}</td><td class="n">${losasReal}</td>${dif(losasReal, losasPlan || null, 0)}</tr>
+      <tr><td class="lbl">Losas${tramo ? ` <span style="font-weight:400; color:#5a6b7c">— tramo ${esc(tramo.carril)}-${tramo.desde.toFixed(3)} → ${tramo.hasta.toFixed(3)}, ${tramo.metros} m</span>` : ""}</td>
+        <td class="n">${losasPlan ? losasAprox + losasPlan : "—"}</td><td class="n">${losasReal}</td>${dif(losasReal, losasPlan || null, 0)}</tr>
+      ${losasFuera && losasFuera.length ? `<tr><td class="lbl">Vaciadas fuera del tramo declarado</td>
+        <td class="n">—</td><td class="n">${losasFuera.length}</td><td class="n">${losasFuera.map(esc).join(", ")}</td></tr>` : ""}
       <tr><td class="lbl">Hora de comienzo</td>
         <td class="n">${hm(meta.horaInicio)}</td><td class="n">${hm(inicio)}</td>
         ${meta.horaInicio && inicio ? `<td class="n dif">${minutesBetween(meta.horaInicio, inicio)} min</td>` : `<td class="n">—</td>`}</tr>

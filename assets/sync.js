@@ -124,17 +124,30 @@ function qcCambios(antes, ahora) {
   const ts = new Date().toISOString();
   const dev = qcAparato();
   const usr = sessionStorage.getItem("qc-user") || "?";
+  const anota = (ent, id, campo, valor) => ops.push({
+    uid: dev + "|" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    ent, id, campo, valor: valor === undefined ? null : valor, ts, dev, usr,
+  });
+
   for (const ent of Object.keys(ahora)) {
     const A = antes[ent] || {}, B = ahora[ent];
     for (const id of Object.keys(B)) {
       const va = A[id] || {}, vb = B[id];
       for (const campo of Object.keys(vb)) {
-        if (qcIgual(va[campo], vb[campo])) continue;
-        ops.push({
-          uid: dev + "|" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-          ent, id, campo, valor: vb[campo] === undefined ? null : vb[campo], ts, dev, usr,
-        });
+        if (!qcIgual(va[campo], vb[campo])) anota(ent, id, campo, vb[campo]);
       }
+      /* Un campo que ESTABA y ya no está también es un cambio. Sin esto,
+         reprogramar el tiro —que borra el plan del día para empezar limpio—
+         dejaba el plan viejo intacto en los demás aparatos: el iPad enseñando
+         19 losas de un tiro que ya no existe. Lo que se quita se anota como
+         quitado, y así viaja. */
+      for (const campo of Object.keys(va)) {
+        if (!(campo in vb) && va[campo] != null) anota(ent, id, campo, null);
+      }
+    }
+    for (const id of Object.keys(A)) {
+      if (id in B) continue;
+      for (const campo of Object.keys(A[id])) if (A[id][campo] != null) anota(ent, id, campo, null);
     }
   }
   return ops;

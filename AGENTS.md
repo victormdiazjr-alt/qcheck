@@ -125,6 +125,20 @@ que se escribe `L3-0.943:24, L3-0.936:18, L3-0.929` — el número tras los dos 
 las yardas planificadas de esa losa, y es opcional. **Sin lista declarada no se pinta
 nada, ni un aviso**: deducir el plan de lo que los camiones sirvieron sería inventarlo.
 
+**En obra el plan llega como un TRAMO, no como una lista**: `L3-0.431@L3-0.252`. Y de ahí
+**no se pueden sacar los códigos de las losas de en medio.** El paso entre losas
+consecutivas en este proyecto va de 4 a 8 m y cambia dentro de un mismo tiro — está en los
+397 ensayos del Excel, se comprueba en un minuto. Generarlas sería inventar losas que no
+existen: ninguna cuadraría con la que trae el camión, el tablero enseñaría un plan lleno de
+losas que nunca se llenan y las de verdad saldrían como «fuera de plan». **No lo hagas.**
+
+Así que el tramo se guarda como lo que es —los dos extremos, `rangoDeLosas()`— y las losas
+**se descubren de los camiones**, que sí traen el código bueno. Lo que el tramo sí permite,
+y es lo que vale: **cantar el camión vaciado fuera del tramo del día** (`losasDelDia().fuera`),
+que hoy no se ve hasta que se cierra el lote. El total de losas es una **estimación** y se
+enseña con «≈»: sale de `pasoTipicoLosa()`, la mediana de los saltos del propio proyecto
+descartando los de más de 12 m —esos no son una losa larga, son una que nadie muestreó.
+
 **Hay dos formas de declarar las losas y no pueden contradecirse.** `dayMeta.losas` es la
 lista con sus códigos, la que llena QC; `dayMeta.losasPlan` es el simple conteo, lo único
 que sabe el contratista desde su pantalla. **Si hay lista, manda la lista** —contarla es
@@ -293,7 +307,28 @@ tener que entrar a ver si está pasando algo.
   Todo eso vive en la guía de usuario. Si te hace falta explicar algo dentro de una pantalla,
   probablemente la pantalla esté mal.
 
-## 8b. La simulación — el tiro de hoy ya en marcha
+## 8b. La simulación — APAGADA desde el 1 de agosto de 2026
+
+**`DEMO_ACTIVA = false` en `assets/demo.js`.** Víctor la retiró para la primera prueba real
+en obra: el sistema arranca con el histórico del proyecto y el día en blanco, listo para
+«Programar tiro». No se borró el archivo —QCheck se enseña antes de venderse, y para el
+próximo cliente se vuelve a encender con esa sola línea—, pero **un dato inventado no puede
+colarse en un expediente de verdad**, y por eso el interruptor es una línea y está arriba
+del todo.
+
+Dejar de sembrar no bastaba: cuando se apagó, la simulación ya estaba dentro del iPad, de
+la PC y del teléfono, y cada uno guarda lo suyo. **`retirarSimulacion()` limpia cada aparato
+al abrir**, y solo toca lo que lleva `source: "demo"`.
+
+**Un registro retirado lleva `borrado: true` y no se saca del archivo** (`vivos()`,
+`retirarDia()`). El registro de cambios es un expediente y uno del que se pueden hacer
+desaparecer renglones no vale nada: se retira, que es otra cosa, y queda quién y cuándo.
+Además así el retiro **viaja** a los demás aparatos como cualquier otro cambio — un borrado
+de verdad no tendría cómo.
+
+Lo que sigue describe la simulación **para cuando se vuelva a encender**.
+
+## 8b-bis. La simulación, cómo funcionaba
 
 `assets/demo.js`. El sistema siembra un vaciado ya empezado: **90 yardas de un plan de 260,
 nueve camiones recibidos y el último terminado hace 3 minutos**. Un tablero vacío no
