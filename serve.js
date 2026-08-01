@@ -1,7 +1,16 @@
-/* Tiny static file server for local preview: node serve.js [port] */
+/* Servidor local: sirve los archivos y monta la API de sincronización.
+
+     node serve.js [puerto]
+
+   Escucha en todas las interfaces, no solo en 127.0.0.1, para que el iPad y
+   el teléfono de la obra puedan entrar por el IP de la máquina. El token se
+   pone con la variable QC_TOKEN; sin él la puerta queda abierta, que en una
+   red local es lo cómodo y de cara a internet no vale. */
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
+const { crearAlmacen, montarAPI } = require("./sync-servidor");
 
 const ROOT = __dirname;
 const PORT = Number(process.argv[2]) || 8452;
@@ -10,11 +19,17 @@ const MIME = {
   ".js": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".json": "application/json",
+  ".webmanifest": "application/manifest+json",
   ".svg": "image/svg+xml",
   ".png": "image/png",
 };
 
+const almacen = crearAlmacen(path.join(ROOT, "datos", "cambios.jsonl"));
+const atenderAPI = montarAPI(almacen, process.env.QC_TOKEN || "");
+
 http.createServer((req, res) => {
+  if (atenderAPI(req, res)) return;
+
   let urlPath = decodeURIComponent(req.url.split("?")[0]);
   if (urlPath.endsWith("/")) urlPath += "index.html";
   let file = path.normalize(path.join(ROOT, urlPath));
@@ -24,4 +39,12 @@ http.createServer((req, res) => {
   }
   res.writeHead(200, { "Content-Type": MIME[path.extname(file)] || "application/octet-stream" });
   fs.createReadStream(file).pipe(res);
-}).listen(PORT, "127.0.0.1", () => console.log(`Serving ${ROOT} at http://127.0.0.1:${PORT}`));
+}).listen(PORT, "0.0.0.0", () => {
+  console.log(`QCheck en http://localhost:${PORT}`);
+  for (const [nombre, dirs] of Object.entries(os.networkInterfaces())) {
+    for (const d of dirs || []) {
+      if (d.family === "IPv4" && !d.internal) console.log(`  desde la obra (${nombre}): http://${d.address}:${PORT}`);
+    }
+  }
+  console.log(`  registro de cambios: ${almacen.total()} líneas · seq ${almacen.seq()}`);
+});

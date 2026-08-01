@@ -50,15 +50,28 @@ function sembrarDia() {
   }
   if (sembrarTiroDemo(db)) saveDB();
 }
-/* Esquema v2: record por conduce (compañía + número), humedades, plan del día */
-function migrateDB() {
+/* Esquema v2: record por conduce (compañía + número), humedades, plan del día.
+
+   Va separado de `db` a propósito: la sincronización necesita migrar una copia
+   limpia de `seed.js` para saber cómo se ve el histórico "sin tocar", y si esto
+   solo supiera trabajar sobre la base global, esa copia quedaría a medias y los
+   397 ensayos se leerían como nuevos. Pasó en la primera prueba: 7.878 líneas
+   de nada camino del servidor. Una sola migración, dos usos. */
+function migrateDB() { migrarBase(db); }
+function migrarBase(db) {
   if (!db.humidity) db.humidity = [];
   if (!db.dayMeta) db.dayMeta = {};
   if (!db.plan.humidityMaxHours) db.plan.humidityMaxHours = 3;
   for (const t of db.tests) {
     if (!t.company) t.company = plantCompany(t.plant);   // clave: compañía + conduce
     if (!t.source) t.source = "excel";                    // qr | ocr | manual | excel
+    /* `id` es la llave que viaja entre aparatos; `n` no sirve, porque cada
+       aparato lo reparte por su cuenta y dos sin señal darían el mismo.
+       Los del Excel lo deducen de su número, así que sale idéntico en todas
+       partes: vienen del mismo seed.js. Ver assets/sync.js. */
+    if (!t.id && typeof qcIdDe === "function") qcIdDe(t, "t");
   }
+  for (const h of db.humidity) if (!h.id && typeof qcIdDe === "function") qcIdDe(h, "h");
   db.version = 2;
 }
 /* La compañía sale de la planta cuando no viene declarada (histórico) */
@@ -80,16 +93,27 @@ function publishSpec() {
     try { C.publishMixSpec(db, db.project && db.project.mixId, db.plan); } catch (_) {}
   }
 }
-function saveDB() { publishSpec(); localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+function saveDB() {
+  publishSpec();
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
+  /* La sincronización se cuelga aquí y de ningún otro sitio: mira qué
+     cambió respecto a la última vez y encola las líneas del registro.
+     Por eso ninguna de las once pantallas tuvo que cambiar nada — siguen
+     mutando `db` y llamando a `saveDB()` como siempre. Ver assets/sync.js. */
+  if (typeof QCSync !== "undefined") { try { QCSync.alGuardar(); } catch (e) { console.error(e); } }
+}
 
-/* Cross-window live sync: other open role screens re-render when
-   any window writes the DB (storage events fire cross-tab).     */
+/* Sincronización en vivo. Dos caminos, el mismo aviso:
+   - Entre pestañas del mismo aparato, el evento `storage` del navegador.
+   - Entre aparatos distintos, el registro de cambios (assets/sync.js).
+   La pantalla no distingue: le llega `onChange()` y repinta. */
 function enableLiveSync(onChange) {
   window.addEventListener("storage", (e) => {
     if (e.key === DB_KEY && e.newValue) {
       try { db = JSON.parse(e.newValue); if (!db.dayMeta) db.dayMeta = {}; onChange(); } catch (_) {}
     }
   });
+  if (typeof QCSync !== "undefined") { QCSync.alCambiar(onChange); QCSync.arrancar(); }
 }
 
 /* ------------------------------------------------------------ theme (light/dark)

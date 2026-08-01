@@ -5,6 +5,52 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.11] — 1 de agosto · «los aparatos se ven»
+
+Q-02, la pieza que faltaba: hasta hoy cada navegador guardaba lo suyo y el iPad de la obra
+no sabía nada de la PC de Rubén. Ahora el iPad entra los datos, la PC mira el Control
+Center, el teléfono mira los indicadores y el Field Display canta en vivo, todos sobre lo
+mismo.
+
+### Añadido
+- **Registro de cambios por campo** en vez de subir la base entera. Lo que viaja es
+  *camión 407 · slump · 3.0 · 22:56 · iPad de Rubén*, así que dos aparatos pueden tocar el
+  mismo camión a la vez sin pisarse — el caso real es el iPad escribiendo el Slump mientras
+  Recepción sella «Termina vaciado». De regalo queda la línea de tiempo de cada conduce,
+  que era Q-05 y es el expediente que pediría la ACT.
+- **Cola para cuando no hay señal.** Lo entrado se guarda y sube al volver la cobertura. En
+  obra eso va a pasar, así que no es un extra.
+- **`assets/sync.js`** se cuelga de `saveDB()` y de ningún otro sitio: compara contra una
+  copia de referencia y de la diferencia saca las líneas. **Ninguna de las once pantallas
+  tuvo que cambiar una línea** — el aislamiento de la base detrás de `loadDB`/`saveDB`
+  desde el primer día es lo que cobró hoy.
+- **El mismo servidor, dos casas**: `sync-servidor.js` (Node sin dependencias, lo monta
+  `serve.js`) y `sync-worker.js` (Cloudflare Workers + D1). Rutas y reglas idénticas, así
+  que el cliente no distingue si habla con la laptop de la obra o con internet.
+- Panel de **Sincronización** en Plan & Datos: dirección, llave del proyecto y nombre del
+  aparato. Viven en el navegador, **no en el repositorio**, que es público.
+
+### Arreglado en el camino
+- El primer arranque subía **7.878 líneas**: los 397 ensayos del Excel enteros. La copia de
+  referencia se estrenaba con `seed.js` crudo, y es `migrateDB()` la que le pone `company`,
+  `source` e `id`. Se partió en `migrarBase(base)` para poder migrar una copia — una
+  migración, dos usos.
+- El plan del día **de la simulación** también viajaba: la PC recibía 260 yardas y trece
+  losas sin un solo camión detrás. Ahora lleva `source: "demo"` y se queda en casa. De la
+  simulación solo viaja su apagado.
+
+### Verificado con dos almacenamientos separados
+`localhost` y `127.0.0.1` son orígenes distintos para el navegador, o sea dos aparatos de
+verdad. Camión recibido en uno → **EN PRUEBAS** en el otro. Muestras entradas en uno →
+**ACEPTADO** con Slump 3.25 y Unit Weight 150.4 en el otro. Servidor apagado a media faena →
+«sin señal», dos cambios encolados, y al volver subieron solos.
+
+### Pendiente
+Desplegar en Cloudflare. Necesita la cuenta de Víctor; los comandos están en la cabecera de
+`sync-worker.js`.
+
+---
+
 ## [0.10] — 31 de julio · «el ciclo cierra»
 
 Dos fallos encontrados probando el ciclo completo la víspera del primer tiro en obra.

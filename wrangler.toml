@@ -1,0 +1,17 @@
+# Despliegue de la API de sincronización en Cloudflare Workers.
+# Ver la cabecera de `sync-worker.js` para los comandos, en orden.
+#
+# El `database_id` lo imprime `npx wrangler d1 create qcheck` y hay que
+# pegarlo aquí. No es un secreto: identifica la base, no da acceso a ella.
+# La llave del proyecto NO va en este archivo — va con
+# `npx wrangler secret put QC_TOKEN`, que la guarda cifrada en Cloudflare.
+# Este repositorio es público: lo que se escriba aquí lo ve cualquiera.
+
+name = "qcheck-api"
+main = "sync-worker.js"
+compatibility_date = "2026-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "qcheck"
+database_id = "PENDIENTE — lo imprime `npx wrangler d1 create qcheck`"

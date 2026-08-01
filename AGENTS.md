@@ -507,6 +507,63 @@ mismo camión, la pantalla se repintaba idéntica y **parecía que el botón no 
 Por lo mismo, al enviar se sueltan los cuatro campos y se vuelve a la fila (`state.n = null`):
 si la pantalla siguiera enseñando lo recién enviado, enviar no se distinguiría de no enviar.
 
+## 14. La sincronización entre aparatos — el registro de cambios
+
+`assets/sync.js` (navegador) · `sync-servidor.js` (Node) · `sync-worker.js` (Cloudflare).
+El iPad entra los datos, la PC mira el Control Center, el teléfono mira los indicadores y
+el Field Display canta en vivo. Todos sobre lo mismo.
+
+**Lo que viaja es una línea por CAMPO que cambió**, no la base entera:
+
+    camión 407 · slump · 3.0 · 22:56 · iPad de Rubén
+
+Subir la base completa rompe en cuanto dos personas trabajan a la vez: el iPad escribe el
+Slump del camión 407 mientras Recepción le sella «Termina vaciado» al mismo camión, y el
+último en subir borra lo del otro. Por campo eso no puede pasar. De regalo queda la línea
+de tiempo de cada conduce —quién entró qué y cuándo—, que es Q-05 y es el expediente que
+pediría la ACT.
+
+Reglas que no se rompen aquí:
+
+- **La sincronización se cuelga de `saveDB()` y de ningún otro sitio.** Compara la base
+  contra una copia de cómo estaba al sincronizar (`qc-sync-base`) y de la diferencia saca
+  las líneas. Por eso **ninguna de las once pantallas tuvo que cambiar nada**: siguen
+  mutando `db` y llamando a `saveDB()`. Si te ves añadiendo llamadas de sync en una
+  pantalla, vas por el camino equivocado.
+- **La llave que viaja es `id`, nunca `n`.** `n` lo reparte cada aparato por su cuenta
+  (`nextTestN()` = el mayor + 1), así que dos sin señal dan el mismo número. Cuando dos
+  camiones llegan con el mismo `n`, el de `id` menor se queda con él y el otro coge el
+  siguiente libre — todos los aparatos aplican la misma regla sobre las mismas líneas, así
+  que todos llegan al mismo reparto sin preguntarle a nadie (`qcReconciliarN()`).
+- **La simulación no viaja.** Ni los ensayos con `source: "demo"` ni el plan que siembra
+  (`dayMeta[hoy].source === "demo"`). Lo único suyo que sale es su **apagado**:
+  `db.demo === false` significa que alguien programó un tiro de verdad y los demás tienen
+  que enterarse para no sembrar encima.
+- **La copia de referencia se estrena con `seed.js` MIGRADO.** Es la migración la que le
+  pone `company`, `source` e `id` a los 397 ensayos históricos; con la semilla cruda no se
+  parecen a la base real y el primer arranque los sube todos. Pasó en la primera prueba:
+  7.878 líneas de nada. Por eso `migrateDB()` se partió en `migrarBase(base)`, que sabe
+  trabajar sobre una copia — una migración, dos usos.
+- **La base actualiza ANTES de guardar lo que llega de fuera.** Si no, un cambio recibido
+  se lee como propio en el siguiente diff y vuelve a subir, en bucle.
+- **Nada se borra.** El registro solo crece. Un dato que quedó mal se corrige con otra
+  línea encima y las dos quedan; un expediente de calidad que se puede reescribir por
+  detrás no vale nada.
+- **Sin señal se sigue trabajando.** Lo que no subió se encola en `qc-sync-cola` y sube al
+  volver. En obra eso va a pasar, así que no es un extra. Solo se descuela lo que el
+  servidor confirmó por `uid`, y un `uid` repetido no entra dos veces.
+- **La dirección del servidor y la llave viven en el navegador, NO en el repositorio**
+  (`qc-api`, `qc-token`, en Plan & Datos → Sincronización). Este repositorio es público:
+  una llave dentro de él no es una llave. Y aun así **no sustituye a la autenticación
+  real** — sigue siendo Q-07.
+- Se consulta cada **3 s** con la pantalla delante y cada **20 s** escondida.
+
+`node serve.js` monta la API además de servir los archivos, y escucha en todas las
+interfaces para que el iPad entre por el IP de la máquina. El registro local va a
+`datos/cambios.jsonl`, que está en `.gitignore`: son datos de trabajo, no código.
+
+## 13b. Recepción, el conduce repetido
+
 **La comprobación de conduce repetido vive ahora en `saveArrival()` de `conduce.html`.**
 Estaba en la alta de Muestras y se fue con ella; sin ella, el mismo conduce entrado dos
 veces duplica las yardas. La llave es **compañía + ticket**, nunca el ticket solo, y por eso

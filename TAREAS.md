@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-02 | **Sincronización multi-aparato**: registro de cambios por campo, servidor sin dependencias y cliente con cola offline. iPad entra datos, PC y teléfono miran, Field Display en vivo | claude | 2026-07-31 |
+| Q-02 | **Sincronización multi-aparato** — código terminado y probado con dos almacenamientos separados. **Falta solo desplegar en Cloudflare**, que necesita la cuenta de Víctor: comandos en la cabecera de `sync-worker.js` | claude | 2026-07-31 |
 
 ---
 
@@ -20,9 +20,8 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 | id | tarea | por qué importa | tamaño |
 |----|-------|-----------------|--------|
 | Q-01 | **OCR del conduce en papel** — foto → el sistema entra los datos solos | La mayoría de concreteras no tendrán QR: esta es la vía principal de entrada, no el respaldo | grande |
-| Q-02 | **Backend y base de datos en la nube** | Hoy cada navegador guarda lo suyo; sin esto no hay "correr en vivo" para el equipo | grande |
 | Q-04 | **Correo automático al rechazar** | Hoy abre un correo pre-llenado; falta el envío real (necesita Q-02) | mediano |
-| Q-05 | **Línea de tiempo de eventos por conduce** | Modelo de datos definitivo: salida de planta, llegada, muestra, veredicto, vaciado, cilindros | mediano |
+| Q-05 | **Línea de tiempo de eventos por conduce** — *el dato ya existe*: el registro de cambios (Q-02) lo guarda entero. Falta la pantalla que lo enseñe | Modelo de datos definitivo: salida de planta, llegada, muestra, veredicto, vaciado, cilindros | pequeño |
 | Q-06 | **Adjuntos en el conduce**: foto del conduce, pesadas, fotos de losa y cilindros | Cierra el expediente digital que hoy se arma a mano | mediano |
 | Q-07 | **Autenticación real** con usuarios y roles | Hoy la puerta es de demostración (`admin`/`1234`), no protege nada | mediano (necesita Q-02) |
 | Q-08 | **Más reglas de inteligencia** | La capa de avisos ya detecta agua, tendencia y humedad vencida; faltan reglas de temperatura y de tiempo de viaje | pequeño |

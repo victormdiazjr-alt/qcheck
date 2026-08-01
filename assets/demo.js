@@ -125,6 +125,10 @@ function sembrarTiroDemo(base) {
 
   base.tests = base.tests.concat(nuevos);
   base.dayMeta[hoy] = {
+    /* Marcado como de la simulación para que NO viaje a los otros aparatos.
+       Sin esto, la PC recibía un plan de 260 yardas y trece losas sin un solo
+       camión detrás: el tablero de otro enseñando su demostración. */
+    source: "demo",
     horaInicio: nuevos[0].start,
     cyPlan: DEMO_LOSAS.length * DEMO_CY_LOSA,
     losasPlan: DEMO_LOSAS.length,

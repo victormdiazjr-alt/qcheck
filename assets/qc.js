@@ -432,6 +432,73 @@ function viewCharts() {
     </div>`;
 }
 
+/* ------------------------------------------------------------ Sincronización
+
+   El único sitio donde se configura el multi-aparato. La dirección del
+   servidor y la llave del proyecto viven en este navegador y NO en el
+   repositorio: el repositorio es público, y una llave dentro de él no es
+   una llave. Cada aparato se configura una vez.
+
+   Lo que se enseña aquí es estado, no instrucciones (§8a): si algo está
+   mal se ve —«sin señal», «llave rechazada»— y se corrige. */
+const QC_ESTADO_SYNC = {
+  "apagado":    { t: "Sin sincronizar", c: "var(--muted)", d: "Este aparato guarda solo lo suyo. Nadie más lo ve." },
+  "conectando": { t: "Conectando…",     c: "var(--act)",   d: "" },
+  "al-dia":     { t: "Al día",          c: "var(--ok)",    d: "Todo lo que pasa aquí lo ven los demás aparatos, y al revés." },
+  "sin-senal":  { t: "Sin señal",       c: "var(--act)",   d: "Se sigue trabajando igual; lo entrado sube en cuanto vuelva la señal." },
+  "sin-llave":  { t: "Llave rechazada", c: "var(--susp)",  d: "El servidor no reconoce la llave del proyecto." },
+};
+function panelSync() {
+  const e = QC_ESTADO_SYNC[QCSync.estado] || QC_ESTADO_SYNC.apagado;
+  const pend = QCSync.pendientes;
+  return `<div class="panel">
+    <div class="panel-head"><h2>Sincronización</h2><div class="spacer"></div>
+      <span style="font-weight:800; letter-spacing:.14em; text-transform:uppercase; font-size:12px; color:${e.c}">${e.t}</span>
+      ${pend ? `<span class="muted" style="font-size:12px; margin-left:10px">${pend} sin subir</span>` : ""}
+    </div>
+    <div class="panel-body" style="font-size:13.5px">
+      <p class="muted" style="margin:0 0 12px">${e.d}</p>
+      <div class="grid cols-2" style="gap:12px">
+        <label style="display:block">
+          <span class="muted" style="font-size:11px; font-weight:800; letter-spacing:.2em; text-transform:uppercase">Servidor</span>
+          <input id="sync-url" value="${esc(qcApiURL())}" placeholder="https://qcheck-api.workers.dev"
+            style="width:100%; margin-top:6px" spellcheck="false" autocapitalize="off">
+        </label>
+        <label style="display:block">
+          <span class="muted" style="font-size:11px; font-weight:800; letter-spacing:.2em; text-transform:uppercase">Llave del proyecto</span>
+          <input id="sync-token" value="${esc(qcApiToken())}" placeholder="—"
+            style="width:100%; margin-top:6px" spellcheck="false" autocapitalize="off">
+        </label>
+        <label style="display:block">
+          <span class="muted" style="font-size:11px; font-weight:800; letter-spacing:.2em; text-transform:uppercase">Este aparato</span>
+          <input id="sync-dev" value="${esc(qcAparato())}" style="width:100%; margin-top:6px">
+        </label>
+      </div>
+      <div style="margin-top:14px; display:flex; gap:10px; align-items:center">
+        <button class="btn small" onclick="guardarSync()">Guardar y conectar</button>
+        <span id="sync-msg" class="muted" style="font-size:12.5px"></span>
+      </div>
+    </div>
+  </div>`;
+}
+function guardarSync() {
+  const url = document.getElementById("sync-url").value.trim().replace(/\/+$/, "");
+  localStorage.setItem("qc-api", url);
+  localStorage.setItem("qc-token", document.getElementById("sync-token").value.trim());
+  localStorage.setItem("qc-dev", document.getElementById("sync-dev").value.trim() || qcAparato());
+  const msg = document.getElementById("sync-msg");
+  if (!url) { QCSync.estado = "apagado"; render(); return; }
+  msg.textContent = "Probando…";
+  fetch(url + "/api/salud")
+    .then((r) => r.json())
+    .then((s) => {
+      msg.textContent = `Servidor al habla · ${s.cambios} cambios guardados`;
+      QCSync.arrancar();
+      setTimeout(render, 900);
+    })
+    .catch(() => { msg.textContent = "No contesta. Revise la dirección."; });
+}
+
 /* ------------------------------------------------------------ Plan & data */
 function viewPlan() {
   const p = db.plan, pr = db.project;
@@ -449,6 +516,7 @@ function viewPlan() {
         arrancar uno de verdad; los 397 ensayos históricos del proyecto no se tocan.
       </div>
     </div>` : ""}
+    ${panelSync()}
     <div class="grid cols-2">
       <div class="panel">
         <div class="panel-head"><h2>Proyecto</h2><div class="spacer"></div><button class="btn small" onclick="formProject()">Editar</button></div>
