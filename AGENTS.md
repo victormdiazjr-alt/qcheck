@@ -63,8 +63,21 @@ toca ese archivo y nada más; el papel se comprueba con `qcEsQC()`, nunca con el
 | usuario | clave | papel | dónde entra |
 |---|---|---|---|
 | `ruben` | 1234 | qc | teléfono → portal · computadora → Control Center |
-| `admin` | 1234 | qc | igual que Rubén |
+| `admin` | 1234 | qc | igual que Rubén, **más «Plan & Datos»** |
 | `invitado` | 1234 | consulta | siempre al portal, sin Resultados |
+
+**«Plan & Datos» es solo del administrador** (`config: true`, `qcVeConfig()`). Ahí viven la
+dirección del servidor, la llave del proyecto, los límites del plan de control y la ficha
+del proyecto: **configuración, no trabajo.** Rubén lleva el control de calidad y aun así no
+la ve — Víctor lo pidió el 1 ago 2026 —, porque una llave de servidor o un límite de
+especificación tocados sin querer no dan un error: dan un expediente malo que nadie nota
+hasta que lo firma la Autoridad. Quien usa la herramienta no ve cómo está montada.
+
+Se comprueba en **tres sitios**, porque esconder el botón no es esconder la pantalla: la
+pestaña no se pinta (`pintarPestanas`), el enrutador no la acepta desde la dirección
+(`tabsVisibles`) y `viewPlan()` no pinta nada sin permiso (`permiteConfig`). Como el resto
+del acceso vive en el navegador, frena un despiste y no a alguien decidido: el candado de
+verdad es Q-07.
 
 El papel **se deduce del usuario en cada comprobación, no se guarda**: así una sesión abierta
 antes de añadir a alguien no queda a medias. `auth.js` devuelve al portal a quien no lleve

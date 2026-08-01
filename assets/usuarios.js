@@ -19,7 +19,7 @@
 "use strict";
 
 const QC_CUENTAS = {
-  admin:    { clave: "1234", rol: "qc",       nombre: "Administrador", tablero: true },
+  admin:    { clave: "1234", rol: "qc",       nombre: "Administrador", tablero: true, config: true },
   ruben:    { clave: "1234", rol: "qc",       nombre: "Rubén Segarra" },
   invitado: { clave: "1234", rol: "consulta", nombre: "Invitado" },
 };
@@ -47,5 +47,23 @@ function qcEsQC() { return qcRol() === "qc"; }
 function qcVeTablero() {
   const u = sessionStorage.getItem("qc-user");
   return !!(QC_CUENTAS[u] && QC_CUENTAS[u].tablero);
+}
+
+/* ¿Puede ver la tripa del sistema? — «Plan & Datos»: la dirección del servidor,
+   la llave del proyecto, los límites del plan de control, la ficha del proyecto
+   y el panel de la simulación.
+
+   **Rubén NO.** Lleva el control de calidad y aun así esto no es suyo: es
+   configuración, y una llave de servidor o un límite de especificación tocados
+   sin querer no dan un error — dan un expediente malo que nadie nota hasta que
+   lo firma la Autoridad. Víctor lo pidió así el 1 ago 2026: quien usa la
+   herramienta no ve cómo está montada.
+
+   Igual que `qcVeTablero()`, va como capacidad de la cuenta y NUNCA como
+   `usuario === "admin"`: el papel se deduce de esta lista y nunca del nombre
+   (AGENTS §3). Para dárselo a alguien más se le pone `config: true` aquí. */
+function qcVeConfig() {
+  const u = sessionStorage.getItem("qc-user");
+  return !!(QC_CUENTAS[u] && QC_CUENTAS[u].config);
 }
 

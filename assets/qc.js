@@ -9,8 +9,17 @@
 /* ------------------------------------------------------------ UI state */
 const state = { tab: "dashboard", day: null, search: "", showAll: false, chartRange: 80 };
 
-const TABS = ["dashboard", "live", "daily", "tests", "strength", "charts", "plan"];
+/* «Plan & Datos» es configuración, no trabajo: servidor, llave del proyecto,
+   límites del plan de control y ficha del proyecto. Solo la ve quien lleve
+   `config: true` (`qcVeConfig()`), y la comprobación se hace en TRES sitios
+   porque esconder el botón no es esconder la pantalla: la pestaña no se pinta,
+   el enrutador no la acepta desde la dirección, y `switchTab` la rechaza. */
+const TABS_BASE = ["dashboard", "live", "daily", "tests", "strength", "charts"];
+function tabsVisibles() {
+  return typeof qcVeConfig === "function" && qcVeConfig() ? TABS_BASE.concat("plan") : TABS_BASE;
+}
 function switchTab(tab, pushHash = true) {
+  if (!tabsVisibles().includes(tab)) tab = "dashboard";
   state.tab = tab;
   document.querySelectorAll("#main-tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
   // deja la pestaña en la direccion, para que el Control Center pueda enlazar directo
@@ -20,7 +29,16 @@ function switchTab(tab, pushHash = true) {
 /* Los widgets del Control Center abren results.html#<pestana> */
 function tabFromHash() {
   const h = location.hash.slice(1);
-  return TABS.includes(h) ? h : null;
+  return tabsVisibles().includes(h) ? h : null;
+}
+
+/* La pestaña se quita del encabezado para quien no deba verla. Se hace aquí y
+   no en el HTML porque el papel se deduce de la cuenta en cada carga, no se
+   escribe en la página. */
+function pintarPestanas() {
+  if (typeof qcVeConfig === "function" && qcVeConfig()) return;
+  const b = document.querySelector('#main-tabs button[data-tab="plan"]');
+  if (b) b.remove();
 }
 function render() {
   if (typeof pintarTiro === "function") pintarTiro();   // el tiro sube en vivo
@@ -33,6 +51,12 @@ function render() {
   else if (state.tab === "charts") app.innerHTML = viewCharts();
   else if (state.tab === "plan") app.innerHTML = viewPlan();
 }
+
+/* ¿Y si alguien llega a `viewPlan()` por otro camino? No pinta nada. Es la
+   tercera comprobación a propósito: como el resto del acceso, esto vive en el
+   navegador y frena un despiste, no a alguien decidido. El candado de verdad
+   llega con Q-07. */
+function permiteConfig() { return typeof qcVeConfig !== "function" || qcVeConfig(); }
 
 /* ------------------------------------------------------------ Dashboard */
 function viewDashboard() {
@@ -501,6 +525,7 @@ function guardarSync() {
 
 /* ------------------------------------------------------------ Plan & data */
 function viewPlan() {
+  if (!permiteConfig()) return "";
   const p = db.plan, pr = db.project;
   const enDemo = db.demo && db.demo === todayISO();
   return `
@@ -682,6 +707,7 @@ document.getElementById("main-tabs").addEventListener("click", (e) => {
 loadDB();
 initTheme();
 mountThemeToggle();
+pintarPestanas();                   // fuera «Plan & Datos» para quien no sea admin
 enableLiveSync(() => render());
 window.addEventListener("hashchange", () => { const t = tabFromHash(); if (t) switchTab(t, false); });
 const inicial = tabFromHash();
