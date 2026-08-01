@@ -8,3 +8,6 @@ respaldo-*.json
 
 # El registro de cambios del servidor local: datos de trabajo, no código
 datos/
+
+# Caché de wrangler (Cloudflare)
+.wrangler/

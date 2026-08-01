@@ -45,9 +45,13 @@ verdad. Camión recibido en uno → **EN PRUEBAS** en el otro. Muestras entradas
 **ACEPTADO** con Slump 3.25 y Unit Weight 150.4 en el otro. Servidor apagado a media faena →
 «sin señal», dos cambios encolados, y al volver subieron solos.
 
-### Pendiente
-Desplegar en Cloudflare. Necesita la cuenta de Víctor; los comandos están en la cabecera de
-`sync-worker.js`.
+### Desplegado
+**`https://qcheck-api.qcheck.workers.dev`** — Cloudflare Workers + D1, cuenta de Víctor.
+Probado además entre el **sitio publicado** (`victormdiazjr-alt.github.io`) y un segundo
+aparato: camión recibido en uno → **EN PRUEBAS** en el otro; muestras entradas en uno →
+**ACEPTADO** con Slump 2.75 y Unit Weight 149.8 en el otro. La API rechaza con **401** a
+quien no traiga la llave. El registro quedó en cero: los datos de prueba se borraron antes
+de que nadie lo use de verdad.
 
 ---
 

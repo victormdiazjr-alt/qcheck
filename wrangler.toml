@@ -14,4 +14,4 @@ compatibility_date = "2026-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "qcheck"
-database_id = "PENDIENTE — lo imprime `npx wrangler d1 create qcheck`"
+database_id = "506c7a22-b75c-427a-8448-42b2a6aa1d7a"
