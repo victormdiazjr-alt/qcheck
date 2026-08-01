@@ -19,6 +19,7 @@ _(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 
 | id | tarea | por qué importa | tamaño |
 |----|-------|-----------------|--------|
+| Q-29 | **Mudanza a `qcheck.dcreationspr.com`** — nameservers a Cloudflare, sitio en Pages, API en `api.qcheck…`, y **repartir el enlace nuevo una sola vez** dejando el viejo con redirección | Acordado con Víctor: **al terminar de construir**, cuando QCheck entre en uso oficial. Antes no — un enlace nuevo en mitad de las pruebas es confusión de más. Ver `DECISIONS.md` §16 | mediano |
 | Q-01 | **OCR del conduce en papel** — foto → el sistema entra los datos solos | La mayoría de concreteras no tendrán QR: esta es la vía principal de entrada, no el respaldo | grande |
 | Q-04 | **Correo automático al rechazar** | Hoy abre un correo pre-llenado; falta el envío real (necesita Q-02) | mediano |
 | Q-05 | **Línea de tiempo de eventos por conduce** — *el dato ya existe*: el registro de cambios (Q-02) lo guarda entero. Falta la pantalla que lo enseñe | Modelo de datos definitivo: salida de planta, llegada, muestra, veredicto, vaciado, cilindros | pequeño |

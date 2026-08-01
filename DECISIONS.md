@@ -220,5 +220,10 @@ QCheck pase a `qcheck.dcreationspr.com` hay que repartir uno nuevo. Se hace **un
 avisando, y GitHub Pages se queda sirviendo el viejo con una redirección mientras tanto
 — no se apaga el mismo día.
 
-**Cuándo reconsiderarlo:** con la autenticación real (Q-07). Entonces la llave en el
-enlace sobra: cada quien entra con su cuenta y el aparato se conecta solo.
+**Cuándo se cambia, acordado con Víctor el 1 ago 2026:** **al terminar de construir**, cuando
+QCheck deje las pruebas y entre en uso oficial. Ese es el momento y no antes: mientras se
+esté cambiando código a diario, un enlace nuevo es una confusión más encima de una prueba
+que ya tiene bastante. Va como Q-29 en `TAREAS.md`.
+
+**Cuándo deja de hacer falta la llave en el enlace:** con la autenticación real (Q-07).
+Entonces cada quien entra con su cuenta y el aparato se conecta solo.
