@@ -258,14 +258,19 @@ table.rep td.dif { font-weight: 700; }
 
    Comparten encabezado, pie, estilos de hoja y reglas de impresión: son el
    mismo entregable con distinto alcance, no dos productos. */
-const state = { modo: "dia", dia: null, from: null, to: null, lot: "all" };
+const state = { modo: "dia", dia: null, fijado: false, from: null, to: null, lot: "all" };
 
 /* La dirección manda: reporte.html?dia=2026-07-31 abre el reporte de ese tiro,
    para que el Control Center y Results puedan enlazar al día que se cierra. */
 function leerDireccion() {
   const q = new URLSearchParams(location.search);
   const d = q.get("dia");
-  if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) { state.modo = "dia"; state.dia = d; }
+  /* `fijado` marca que el día lo pidió el ENLACE, no el selector. Importa
+     porque al abrir, la sincronización todavía no ha traído los vaciados: la
+     lista de días es solo «hoy», el día pedido no está en ella y se descartaba
+     — el enlace directo al informe de un tiro terminaba enseñando el día en
+     blanco de hoy. Un día pedido a mano se respeta y se espera a que llegue. */
+  if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) { state.modo = "dia"; state.dia = d; state.fijado = true; }
   else if (q.get("modo") === "acumulado") state.modo = "acumulado";
 }
 function cambiarModo(m) {
@@ -284,6 +289,9 @@ function cambiarDia(d) {
    reportar, el reporte lo dice; no se esconde la fecha. */
 function diasDelReporte() {
   const s = new Set([...testDates(), ...Object.keys(db.dayMeta || {}), todayISO()]);
+  /* El día pedido por el enlace entra en la lista aunque sus datos aún no hayan
+     llegado, para que el selector lo enseñe escogido y no salte a otro. */
+  if (state.dia) s.add(state.dia);
   return [...s].sort().reverse();
 }
 
@@ -405,7 +413,10 @@ function barra(dias) {
 /* ---------- render ---------- */
 function render() {
   const dias = diasDelReporte();
-  if (!state.dia || !dias.includes(state.dia)) state.dia = dias[0];
+  /* Un día pedido por el enlace NO se sustituye aunque todavía no esté en la
+     lista: los datos pueden estar de camino. Se queda, y en cuanto la
+     sincronización los trae, la hoja se pinta sola. */
+  if (!state.dia || (!dias.includes(state.dia) && !state.fijado)) state.dia = dias[0];
   const days = testDates().slice().sort();
   if (!state.from) state.from = days[0];
   if (!state.to) state.to = days[days.length - 1];
