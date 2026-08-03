@@ -79,6 +79,47 @@
 
 h2.sec { font-size: 12pt; margin: 20px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #dbe2e9; color: #2b3a8c; }
 h2.sec:first-of-type { margin-top: 4px; }
+/* Las secciones se numeran solas, de corrido por todo el informe. Un documento
+   técnico se cita por sección —«ver 4»— y numerarlas a mano se desordena en
+   cuanto se añade una. */
+#report { counter-reset: qcsec; }
+h2.sec { counter-increment: qcsec; }
+h2.sec::before { content: counter(qcsec) ". "; color: #7d8ba0; font-weight: 700; }
+
+/* ---------- identidad del documento ----------
+   La tira de arriba: quién es este papel. Un informe que se archiva necesita
+   un número que no cambie entre dos copias del mismo vaciado. */
+.doc-id {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+  background: #dbe2e9; border: 1px solid #dbe2e9; border-radius: 5px;
+  overflow: hidden; margin-bottom: 6px;
+}
+.doc-id > div { background: #f7f9fb; padding: 7px 10px; }
+.doc-id span { display: block; font-size: 6.8pt; text-transform: uppercase;
+  letter-spacing: .5px; color: #5a6b7c; font-weight: 800; }
+.doc-id b { font-size: 9.5pt; color: #16222e; font-variant-numeric: tabular-nums; }
+
+/* ---------- prosa ----------
+   Un informe se lee de corrido. Medida de línea contenida: a lo ancho de la
+   carta entera, el ojo pierde el renglón. */
+p.cuerpo { font-size: 9.6pt; line-height: 1.62; margin: 0 0 9px; text-align: justify; }
+p.cuerpo b { font-weight: 700; }
+
+/* ---------- disposición ----------
+   La conclusión que alguien firma, y se ve de lejos: es lo primero que busca
+   quien abre el informe. */
+.veredicto {
+  border: 1px solid #dbe2e9; border-left: 4px solid #5a6b7c;
+  border-radius: 5px; padding: 10px 13px; margin: 12px 0 4px; background: #f7f9fb;
+}
+.veredicto .vt { font-size: 11.5pt; font-weight: 800; letter-spacing: -.01em; }
+.veredicto .vd { font-size: 8.8pt; color: #4a5a6a; margin-top: 2px; line-height: 1.5; }
+.veredicto.v-ok    { border-left-color: #1e8e3e; background: #f2faf5; }
+.veredicto.v-ok .vt    { color: #16702f; }
+.veredicto.v-obs   { border-left-color: #b26a00; background: #fdf8ee; }
+.veredicto.v-obs .vt   { color: #8a5200; }
+.veredicto.v-curso { border-left-color: #2b3a8c; background: #f4f6fd; }
+.veredicto.v-curso .vt { color: #2b3a8c; }
 
 /* ficha del proyecto */
 .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 18px; font-size: 9.5pt; }
@@ -202,7 +243,7 @@ table.rep td.dif { font-weight: 700; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=2e48ba53"></script>
-<script src="assets/core.js?v=8acf8749"></script>
+<script src="assets/core.js?v=6927cbf9"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -684,7 +725,9 @@ function renderDiario() {
   /* 18 camiones es lo máximo que cabe en una carta con el encabezado, el pie y
      alguna losa partida en dos líneas. Ver `repartir()`. */
   const chunks = repartir(rows, 18);
-  const total = 2 + chunks.length + paresCartas.length + 1;
+  /* 3 fijas: el informe técnico, cómo cerró el día, y las losas con las
+     observaciones. Más la bitácora, las cartas y la de incidencias y firmas. */
+  const total = 3 + chunks.length + paresCartas.length + 1;
   let pg = 0;
   const out = [];
 
@@ -695,7 +738,132 @@ function renderDiario() {
     return `<td class="n dif${z}">${d > 0 ? "+" : ""}${fmt(d, dp)}</td>`;
   };
 
-  // ---------- HOJA 1: cómo cerró el vaciado ----------
+  /* ---------- HOJA 1: RESUMEN TÉCNICO ----------
+
+     La que faltaba. El informe abría con mosaicos de indicadores —«unos print
+     screens», dijo quien lo recibió, y tenía razón—: un tablero impreso no es
+     un documento técnico. Un informe se lee de corrido, dice qué pasó, lo
+     respalda con estadística y termina con una conclusión que alguien firma.
+
+     Cada frase de aquí sale de los datos. Nada se redacta «a ojo»: si un dato
+     no existe, la frase que lo usaría no se escribe. */
+  const est = estadisticasDia(day);
+  const estDe = (k) => (est.find((e) => e.k === k) || {}).est || null;
+  const eSlump = estDe("slump"), eUW = estDe("uw"), eTemp = estDe("temp");
+  const fueraTotal = est.reduce((a, e) => a + e.susp, 0);
+  const enAccion = est.reduce((a, e) => a + e.accion, 0);
+
+  /* El identificador del informe se DEDUCE del proyecto y del día, no se
+     inventa ni se lleva un contador: el mismo vaciado emite siempre el mismo
+     número, y dos copias del mismo día son la misma copia. */
+  const idInforme = `QC-${(db.project.mixId || "PR52").split("-")[0].replace(/\s+/g, "")}-${day.replace(/-/g, "")}`;
+
+  const veredicto = enCurso
+    ? { cls: "curso", t: "Vaciado en curso", d: "Las cifras son las de este momento. Emítase de nuevo al cerrar el tiro." }
+    : rej.length || fueraTotal
+      ? { cls: "obs", t: "Conforme con observaciones",
+          d: `${rej.length ? `${rej.length} carga${rej.length === 1 ? "" : "s"} rechazada${rej.length === 1 ? "" : "s"}` : ""}${rej.length && fueraTotal ? " · " : ""}${fueraTotal ? `${fueraTotal} lectura${fueraTotal === 1 ? "" : "s"} fuera de límite de suspensión` : ""}. Ver el detalle en las hojas siguientes.` }
+      : { cls: "ok", t: "Conforme",
+          d: "Todas las lecturas de hormigón fresco quedaron dentro de los límites de especificación del plan de control." };
+
+  /* Las frases se arman por piezas y se descartan las que no tienen dato
+     detrás. Así el párrafo nunca dice «— yd³» ni «desde las —». */
+  const trozos = [];
+  trozos.push(`El vaciado del <b>${fmtDate(day)}</b> se ejecutó en el proyecto <b>${esc(db.project.name || "—")}</b>${
+    meta.fase ? `, fase ${esc(meta.fase)}` : ""}${meta.lane ? `, carril ${esc(meta.lane)}` : ""}${
+    meta.km ? `, kilometraje ${esc(meta.km)}` : ""}.`);
+  if (st.firstStart && st.lastEnd) {
+    trozos.push(`La colocación transcurrió entre las <b>${hm(st.firstStart)}</b> y las <b>${hm(st.lastEnd)}</b>${
+      st.hours ? `, ${duracionCorta(Math.round(st.hours * 60))} de faena` : ""}${
+      cerradoAMano ? `, y el tiro se dio por cerrado a las <b>${hm(cerradoAMano)}</b>` : ""}.`);
+  }
+  trozos.push(`Se recibieron <b>${prog.loads}</b> camiones y se colocaron <b>${fmt(prog.placed, 1)} yd³</b>${
+    prog.cyPlan ? ` frente a las ${fmt(prog.cyPlan, 1)} yd³ planificadas (${fmt(prog.placed / prog.cyPlan * 100, 0)} %)` : ""}${
+    empresas.length ? `, suministradas por ${esc(empresas.join(" y "))}` : ""}${
+    plantas.length ? ` desde ${plantas.length === 1 ? "la planta" : "las plantas"} ${esc(plantas.join(" y "))}` : ""}.`);
+  if (tramo) {
+    trozos.push(`El tramo declarado fue <b>${esc(tramo.carril)}-${tramo.desde.toFixed(3)} a ${tramo.hasta.toFixed(3)}</b>
+      (${tramo.metros} m), sobre el que recibieron hormigón <b>${losasReal}</b> losas.`);
+  } else if (losasPlan) {
+    trozos.push(`Se vaciaron <b>${losasReal}</b> de <b>${losasPlan}</b> losas planificadas.`);
+  }
+
+  const ritmo = [];
+  if (ritmoReal != null) ritmo.push(`El ritmo medio de colocación fue de <b>${fmt(ritmoReal, 1)} yd³/h</b> (${fmt(st.loadsPerHr, 1)} camiones por hora)`);
+  if (st.avgCycle != null) ritmo.push(`el ciclo medio de batch a fin de descarga, <b>${Math.round(st.avgCycle)} min</b>${
+    st.maxCycle != null ? ` con un máximo de ${Math.round(st.maxCycle)} min` : ""} frente al límite de ${p.maxElapsedMin} min del plan`);
+  if (st.avgWait != null) ritmo.push(`y la espera media en obra, de <b>${Math.round(st.avgWait)} min</b>`);
+
+  const cumpl = [];
+  cumpl.push(`De los <b>${prog.evaluated}</b> camiones con lecturas evaluables, <b>${prog.conforming}</b> resultaron dentro de límites${
+    prog.compliancePct != null ? ` (<b>${fmt(prog.compliancePct, 1)} %</b>)` : ""}.`);
+  if (enAccion) cumpl.push(`<b>${enAccion}</b> lectura${enAccion === 1 ? " entró" : "s entraron"} en zona de acción —dentro de especificación, pero lo bastante cerca del límite como para vigilar la mezcla—.`);
+  if (fueraTotal) cumpl.push(`<b>${fueraTotal}</b> lectura${fueraTotal === 1 ? "" : "s"} superó${fueraTotal === 1 ? "" : "n"} el límite de suspensión.`);
+  if (rej.length) cumpl.push(`Se rechazaron <b>${rej.length}</b> carga${rej.length === 1 ? "" : "s"}: ${rej.map((t) => `camión ${esc(t.truck || "—")} (conduce ${esc(t.ticket || "—")})`).join(", ")}.`);
+  else cumpl.push("No se rechazó ninguna carga.");
+  if (eSlump && eSlump.sd != null) {
+    cumpl.push(`La consistencia de la producción, medida como desviación estándar de la muestra, fue de
+      <b>${fmt(eSlump.sd, 2)} in</b> en Slump${eUW && eUW.sd != null ? ` y <b>${fmt(eUW.sd, 2)} pcf</b> en Unit Weight` : ""}.`);
+  }
+  if (eTemp) cumpl.push(`La temperatura del hormigón fresco osciló entre <b>${fmt(eTemp.min, 0)}</b> y <b>${fmt(eTemp.max, 0)} °F</b> (máximo admisible ${p.tempMax} °F).`);
+
+  pg++;
+  out.push(`<div class="sheet">
+    ${sheetHead("Informe técnico del vaciado", fmtDate(day))}
+
+    <div class="doc-id">
+      <div><span>Informe</span><b>${esc(idInforme)}</b></div>
+      <div><span>Vaciado</span><b>${fmtDate(day)}</b></div>
+      <div><span>Emitido</span><b>${fmtDate(todayISO())}</b></div>
+      <div><span>Estado</span><b>${enCurso ? "En curso" : "Cerrado"}</b></div>
+    </div>
+
+    <h2 class="sec">Resumen del vaciado</h2>
+    <p class="cuerpo">${trozos.join(" ")}</p>
+    ${ritmo.length ? `<p class="cuerpo">${ritmo.join(", ")}.</p>` : ""}
+
+    <h2 class="sec">Cumplimiento</h2>
+    <p class="cuerpo">${cumpl.join(" ")}</p>
+
+    <div class="veredicto v-${veredicto.cls}">
+      <div class="vt">${esc(veredicto.t)}</div>
+      <div class="vd">${veredicto.d}</div>
+    </div>
+
+    <h2 class="sec">Estadística de los ensayos de hormigón fresco</h2>
+    <table class="rep">
+      <tr><th>Propiedad</th><th class="n">n</th><th class="n">Media</th><th class="n">Desv. est.</th>
+          <th class="n">CV</th><th class="n">Mínimo</th><th class="n">Máximo</th>
+          <th class="n">Acción</th><th class="n">Fuera</th><th>Norma</th></tr>
+      ${est.map((e) => e.est ? `<tr>
+        <td class="lbl" style="width:auto">${esc(e.n)} <span style="color:#5a6b7c">(${esc(e.u)})</span></td>
+        <td class="n">${e.est.n}</td>
+        <!-- La media con los decimales con que se MIDE la propiedad; la
+             desviación con uno más, que es donde se aprecia. Un Slump con tres
+             decimales finge una precisión que la regla no da. -->
+        <td class="n"><b>${fmt(e.est.media, e.dp)}</b></td>
+        <td class="n">${e.est.sd != null ? fmt(e.est.sd, e.dp + 1) : "—"}</td>
+        <td class="n">${e.est.cv != null ? fmt(e.est.cv, 1) + " %" : "—"}</td>
+        <td class="n">${fmt(e.est.min, e.dp)}</td>
+        <td class="n">${fmt(e.est.max, e.dp)}</td>
+        <td class="n${e.accion ? " z-act" : ""}">${e.accion || "—"}</td>
+        <td class="n${e.susp ? " z-susp" : ""}">${e.susp || "—"}</td>
+        <td style="color:#5a6b7c">${esc(e.norma)}</td>
+      </tr>` : `<tr><td class="lbl" style="width:auto">${esc(e.n)}</td>
+        <td class="n" colspan="8" style="color:#5a6b7c">sin lecturas registradas este día</td>
+        <td style="color:#5a6b7c">${esc(e.norma)}</td></tr>`).join("")}
+    </table>
+    <div class="tbl-note">
+      La desviación estándar es de muestra (n−1), el criterio de ACI 214 para juzgar la uniformidad de
+      la producción. <b>Acción</b> son las lecturas dentro de especificación pero cerca del límite;
+      <b>Fuera</b>, las que superaron el límite de suspensión. Con una sola lectura no hay desviación
+      posible y la casilla queda vacía: un cero diría «ninguna variación», que no es lo mismo que
+      «no se puede saber».
+    </div>
+    ${sheetFoot(pg, total)}
+  </div>`);
+
+  // ---------- HOJA 2: cómo cerró el vaciado ----------
   pg++;
   out.push(`<div class="sheet">
     ${sheetHead("Reporte del vaciado", fmtDate(day))}

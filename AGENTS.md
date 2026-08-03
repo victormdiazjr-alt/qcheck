@@ -560,6 +560,23 @@ reglas de impresión. Son el mismo producto con distinto alcance, no dos pantall
 clic. `render()` reparte a `renderDiario()` o `renderAcumulado()` y **la barra se pinta una
 sola vez**, en `barra()`.
 
+**El informe del día abre con una hoja ESCRITA, no con mosaicos.** La primera hoja es el
+informe técnico: identidad del documento, resumen en prosa, cumplimiento, **disposición** y
+la **estadística de los ensayos** (n, media, desviación de muestra, CV, mín, máx, cuántas en
+zona de acción y cuántas fuera, con su norma ASTM). Se añadió el 3 ago 2026 porque quien lo
+recibió dijo que lo anterior eran «unos print screens de los indicadores», y tenía razón:
+un tablero impreso no es un documento técnico.
+
+- **Cada frase sale de los datos.** Las oraciones se arman por piezas y la pieza que no
+  tiene dato detrás **no se escribe**: así el párrafo nunca dice «— yd³» ni «desde las —».
+- **La desviación es de MUESTRA (n−1)**, el criterio de ACI 214 para juzgar la uniformidad
+  de la producción (`estadisticas()` en `core.js`). Con una sola lectura no hay desviación y
+  la casilla queda vacía: un cero diría «ninguna variación», que no es «no se puede saber».
+- **El número de informe se deduce** de la mezcla y del día (`QC-<mezcla>-<AAAAMMDD>`). No
+  hay contador: dos copias del mismo vaciado son la misma copia.
+- Las secciones **se numeran solas** con un contador CSS. Numerarlas a mano se desordena en
+  cuanto se añade una.
+
 Reglas que no se rompen aquí:
 
 - **El reporte no calcula nada por su cuenta.** Sale de `dayProgress`, `dayStats`,

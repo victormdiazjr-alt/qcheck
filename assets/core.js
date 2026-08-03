@@ -622,6 +622,61 @@ function cicloCamion(t, tope) {
   return tope != null && c > tope ? null : c;
 }
 /* Day-level production stats (producer / contractor KPIs). */
+/* ------------------------------------------------------------ estadística de ensayos
+
+   Lo que convierte una bitácora en un informe técnico. Un listado de lecturas
+   dice qué salió; la desviación estándar dice **si la planta está bajo
+   control**, que es la pregunta de fondo — y es como la juzga ACI 214.
+
+   El coeficiente de variación solo se calcula si la media no es cero, y con
+   menos de dos lecturas no hay desviación posible: en esos casos se devuelve
+   `null` y la hoja escribe «—». Un cero ahí sería decir «variación ninguna»,
+   que es exactamente lo contrario de «no se puede saber». */
+function estadisticas(vals) {
+  const v = vals.map(num).filter((x) => x != null);
+  if (!v.length) return null;
+  const n = v.length;
+  const media = v.reduce((a, b) => a + b, 0) / n;
+  /* Desviación de MUESTRA (n−1): estas lecturas son una muestra del vaciado,
+     no la población entera. Es la que usa ACI 214. */
+  const sd = n > 1 ? Math.sqrt(v.reduce((a, b) => a + (b - media) ** 2, 0) / (n - 1)) : null;
+  return {
+    n, media, sd,
+    cv: sd != null && media !== 0 ? (sd / media) * 100 : null,
+    min: Math.min(...v), max: Math.max(...v),
+  };
+}
+
+/* Las cuatro propiedades del hormigón fresco, cada una con su estadística y
+   cuántas lecturas cayeron fuera. La zona la juzga el mismo motor que pinta el
+   tablero (`zoneSlump`, `zoneAir`…): la hoja firmada y la pantalla no pueden
+   discrepar. */
+const QC_PROPIEDADES = [
+  { k: "slump", n: "Slump", u: "in", dp: 2, norma: "ASTM C143" },
+  { k: "uw", n: "Unit Weight", u: "pcf", dp: 1, norma: "ASTM C138" },
+  { k: "air", n: "Aire", u: "%", dp: 1, norma: "ASTM C231" },
+  { k: "temp", n: "Temperatura", u: "°F", dp: 0, norma: "ASTM C1064" },
+];
+function estadisticasDia(day) {
+  const rows = testsOfDate(day);
+  return QC_PROPIEDADES.map((p) => {
+    const est = estadisticas(rows.map((t) => t[p.k]));
+    let accion = 0, susp = 0;
+    for (const t of rows) {
+      if (num(t[p.k]) == null) continue;
+      /* Las funciones de zona reciben el ENSAYO entero, no el valor suelto: el
+         Unit Weight se juzga contra el objetivo del propio camión (`uwTarget`),
+         que cambia con la mezcla, y eso no se puede saber desde un número. */
+      const z = p.k === "slump" ? zoneSlump(t)
+        : p.k === "air" ? zoneAir(t)
+        : p.k === "uw" ? zoneUW(t)
+        : zoneTemp(t);
+      if (z === "susp") susp++; else if (z === "act") accion++;
+    }
+    return { ...p, est, accion, susp };
+  });
+}
+
 function dayStats(day) {
   const rows = testsOfDate(day);
   const cy = rows.reduce((a, t) => a + (num(t.vol) || 0), 0);
