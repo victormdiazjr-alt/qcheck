@@ -21,12 +21,15 @@
   --logo-blue:#4a7ef0; --logo-green:#57c94f; --logo-g1:#8a95a3; --logo-g2:#6b7683;
   --text: #eef2f6; --muted: #77848f; --hairline: rgba(255,255,255,.11);
   --ok: #34d27b; --susp: #ff5a52; --navy: #4a63d8;
-  /* Segarra Engineering. El azul del logotipo es #2b3288 y sobre este fondo
-     (#0a0d12) se hunde hasta desaparecer, así que va aclarado manteniendo el
-     tono — el mismo criterio que el logo de QCheck, que se aclara en pantalla
-     y va original sobre el papel del reporte (AGENTS.md §10). El gris no hace
-     falta tocarlo. */
-  --segarra-azul: #5d68cf; --segarra-gris: #86868d;
+  /* Segarra Engineering — los colores salen del vector oficial
+     (assets/logo-segarra.svg): rombo #293992, chevrons #81808a.
+
+     El azul original se hunde sobre este fondo (#0a0d12) hasta desaparecer, así
+     que va aclarado manteniendo el tono exacto — mismo criterio que el logo de
+     QCheck, que se aclara en pantalla y va original sobre el papel del reporte
+     (AGENTS.md §10). Sobre papel se usa #293992 tal cual. El gris no hace falta
+     tocarlo: sobre fondo oscuro se lee bien como viene. */
+  --segarra-azul: #586ad0; --segarra-gris: #81808a;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
@@ -115,11 +118,11 @@ button:active { transform: scale(.98); }
    De quién es la herramienta. Va abajo y en gris a propósito: la marca de esta
    pantalla es QCheck, y dos logotipos peleando arriba no dejan leer ninguno.
 
-   Este es el logotipo REAL —rombo hueco y tres chevrons—, que Víctor mandó el
-   5 ago 2026. NO es el de MARCA_SEGARRA en movil.html: aquel eran los
-   chevrons del propio logo de QCheck, recortados, que se usaron mientras no
-   había vector bueno. El del portal sigue pendiente de cambiar por este.
-   Ver AGENTS.md §8a y TODO.md. */
+   Este es el logotipo REAL, sacado del vector oficial que dio Víctor el 5 ago
+   2026 (assets/logo-segarra.svg). NO es el de MARCA_SEGARRA en movil.html:
+   aquel eran los chevrons del propio logo de QCheck, recortados, que se usaron
+   mientras no había vector bueno. El del portal sigue pendiente de cambiar por
+   este. Ver AGENTS.md §8a. */
 .firma {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--hairline);
@@ -180,18 +183,25 @@ button:active { transform: scale(.98); }
        necesita rótulo propio: repetirlo lo leería dos veces un lector de
        pantalla.
 
-       El rombo y los chevrons van de TRAZO, no de relleno: así el grosor es
-       uniforme en las esquinas y el mismo dibujo aguanta cualquier tamaño sin
-       retocar los vértices. -->
+       Trazados copiados TAL CUAL del vector oficial que dio Víctor el 5 ago
+       2026, assets/logo-segarra.svg. Va solo el logotipo gráfico —el rombo y
+       los tres chevrons—, sin la palabra «Segarra» ni el lema: el nombre ya lo
+       pone el <span> de al lado, en la tipografía de la interfaz, y meter dos
+       veces el mismo nombre a dos tamaños distintos se ve como un error.
+
+       El viewBox es el recuadro exacto del grupo gráfico dentro del archivo
+       original, medido con getBBox(). Si algún día se recorta a ojo, el logo se
+       descentra respecto al texto.
+
+       Lo único que cambia respecto al original son los colores, que salen de
+       variables para poder aclarar el azul sobre fondo oscuro. Las formas no se
+       tocan: es una marca registrada. -->
   <div class="firma">
-    <svg viewBox="0 0 756 730" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
-         fill="none" stroke-linejoin="miter" stroke-linecap="butt">
-      <path stroke="var(--segarra-azul)" stroke-width="34" d="M 378 20 L 713 190 L 378 360 L 43 190 Z"/>
-      <g stroke="var(--segarra-gris)" stroke-width="52">
-        <path d="M 20 313 L 378 470 L 736 313"/>
-        <path d="M 20 426 L 378 583 L 736 426"/>
-        <path d="M 20 539 L 378 696 L 736 539"/>
-      </g>
+    <svg viewBox="23.32 50.95 31.11 29.77" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path fill="var(--segarra-gris)" d="M53.07,72.28l-14.43,7.12-13.98-7.04-1.26.66,15.27,7.7,1.28-.66,14.41-7.1-1.28-.68h0Z"/>
+      <path fill="var(--segarra-gris)" d="M39.94,70.7l14.41-7.1-1.28-.66-14.43,7.12-13.98-7.06-1.26.66,15.27,7.7,1.28-.66Z"/>
+      <path fill="var(--segarra-gris)" d="M38.64,74.71l-13.98-7.04-1.28.66,15.27,7.7,1.28-.66,14.41-7.1-1.28-.66-14.41,7.1h0Z"/>
+      <path fill="var(--segarra-azul)" d="M54.43,58.84l-14.49-7.23-1.28-.66-15.34,7.88,15.34,7.88,1.28-.66,14.49-7.2ZM25.82,58.82l12.82-6.55,13.11,6.55-13.11,6.57-12.82-6.57Z"/>
     </svg>
     <span>Segarra Engineering</span>
   </div>
