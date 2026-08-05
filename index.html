@@ -21,6 +21,12 @@
   --logo-blue:#4a7ef0; --logo-green:#57c94f; --logo-g1:#8a95a3; --logo-g2:#6b7683;
   --text: #eef2f6; --muted: #77848f; --hairline: rgba(255,255,255,.11);
   --ok: #34d27b; --susp: #ff5a52; --navy: #4a63d8;
+  /* Segarra Engineering. El azul del logotipo es #2b3288 y sobre este fondo
+     (#0a0d12) se hunde hasta desaparecer, así que va aclarado manteniendo el
+     tono — el mismo criterio que el logo de QCheck, que se aclara en pantalla
+     y va original sobre el papel del reporte (AGENTS.md §10). El gris no hace
+     falta tocarlo. */
+  --segarra-azul: #5d68cf; --segarra-gris: #86868d;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
@@ -104,6 +110,27 @@ button:active { transform: scale(.98); }
 .err.show { display: block; }
 .back { display: block; text-align: center; margin-top: 20px; color: var(--muted); font-size: 12.5px; text-decoration: none; }
 .back:hover { color: var(--text); }
+
+/* ---------- Segarra Engineering, al pie ----------
+   De quién es la herramienta. Va abajo y en gris a propósito: la marca de esta
+   pantalla es QCheck, y dos logotipos peleando arriba no dejan leer ninguno.
+
+   Este es el logotipo REAL —rombo hueco y tres chevrons—, que Víctor mandó el
+   5 ago 2026. NO es el de MARCA_SEGARRA en movil.html: aquel eran los
+   chevrons del propio logo de QCheck, recortados, que se usaron mientras no
+   había vector bueno. El del portal sigue pendiente de cambiar por este.
+   Ver AGENTS.md §8a y TODO.md. */
+.firma {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--hairline);
+}
+/* 26 px y no menos: por debajo, el trazo del rombo baja de 1 px y en una
+   pantalla que no sea Retina el rombo se corta a trozos. */
+.firma svg { height: 26px; width: auto; flex: none; }
+.firma span {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--muted);
+}
 </style>
 </head>
 <body>
@@ -148,6 +175,26 @@ button:active { transform: scale(.98); }
   <!-- Aquí vivían las credenciales de demostración y la explicación de qué ve
        cada cuenta. Víctor las sacó el 31 jul 2026: la aplicación no da
        instrucciones — van todas en la guía de usuario. -->
+
+  <!-- De quién es la herramienta. El texto va en el <span>, así que el SVG no
+       necesita rótulo propio: repetirlo lo leería dos veces un lector de
+       pantalla.
+
+       El rombo y los chevrons van de TRAZO, no de relleno: así el grosor es
+       uniforme en las esquinas y el mismo dibujo aguanta cualquier tamaño sin
+       retocar los vértices. -->
+  <div class="firma">
+    <svg viewBox="0 0 756 730" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
+         fill="none" stroke-linejoin="miter" stroke-linecap="butt">
+      <path stroke="var(--segarra-azul)" stroke-width="34" d="M 378 20 L 713 190 L 378 360 L 43 190 Z"/>
+      <g stroke="var(--segarra-gris)" stroke-width="52">
+        <path d="M 20 313 L 378 470 L 736 313"/>
+        <path d="M 20 426 L 378 583 L 736 426"/>
+        <path d="M 20 539 L 378 696 L 736 539"/>
+      </g>
+    </svg>
+    <span>Segarra Engineering</span>
+  </div>
 </form>
 
 <script src="assets/usuarios.js?v=7f884800"></script>
