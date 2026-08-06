@@ -11,7 +11,8 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-37 | **Cada quien entra a lo suyo** — tres cuentas nuevas de consulta (concretero, contratista, autoridad) que caen directas en su tablero sin navegación, Rubén con pantalla `Settings` propia (solo límites), admin lo ve todo | claude | 2026-08-06 |
+| Q-38 | **Botón de imprimir en los tableros** — reporte escrito del tiro y de los indicadores que enseña ese tablero | claude | 2026-08-06 |
 
 ---
 
