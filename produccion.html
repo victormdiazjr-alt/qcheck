@@ -178,6 +178,31 @@ function kpi(label, value, sub, cls = "") {
   return `<div class="stat kpi ${cls}"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;
 }
 
+/* El aire, en la cabecera de su carta — Q-09.
+
+   Era la única de las cuatro propiedades del hormigón fresco que este tablero
+   no enseñaba, y justamente es la que la planta controla con el aditivo: al
+   concretero le sirve más que a nadie. El contrato ya le publica los límites a
+   la concretera (`shared/conduce-contract.js`), así que no enseñárselos aquí
+   era un hueco raro.
+
+   Sale de `estadisticasDia()`, el mismo motor que juzga las zonas en el resto
+   de las pantallas. **No calcula nada por su cuenta**: si un número de aquí no
+   cuadrara con el del reporte, sería un fallo.
+
+   Sin lecturas dice que no las hay. No se rellena con un cero, que se leería
+   como «aire cero por ciento» — un hormigón sin aire incorporado, que es un
+   dato clínico, no un hueco. */
+function resumenAire(day) {
+  const a = estadisticasDia(day).find((p) => p.k === "air");
+  if (!a || !a.est) return "sin lecturas de aire";
+  const p = db.plan.air;
+  const fuera = a.accion + a.susp;
+  return `${a.est.n} lectura${a.est.n === 1 ? "" : "s"} · media ${fmt(a.est.media, 1)} %`
+    + ` · acción ${p.actLo}–${p.actHi} %`
+    + (fuera ? ` · ${fuera} fuera` : "");
+}
+
 function render() {
   const days = testDates();
   if (!state.day || !days.includes(state.day)) state.day = days[0];
@@ -232,10 +257,19 @@ function render() {
       <div class="panel-body">${cycleChart(s.rows, tope)}</div>
     </div>
 
-    <div class="grid cols-2">
+    <!-- Tres cartas y no dos: el Aire entró con Q-09. Va en medio, en el mismo
+         orden que CHART_DEFS, y su cabecera lleva los límites porque son los que
+         el contrato ya le publica a la concretera. La clase cols-3 baja sola a
+         dos columnas en 640 px y a una en 560 px: en el teléfono no aprieta.
+         (Sin acentos graves aquí dentro — esto vive en una plantilla. AGENTS §1b.) -->
+    <div class="grid cols-3">
       <div class="panel">
         <div class="panel-head"><h2>Control del día — Slump</h2><div class="spacer"></div><span class="muted" style="font-size:12px">${trendLabel(state.day, "slump")}</span></div>
         <div class="panel-body"><div class="chart-scroll">${chartForDay(CHART_DEFS[0], state.day, 24)}</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Control del día — Aire</h2><div class="spacer"></div><span class="muted" style="font-size:12px">${resumenAire(state.day)}</span></div>
+        <div class="panel-body"><div class="chart-scroll">${chartForDay(CHART_DEFS[1], state.day, 24)}</div></div>
       </div>
       <div class="panel">
         <div class="panel-head"><h2>Control del día — Unit Weight</h2><div class="spacer"></div><span class="muted" style="font-size:12px">${trendLabel(state.day, "uw")}</span></div>

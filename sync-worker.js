@@ -169,6 +169,13 @@ export default {
     if (url.pathname === "/api/sesion" && req.method === "POST") {
       let d;
       try { d = await req.json(); } catch (_) { return json({ error: "json" }, 400); }
+      /* Sin cuentas dadas de alta se contesta 501 y NO 401, y la diferencia
+         importa: el aparato entiende «este servidor todavía no lleva cuentas» y
+         cae a su lista local, mientras que un 401 significaría «tu clave no
+         vale» y lo dejaría fuera. Un servidor recién levantado dejaría a todo
+         el mundo en la calle. */
+      const cuantos = await env.DB.prepare("SELECT COUNT(*) AS n FROM usuarios").first();
+      if (!cuantos || !cuantos.n) return json({ error: "sin-cuentas" }, 501);
       const usr = String(d.usr || "").trim().toLowerCase();
       const u = await env.DB.prepare("SELECT * FROM usuarios WHERE usr = ?").bind(usr).first();
       /* Se tarda lo mismo con un usuario que no existe que con una clave mala:

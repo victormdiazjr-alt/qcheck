@@ -346,7 +346,12 @@ function montarAPI(almacen, token, opciones) {
     /* ---------------------------------------------------------- la sesión */
 
     if (url.pathname === "/api/sesion" && req.method === "POST") {
-      if (!cuentas) return responder(res, 501, { error: "sin-cuentas" });
+      /* Sin cuentas dadas de alta se contesta 501 y NO 401, y la diferencia
+         importa: el aparato entiende «este servidor todavía no lleva cuentas»
+         y cae a su lista local, mientras que un 401 significaría «tu clave no
+         vale» y lo dejaría fuera. Un servidor recién levantado —el de la obra,
+         o el de un cliente nuevo— dejaría a todo el mundo en la calle. */
+      if (!cuentas || !cuentas.hayUsuarios()) return responder(res, 501, { error: "sin-cuentas" });
       let d;
       try { d = await cuerpoDe(req, 1e4); } catch (_) { return responder(res, 400, { error: "json" }); }
       const s = await cuentas.entrar(d.usr, d.clave, d.dev);
