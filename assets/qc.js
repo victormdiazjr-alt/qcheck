@@ -551,11 +551,14 @@ function viewLosas() {
    Lo que se enseña aquí es estado, no instrucciones (§8a): si algo está
    mal se ve —«sin señal», «llave rechazada»— y se corrige. */
 const QC_ESTADO_SYNC = {
-  "apagado":    { t: "Sin sincronizar", c: "var(--muted)", d: "Este aparato guarda solo lo suyo. Nadie más lo ve." },
-  "conectando": { t: "Conectando…",     c: "var(--act)",   d: "" },
-  "al-dia":     { t: "Al día",          c: "var(--ok)",    d: "Todo lo que pasa aquí lo ven los demás aparatos, y al revés." },
-  "sin-senal":  { t: "Sin señal",       c: "var(--act)",   d: "Se sigue trabajando igual; lo entrado sube en cuanto vuelva la señal." },
-  "sin-llave":  { t: "Llave rechazada", c: "var(--susp)",  d: "El servidor no reconoce la llave del proyecto." },
+  /* Los rótulos en inglés, las explicaciones en español: el rótulo es
+     vocabulario de estado y se comparte con la barra (Q-34); la explicación
+     la lee el técnico cuando algo va mal. */
+  "apagado":    { t: "Not syncing", c: "var(--muted)", d: "Este aparato guarda solo lo suyo. Nadie más lo ve." },
+  "conectando": { t: "Connecting…", c: "var(--act)",   d: "" },
+  "al-dia":     { t: "Online",      c: "var(--ok)",    d: "Todo lo que pasa aquí lo ven los demás aparatos, y al revés." },
+  "sin-senal":  { t: "No signal",   c: "var(--act)",   d: "Se sigue trabajando igual; lo entrado sube en cuanto vuelva la señal." },
+  "sin-llave":  { t: "Key rejected", c: "var(--susp)", d: "El servidor no reconoce la llave del proyecto." },
 };
 function panelSync() {
   const e = QC_ESTADO_SYNC[QCSync.estado] || QC_ESTADO_SYNC.apagado;

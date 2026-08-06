@@ -338,7 +338,15 @@ function mountStatusBar(day, opciones) {
   return bar;
 }
 
-/* La barra dice la verdad sobre la sincronización, no sobre el WiFi.
+/* EN INGLÉS A PROPÓSITO (Q-34, 6 ago 2026). Los rótulos de estado del
+   servidor van en inglés en toda la herramienta —aquí, en `qc.js` y en el
+   portal— porque antes estaban a medias: `index.html` decía «Online» y dos
+   líneas más abajo «Sin conexión», el mismo aparato y el mismo servidor con
+   dos idiomas. Los comentarios y el resto de la interfaz siguen en español;
+   lo que se unificó es el vocabulario de estado. Si añades un estado nuevo,
+   ponlo en inglés y en los tres sitios.
+
+   La barra dice la verdad sobre la sincronización, no sobre el WiFi.
    `navigator.onLine` solo sabe si hay red; llegó a decir «En línea» con el
    servidor caído y los cambios amontonándose sin subir. En obra eso es peor
    que no decir nada: el técnico sigue entrando muestras convencido de que
@@ -355,21 +363,21 @@ function pintarConexion() {
      No es un fallo, pero tampoco es lo normal: va en gris apagado, que es como
      se ve algo que está por hacer. */
   let clase = "", texto;
-  if (!red) { clase = " off"; texto = "Sin conexión"; }
-  else if (s === "apagado") { clase = " solo"; texto = "Solo este aparato"; }
-  else if (s === "al-dia") { texto = "En línea"; }
-  else if (s === "sin-llave") { clase = " off"; texto = "Llave rechazada"; }
+  if (!red) { clase = " off"; texto = "Offline"; }
+  else if (s === "apagado") { clase = " solo"; texto = "This device only"; }
+  else if (s === "al-dia") { texto = "Online"; }
+  else if (s === "sin-llave") { clase = " off"; texto = "Key rejected"; }
   /* Los tres «no sube» se dicen distinto porque se arreglan distinto: la llave
      la cambia el administrador, la sesión la arregla el propio técnico
      volviendo a entrar, y el papel no lo arregla nadie desde aquí. Un «Sin
      señal» genérico manda al técnico a mirar el WiFi mientras sus muestras se
      amontonan por otra razón. */
-  else if (s === "sin-sesion") { clase = " off"; texto = pend ? `Entra otra vez · ${pend} sin subir` : "Entra otra vez"; }
-  else if (s === "sin-permiso") { clase = " off"; texto = "Sin permiso para escribir"; }
-  else if (s === "sin-senal") { clase = " off"; texto = pend ? `Sin señal · ${pend} sin subir` : "Sin señal"; }
-  else { clase = " solo"; texto = "Conectando…"; }
+  else if (s === "sin-sesion") { clase = " off"; texto = pend ? `Sign in again · ${pend} unsent` : "Sign in again"; }
+  else if (s === "sin-permiso") { clase = " off"; texto = "No write access"; }
+  else if (s === "sin-senal") { clase = " off"; texto = pend ? `No signal · ${pend} unsent` : "No signal"; }
+  else { clase = " solo"; texto = "Connecting…"; }
   el.className = "qcs-conn" + clase;
-  el.title = s === "apagado" ? "Este aparato guarda solo lo suyo. Nadie más lo ve." : "";
+  el.title = s === "apagado" ? "This device keeps its own work. Nobody else sees it." : "";
   el.querySelector("span").textContent = texto;
 }
 

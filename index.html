@@ -218,7 +218,7 @@ button:active { transform: scale(.98); }
 
    Tres estados, y el silencio también dice algo:
      - contesta          → «Online» en verde, respirando
-     - configurado y no contesta → «Sin conexión» en rojo. Callarlo sería peor:
+     - configurado y no contesta → «Offline» en rojo. Callarlo sería peor:
                            el aparato cree estar en la red y no lo está.
      - sin servidor      → nada. Ese aparato trabaja solo a propósito y no
                            hay nada que avisar. */
@@ -238,7 +238,7 @@ function pintarRed() {
       el.title = `${s.cambios} cambios guardados en el servidor`;
     })
     .catch(() => {
-      el.textContent = "Sin conexión";
+      el.textContent = "Offline";
       el.className = "estado no";
       el.title = "Este aparato no está alcanzando el servidor";
     });
