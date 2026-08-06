@@ -5,6 +5,32 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.17] — 6 de agosto · «el calor y el reloj»
+
+### Añadido
+- **Q-08 — Dos avisos nuevos.** **El calor**: la temperatura va subiendo hacia el límite,
+  con el umbral del plan (`zoneTemp`) más la dirección, para no cantar un día que ronda el
+  límite sin moverse. **El reloj**: el camión que no va a llegar a tiempo, avisado
+  mientras todavía viene y no cuando ya se pasó.
+
+### El umbral del reloj sale del propio día
+- Se compara lo que le queda al camión contra **lo que se está tardando HOY en descargar**
+  (la mediana de `arrive → end`). Un día de descargas de 12 minutos avisa más tarde que
+  uno de 25. **Sin ningún camión terminado no se avisa** — inventar una duración sería
+  justo lo que este proyecto no hace (DECISIONS §4).
+
+### De paso
+- El aviso **cambia según el tiro esté abierto o cerrado**: `trendAlerts()` alimenta el
+  reporte, que se imprime de días pasados, y «adelantar los tiros que queden» sobre un
+  vaciado de julio es ruido.
+- **El calor lleva ☀ y no 🌡**, que ya era de la humedad vencida.
+
+### Medido sobre el histórico
+- 8 avisos de calor en 29 días — entre ellos un camión a **98 °F con el límite en 95** que
+  hasta ahora nadie señalaba por su nombre. Los 27 de humedad, sin tocar.
+
+---
+
 ## [0.16] — 6 de agosto · «las yardas de cada losa»
 
 ### Añadido

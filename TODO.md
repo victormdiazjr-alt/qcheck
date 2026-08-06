@@ -60,10 +60,6 @@ con la consola: es cifrar la base local contra la clave del usuario. Ver `DECISI
 Foto del conduce, pesadas, fotos de losa y cilindros. Cierra el expediente digital
 que hoy se arma a mano.
 
-### Q-08 · Más reglas de inteligencia — pequeño
-`trendAlerts()` ya detecta agua, tendencia y humedad vencida. Faltan reglas de
-temperatura y de tiempo de viaje.
-
 ### Q-10 · Integración con ArcGIS — investigación
 La inspección ya georreferencia losas ahí. Evaluar el enlace.
 

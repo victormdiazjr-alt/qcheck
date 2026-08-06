@@ -801,6 +801,33 @@ Dónde vive: `sync-servidor.js` y `sync-worker.js` (los dos, y tienen que decir 
 las tablas `usuarios`/`sesiones`/`ajustes` de `sync-esquema.sql`, `assets/usuarios.js`
 (`qcCuenta()`), el acceso en `index.html` y `cuentas.js` para dar de alta.
 
+## 17. La capa de avisos, y de dónde salen sus umbrales
+
+`trendAlerts()` mira los datos del día y canta lo que no se ve solo: exceso de agua,
+tendencias, humedad vencida, racha en zona de acción, repartos que no cuadran (Q-11) y,
+desde Q-08, el calor y el camión que no llega a tiempo.
+
+**Ningún umbral de esta capa se inventa** — es el §4 de DECISIONS, y aquí se ve bien:
+
+- **El calor** reusa el umbral del plan. `zoneTemp()` ya sabe cuándo un camión entra en
+  zona de acción (`tempMax - 3`); el aviso solo añade la dirección —que además esté
+  subiendo— para no cantar cada media hora un día que ronda el límite sin moverse.
+- **El tiempo de viaje** saca su umbral **del propio día**: compara lo que le queda al
+  camión contra lo que se está tardando HOY en descargar, en esta obra y con esta
+  cuadrilla (la mediana de `arrive → end`). Un día de descargas de 12 minutos avisa más
+  tarde que uno de 25, y así debe ser. **Sin ningún camión terminado no hay con qué
+  comparar y no se avisa**: inventar una duración de descarga sería justo lo que no se
+  hace.
+
+Dos reglas más de la casa, por si se añaden avisos:
+
+- **El aviso cambia según el tiro esté abierto o cerrado.** «Adelantar los tiros que
+  queden» sobre un vaciado de julio es ruido; el hallazgo es el mismo, lo que cambia es
+  qué se hace con él. `trendAlerts()` alimenta también el reporte, que se imprime de días
+  pasados.
+- **Dos avisos distintos no llevan el mismo icono.** La humedad vencida ya usa 🌡, así que
+  el calor lleva ☀ — de un vistazo tienen que distinguirse.
+
 ## 16. El lector del conduce — propone, nunca guarda (Q-01)
 
 La foto del conduce entra por `/api/leer-conduce` y salen los campos. Reglas duras:

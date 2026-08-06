@@ -1209,6 +1209,99 @@ function trendAlerts(day) {
       text: `${recent.length} de las últimas 5 pruebas en zona de acción.`,
       action: "Ajuste de planta probablemente necesario." });
 
+  /* --- El calor va subiendo hacia el límite (Q-08) ---
+
+     El hormigón que llega caliente fragua antes de tiempo y pierde resistencia,
+     y en agosto en Puerto Rico la temperatura sube sola con la mañana. Lo que
+     falta no es saber que un camión se pasó —eso ya lo pinta la zona— sino
+     verlo venir mientras todavía se puede hacer algo: adelantar el tiro, pedir
+     hielo, parar.
+
+     **El umbral no se inventa: es el del plan.** `zoneTemp()` ya dice cuándo un
+     camión entra en zona de acción (`tempMax - 3`) y cuándo se pasa. Aquí solo
+     se añade la dirección: que además esté SUBIENDO. Un día que ronda el límite
+     sin moverse no necesita que nadie avise cada media hora. */
+  const tp = rows.filter((t) => num(t.temp) != null);
+  if (tp.length >= 3) {
+    const ultimo = tp[tp.length - 1];
+    const zona = zoneTemp(ultimo);
+    if (zona === "act" || zona === "susp") {
+      const v = num(ultimo.temp);
+      const antes = avg(tp.slice(0, -1).map((t) => num(t.temp)));
+      /* Medio grado sobre la media del día ya es tendencia; por debajo de eso
+         es el ruido del propio termómetro. */
+      if (antes != null && v - antes >= 0.5) {
+        const pasado = zona === "susp";
+        /* El vaciado abierto y el cerrado piden cosas distintas. En uno todavía
+           se puede adelantar el tiro o pedir hielo; en el otro ya solo queda el
+           expediente, y decirle a alguien que «adelante los tiros que queden»
+           sobre un vaciado de julio es ruido. El aviso es el mismo hallazgo; lo
+           que cambia es qué se hace con él.
+
+           El icono NO es 🌡: ese ya lo lleva la humedad vencida, y dos avisos
+           distintos con el mismo símbolo se confunden de un vistazo. */
+        const abierto = day === todayISO() && !tiroCerrado(day);
+        out.push({
+          level: pasado ? "susp" : "act", icon: "☀",
+          title: pasado ? "Temperatura sobre el límite y subiendo" : "La temperatura va subiendo",
+          text: `El camión ${ultimo.truck || ultimo.ticket || "—"} llegó a ${fmt(v, 0)} °F`
+            + ` — ${fmt(v - antes, 1)} °F sobre la media del día. El límite son ${db.plan.tempMax} °F.`,
+          action: abierto
+            ? (pasado
+              ? "Decidir sobre esta carga y avisar a la planta antes del próximo camión."
+              : "Adelantar los tiros que queden o pedir a la planta que enfríe la mezcla.")
+            : (pasado
+              ? "Queda en el expediente: esta carga entró por encima del límite de temperatura."
+              : "Queda en el expediente: el día cerró con la temperatura subiendo hacia el límite."),
+        });
+      }
+    }
+  }
+
+  /* --- Un camión que no va a llegar a tiempo (Q-08) ---
+
+     Un camión tiene `maxElapsedMin` desde que sale de planta hasta que termina
+     de descargar. Hoy se sabe cuál se pasó — cuando ya se pasó y no hay nada
+     que hacer. Lo útil es el que todavía viene.
+
+     **El umbral sale del propio día, no de un número inventado** (DECISIONS §4):
+     se compara el tiempo que le queda contra lo que está tardando en descargar
+     un camión HOY, en esta obra, con esta cuadrilla. Un día de descargas de 12
+     minutos avisa más tarde que uno de descargas de 25, y así debe ser.
+
+     Sin ningún camión terminado todavía no hay con qué comparar, y entonces no
+     se avisa: inventar una duración de descarga sería justo lo que no se hace.
+
+     Solo aplica a HOY. En un día pasado todos los camiones ya terminaron, y
+     «ahora» no significa nada. */
+  if (day === todayISO()) {
+    const descargas = rows
+      .map((t) => minutesBetween(t.arrive, t.end))
+      .filter((m) => m != null && m > 0)
+      .sort((a, b) => a - b);
+    const tipica = descargas.length ? descargas[Math.floor(descargas.length / 2)] : null;
+    if (tipica != null) {
+      for (const t of rows) {
+        if (!t.batch || t.end) continue;               // ya terminó, o no salió de planta
+        const lleva = minutosDesde(t.batch);
+        if (lleva == null) continue;
+        const quedan = db.plan.maxElapsedMin - lleva;
+        if (quedan >= tipica) continue;                // le da tiempo de sobra
+        const cual = t.truck || t.ticket || "—";
+        out.push(quedan < 0 ? {
+          level: "susp", icon: "⏱", title: `El camión ${cual} pasó del tiempo`,
+          text: `Salió de planta a las ${t.batch} — lleva ${fmt(lleva, 0)} min y el límite son ${db.plan.maxElapsedMin}.`,
+          action: "Decidir sobre esta carga: pasado el límite el hormigón ya no cumple.",
+        } : {
+          level: "act", icon: "⏱", title: `El camión ${cual} va justo`,
+          text: `Salió de planta a las ${t.batch}, van ${fmt(lleva, 0)} min. Le quedan ${fmt(quedan, 0)}`
+            + ` y hoy se está tardando ${fmt(tipica, 0)} min en descargar.`,
+          action: "Darle paso antes que a los demás, o avisar a la planta.",
+        });
+      }
+    }
+  }
+
   /* --- El reparto de una carga no cuadra (Q-11) ---
      Se canta y no se corrige. Ajustar la diferencia por detrás para que sume
      sería decidir en qué losa cayó ese hormigón, y eso no lo sabe nadie desde
