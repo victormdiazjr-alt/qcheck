@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Producción (concretero) — QCheck</title>
-<link rel="stylesheet" href="assets/qc.css?v=34ac13a9">
+<link rel="stylesheet" href="assets/qc.css?v=75d96e21">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23122c42'/><text x='50' y='70' font-size='52' text-anchor='middle' fill='white'>⚙</text></svg>">
 <style>
 /* Producción — planta y contratista. Analytics theme. */
@@ -100,7 +100,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=6792db96"></script>
+<script src="assets/core.js?v=93396396"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -138,6 +138,22 @@ function cumChart(rows) {
       ? `<g><title>RECHAZADO · camión ${p.truck} · ${p.time}</title><path d="M${X(p.min) - 4},${Y(p.acc) - 4} l8,8 M${X(p.min) + 4},${Y(p.acc) - 4} l-8,8" stroke="#c5221f" stroke-width="2.2"/></g>`
       : `<circle cx="${X(p.min)}" cy="${Y(p.acc)}" r="3.6" fill="#0f6db4" stroke="#fff" stroke-width="1.2"><title>${p.time} · camión ${p.truck || "—"} · ticket ${p.ticket || "—"} · acumulado ${fmt(p.acc, 1)} CY</title></circle>`;
   }
+  /* Capa de lectura (Q-35). Los camiones no caen a intervalos regulares, así
+     que cada uno se queda con la mitad del hueco hasta su vecino: se apunta
+     al camión que se está mirando, no al que cae más cerca del píxel. */
+  g += pistaCursor(MT, H - MB);
+  series.forEach((q, i) => {
+    const xa = i === 0 ? ML : (X(series[i - 1].min) + X(q.min)) / 2;
+    const xb = i === series.length - 1 ? W - MR : (X(q.min) + X(series[i + 1].min)) / 2;
+    g += pistaPunto({
+      x: xa, y: MT, w: Math.max(1, xb - xa), alto: H - MT - MB,
+      cx: X(q.min), cy: Y(q.acc),
+      valor: fmt(q.acc, 1) + " CY",
+      detalle: `${q.time} · camión ${q.truck || "—"} · ticket ${q.ticket || "—"}`,
+      estado: q.rejected ? "Rechazado · no suma al acumulado" : "",
+    });
+  });
+
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%; max-width:${W}px; display:block" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
 }
 
@@ -171,6 +187,24 @@ function cycleChart(rows, tope) {
       g += `<rect x="${X(i)}" y="${Y(x.wait)}" width="${bw}" height="${Y(0) - Y(x.wait)}" rx="3" fill="var(--chart-wait, rgba(18,44,66,.35))"/>`;
     g += `<text x="${X(i) + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="9.5" fill="var(--chart-text, #5a6b7c)">${x.truck || x.load}</text>`;
   });
+
+  /* Capa de lectura (Q-35): responde la columna entera, no solo la barra.
+     Una carga rápida deja una barra de dos centímetros y apuntarle con el
+     dedo en el iPad es imposible. */
+  g += pistaCursor(MT, H - MB);
+  const paso = (W - ML - MR) / items.length;
+  items.forEach((x, i) => {
+    g += pistaPunto({
+      x: ML + i * paso, y: MT, w: paso, alto: H - MT - MB,
+      cx: X(i) + bw / 2, cy: Y(x.cycle),
+      valor: x.cycle + " min",
+      detalle: `Carga ${x.load} · camión ${x.truck || "—"} · ticket ${x.ticket || "—"}` +
+               (x.wait != null ? ` · espera ${x.wait} min` : ""),
+      estado: x.rejected ? "Rechazado"
+        : x.cycle > db.plan.maxElapsedMin ? `Pasa del límite de ${db.plan.maxElapsedMin} min` : "",
+    });
+  });
+
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%; max-width:${W}px; display:block" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
 }
 

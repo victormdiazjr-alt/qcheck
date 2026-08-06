@@ -1380,6 +1380,108 @@ function bandsFor(key) {
   return {};
 }
 
+/* ------------------------------------------------------------ pista de gráficas
+
+   Q-35, 6 ago 2026. Las cartas tenían `<title>`, que es el globito nativo del
+   navegador, y solo en los puntos que se dibujan — los rechazados, los fuera
+   de zona y el último. Un punto dentro de límites no se dibujaba y no había
+   nada donde posar el cursor: la carta enseñaba la forma y se guardaba la
+   cifra. Y `<title>` tarda casi un segundo en salir y **en el iPad no sale
+   nunca**, que es justo donde se trabaja.
+
+   Lo que hay ahora es una capa de lectura: un rectángulo transparente por
+   punto, de arriba abajo de la carta, y una sola pista flotante compartida
+   por toda la herramienta. En el iPad se toca y se puede arrastrar el dedo
+   por la carta leyendo punto por punto.
+
+   Los puntos se siguen dibujando igual —solo los que importan— porque la
+   carta se lee de un vistazo por su forma, no por sus veintitantos círculos.
+   Lo que cambia es que ahora se puede preguntar.
+
+   Para engancharla desde otra carta: emite `pistaPunto()` por cada punto y
+   mete `pistaCursor()` dentro del mismo `<svg>`. No hay que registrar nada:
+   el oyente está puesto en `document` una sola vez y va por delegación, así
+   que sobrevive a que la carta se vuelva a pintar entera. */
+
+function pistaPunto({ x, y, w, alto, cx, cy, valor, detalle, estado }) {
+  return `<rect class="ch-hit" x="${x}" y="${y}" width="${w}" height="${alto}" fill="transparent"` +
+    ` data-qcp="${esc(valor)}" data-qcd="${esc(detalle)}"` +
+    (estado ? ` data-qce="${esc(estado)}"` : "") +
+    ` data-qcx="${cx}" data-qcy="${cy}"/>`;
+}
+
+function pistaCursor(y1, y2) {
+  return `<g class="ch-cur" opacity="0" pointer-events="none">
+    <line class="ch-cur-l" y1="${y1}" y2="${y2}" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 3"/>
+    <circle class="ch-cur-p" r="5" fill="none" stroke="var(--info)" stroke-width="2"/>
+  </g>`;
+}
+
+function pistaGrafica() {
+  if (pistaGrafica.puesta || typeof document === "undefined" || !document.body) return;
+  pistaGrafica.puesta = true;
+  const caja = document.createElement("div");
+  caja.className = "ch-pista";
+  document.body.appendChild(caja);
+  let svgVivo = null;
+
+  function apagarCursor() {
+    if (!svgVivo) return;
+    const c = svgVivo.querySelector(".ch-cur");
+    if (c) c.setAttribute("opacity", "0");
+    svgVivo = null;
+  }
+  function ocultar() { caja.classList.remove("on"); apagarCursor(); }
+
+  function mostrar(hit, mx, my) {
+    /* getAttribute devuelve el texto ya descodificado, así que vuelve a
+       escaparse antes de pintarlo. Un ticket con comillas no rompe nada. */
+    const est = hit.getAttribute("data-qce");
+    caja.innerHTML =
+      `<b>${esc(hit.getAttribute("data-qcp"))}</b>` +
+      `<span>${esc(hit.getAttribute("data-qcd"))}</span>` +
+      (est ? `<i>${esc(est)}</i>` : "");
+    caja.classList.add("on");
+
+    /* Se coloca arriba a la derecha del dedo, y se voltea si no cabe: en el
+       iPad la mano tapa justo lo que se quiere leer. */
+    const r = caja.getBoundingClientRect();
+    let px = mx + 16, py = my - r.height - 16;
+    if (px + r.width > innerWidth - 8) px = mx - r.width - 16;
+    if (px < 8) px = 8;
+    if (py < 8) py = my + 22;
+    caja.style.left = Math.round(px) + "px";
+    caja.style.top = Math.round(py) + "px";
+
+    const svg = hit.ownerSVGElement;
+    if (svg !== svgVivo) apagarCursor();
+    svgVivo = svg;
+    const cur = svg && svg.querySelector(".ch-cur");
+    if (!cur) return;
+    const cx = hit.getAttribute("data-qcx"), cy = hit.getAttribute("data-qcy");
+    const li = cur.querySelector(".ch-cur-l"), pt = cur.querySelector(".ch-cur-p");
+    if (li) { li.setAttribute("x1", cx); li.setAttribute("x2", cx); }
+    if (pt) { pt.setAttribute("cx", cx); pt.setAttribute("cy", cy); }
+    cur.setAttribute("opacity", "1");
+  }
+
+  function tocar(e) {
+    const hit = e.target && e.target.closest ? e.target.closest(".ch-hit") : null;
+    if (hit) mostrar(hit, e.clientX, e.clientY);
+    else ocultar();
+  }
+  addEventListener("pointermove", tocar, { passive: true });
+  addEventListener("pointerdown", tocar, { passive: true });
+  addEventListener("pointercancel", ocultar, { passive: true });
+  /* Al rodar la página la pista se queda flotando donde ya no hay punto. */
+  addEventListener("scroll", ocultar, { passive: true, capture: true });
+}
+
+if (typeof document !== "undefined") {
+  if (document.body) pistaGrafica();
+  else addEventListener("DOMContentLoaded", pistaGrafica);
+}
+
 function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
   if (!pts.length) return `<div class="empty">Sin datos.</div>`;
   /* Estética de gráfica de mercado, no de hoja de cálculo:
@@ -1467,6 +1569,22 @@ function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
   const u = pts[pts.length - 1];
   const uCol = u.rejected || u.z === "susp" ? "var(--susp)" : u.z === "act" ? "var(--act)" : "var(--chart-line, #5b8dbf)";
   g += `<text x="${X(pts.length - 1) + 8}" y="${Y(u.v) + 4}" font-size="12" font-weight="700" fill="${uCol}">${fmt(u.v, dp)}</text>`;
+
+  /* La capa de lectura va la última: tiene que quedar por encima de todo
+     para recibir el cursor, y como es transparente no tapa nada. */
+  g += pistaCursor(MT, H - MB);
+  pts.forEach((p, i) => {
+    const est = p.rejected ? "Rechazado"
+      : p.z === "susp" ? "Fuera de límite de suspensión"
+      : p.z === "act" ? "Zona de acción" : "";
+    g += pistaPunto({
+      x: X(i) - PW / 2, y: MT, w: PW, alto: H - MT - MB,
+      cx: X(i), cy: Y(p.v),
+      valor: fmt(p.v, dp) + yUnit,
+      detalle: `#${p.n} · ${p.date} · ticket ${p.ticket || "—"}`,
+      estado: est,
+    });
+  });
 
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="display:block">${g}</svg>`;
 }
