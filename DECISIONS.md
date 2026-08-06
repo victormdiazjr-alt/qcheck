@@ -227,3 +227,42 @@ que ya tiene bastante. Va como Q-29 en `TAREAS.md`.
 
 **Cuándo deja de hacer falta la llave en el enlace:** con la autenticación real (Q-07).
 Entonces cada quien entra con su cuenta y el aparato se conecta solo.
+
+---
+
+## 17. La firma del expediente la pone el servidor, no el aparato
+
+**Decidido (5 ago 2026, Q-07):** el `usr` de cada línea del registro de cambios lo estampa
+el servidor desde la sesión. Lo que venga en el cuerpo del POST se ignora.
+
+**Por qué:** hasta aquí el autor era autodeclarado —`usr` viajaba en el cuerpo y nadie lo
+comprobaba—, así que cualquiera con el enlace de conexión podía escribir una línea firmada
+«ruben». El valor de este registro es que **no se puede reescribir por detrás** (§14 de
+AGENTS); si además se puede firmar con el nombre de otro, ese valor no existe. Y esto acaba
+delante de la ACT o la FHWA.
+
+Lo que **no** era el problema, aunque lo pareciera: que las claves fueran `1234`. Eso deja
+entrar a mirar. Lo otro deja escribir en el expediente con el nombre de otro.
+
+**Precio, y hay tres:**
+
+1. **La llave del proyecto deja de ser el candado y pasa a ser la matrícula del aparato.**
+   Tenía que ser así para no tocar §16: el enlace de Rubén sigue funcionando igual.
+2. **Un secreto más que custodiar** (`QC_ADMIN`), aparte de la llave. No hay forma de
+   evitarlo: la llave la tiene Rubén dentro de su enlace, así que no puede ser también la
+   que da de alta cuentas.
+3. **La mudanza tiene un orden y no se puede saltar.** Crear cuentas → repartir claves y
+   que cada aparato entre una vez → `exigir-sesion on`. Encenderlo antes deja a la cuadrilla
+   fuera en mitad de un vaciado. Por eso la bandera existe y por eso `cuentas.js` pregunta
+   antes de encenderla.
+
+**Lo que sigue sin resolver, y hay que decirlo:** un aparato sin señal entra con la lista
+local de `usuarios.js` para poder seguir trabajando. Eso es deliberado —dejar al técnico
+fuera de su herramienta en obra es peor—, pero significa que **quien tenga el aparato puede
+ver las pantallas**. Lo que no puede es escribir en el expediente compartido: sin pase de
+sesión, con la bandera encendida, el servidor le rechaza los cambios. La confidencialidad
+de lo que ya está en el aparato sigue dependiendo de quién tenga el aparato.
+
+**Cuándo reconsiderarlo:** si hiciera falta que un aparato perdido no enseñe nada, esto se
+resuelve cifrando la base local contra la clave del usuario, no con más candados en el
+navegador. Es otro trabajo y bastante más grande.

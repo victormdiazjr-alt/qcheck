@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-07 | **Autenticación real** con usuarios y roles | claude | 2026-08-05 |
+_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 
 ---
 
@@ -20,6 +20,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 | id | tarea | por qué importa | tamaño |
 |----|-------|-----------------|--------|
 | Q-29 | **Mudanza a `qcheck.dcreationspr.com`** — nameservers a Cloudflare, sitio en Pages, API en `api.qcheck…`, y **repartir el enlace nuevo una sola vez** dejando el viejo con redirección | Acordado con Víctor: **al terminar de construir**, cuando QCheck entre en uso oficial. Antes no — un enlace nuevo en mitad de las pruebas es confusión de más. Ver `DECISIONS.md` §16 | mediano |
+| Q-30 | **Desplegar Q-07 y migrar los aparatos** — correr el esquema en D1, poner `QC_ADMIN`, `npx wrangler deploy`, crear las cuentas, repartir las claves, y **solo cuando todos los aparatos hayan entrado una vez**, `node cuentas.js exigir-sesion on` | El código está hecho y probado, pero **en producción todavía manda la llave sola**. Hasta que esto se haga, el expediente sigue aceptando autoría autodeclarada. **Es de Víctor**: hace falta la cuenta de Cloudflare y decidir el día — no un día de vaciado | mediano |
 | Q-01 | **OCR del conduce en papel** — foto → el sistema entra los datos solos | La mayoría de concreteras no tendrán QR: esta es la vía principal de entrada, no el respaldo | grande |
 | Q-04 | **Correo automático al rechazar** | Hoy abre un correo pre-llenado; falta el envío real (necesita Q-02) | mediano |
 | Q-05 | **Línea de tiempo de eventos por conduce** — *el dato ya existe*: el registro de cambios (Q-02) lo guarda entero. Falta la pantalla que lo enseñe | Modelo de datos definitivo: salida de planta, llegada, muestra, veredicto, vaciado, cilindros | pequeño |
@@ -51,6 +52,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-08-05 | **Q-07 — Autenticación real**: el `usr` de cada línea del expediente lo estampa el servidor desde la sesión, no el cuerpo del POST. Claves con PBKDF2 (210.000 vueltas, sal por usuario), pases de sesión guardados por su huella, papeles aplicados en el servidor, `cuentas.js` para dar de alta y la bandera `exigir_sesion` para migrar sin dejar a nadie fuera. Sin tocar el enlace de Rubén (§16) y sin una sola dependencia nueva. **Falta desplegarlo — Q-30** | claude |
 | 2026-08-01 | **Q-02 — Sincronización entre aparatos**, por registro de cambios campo a campo. Desplegada en Cloudflare Workers + D1 (`qcheck-api.qcheck.workers.dev`) y probada de punta a punta entre el sitio publicado y un segundo aparato | claude |
 | 2026-07-31 | **Q-28 — El ciclo cierra**: Muestras solo engancha camiones que esperan resultados y se limpia al enviar; la simulación deja de borrar el trabajo real en cada acceso | claude |
 | 2026-07-31 | **Q-27 — La marca**: «Smart Quality Control» como descripción del nombre y «Build Connected» como lema | claude |

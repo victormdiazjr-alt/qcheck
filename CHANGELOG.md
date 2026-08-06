@@ -5,6 +5,48 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.13] — 5 de agosto · «la firma del expediente»
+
+Q-07. **Escrito y probado, todavía no desplegado** — ver Q-30 en `TAREAS.md`.
+
+### Añadido
+- **La identidad la pone el servidor.** Cuentas con clave derivada (PBKDF2-SHA256, 210.000
+  vueltas, sal por usuario) y sesiones con vencimiento deslizante de 12 h. Tres tablas
+  nuevas en `sync-esquema.sql`: `usuarios`, `sesiones` y `ajustes`. Rutas nuevas:
+  `/api/sesion` (entrar, mirar, salir) y `/api/cuentas` (dar de alta, solo Víctor).
+- **`cuentas.js`** para crear cuentas, cambiar claves, dar de baja y encender la bandera.
+  Node puro, sin dependencias. La clave no se escribe en la línea de comandos —queda en el
+  historial del terminal— sino que se pide a ciegas o la inventa el programa.
+- **`exigir_sesion`**, el interruptor de la mudanza: apagado, el servidor acepta lo de
+  siempre; encendido, sin pase no se escribe. Existe para migrar los aparatos uno por uno
+  sin dejar a nadie fuera en mitad de un vaciado.
+
+### Cambiado, y es el cambio
+- **El `usr` de cada línea del registro lo estampa el servidor desde la sesión.** Antes
+  viajaba en el cuerpo del POST y se guardaba tal cual: cualquiera con el enlace de
+  conexión podía subir una línea firmada «ruben». Un registro que no se puede borrar pero
+  sí firmar con el nombre de otro no es un expediente. Igual en el latido: la sala de
+  máquinas enseña quién está dentro de verdad, no quien dice estar.
+- **El papel se aplica en el servidor**: `consulta` no escribe, y ya no depende de que el
+  navegador se porte bien.
+- **La llave del proyecto pasó de candado a matrícula del aparato.** Tenía que ser así para
+  no tocar el enlace de Rubén (`DECISIONS.md` §16), que sigue funcionando igual.
+- **La franja de arriba distingue los tres «no sube»** —«Llave rechazada», «Entra otra vez»
+  y «Sin permiso para escribir»— porque se arreglan distinto y un «Sin señal» genérico
+  manda a mirar el WiFi mientras las muestras se amontonan por otra razón.
+- **Quién cerró el tiro** sale de la sesión y no de lo que el navegador tenga apuntado: eso
+  se imprime en el informe que se firma.
+
+### Sin cambiar, a propósito
+- **Ni una dependencia nueva.** Todo con `crypto.subtle`, que viene dentro de Node y del
+  Worker. Sigue sin haber paso de compilación.
+- **`conectar.html` no se tocó.** El enlace de Rubén es el mismo.
+- **La lista local de `assets/usuarios.js` se queda**, para el aparato sin servidor. Con
+  servidor puesto ni se consulta, y lo que entre con ella no puede escribir en el
+  expediente compartido.
+
+---
+
 ## [0.12] — 1 de agosto · «la primera prueba real»
 
 La simulación sale y entra el trabajo de verdad.

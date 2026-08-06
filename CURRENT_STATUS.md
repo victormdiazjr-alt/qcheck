@@ -1,8 +1,36 @@
 # CURRENT_STATUS
 
-**Última sesión:** 3 de agosto de 2026 · agente `claude`
+**Última sesión:** 5 de agosto de 2026 · agente `claude`
 **Estado:** verde. `node verificar.js` pasa sin fallos. Publicado, sincronizando y **ya
 usado en obra**.
+
+---
+
+## Lo último: Q-07, la firma del expediente (5 ago 2026)
+
+**Hecho y probado, PERO todavía no desplegado.** El código está en `main`; en producción
+sigue mandando la llave sola hasta que se haga **Q-30**, que es de Víctor.
+
+Lo que arregla no era la clave `1234`. Era que el `usr` de cada línea del registro de
+cambios **lo decía el aparato**: viajaba en el cuerpo del POST y nadie lo comprobaba, así
+que cualquiera con el enlace de conexión podía subir una línea firmada «ruben». Ahora lo
+estampa el servidor desde la sesión y el cuerpo no tiene voz.
+
+| pieza | dónde |
+|---|---|
+| Cuentas, sesiones y la bandera de mudanza | `sync-esquema.sql` — tres tablas nuevas |
+| Servidor local | `sync-servidor.js` — `crearCuentas()` y las rutas de `/api/sesion` |
+| Worker | `sync-worker.js` — lo mismo sobre D1 |
+| Cliente | `index.html` (entrar), `assets/usuarios.js` (`qcCuenta()`), `assets/sync.js` (el pase) |
+| Dar de alta cuentas | `cuentas.js` — protegido por `QC_ADMIN`, que **no** es la llave del proyecto |
+
+Claves con PBKDF2-SHA256, 210.000 vueltas y sal por usuario; del pase de sesión se guarda
+su huella, no el pase. Todo con `crypto.subtle` — **ni una dependencia nueva**. El enlace
+de Rubén (`DECISIONS.md` §16) no se tocó: la llave pasó de ser el candado a ser la
+matrícula del aparato. Las reglas completas en `AGENTS.md` §15 y el porqué en
+`DECISIONS.md` §17.
+
+**Lo siguiente es desplegarlo — Q-30 — y no se hace un día de vaciado.**
 
 ---
 
@@ -63,9 +91,9 @@ rompen están en `AGENTS.md` §14.
 
 ## Lo siguiente, por prioridad
 
-1. **Q-07 — autenticación real.** Lo más urgente que queda. Hoy las claves son `1234` y la
-   separación admin/usuario es de cortesía, no un candado. Antes de que esto lleve datos
-   que la ACT vaya a firmar, hay que cerrarlo.
+1. **Q-30 — desplegar Q-07 y migrar los aparatos.** Es de Víctor: hace falta la cuenta de
+   Cloudflare. Mientras no se haga, el expediente en producción sigue aceptando autoría
+   autodeclarada. El orden está en `TODO.md` y **no se hace un día de vaciado**.
 2. **Q-29 — mudanza a `qcheck.dcreationspr.com`.** Acordado con Víctor: **al terminar de
    construir**, no antes. Cambia el enlace de Rubén, y eso se hace una vez y avisando.
 3. **Q-01 — OCR del conduce en papel.** La vía de entrada principal a medio plazo.

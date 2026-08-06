@@ -42,3 +42,76 @@ CREATE TABLE IF NOT EXISTS presencia (
   visto  TEXT NOT NULL       -- último latido
 );
 CREATE INDEX IF NOT EXISTS presencia_visto ON presencia (visto);
+
+-- ============================================================ Q-07
+--
+-- Quién es cada quien, de verdad.
+--
+-- Hasta aquí, el `usr` de cada fila de `ops` era lo que el aparato DECÍA
+-- que era: viajaba en el cuerpo del POST y nadie lo comprobaba. Con eso,
+-- cualquiera con el enlace de conexión podía escribir una línea firmada
+-- «ruben». Un registro que no se puede borrar pero sí firmar con el nombre
+-- de otro no es un expediente: es un cuaderno anónimo.
+--
+-- Desde Q-07 el `usr` lo pone el SERVIDOR, sacado de la sesión. El aparato
+-- ya no tiene voz en quién firma.
+
+CREATE TABLE IF NOT EXISTS usuarios (
+  usr     TEXT PRIMARY KEY,        -- en minúsculas, como se teclea
+  nombre  TEXT NOT NULL,           -- «Rubén Segarra», lo que se enseña
+  rol     TEXT NOT NULL,           -- qc · consulta
+  tablero INTEGER NOT NULL DEFAULT 0,  -- ¿salta del portal al Control Center?
+  config  INTEGER NOT NULL DEFAULT 0,  -- ¿ve «Plan & Datos» y «Estado del sistema»?
+  sal     TEXT NOT NULL,           -- 16 bytes en hex, distinta para cada quien
+  hash    TEXT NOT NULL,           -- PBKDF2-SHA256 de la clave con esa sal
+  vueltas INTEGER NOT NULL,        -- iteraciones; se guarda para poder subirlas después
+  activo  INTEGER NOT NULL DEFAULT 1,
+  creado  TEXT NOT NULL,
+  visto   TEXT                     -- último acceso, para saber quién ya no usa esto
+);
+
+-- La clave NO se guarda, ni cifrada ni de ninguna otra forma: se guarda el
+-- resultado de derivarla con PBKDF2-SHA256 y una sal propia de cada usuario.
+-- Sin sal, dos personas con la misma clave dan el mismo hash y se ve a simple
+-- vista. Las vueltas van en su columna porque el número correcto sube con los
+-- años: guardarlo permite subirlo sin invalidar las claves que ya existen.
+
+-- ------------------------------------------------------------ sesiones
+--
+-- Se guarda el HASH del token de sesión, no el token. Si algún día alguien se
+-- lleva una copia de la base, con lo que hay aquí no puede entrar como nadie:
+-- del hash no se saca el token. Es la misma razón por la que no se guardan las
+-- claves, aplicada al pase de entrada.
+--
+-- `vence` es DESLIZANTE y se estira con cada uso. En obra un vaciado dura lo
+-- que dura y la sincronización toca el servidor cada 3 segundos, así que una
+-- sesión en uso no caduca nunca; la que caduca es la del aparato que se quedó
+-- olvidado en la caseta. Una sesión que se cae en mitad de un tiro y devuelve
+-- al técnico a la pantalla de acceso, con las manos sucias, es exactamente el
+-- fallo que no nos podemos permitir.
+CREATE TABLE IF NOT EXISTS sesiones (
+  tk     TEXT PRIMARY KEY,   -- SHA-256 del token que lleva el aparato
+  usr    TEXT NOT NULL,
+  dev    TEXT,               -- de qué aparato se entró
+  creada TEXT NOT NULL,
+  vence  TEXT NOT NULL,
+  visto  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sesiones_usr ON sesiones (usr);
+CREATE INDEX IF NOT EXISTS sesiones_vence ON sesiones (vence);
+
+-- ------------------------------------------------------------ ajustes
+--
+-- `exigir_sesion` es el interruptor de la mudanza, y existe porque esto entra
+-- en un sistema que YA está en uso. Con la bandera apagada el servidor sigue
+-- aceptando exactamente lo de antes —llave del proyecto y nada más—, pero si
+-- el aparato ya trae sesión, el `usr` sale de ella. Así se dan de alta las
+-- cuentas, se migran los aparatos uno por uno, y solo cuando todos están
+-- dentro se enciende.
+--
+-- Encenderla de golpe el día que se crean los usuarios dejaría a Rubén fuera
+-- en mitad de un vaciado, que es justo lo que no puede pasar.
+CREATE TABLE IF NOT EXISTS ajustes (
+  clave TEXT PRIMARY KEY,
+  valor TEXT
+);

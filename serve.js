@@ -5,12 +5,17 @@
    Escucha en todas las interfaces, no solo en 127.0.0.1, para que el iPad y
    el teléfono de la obra puedan entrar por el IP de la máquina. El token se
    pone con la variable QC_TOKEN; sin él la puerta queda abierta, que en una
-   red local es lo cómodo y de cara a internet no vale. */
+   red local es lo cómodo y de cara a internet no vale.
+
+   QC_ADMIN es OTRO secreto y es el que da de alta cuentas (`node cuentas.js`).
+   Va aparte de QC_TOKEN a propósito: la llave del proyecto viaja dentro del
+   enlace de conexión que tiene Rubén, así que si sirviera también para crear
+   usuarios, cualquiera que viera ese enlace podría crearse uno. */
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const { crearAlmacen, montarAPI } = require("./sync-servidor");
+const { crearAlmacen, montarAPI, crearCuentas } = require("./sync-servidor");
 
 const ROOT = __dirname;
 const PORT = Number(process.argv[2]) || 8452;
@@ -25,7 +30,11 @@ const MIME = {
 };
 
 const almacen = crearAlmacen(path.join(ROOT, "datos", "cambios.jsonl"));
-const atenderAPI = montarAPI(almacen, process.env.QC_TOKEN || "");
+const cuentas = crearCuentas(path.join(ROOT, "datos"));
+const atenderAPI = montarAPI(almacen, process.env.QC_TOKEN || "", {
+  cuentas,
+  admin: process.env.QC_ADMIN || "",
+});
 
 http.createServer((req, res) => {
   if (atenderAPI(req, res)) return;

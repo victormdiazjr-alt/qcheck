@@ -207,7 +207,7 @@ button:active { transform: scale(.98); }
   </div>
 </form>
 
-<script src="assets/usuarios.js?v=7f884800"></script>
+<script src="assets/usuarios.js?v=d62512d9"></script>
 <script>
 "use strict";
 
@@ -245,13 +245,57 @@ function pintarRed() {
 }
 pintarRed();
 
-function entrar(e) {
+/* Entrar contra el SERVIDOR cuando lo hay (Q-07). La ficha que devuelve
+   —nombre, papel, capacidades— es la que mandará en todas las pantallas, y el
+   pase de sesión es lo que hará que el servidor firme con su nombre cada línea
+   que este aparato escriba en el expediente.
+
+   Devuelve la ficha, `null` si las credenciales no valen, o `undefined` si no
+   se pudo ni preguntar —servidor caído, sin señal—, que no es lo mismo: eso
+   último cae a la lista local, porque en obra la señal se va y dejar al
+   técnico fuera de su propia herramienta es peor que lo que evita. Lo que esa
+   sesión local NO puede es escribir en el expediente compartido: con
+   `exigir_sesion` encendida, el servidor le rechaza los cambios y la franja de
+   arriba lo canta. */
+async function entrarEnServidor(u, p) {
+  const api = (localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
+  if (!api) return undefined;
+  const cab = { "Content-Type": "application/json" };
+  const tk = localStorage.getItem("qc-token");
+  if (tk) cab["X-QC-Token"] = tk;
+  let r;
+  try {
+    r = await fetch(api + "/api/sesion", {
+      method: "POST", headers: cab,
+      body: JSON.stringify({ usr: u, clave: p, dev: localStorage.getItem("qc-dev") || "?" }),
+    });
+  } catch (_) { return undefined; }          // no se pudo ni preguntar
+  if (r.status === 401) return null;         // preguntamos y la respuesta fue que no
+  if (!r.ok) return undefined;               // 501 sin cuentas dadas de alta, 500, …
+  const s = await r.json();
+  sessionStorage.setItem("qc-sesion", s.tk);
+  sessionStorage.setItem("qc-ident", JSON.stringify(s.usuario));
+  return s.usuario;
+}
+
+async function entrar(e) {
   e.preventDefault();
   const u = document.getElementById("u").value.trim().toLowerCase();
   const p = document.getElementById("p").value;
-  /* La lista de usuarios vive en assets/usuarios.js — una sola. */
-  const cuenta = QC_CUENTAS[u];
-  if (cuenta && cuenta.clave === p) {
+  const boton = document.querySelector("button[type=submit]");
+  boton.disabled = true;
+
+  /* Derivar la clave lleva su rato a propósito —210.000 vueltas— así que el
+     botón se apaga mientras: si no, dos toques seguidos abren dos sesiones. */
+  const delServidor = await entrarEnServidor(u, p);
+  boton.disabled = false;
+
+  /* La lista local (assets/usuarios.js) solo entra cuando el servidor no
+     contestó. Si contestó que no, es que no. */
+  const cuenta = delServidor
+    || (delServidor === undefined && QC_CUENTAS[u] && QC_CUENTAS[u].clave === p ? QC_CUENTAS[u] : null);
+
+  if (cuenta) {
     sessionStorage.setItem("qc-auth", "1");
     sessionStorage.setItem("qc-user", u);
     /* Cada acceso arranca un tiro nuevo de la simulación: quien entra se

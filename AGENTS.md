@@ -65,14 +65,20 @@ anótalo en la bitácora.
 node serve.js 8452
 # abre http://localhost:8452  → pantalla de acceso
 ```
-**Los usuarios viven en `assets/usuarios.js` — una sola lista.** Para añadir a alguien se
-toca ese archivo y nada más; el papel se comprueba con `qcEsQC()`, nunca con el nombre.
+**Con servidor puesto, los usuarios viven en el SERVIDOR** y se dan de alta con
+`node cuentas.js` — ver §15. La lista de `assets/usuarios.js` es la del aparato **sin**
+servidor detrás, y las claves de abajo son las suyas. El papel se comprueba siempre con
+`qcEsQC()`, nunca con el nombre, venga de donde venga la ficha.
 
 | usuario | clave | papel | dónde entra |
 |---|---|---|---|
 | `ruben` | 1234 | qc | teléfono → portal · computadora → Control Center |
 | `admin` | 1234 | qc | igual que Rubén, **más «Plan & Datos»** |
 | `invitado` | 1234 | consulta | siempre al portal, sin Resultados |
+
+Esas tres claves **ya no abren nada que importe**: con un servidor configurado ni se
+consultan, y lo que entre con ellas no puede escribir en el expediente compartido. Siguen
+ahí porque QCheck tiene que abrir y enseñarse sin nada detrás (§1).
 
 **«Plan & Datos» es solo del administrador** (`config: true`, `qcVeConfig()`). Ahí viven la
 dirección del servidor, la llave del proyecto, los límites del plan de control y la ficha
@@ -726,6 +732,56 @@ Reglas que no se rompen aquí:
 `node serve.js` monta la API además de servir los archivos, y escucha en todas las
 interfaces para que el iPad entre por el IP de la máquina. El registro local va a
 `datos/cambios.jsonl`, que está en `.gitignore`: son datos de trabajo, no código.
+
+## 15. La autenticación — quién firma el expediente (Q-07)
+
+Hecho el 5 ago 2026. Lo que arregla **no era la clave `1234`**, aunque eso también.
+
+Era esto: el `usr` de cada línea del registro de cambios era **lo que el aparato dijera
+que era**. Viajaba en el cuerpo del POST y el servidor lo guardaba tal cual. Con eso,
+cualquiera con el enlace de conexión —que lleva la llave dentro— podía subir una línea
+firmada «ruben». Un registro que no se puede borrar pero sí firmar con el nombre de otro no
+es un expediente: es un cuaderno anónimo. Y este expediente lo firma la ACT.
+
+**Ahora el `usr` lo pone el servidor, sacado de la sesión, y el cuerpo del POST no tiene
+voz.** Eso es Q-07. Todo lo demás son consecuencias.
+
+Reglas que no se rompen aquí:
+
+- **La llave del proyecto cambió de papel, no desapareció.** Ya no es «la seguridad»: es la
+  matrícula del aparato. Por eso el enlace de Rubén sigue funcionando exactamente igual y
+  `DECISIONS.md` §16 queda intacto. Lo que antes hacía de candado ahora hace de matrícula,
+  y el candado es la sesión.
+- **`QC_ADMIN` es OTRO secreto y no puede ser la llave del proyecto.** La llave va dentro
+  del enlace que tiene Rubén; si sirviera además para dar de alta cuentas, cualquiera que
+  viese ese enlace podría hacerse una. Dar de alta a alguien es cosa de Víctor.
+- **Las claves no se guardan.** Se guarda PBKDF2-SHA256 con 210.000 vueltas y una sal por
+  usuario. Del pase de sesión se guarda su SHA-256, no el pase: con una copia de la base no
+  se entra como nadie. Todo con `crypto.subtle`, que viene dentro de Node y del Worker —
+  **ni una dependencia**, que es §1 de DECISIONS.
+- **La sesión dura 12 h y el vencimiento se estira con cada uso.** La sincronización toca el
+  servidor cada 3 s, así que una sesión en uso no caduca nunca; caduca la del aparato
+  olvidado en la caseta. Una sesión que se cae en mitad de un tiro y devuelve al técnico a
+  la pantalla de acceso, con las manos sucias, es el fallo que esto no puede tener.
+- **`exigir_sesion` es el interruptor de la mudanza y va apagado hasta que todos los
+  aparatos estén dentro.** Apagada, el servidor acepta lo de siempre; si el aparato ya trae
+  pase, el autor sale de él igualmente. Encendida, sin pase no se escribe. Encenderla el
+  mismo día que se crean las cuentas deja a Rubén fuera en mitad de un vaciado. El orden
+  está en `cuentas.js` y en `DECISIONS.md` §17.
+- **El papel se aplica en el SERVIDOR.** `consulta` no escribe, y eso ya no depende de que
+  el navegador se porte bien. `auth.js` sigue donde estaba: esconde lo que no toca, que es
+  otra cosa y también hace falta.
+- **La franja de arriba distingue los tres «no sube»**, porque se arreglan distinto: «Llave
+  rechazada» la arregla el administrador, «Entra otra vez» la arregla el propio técnico, y
+  «Sin permiso para escribir» no la arregla nadie desde el aparato. Un «Sin señal» genérico
+  manda a mirar el WiFi mientras las muestras se amontonan por otra razón.
+- **Con servidor puesto, la lista local de `usuarios.js` NI SE MIRA.** Solo entra cuando el
+  servidor no contestó —sin señal—, porque dejar al técnico fuera de su herramienta es peor
+  que lo que evita. Esa sesión no lleva pase, así que no escribe en el expediente compartido.
+
+Dónde vive: `sync-servidor.js` y `sync-worker.js` (los dos, y tienen que decir lo mismo),
+las tablas `usuarios`/`sesiones`/`ajustes` de `sync-esquema.sql`, `assets/usuarios.js`
+(`qcCuenta()`), el acceso en `index.html` y `cuentas.js` para dar de alta.
 
 ## 13b. Recepción, el conduce repetido
 

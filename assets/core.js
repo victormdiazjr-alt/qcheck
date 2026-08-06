@@ -187,11 +187,27 @@ async function cerrarVentana() {
   location.href = casa;
 }
 
-/* Salir de la sesión, que ya no se hace por descuido con la ✕. */
+/* Salir de la sesión, que ya no se hace por descuido con la ✕.
+
+   Desde Q-07 también se le dice al servidor, para que el pase deje de valer
+   ahí y no solo en este navegador. Se avisa y no se espera: si no hay señal,
+   salir tiene que salir igual —el pase caduca solo—, y dejar al técnico
+   mirando una pantalla que no responde porque el servidor no contesta sería
+   cambiar un problema por otro peor. */
 function salirDeQCheck() {
   if (!confirm("¿Salir de QCheck?\n\nHabrá que entrar otra vez con usuario y clave.")) return;
+  const pase = sessionStorage.getItem("qc-sesion");
+  const api = (localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
+  if (pase && api) {
+    const cab = { "Content-Type": "application/json", "X-QC-Sesion": pase };
+    const tk = localStorage.getItem("qc-token");
+    if (tk) cab["X-QC-Token"] = tk;
+    try { fetch(api + "/api/sesion/salir", { method: "POST", headers: cab, keepalive: true }); } catch (_) {}
+  }
   sessionStorage.removeItem("qc-auth");
   sessionStorage.removeItem("qc-user");
+  sessionStorage.removeItem("qc-sesion");
+  sessionStorage.removeItem("qc-ident");
   location.href = "index.html";
 }
 const ICONO_SALIR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5H19a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5h-4.5"/><path d="M9.5 16 5.5 12l4-4"/><path d="M5.5 12h9"/></svg>`;
@@ -343,6 +359,13 @@ function pintarConexion() {
   else if (s === "apagado") { clase = " solo"; texto = "Solo este aparato"; }
   else if (s === "al-dia") { texto = "En línea"; }
   else if (s === "sin-llave") { clase = " off"; texto = "Llave rechazada"; }
+  /* Los tres «no sube» se dicen distinto porque se arreglan distinto: la llave
+     la cambia el administrador, la sesión la arregla el propio técnico
+     volviendo a entrar, y el papel no lo arregla nadie desde aquí. Un «Sin
+     señal» genérico manda al técnico a mirar el WiFi mientras sus muestras se
+     amontonan por otra razón. */
+  else if (s === "sin-sesion") { clase = " off"; texto = pend ? `Entra otra vez · ${pend} sin subir` : "Entra otra vez"; }
+  else if (s === "sin-permiso") { clase = " off"; texto = "Sin permiso para escribir"; }
   else if (s === "sin-senal") { clase = " off"; texto = pend ? `Sin señal · ${pend} sin subir` : "Sin señal"; }
   else { clase = " solo"; texto = "Conectando…"; }
   el.className = "qcs-conn" + clase;
@@ -1543,7 +1566,14 @@ function cerrarTiro(day) {
   if (!confirm(texto.join("\n"))) return false;
   if (!db.dayMeta[d]) db.dayMeta[d] = {};
   db.dayMeta[d].cerradoA = nowHM();
-  db.dayMeta[d].cerradoPor = sessionStorage.getItem("qc-user") || "?";
+  /* Quién cerró el tiro sale de la sesión, no de lo que el navegador tenga
+     apuntado: esto se imprime en el informe que se firma. Es el mismo criterio
+     de Q-07, aplicado a un campo que viaja como valor y no como autor —el
+     servidor estampa la columna `usr` del registro, pero el contenido de un
+     campo no lo mira nadie, así que aquí hay que ponerlo bien de origen. */
+  const quien = qcCuenta();
+  db.dayMeta[d].cerradoPor = (quien && (quien.nombre || quien.usr))
+    || sessionStorage.getItem("qc-user") || "?";
   saveDB();
   return true;
 }

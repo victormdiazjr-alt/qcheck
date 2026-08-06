@@ -12,9 +12,23 @@
      consulta — el contratista, el concretero, la Autoridad. Solo
                 sus indicadores, a través del portal.
 
-   PROTOTIPO: las claves viven en el navegador y cualquiera puede
-   leerlas en el código. Frena un despiste, no a alguien decidido.
-   La autenticación de verdad llega con el backend (Q-07).
+   DE DÓNDE SALE LA IDENTIDAD — Q-07, 5 ago 2026
+   ----------------------------------------------
+   **Con servidor puesto, manda el servidor.** Al entrar, la ficha que
+   devuelve `/api/sesion` —usuario, nombre, papel y capacidades— se
+   guarda en `qc-ident` y es la que se lee aquí. La lista de abajo ni
+   se mira.
+
+   La lista local sigue existiendo para el aparato SIN servidor: QCheck
+   es un producto independiente (§1) y tiene que abrir y enseñarse sin
+   nada detrás. Pero esa sesión no puede escribir en el expediente
+   compartido: con la bandera `exigir_sesion` encendida, el servidor
+   rechaza lo que no traiga pase. Es una puerta para enseñar la
+   herramienta, no una llave.
+
+   Y el candado de verdad nunca estuvo aquí: esto vive en el navegador,
+   así que frena un despiste. Quien decide es el servidor, y lo que
+   decide es **quién firma cada línea del expediente**.
    ============================================================ */
 "use strict";
 
@@ -24,11 +38,24 @@ const QC_CUENTAS = {
   invitado: { clave: "1234", rol: "consulta", nombre: "Invitado" },
 };
 
+/* La ficha que mandó el servidor al entrar, si la hay. */
+function qcIdentidad() {
+  try { return JSON.parse(sessionStorage.getItem("qc-ident")) || null; } catch (_) { return null; }
+}
+
+/* Quién es el que está dentro. El servidor primero; la lista local solo
+   cuando no hay servidor detrás. */
+function qcCuenta() {
+  const ficha = qcIdentidad();
+  if (ficha) return ficha;
+  return QC_CUENTAS[sessionStorage.getItem("qc-user")] || null;
+}
+
 /* El papel se deduce del usuario en cada comprobación, no se guarda:
    así una sesión abierta antes de añadir a alguien no queda a medias. */
 function qcRol() {
-  const u = sessionStorage.getItem("qc-user");
-  return (QC_CUENTAS[u] && QC_CUENTAS[u].rol) || "consulta";
+  const c = qcCuenta();
+  return (c && c.rol) || "consulta";
 }
 
 /* ¿Este usuario lleva el control de calidad? */
@@ -43,10 +70,11 @@ function qcEsQC() { return qcRol() === "qc"; }
 
    Va como capacidad de la cuenta y no como `usuario === "admin"` a propósito:
    el papel de cada quien se deduce de esta lista y nunca del nombre (AGENTS §3).
-   Para dárselo a alguien más, se le pone `tablero: true` aquí y ya. */
+   Para dárselo a alguien más, se le pone `tablero: true` aquí y ya —o en
+   su cuenta del servidor, `node cuentas.js`, que es lo que manda desde Q-07. */
 function qcVeTablero() {
-  const u = sessionStorage.getItem("qc-user");
-  return !!(QC_CUENTAS[u] && QC_CUENTAS[u].tablero);
+  const c = qcCuenta();
+  return !!(c && c.tablero);
 }
 
 /* ¿Puede ver la tripa del sistema? — «Plan & Datos»: la dirección del servidor,
@@ -63,7 +91,7 @@ function qcVeTablero() {
    `usuario === "admin"`: el papel se deduce de esta lista y nunca del nombre
    (AGENTS §3). Para dárselo a alguien más se le pone `config: true` aquí. */
 function qcVeConfig() {
-  const u = sessionStorage.getItem("qc-user");
-  return !!(QC_CUENTAS[u] && QC_CUENTAS[u].config);
+  const c = qcCuenta();
+  return !!(c && c.config);
 }
 

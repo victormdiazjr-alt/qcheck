@@ -123,6 +123,10 @@ function qcCambios(antes, ahora) {
   const ops = [];
   const ts = new Date().toISOString();
   const dev = qcAparato();
+  /* Desde Q-07 esto es solo lo que este aparato CREE: si la petición lleva
+     pase de sesión, el servidor lo pisa con quien de verdad está dentro. Se
+     sigue mandando porque un servidor con `exigir_sesion` apagada —o el local
+     de la obra sin cuentas dadas de alta— todavía se apoya en ello. */
   const usr = sessionStorage.getItem("qc-user") || "?";
   const anota = (ent, id, campo, valor) => ops.push({
     uid: dev + "|" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -255,8 +259,22 @@ const QCSync = {
     const cabeceras = { "Content-Type": "application/json" };
     const tk = qcApiToken();
     if (tk) cabeceras["X-QC-Token"] = tk;
+    /* El pase de sesión (Q-07). Es lo que hace que el servidor firme cada línea
+       con el nombre de quien de verdad está dentro, en vez de creerle al
+       cuerpo del POST. Sin él, el aparato solo puede escribir mientras
+       `exigir_sesion` siga apagada. */
+    const ses = sessionStorage.getItem("qc-sesion");
+    if (ses) cabeceras["X-QC-Sesion"] = ses;
     const r = await fetch(qcApiURL() + ruta, Object.assign({ headers: cabeceras }, opciones || {}));
-    if (r.status === 401) throw new Error("token");
+    /* Los dos 401 no son el mismo problema y no se arreglan igual: la llave
+       la cambia el administrador, y la sesión la arregla el propio técnico
+       volviendo a entrar. La franja de arriba tiene que decir cuál es. */
+    if (r.status === 401) {
+      let motivo = "token";
+      try { motivo = (await r.json()).error || "token"; } catch (_) {}
+      throw new Error(motivo === "sesion" ? "sesion" : "token");
+    }
+    if (r.status === 403) throw new Error("rol");
     if (!r.ok) throw new Error("http " + r.status);
     return r.json();
   },
@@ -271,7 +289,10 @@ const QCSync = {
       this._guardarCola(cola.filter((o) => !ok.has(o.uid)));
       this.estado = "al-dia";
     } catch (e) {
-      this.estado = e.message === "token" ? "sin-llave" : "sin-senal";
+      this.estado = e.message === "token" ? "sin-llave"
+        : e.message === "sesion" ? "sin-sesion"
+        : e.message === "rol" ? "sin-permiso"
+        : "sin-senal";
     }
   },
 
@@ -296,7 +317,10 @@ const QCSync = {
       this.estado = "al-dia";
       this.ultimo = new Date();
     } catch (e) {
-      this.estado = e.message === "token" ? "sin-llave" : "sin-senal";
+      this.estado = e.message === "token" ? "sin-llave"
+        : e.message === "sesion" ? "sin-sesion"
+        : e.message === "rol" ? "sin-permiso"
+        : "sin-senal";
     }
   },
 

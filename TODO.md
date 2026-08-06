@@ -26,12 +26,33 @@ entrada, no el respaldo.** Es lo que más trabajo manual quita en el campo.
 
 ## Después
 
-### Q-07 · Autenticación real con usuarios y roles — mediano · necesita Q-02
-Hoy `assets/usuarios.js` lleva las claves en el código. La estructura de papeles ya
-está (`qcEsQC()`), así que el cambio es sustituir la comprobación, no rediseñarla.
+### Q-30 · Desplegar Q-07 y migrar los aparatos — mediano · **es de Víctor**
+El código de la autenticación está hecho y probado (5 ago 2026), pero **en producción
+todavía manda la llave sola**: mientras no se despliegue, el expediente sigue aceptando
+que cada aparato diga quién es. El orden no se puede saltar:
+
+```bash
+npx wrangler d1 execute qcheck --remote --file=./sync-esquema.sql
+npx wrangler secret put QC_ADMIN
+npx wrangler deploy
+node cuentas.js crear ruben --rol qc --nombre "Rubén Segarra" --generar
+node cuentas.js listar
+# repartir las claves · que CADA aparato entre una vez · comprobarlo en estado.html
+node cuentas.js exigir-sesion on      # ← solo cuando todos estén dentro
+```
+
+Encender la bandera antes de que los aparatos hayan entrado deja a la cuadrilla sin poder
+escribir en mitad de un vaciado. **No se hace un día de tiro.** Ver `DECISIONS.md` §17.
 
 ### Q-04 · Correo automático al rechazar — mediano · necesita Q-02
 Hoy `notifyReject()` abre un correo pre-llenado. Falta el envío real.
+
+### Q-31 · Que el aparato perdido no enseñe nada — grande
+Q-07 cerró quién puede **escribir** en el expediente. Lo que sigue abierto es que un
+aparato sin señal entra con la lista local de `usuarios.js` y ve las pantallas: es
+deliberado —dejar al técnico fuera en obra es peor—, pero significa que quien tenga el
+iPad ve lo que hay dentro. La salida no son más candados en el navegador, que se saltan
+con la consola: es cifrar la base local contra la clave del usuario. Ver `DECISIONS.md` §17.
 
 ### Q-05 · Línea de tiempo de eventos por conduce — mediano
 Modelo de datos definitivo: salida de planta, llegada, muestra, veredicto, vaciado,
