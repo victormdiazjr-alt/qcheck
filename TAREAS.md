@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-07 | **Autenticación real** con usuarios y roles | claude | 2026-08-05 |
 
 ---
 
@@ -24,7 +24,6 @@ _(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 | Q-04 | **Correo automático al rechazar** | Hoy abre un correo pre-llenado; falta el envío real (necesita Q-02) | mediano |
 | Q-05 | **Línea de tiempo de eventos por conduce** — *el dato ya existe*: el registro de cambios (Q-02) lo guarda entero. Falta la pantalla que lo enseñe | Modelo de datos definitivo: salida de planta, llegada, muestra, veredicto, vaciado, cilindros | pequeño |
 | Q-06 | **Adjuntos en el conduce**: foto del conduce, pesadas, fotos de losa y cilindros | Cierra el expediente digital que hoy se arma a mano | mediano |
-| Q-07 | **Autenticación real** con usuarios y roles | Hoy la puerta es de demostración (`admin`/`1234`), no protege nada | mediano (necesita Q-02) |
 | Q-08 | **Más reglas de inteligencia** | La capa de avisos ya detecta agua, tendencia y humedad vencida; faltan reglas de temperatura y de tiempo de viaje | pequeño |
 | Q-09 | **Aire en el tablero del productor** | El contrato ya publica los límites de aire; nadie los muestra | pequeño |
 | Q-10 | **Integración con ArcGIS** | La inspección ya georreferencia losas ahí; evaluar el enlace | investigación |
