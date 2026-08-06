@@ -5,6 +5,27 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.16] — 6 de agosto · «las yardas de cada losa»
+
+### Añadido
+- **Q-11 — El reparto de una carga se puede declarar.** Un camión que sirve varias losas
+  puede decir cuánto dejó en cada una, con la misma sintaxis del plan del día:
+  `L3-0.943:6, L3-0.936:4`. Con el reparto declarado la cifra de la losa es **exacta** y
+  desaparece el `≥`; sin declarar, todo se comporta como antes.
+- **Un reparto que no suma se canta y no se corrige.** Aviso en la capa de avisos y, en
+  Recepción, **mientras se escribe** — que es cuando el chofer todavía está en la obra.
+  Ajustar la diferencia por detrás sería decidir en qué losa cayó ese hormigón.
+
+### Por qué importaba más de lo que parecía
+- **De los 372 ensayos con losa del histórico, 161 son cargas repartidas** — el 43 %. El
+  `≥` no estaba en un caso raro: estaba en casi la mitad del expediente.
+
+### Sin migración
+- Los 161 históricos vienen del Excel en prosa («SLAB L1-2.487 and L1-2.482») y **ninguno
+  activa el camino nuevo** — se comprobó uno a uno. Siguen leyéndose igual, sin tocarlos.
+
+---
+
 ## [0.15] — 6 de agosto · «el conduce se lee solo»
 
 ### Añadido

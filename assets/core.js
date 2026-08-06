@@ -740,6 +740,60 @@ function slabCodes(ident) {
   return m ? m.map((s) => s.replace(/\s+/g, "").toUpperCase()) : [];
 }
 
+/* ------------------------------------------------------------ el reparto (Q-11)
+
+   Un camión que reparte su carga entre varias losas no dice cuánto dejó en cada
+   una, y ese volumen NO se reparte a ojo — la cifra sale como un mínimo (`≥`).
+   Eso no es un caso raro: **de los 372 ensayos con losa del histórico, 161 son
+   cargas repartidas.** El `≥` está en casi la mitad del expediente.
+
+   La salida es que el técnico lo declare, y para eso se reusa la sintaxis que
+   este proyecto YA tiene en el plan del día:
+
+       L3-0.943:6, L3-0.936:4
+
+   El número tras los dos puntos son las yardas que ese camión dejó en esa losa.
+   Es opcional: sin él, la losa sigue contándose como compartida y con `≥`, que
+   es lo de hoy. Reusar la sintaxis en vez de inventar un campo tiene dos
+   ventajas: el técnico ya la conoce del plan, y **los 161 registros históricos
+   —que vienen del Excel en prosa, «SLAB L1-2.487 and L1-2.482»— siguen leyéndose
+   igual sin tocarlos.** No hay migración que hacer.
+
+   Devuelve solo los códigos que declaran yardas. Un `ident` sin dos puntos
+   devuelve un objeto vacío, y todo se comporta como antes de Q-11. */
+function repartoDe(ident) {
+  const out = {};
+  if (!ident) return out;
+  for (const m of String(ident).matchAll(/(L\s?\d+\s?-\s?\d+\.\d+)\s*:\s*(\d+(?:\.\d+)?)/gi)) {
+    const cy = num(m[2]);
+    if (cy != null) out[m[1].replace(/\s+/g, "").toUpperCase()] = cy;
+  }
+  return out;
+}
+
+/* Lo que el reparto declarado no cuadra con lo que trajo el camión.
+
+   Devuelve `null` cuando no hay nada que decir: sin reparto declarado, con una
+   sola losa, o sin volumen. Devuelve la diferencia cuando la hay — y no se
+   corrige ni se normaliza sola. Un reparto que no suma es un dato mal entrado,
+   y ajustarlo por detrás para que cuadre sería inventar en qué losa cayó la
+   diferencia, que es justo lo que este proyecto no hace (DECISIONS §3). */
+function descuadreDeReparto(t) {
+  const rep = repartoDe(t.ident);
+  const codigos = Object.keys(rep);
+  if (!codigos.length) return null;
+  const vol = num(t.vol);
+  if (vol == null) return null;
+  /* Solo se juzga si TODAS las losas del conduce declararon su parte. Con un
+     reparto a medias no se sabe cuánto tocaba a las que callan. */
+  if (codigos.length !== slabCodes(t.ident).length) return null;
+  const suma = codigos.reduce((a, c) => a + rep[c], 0);
+  const dif = suma - vol;
+  /* Una décima de yarda es redondeo del papel, no un error que valga la pena
+     cantar. Media yarda ya es medio metro cúbico sin sitio. */
+  return Math.abs(dif) < 0.15 ? null : { suma, vol, dif };
+}
+
 /* ------------------------------------------------------------ losas del tiro
    Cuáles se van a tirar hoy y cómo va cada una.
 
@@ -856,9 +910,15 @@ function losasDelDia(day) {
   for (const t of rows) {
     const cs = slabCodes(t.ident);
     const sola = cs.length === 1;
+    /* Q-11: si el conduce declara cuánto dejó en cada losa, se atribuye eso.
+       Una carga repartida deja de ser un `≥` en cuanto alguien dice el reparto;
+       la que no lo diga sigue contándose como compartida, exactamente como
+       antes. Las dos formas conviven en el mismo día sin estorbarse. */
+    const rep = repartoDe(t.ident);
     for (const c of cs) {
       cargas[c] = (cargas[c] || 0) + 1;
-      if (sola) cy[c] = (cy[c] || 0) + (num(t.vol) || 0);
+      if (rep[c] != null) cy[c] = (cy[c] || 0) + rep[c];
+      else if (sola) cy[c] = (cy[c] || 0) + (num(t.vol) || 0);
       else compartida[c] = true;
       if (t.end) estado[c] = "vaciada";
       else if (t.arrive && estado[c] !== "vaciada") estado[c] = "curso";
@@ -1148,6 +1208,22 @@ function trendAlerts(day) {
     out.push({ level: "act", icon: "⚠", title: "Racha en zona de acción",
       text: `${recent.length} de las últimas 5 pruebas en zona de acción.`,
       action: "Ajuste de planta probablemente necesario." });
+
+  /* --- El reparto de una carga no cuadra (Q-11) ---
+     Se canta y no se corrige. Ajustar la diferencia por detrás para que sume
+     sería decidir en qué losa cayó ese hormigón, y eso no lo sabe nadie desde
+     aquí. Quien lo sabe es el chofer, y todavía está en la obra. */
+  for (const t of rows) {
+    const d = descuadreDeReparto(t);
+    if (!d) continue;
+    out.push({
+      level: "act", icon: "🧱",
+      title: `El reparto del camión ${t.truck || t.ticket || "—"} no cuadra`,
+      text: `Las losas suman ${fmt(d.suma, 1)} CY y el conduce trae ${fmt(d.vol, 1)} CY`
+        + ` — ${d.dif > 0 ? "sobran" : "faltan"} ${fmt(Math.abs(d.dif), 1)} CY.`,
+      action: "Corregir el reparto en Recepción antes de que se vaya el chofer.",
+    });
+  }
 
   return out;
 }

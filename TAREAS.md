@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-11 | **Avance exacto por losa** | claude | 2026-08-06 |
+_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 
 ---
 
@@ -48,6 +48,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-08-06 | **Q-11 — El reparto de una carga se puede declarar**: `L3-0.943:6, L3-0.936:4` en el conduce, la misma sintaxis del plan del día. Con todas las cargas declaradas la losa da cifra exacta y desaparece el `≥`; sin declarar, todo igual que antes. Un reparto que no suma se canta y no se corrige, en la capa de avisos y en Recepción mientras se escribe. Los 161 repartidos del histórico no se tocaron: ninguno activa el camino nuevo | claude |
 | 2026-08-06 | **Q-01 — El conduce se lee de la foto**: una sola foto, dos tamaños — la de 900 px se guarda como evidencia y una de 2576 px se manda a leer y no se guarda. El lector **propone y nunca guarda**: lo leído sale en ámbar y al registrar se pregunta enseñando cada campo con su valor. Un campo que no se lee con seguridad queda en `null` y vacío. Por HTTP directo, sin SDK ni dependencias. **Falta la llave `QC_ANTHROPIC` y probarlo con conduces de verdad — Q-32** | claude |
 | 2026-08-06 | **Q-05 — La historia de cada conduce**: dos relatos juntos, el del camión en la obra (hitos y tiempos entre ellos) y el del expediente (quién entró qué campo y cuándo, del registro de cambios). Ruta `/api/registro` en los dos servidores, apoyada en el índice que Q-02 dejó puesto. Se abre desde Results y desde Recepción | claude |
 | 2026-08-06 | **Q-09 — El aire, en el tablero del concretero**: tercera carta de control con sus límites, que el contrato ya publicaba y nadie enseñaba. Un día sin lecturas lo dice; no se rellena con un cero | claude |

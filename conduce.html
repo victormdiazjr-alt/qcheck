@@ -81,6 +81,12 @@ body { background: var(--bg); }
   border-color: var(--susp);
   box-shadow: 0 0 0 3px rgba(255,90,82,.16), 0 0 20px -6px var(--susp);
 }
+/* La pista del reparto (Q-11). Gris cuando solo informa, ámbar cuando el
+   reparto declarado no cuadra con lo que trae el conduce. */
+.pista { font-size: 12px; margin-top: 4px; color: var(--ink-soft); min-height: 15px; }
+.pista.descuadra { color: var(--act); font-weight: 700; }
+.pista code { background: var(--panel-2); border-radius: 4px; padding: 1px 5px; font-size: 11.5px; }
+
 /* Leído de la foto y todavía sin mirar (Q-01). Ámbar, que es la zona de acción
    del proyecto: ni bien ni mal, pendiente de que alguien lo confirme. Entra por
    el resplandor y no por el relleno, como todo lo demás (AGENTS §10). */
@@ -163,12 +169,16 @@ body { background: var(--bg); }
              hasta que se cierra el tiro. Ver CAMPOS_CAMION. -->
         <div class="field"><label>Ticket / Conduce *</label><input id="f-ticket" inputmode="numeric" placeholder="66861"></div>
         <div class="field"><label>Camión *</label><input id="f-truck" inputmode="numeric" placeholder="102"></div>
-        <div class="field"><label>Volumen (CY) *</label><input id="f-vol" inputmode="decimal" value="10"></div>
+        <!-- El volumen también recalcula la pista: el reparto se juzga contra él. -->
+        <div class="field"><label>Volumen (CY) *</label><input id="f-vol" inputmode="decimal" value="10" oninput="pistaReparto()"></div>
         <div class="field"><label>Hora batch (del conduce) *</label><input id="f-batch" type="time">
           <button class="now-btn" onclick="setNow('f-batch')">AHORA</button></div>
         <div class="field"><label>Llegada *</label><input id="f-arrive" type="time">
           <button class="now-btn" onclick="setNow('f-arrive')">AHORA</button></div>
-        <div class="field"><label>Losa / Identificación *</label><input id="f-ident" placeholder="L3-0.443"></div>
+        <div class="field"><label>Losa / Identificación *</label><input id="f-ident" placeholder="L3-0.443" oninput="pistaReparto()">
+          <!-- Q-11: cuando el camión toca más de una losa, aquí se dice que se
+               puede declarar el reparto, y si lo declara, si cuadra. -->
+          <div id="pista-reparto" class="pista"></div></div>
       </div>
       <!-- Lo que el lector sacó de la foto, y lo que no pudo (Q-01). -->
       <div id="aviso-lectura"></div>
@@ -196,7 +206,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=dbd91e4b"></script>
+<script src="assets/core.js?v=ecc5fefa"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -283,6 +293,42 @@ function photoCapture(input) {
   };
   img.src = URL.createObjectURL(file);
   input.value = "";
+}
+
+/* La pista del reparto — Q-11.
+
+   Con una sola losa no dice nada: no hay nada que repartir. Con dos o más se
+   ofrece la sintaxis, que es la misma del plan del día, y en cuanto el técnico
+   la usa se comprueba en vivo contra las yardas del conduce. Se comprueba
+   MIENTRAS escribe y no al guardar a propósito: quien puede aclarar en qué losa
+   cayó la diferencia es el chofer, y en el momento de escribirlo todavía está
+   ahí. Al cerrar el tiro ya no hay a quién preguntarle. */
+function pistaReparto() {
+  const el = document.getElementById("pista-reparto");
+  const ident = document.getElementById("f-ident").value;
+  const codigos = slabCodes(ident);
+  el.className = "pista";
+  if (codigos.length < 2) { el.textContent = ""; return; }
+
+  const rep = repartoDe(ident);
+  const declaradas = Object.keys(rep).length;
+  if (!declaradas) {
+    el.innerHTML = `${codigos.length} losas — puedes decir cuánto dejó en cada una: `
+      + `<code>${esc(codigos[0])}:6, ${esc(codigos[1])}:4</code>`;
+    return;
+  }
+  if (declaradas < codigos.length) {
+    el.textContent = `Faltan ${codigos.length - declaradas} de ${codigos.length} losas por repartir.`;
+    return;
+  }
+  const vol = num(document.getElementById("f-vol").value);
+  const suma = codigos.reduce((a, c) => a + (rep[c] || 0), 0);
+  if (vol == null) { el.textContent = `Reparto completo: ${fmt(suma, 1)} CY.`; return; }
+  const dif = suma - vol;
+  if (Math.abs(dif) < 0.15) { el.textContent = `Cuadra: ${fmt(suma, 1)} de ${fmt(vol, 1)} CY.`; return; }
+  el.className = "pista descuadra";
+  el.textContent = `Las losas suman ${fmt(suma, 1)} CY y el conduce trae ${fmt(vol, 1)}`
+    + ` — ${dif > 0 ? "sobran" : "faltan"} ${fmt(Math.abs(dif), 1)} CY.`;
 }
 
 /* Los campos que el lector puede rellenar. La llegada NO está: es «ahora», la
@@ -433,6 +479,7 @@ function saveArrival() {
   pendingPhoto = null;
   document.getElementById("photo-slot").innerHTML = "";
   ["f-ticket", "f-truck", "f-ident", "f-batch", "f-arrive"].forEach((id) => document.getElementById(id).value = "");
+  pistaReparto();   // el camión siguiente empieza sin la pista del anterior
   document.getElementById("f-vol").value = "10";
   render();
   toast(`Camión ${t.truck || ""} ticket ${t.ticket} registrado`);

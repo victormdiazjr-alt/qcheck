@@ -206,6 +206,24 @@ si además hubo cargas repartidas, la cifra se lee como un mínimo (`≥`). Cuan
 solo recibió cargas repartidas no se pinta una barra al 0 %: se dice cuántas cargas
 compartidas la tocaron. Y una losa que nadie ha tocado enseña su código y nada más.
 
+**Desde Q-11 el técnico PUEDE declarar el reparto**, y entonces la cifra es exacta. Se
+escribe en el conduce con la misma sintaxis del plan del día:
+
+    L3-0.943:6, L3-0.936:4
+
+Es opcional: sin declarar, todo se comporta como el párrafo de arriba. Reusar la sintaxis
+en vez de inventar un campo tiene un motivo concreto — **de los 372 ensayos con losa del
+histórico, 161 son cargas repartidas escritas en prosa desde el Excel** («SLAB L1-2.487
+and L1-2.482»), y esos se siguen leyendo igual sin tocar ni uno. No hubo migración.
+
+Una losa deja de llevar `≥` **solo si TODAS las cargas que la tocaron declararon su
+parte**: con una sola carga callada, parte de lo que recibió sigue sin saberse.
+
+**Un reparto que no suma se canta y no se corrige** (`descuadreDeReparto()`): ajustar la
+diferencia por detrás sería decidir en qué losa cayó ese hormigón, y eso no lo sabe nadie
+desde aquí. Se avisa en la capa de avisos y, en Recepción, **mientras se escribe** — que
+es cuando el chofer todavía está en la obra y se le puede preguntar.
+
 **Concretero, contratista y Autoridad no van sueltos**: entran por una sola puerta,
 «Dashboards», **que va la última de todos los botones** —en el Control Center y en el
 portal— porque no es una pantalla de trabajo: es para que miren desde fuera. Quien usa

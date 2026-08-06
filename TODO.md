@@ -64,11 +64,6 @@ que hoy se arma a mano.
 `trendAlerts()` ya detecta agua, tendencia y humedad vencida. Faltan reglas de
 temperatura y de tiempo de viaje.
 
-### Q-11 · Avance exacto por losa — pequeño
-Un camión que reparte su carga entre varias losas no registra cuánto dejó en cada una.
-Hoy se atribuyen solo las yardas de los camiones que sirvieron una sola losa, y la
-cifra sale con `≥`. Para exactitud haría falta un campo de reparto en Recepción.
-
 ### Q-10 · Integración con ArcGIS — investigación
 La inspección ya georreferencia losas ahí. Evaluar el enlace.
 
