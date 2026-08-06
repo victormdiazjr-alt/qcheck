@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-33 | **La navegación de Muestras** — feedback de Rubén en obra | claude | 2026-08-06 |
 
 ---
 
