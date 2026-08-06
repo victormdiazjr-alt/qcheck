@@ -24,6 +24,8 @@ _(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 | Q-04 | **Correo automático al rechazar** | Hoy abre un correo pre-llenado; falta el envío real (necesita Q-02) | mediano |
 | Q-06 | **Adjuntos en el conduce**: foto del conduce, pesadas, fotos de losa y cilindros | Cierra el expediente digital que hoy se arma a mano | mediano |
 | Q-08 | **Más reglas de inteligencia** | La capa de avisos ya detecta agua, tendencia y humedad vencida; faltan reglas de temperatura y de tiempo de viaje | pequeño |
+| Q-31 | **Que el aparato perdido no enseñe nada** — cifrar la base local contra la clave del usuario | Lo que quedó abierto de Q-07: sin señal, cualquiera con el iPad ve las pantallas. Es deliberado —dejar al técnico fuera en obra es peor— pero sigue siendo un hueco. Ver `DECISIONS.md` §17 | grande |
+| Q-32 | **Encender el lector de conduce y probarlo en obra** — llave de API en `QC_ANTHROPIC` y probarlo con conduces de verdad | El código de Q-01 está escrito y dormido. Lo que hay que medir no es si lee, sino **si deja campos vacíos cuando no está seguro**. **Es de Víctor**: hace falta la llave | pequeño |
 | Q-10 | **Integración con ArcGIS** | La inspección ya georreferencia losas ahí; evaluar el enlace | investigación |
 
 **El detalle de cada tarea está en [`TODO.md`](TODO.md).** Aquí solo se reclama.
