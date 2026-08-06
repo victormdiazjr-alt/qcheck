@@ -579,8 +579,32 @@ function worstZone(t) {
   }
   return w;
 }
+/* ¿Este camión tiene ya un veredicto que signifique algo? (Q-33)
+
+   Hace falta desde que Muestras guarda lo que se va midiendo: un camión con
+   solo la temperatura puesta NO puede enseñarse como «OK», porque nadie ha
+   juzgado nada todavía.
+
+   El corte es slump + Unit Weight, que es el mismo que la propia pantalla usa
+   para dejar enviar (`ready`) y para marcar un camión como hecho en el
+   selector. No se usa `resultsAt`, que sería lo natural, por un motivo
+   comprobado: **ninguno de los 397 ensayos del Excel lo tiene**, y con esa
+   regla el expediente entero pasaría a «a medias». */
+function tieneVeredicto(t) {
+  return num(t.slump) != null && num(t.uw) != null;
+}
+/* Algo medido, pero no lo suficiente para juzgar. */
+function aMedias(t) {
+  if (tieneVeredicto(t)) return false;
+  return ["slump", "uw", "air", "temp"].some((k) => num(t[k]) != null);
+}
+
 function estadoBadge(t) {
   if (t.rejected) return `<span class="badge susp">RECHAZADO</span>`;
+  /* Va DESPUÉS de rechazado a propósito: los cuatro ensayos del histórico que
+     tienen lecturas sueltas están todos rechazados, así que ninguno cambia de
+     aspecto por esto. Se comprobó uno a uno. */
+  if (aMedias(t)) return `<span class="badge act">A MEDIAS</span>`;
   const w = worstZone(t);
   if (w === "susp") return `<span class="badge susp">FUERA DE LÍMITE</span>`;
   if (w === "act") return `<span class="badge act">ACCIÓN</span>`;

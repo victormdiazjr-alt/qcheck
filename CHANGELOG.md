@@ -5,6 +5,30 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.18] — 6 de agosto · «lo que se mide no se pierde»
+
+Feedback de Rubén en obra. Lo llamó un problema de navegación; era pérdida de datos.
+
+### Arreglado
+- **Muestras se comía lo tecleado.** Los cuatro valores no se guardaban hasta pulsar
+  Enviar —que exige slump Y Unit Weight— y cambiar de camión recargaba el buffer desde el
+  registro. Tomar la temperatura de dos camiones a la vez era imposible: la del primero
+  desaparecía al entrar la del segundo. Ahora se guarda en cuanto se asienta, en cada
+  transición y al irse la pantalla a segundo plano.
+- **Guardar una lectura suelta no dispara el veredicto.** `resultsAt` y `rejected` los
+  sigue poniendo solo Enviar.
+
+### Añadido
+- **La rejilla de camiones**, con las palabras de Rubén: «ver en un view el record del
+  camión y darle click al campo que no tenga info». Casilla vacía = botón que lleva a ese
+  camión y a ese campo. Los que faltan arriba, los terminados abajo y apagados.
+- **Estado «A MEDIAS»** para el camión con algo medido y sin juzgar. El corte es slump +
+  Unit Weight; **no** `resultsAt`, que ninguno de los 397 ensayos del Excel tiene.
+- **Paso lateral de Muestras a Recepción.** Son las dos pantallas del día y solo se podía
+  salir a casa — con la pantalla en modo completo, sin barra del navegador ni botón atrás.
+
+---
+
 ## [0.17] — 6 de agosto · «el calor y el reloj»
 
 ### Añadido

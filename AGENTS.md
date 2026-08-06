@@ -851,6 +851,38 @@ La foto del conduce entra por `/api/leer-conduce` y salen los campos. Reglas dur
 - **`leerConduce()` es el único sitio donde se cambia el lector**, en los dos servidores.
   Si algún día se cambia de proveedor, se toca esa función y nada más.
 
+## 18. Muestras: nada de lo que se mide se pierde (Q-33)
+
+Rubén lo dijo en obra el 6 ago 2026: «navegar se hizo imposible, a veces tenía que
+cerrar QCheck y volver a entrar». **No era la navegación: la pantalla se comía los datos.**
+
+Los cuatro valores vivían solo en memoria y no se guardaban hasta pulsar Enviar —que
+además exige slump Y Unit Weight—, y `pickTruck()` recargaba el buffer desde el registro.
+Resultado: se sale con el termómetro, se toma la temperatura de los dos camiones que
+esperan, y al entrar la del segundo **desaparecía la del primero**. Cerrar la aplicación
+era la única salida que quedaba, porque la pantalla está a pantalla completa y sin
+cabecera: no hay barra del navegador, ni botón de atrás, ni menú.
+
+Reglas que salieron de ahí:
+
+- **Una lectura se guarda en cuanto se asienta** (`guardarParcial`), no al enviar. Una
+  temperatura medida ES un dato aunque la muestra esté a medias. Se guarda al asentarse
+  el tecleo, en cada transición y **al irse la pantalla a segundo plano** — en un iPad en
+  obra eso pasa a cada rato e iOS congela el JavaScript sin avisar.
+- **Guardar una lectura suelta NO dispara el veredicto.** `resultsAt` y `rejected` los
+  sigue poniendo solo Enviar; el Field Display no canta nada hasta que alguien lo decide.
+- **Un camión a medias se ve «A MEDIAS»**, no «OK». El corte es slump + Unit Weight, el
+  mismo que la pantalla ya usaba para dejar enviar. **No se usa `resultsAt`** aunque sería
+  lo natural: ninguno de los 397 ensayos del Excel lo tiene, y con esa regla el expediente
+  entero pasaría a «a medias». Se comprobó.
+- **La rejilla de camiones** (`abrirRejilla`) es lo que Rubén pidió con sus palabras: «ver
+  en un view el record del camión y darle click al campo que no tenga info». Una casilla
+  vacía es un botón que lleva a ese camión y a ese campo. Los que faltan van arriba; los
+  terminados abajo y apagados, porque corregir también es trabajo.
+- **Muestras tiene un paso lateral a Recepción.** Son las dos pantallas del día y hasta
+  aquí solo se salía a casa. Si añades una pantalla de trabajo, pregúntate a dónde se va
+  desde ella — no solo cómo se entra.
+
 ## 13b. Recepción, el conduce repetido
 
 **La comprobación de conduce repetido vive ahora en `saveArrival()` de `conduce.html`.**

@@ -76,8 +76,65 @@ header .spacer { flex: 1; }
   border-radius: 14px; padding: 1.4vh 1.6vw; font-size: 2vh; font-weight: 700;
   font-family: inherit; min-width: 26vw;
 }
+/* ---------- la rejilla de camiones (Q-33) ----------
+   Todo se toca con guante mojado: nada por debajo de 44 px de alto, que es el
+   mínimo de Apple para un objetivo táctil, y las casillas son botones enteros
+   y no textos con un enlace dentro. */
+.ver-rejilla {
+  background: var(--surface); border: 2px solid var(--hairline); color: var(--text);
+  border-radius: 14px; padding: 1.4vh 1.4vw; font-size: 1.9vh; font-weight: 800;
+  font-family: inherit; margin-right: 1vw; cursor: pointer; white-space: nowrap;
+}
+.ver-rejilla:hover { border-color: var(--logo-navy); box-shadow: 0 0 18px -6px var(--logo-navy); }
+#rejilla {
+  position: fixed; inset: 0; z-index: 60; display: none;
+  background: rgba(0,0,0,.62); padding: max(2vh, env(safe-area-inset-top)) 2vw 2vh;
+}
+#rejilla.show { display: flex; align-items: flex-start; justify-content: center; }
+.rbox {
+  background: var(--surface); border: 1px solid var(--hairline); border-radius: 18px;
+  width: 100%; max-width: 1100px; max-height: 92dvh; display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,.55);
+}
+.rhead { display: flex; align-items: center; gap: 1.4vw; padding: 1.6vh 2vw; border-bottom: 1px solid var(--hairline); font-size: 2.1vh; }
+.rhead .spacer { flex: 1; }
+.rbody { overflow: auto; padding: 1vh 1vw 2vh; }
+table.rej { width: 100%; border-collapse: separate; border-spacing: 6px 6px; }
+table.rej th {
+  font-size: 1.35vh; text-transform: uppercase; letter-spacing: .16em; color: var(--muted);
+  font-weight: 800; text-align: center; padding-bottom: .4vh;
+}
+table.rej th.izq, table.rej td.izq { text-align: left; }
+.r-camion { font-size: 2.6vh; font-weight: 900; line-height: 1.1; }
+.r-ticket { font-size: 1.5vh; color: var(--muted); }
+/* Una casilla es un botón. Con dato: el valor. Sin dato: un hueco que se ve
+   que se puede tocar — el color entra por el borde y el resplandor, nunca por
+   el relleno (AGENTS §10). */
+.celda {
+  width: 100%; min-height: 52px; border-radius: 12px; cursor: pointer;
+  background: var(--surface-2, rgba(255,255,255,.03)); border: 1.5px solid var(--hairline);
+  color: var(--text); font-family: inherit; font-size: 2.2vh; font-weight: 800;
+}
+.celda:hover { border-color: var(--logo-navy); }
+.celda.vacia { color: var(--muted); font-weight: 600; border-style: dashed; }
+.celda.vacia:hover { border-color: var(--act); box-shadow: 0 0 0 3px rgba(245,184,61,.13), 0 0 18px -6px var(--act); }
+.celda.aqui { border-color: var(--logo-navy); box-shadow: 0 0 0 3px rgba(74,99,216,.22); }
+tr.hecho .celda { opacity: .5; }
+tr.hecho:hover .celda { opacity: 1; }
 /* Cerrar el tiro: chico, discreto y lejos del teclado. El color entra por el
    resplandor, nunca por el relleno (AGENTS.md §10). */
+/* El paso a Recepción (Q-33). Recepción y Muestras son las dos pantallas que
+   el técnico usa todo el día, y hasta aquí no había forma de ir de una a otra:
+   la única salida era la ✕, que se va a casa. Mismo aspecto discreto que
+   «cerrar tiro» — es navegación, no una acción del trabajo. */
+.a-recepcion {
+  margin-left: 1.2vw; flex: none; text-decoration: none; display: inline-block;
+  background: var(--surface); border: 1px solid var(--hairline); color: var(--muted);
+  border-radius: 10px; padding: 1vh 1.1vw; font-size: 1.4vh; font-weight: 800;
+  letter-spacing: .14em; text-transform: uppercase; font-family: inherit;
+  transition: border-color .16s, color .16s, box-shadow .18s;
+}
+.a-recepcion:hover { color: var(--text); border-color: var(--logo-navy); box-shadow: 0 0 16px -6px var(--logo-navy); }
 .cerrar-tiro {
   margin-left: 1.2vw; flex: none;
   background: var(--surface); border: 1px solid var(--hairline); color: var(--muted);
@@ -317,10 +374,17 @@ footer .spacer { flex: 1; }
     <div class="hsub" id="hsub">QCheck · Segarra Engineering</div>
   </div>
   <div class="spacer"></div>
+  <!-- La rejilla de camiones (Q-33). Va PEGADA al selector porque son la misma
+       decisión —a qué camión voy— y con la mano sucia se busca en un sitio, no
+       en dos. El selector sigue estando: para un solo camión es más rápido. -->
+  <button class="ver-rejilla" onclick="abrirRejilla()" title="Ver todos los camiones y qué les falta">▦ Camiones</button>
   <select class="truck-pick" id="truck-pick" onchange="pickTruck(this.value)"></select>
   <!-- Pequeño y aparte del teclado a propósito: cerrar el tiro es la última
        acción del día, no una que se busque con la mano sucia entre camión y
        camión. Pide confirmación con los números delante. -->
+  <!-- El camino de vuelta a Recepción, que es de donde vienen los camiones.
+       Sin esto, desde Muestras solo se podía salir a casa (Q-33). -->
+  <a class="a-recepcion" href="conduce.html" onclick="guardarParcial()">⇄ Recepción</a>
   <button class="cerrar-tiro" id="btn-cerrar" onclick="cerrarDesdeMuestras()"></button>
 </header>
 
@@ -339,13 +403,32 @@ footer .spacer { flex: 1; }
   </div>
 </div>
 
+<!-- ---------------------------------------------------------------- Q-33
+     La rejilla de camiones. Lo que Rubén pidió con estas palabras: «ver en un
+     view el record del camión y darle click al campo que no tenga info».
+
+     Una casilla vacía es un botón que lleva a ese camión y a ese campo. Entrar,
+     poner el dato, salir, entrar al otro — sin perder nada por el camino, que
+     era el fallo de fondo. -->
+<div id="rejilla" onclick="if(event.target===this) cerrarRejilla()">
+  <div class="rbox">
+    <div class="rhead">
+      <b>Camiones de hoy</b>
+      <span class="muted" id="rejilla-sub"></span>
+      <div class="spacer"></div>
+      <button class="btn-ghost" onclick="cerrarRejilla()">✕ Cerrar</button>
+    </div>
+    <div class="rbody" id="rejilla-cuerpo"></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 <div id="modal-root"></div>
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=4ef7bb93"></script>
+<script src="assets/core.js?v=f3158000"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -449,7 +532,56 @@ function pendingTrucks(day) {
 }
 function currentTest() { return state.n == null ? null : db.tests.find((t) => t.n === state.n) || null; }
 
+/* ------------------------------------------------------------ Q-33
+   LO QUE SE MIDE NO SE PIERDE
+
+   Hasta aquí, los cuatro valores vivían solo en `state.buf` y no se guardaban
+   hasta pulsar Enviar — que además exige slump Y Unit Weight. Cambiar de camión
+   recargaba el buffer desde el registro, así que **lo tecleado y no enviado se
+   borraba en silencio.**
+
+   Eso rompía justo el trabajo real: se sale con el termómetro, se toma la
+   temperatura de los dos camiones que esperan, y al entrar la del segundo
+   desaparecía la del primero. Rubén lo dijo en obra el 6 ago 2026 — «navegar se
+   hizo imposible, a veces tenía que cerrar QCheck y volver a entrar». No era la
+   navegación: era que la pantalla se comía los datos y cerrar era la única
+   salida que quedaba.
+
+   Ahora una lectura se guarda en cuanto se asienta. Una temperatura medida ES
+   un dato, aunque la muestra esté a medias.
+
+   LO QUE NO CAMBIA, Y ES LO IMPORTANTE: guardar una lectura suelta **no dispara
+   el veredicto**. `resultsAt` y `rejected` los sigue poniendo solo Enviar, así
+   que el Field Display no canta nada hasta que alguien lo decide. El camión
+   se ve «A MEDIAS» en las demás pantallas, que es lo que es.
+
+   Se guarda al asentarse el tecleo y en cada transición (cambiar de campo, de
+   camión, salir). Se espera ese momento y no cada dígito para no llenar el
+   registro de cambios con `3`, `3.2`, `3.25`: lo que interesa al expediente es
+   la lectura, no las pulsaciones. */
+function guardarParcial() {
+  clearTimeout(guardarParcial._t);
+  const t = currentTest();
+  if (!t) return;
+  let cambio = false;
+  for (const k of ["slump", "uw", "air", "temp"]) {
+    const v = state.buf[k] == null ? null : state.buf[k];
+    if ((num(t[k]) ?? null) !== v) { t[k] = v; cambio = true; }
+  }
+  if (!cambio) return;
+  /* La hora de la muestra se pone con la PRIMERA lectura, que es cuando de
+     verdad se muestreó — no al enviar, que puede ser bastante después. */
+  if (!t.testTime && ["slump", "uw", "air", "temp"].some((k) => num(t[k]) != null)) t.testTime = nowHM();
+  saveDB();
+}
+/* Al teclear se espera a que el número se asiente. */
+function guardarPronto() {
+  clearTimeout(guardarParcial._t);
+  guardarParcial._t = setTimeout(guardarParcial, 1200);
+}
+
 function pickTruck(n) {
+  guardarParcial();                        // lo del camión que se deja, guardado
   state.n = n === "" || n == null ? null : Number(n);
   const t = currentTest();
   state.buf = t ? { slump: num(t.slump), uw: num(t.uw), air: num(t.air), temp: num(t.temp) } : {};
@@ -458,10 +590,73 @@ function pickTruck(n) {
   render();
 }
 
+/* Entrar a un camión por un campo concreto — lo que hace la rejilla al tocar
+   una casilla vacía. */
+function irA(n, campo) {
+  pickTruck(n);
+  state.field = campo;
+  cerrarRejilla();
+  render();
+}
+
+/* ------------------------------------------------------------ la rejilla (Q-33)
+
+   Los camiones que faltan van ARRIBA y los terminados abajo y apagados: la
+   pantalla existe para lo que queda por hacer, no para repasar lo hecho. Los
+   terminados siguen ahí porque corregir un dato es parte del trabajo, y
+   esconderlos obligaría a salir a otra pantalla para eso.
+
+   El orden dentro de los pendientes es el de llegada, igual que la fila: el que
+   lleva más tiempo esperando, primero. */
+function abrirRejilla() {
+  guardarParcial();                     // lo que esté a medio escribir, guardado antes de salir
+  pintarRejilla();
+  document.getElementById("rejilla").classList.add("show");
+}
+function cerrarRejilla() { document.getElementById("rejilla").classList.remove("show"); }
+
+function pintarRejilla() {
+  const todos = testsOfDate(state.day);
+  const faltan = todos.filter((t) => !t.rejected && !tieneVeredicto(t));
+  const hechos = todos.filter((t) => t.rejected || tieneVeredicto(t));
+  const filas = faltan.concat(hechos);
+
+  document.getElementById("rejilla-sub").textContent = todos.length
+    ? `${faltan.length} sin terminar de ${todos.length}`
+    : "";
+
+  const celda = (t, f) => {
+    const v = num(t[f.key]);
+    const aqui = t.n === state.n && state.field === f.key;
+    const clases = "celda" + (v == null ? " vacia" : "") + (aqui ? " aqui" : "");
+    /* El valor se enseña con los decimales de su campo, los mismos que usa el
+       teclado. Un hueco enseña «—» y no un cero: no es lo mismo no haber
+       medido que haber medido cero. */
+    return `<td><button class="${clases}" onclick="irA(${t.n},'${f.key}')"
+      title="${esc(t.truck || "")} · ${esc(f.label)}">${v == null ? "—" : fmt(v, f.dp)}</button></td>`;
+  };
+
+  document.getElementById("rejilla-cuerpo").innerHTML = filas.length ? `
+    <table class="rej">
+      <tr><th class="izq">Camión</th>${FIELDS.map((f) => `<th>${esc(f.label)}</th>`).join("")}<th>Estado</th></tr>
+      ${filas.map((t) => `
+        <tr class="${t.rejected || tieneVeredicto(t) ? "hecho" : ""}">
+          <td class="izq">
+            <div class="r-camion">${esc(t.truck || "—")}</div>
+            <div class="r-ticket">ticket ${esc(t.ticket || "—")}</div>
+          </td>
+          ${FIELDS.map((f) => celda(t, f)).join("")}
+          <td style="text-align:center">${estadoBadge(t)}</td>
+        </tr>`).join("")}
+    </table>`
+    : `<div class="empty" style="padding:4vh 2vw; text-align:center; color:var(--muted)">
+         Ningún camión registrado hoy. Se reciben en Recepción.</div>`;
+}
+
 /* ---------- teclado ---------- */
 /* Al cambiar de campo se reinicia el tecleo: el próximo dígito empieza un
    número nuevo, no se pega al valor que ya estaba. */
-function setField(k) { snd.field(); state.field = k; state._typing = null; state._str = ""; render(); }
+function setField(k) { guardarParcial(); snd.field(); state.field = k; state._typing = null; state._str = ""; render(); }
 function keyPress(ch) {
   const f = state.field;
   const cur = state.buf[f];
@@ -471,6 +666,7 @@ function keyPress(ch) {
   else { snd.key(); s = s + ch; }   // confirma que el número entró
   state._typing = f; state._str = s;
   state.buf[f] = s === "" || s === "." ? null : Number(s);
+  guardarPronto();
   render();
 }
 function bump(delta) {
@@ -481,14 +677,16 @@ function bump(delta) {
   const v = Math.max(0, Math.round((base + delta * def.step) / def.step) * def.step);
   state.buf[f] = Number(v.toFixed(def.dp));
   state._typing = null; state._str = "";
+  guardarPronto();
   render();
 }
-function clearField() { snd.clear(); state.buf[state.field] = null; state._typing = null; state._str = ""; render(); }
+function clearField() { snd.clear(); state.buf[state.field] = null; state._typing = null; state._str = ""; guardarPronto(); render(); }
 
 /* Limpia los cuatro resultados de este camión */
 function clearAll() {
   snd.clear();
   state.buf = {}; state._typing = null; state._str = ""; state.field = "slump";
+  guardarParcial();          // borrar también es un cambio que hay que guardar
   render();
   toast("Resultados borrados");
 }
@@ -721,6 +919,21 @@ enableLiveSync(() => render());
 render();
 mountStatusBar(state.day);
 pantallaCompletaAlTocar();
+
+/* Lo medido se guarda también al irse (Q-33).
+
+   En un iPad en obra la pantalla se va a segundo plano a cada rato —llega una
+   notificación, se bloquea sola, se cambia de aplicación— y iOS congela el
+   JavaScript sin avisar. Sin esto, una lectura escrita en el último segundo se
+   perdería justo en el caso que esta tarea existe para arreglar.
+
+   `pagehide` y `visibilitychange` porque ninguno de los dos se dispara siempre:
+   iOS es irregular con `beforeunload` y con `pagehide` según cómo se salga. */
+addEventListener("pagehide", guardarParcial);
+addEventListener("visibilitychange", () => { if (document.hidden) guardarParcial(); });
+
+/* Escape cierra la rejilla — en el iPad con teclado, y en la PC de la caseta. */
+addEventListener("keydown", (e) => { if (e.key === "Escape") cerrarRejilla(); });
 </script>
 </body>
 </html>
