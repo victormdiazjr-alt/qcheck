@@ -135,7 +135,47 @@ for (const u of ["concretero", "contratista", "autoridad"])
   if (!new RegExp("\\b" + u + ":[^}]*casa:").test(usuarios)) mal(`la cuenta ${u} no tiene casa`);
 if (fallos === fallosAntes) bien(`seis pantallas de QC protegidas · ${CUENTAS.length} cuentas, tres con casa`);
 
-/* ---------- 7. ¿el idioma es el acordado? ---------- */
+/* ---------- 7. ¿se cuela dato de persona en el HTML sin escapar? ----------
+
+   LA RAÍZ: estas pantallas arman HTML con plantillas de texto, y por ellas
+   pasan campos que teclea una persona — número de camión, de ticket,
+   identificación de losa, comentarios. Escribir `${t.truck}` en vez de
+   `${esc(t.truck)}` no da ningún error: funciona perfectamente hasta el día
+   que un valor lleva un `<`, y entonces el navegador se lo come como
+   etiqueta.
+
+   PASÓ DE VERDAD el 6 ago 2026, auditando: un camión llamado `A<b>&"X` metió
+   doce elementos dentro de los SVG de Producción y fusionó dos etiquetas de
+   punto en una. La gráfica seguía dibujándose, así que no habría saltado
+   ninguna alarma — solo habría enseñado mal.
+
+   No es cosa de un atacante: es la letra que se cuela al teclear con guantes,
+   o lo que el lector de conduce (Q-01) proponga de una foto borrosa.
+
+   POR ESO ESTO ESTÁ AQUÍ: pillarlo antes de subirlo, que es la única forma
+   de que no vuelva. Si añades un campo que escribe una persona, métele
+   `esc()` o añádelo a la lista. */
+titulo("Escapado");
+const CAMPOS_DE_PERSONA = /(truck|ticket|ident|comments|plant|lot|company|mixId|nombre|contractor|qcFirm|notifyEmails|\.name\b|\.dev\b|\.usr\b)/;
+const YA_SEGURO = /\b(esc|fmt|num|Number|Math\.|encodeURI|encodeURIComponent|JSON\.stringify)\s*\(/;
+const sinEscapar = [];
+for (const f of [...html, "assets/core.js", "assets/qc.js", "assets/clima.js", "assets/sync.js"]) {
+  if (!fs.existsSync(path.join(raiz, f))) continue;
+  const lineas = leer(f).split("\n");
+  lineas.forEach((linea, i) => {
+    if (!(linea.includes("<") && linea.includes(">"))) return;   // solo donde se arma HTML
+    for (const m of linea.matchAll(/\$\{([^{}]+)\}/g)) {
+      const e = m[1].trim();
+      if (YA_SEGURO.test(e) || !CAMPOS_DE_PERSONA.test(e)) continue;
+      if (/^[^?]*\?\s*"[^"]*"\s*:\s*"[^"]*"$/.test(e)) continue;  // ternario de literales
+      sinEscapar.push(`${f}:${i + 1} → \${${e.slice(0, 50)}}`);
+    }
+  });
+}
+if (sinEscapar.length) sinEscapar.forEach((s) => mal(`dato de persona sin esc(): ${s}`));
+else bien("ningún dato tecleado entra al HTML sin escapar");
+
+/* ---------- 8. ¿el idioma es el acordado? ---------- */
 titulo("Idioma");
 const enIngles = [];
 for (const f of html) {

@@ -369,7 +369,7 @@ footer {
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=9fa4ca62"></script>
+<script src="assets/core.js?v=58793b02"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -647,7 +647,7 @@ function simArrival(t, hora) {
   document.body.className = "s-idle";
   document.getElementById("truck-num").textContent = t.truck;
   document.getElementById("truck-sub").innerHTML =
-    `Ticket <b>${t.ticket}</b> · Camión <b>#${SIM.loads}</b> · <b>${fmt(t.vol, 1)}</b> CY · llegó ${fmt12(hora)}`;
+    `Ticket <b>${esc(t.ticket)}</b> · Camión <b>#${SIM.loads}</b> · <b>${fmt(t.vol, 1)}</b> CY · llegó ${fmt12(hora)}`;
   setPlant(t.plant);
   const v = document.getElementById("verdict");
   v.className = "verdict v-idle";

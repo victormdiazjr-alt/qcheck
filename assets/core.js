@@ -1550,7 +1550,7 @@ function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
     const fuera = p.rejected || p.z === "susp" || p.z === "act";
     if (!fuera && !ult) return;
     const col = p.rejected || p.z === "susp" ? "var(--susp)" : p.z === "act" ? "var(--act)" : "var(--chart-line, #5b8dbf)";
-    const t = `<title>#${p.n} · ${p.date} · ticket ${p.ticket || "—"} · ${fmt(p.v, dp)}${yUnit}${p.rejected ? " · RECHAZADO" : ""}</title>`;
+    const t = `<title>#${p.n} · ${esc(p.date)} · ticket ${esc(p.ticket || "—")} · ${fmt(p.v, dp)}${yUnit}${p.rejected ? " · RECHAZADO" : ""}</title>`;
     if (p.rejected)
       g += `<g>${t}<path d="M${X(i) - 3.6},${Y(p.v) - 3.6} l7.2,7.2 M${X(i) + 3.6},${Y(p.v) - 3.6} l-7.2,7.2"
             stroke="var(--susp)" stroke-width="2.1" stroke-linecap="round"/></g>`;

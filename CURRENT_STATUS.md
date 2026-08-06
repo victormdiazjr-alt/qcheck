@@ -9,8 +9,10 @@ usado en obra**.
 ## Lo último: Q-07, la firma del expediente (5 ago 2026)
 
 **Hecho, desplegado y verificado en producción** — 16 pruebas contra
-`qcheck-api.qcheck.workers.dev`, sin fallos. Las tres cuentas están creadas (`ruben`,
-`admin`, `invitado`) y sus claves en `datos/claves-nuevas.txt`, fuera del repositorio.
+`qcheck-api.qcheck.workers.dev`, sin fallos. Las cuentas están creadas y sus claves en `datos/claves-nuevas.txt`, fuera del
+repositorio. Desde el 6 ago 2026 son **seis**: `admin` y `ruben` llevan el control de
+calidad, `invitado` mira, y `concretero`, `contratista` y `autoridad` entran directas a
+su tablero y no salen de ahí (Q-37).
 
 **Pero el candado sigue APAGADO a propósito.** `exigir_sesion` está en `false`: hasta que
 cada aparato haya entrado una vez con su cuenta, encenderlo dejaría a la cuadrilla sin

@@ -693,7 +693,7 @@ Reglas que no se rompen aquí:
 
 - **La sincronización se cuelga de `saveDB()` y de ningún otro sitio.** Compara la base
   contra una copia de cómo estaba al sincronizar (`qc-sync-base`) y de la diferencia saca
-  las líneas. Por eso **ninguna de las once pantallas tuvo que cambiar nada**: siguen
+  las líneas. Por eso **ninguna pantalla tuvo que cambiar nada**: siguen
   mutando `db` y llamando a `saveDB()`. Si te ves añadiendo llamadas de sync en una
   pantalla, vas por el camino equivocado.
 - **La llave que viaja es `id`, nunca `n`.** `n` lo reparte cada aparato por su cuenta

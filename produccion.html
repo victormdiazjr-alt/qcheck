@@ -105,7 +105,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=9fa4ca62"></script>
+<script src="assets/core.js?v=58793b02"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -140,8 +140,8 @@ function cumChart(rows) {
   g += `<path d="${path}" fill="none" stroke="#0f6db4" stroke-width="2.2"/>`;
   for (const p of series) {
     g += p.rejected
-      ? `<g><title>RECHAZADO · camión ${p.truck} · ${p.time}</title><path d="M${X(p.min) - 4},${Y(p.acc) - 4} l8,8 M${X(p.min) + 4},${Y(p.acc) - 4} l-8,8" stroke="#c5221f" stroke-width="2.2"/></g>`
-      : `<circle cx="${X(p.min)}" cy="${Y(p.acc)}" r="3.6" fill="#0f6db4" stroke="#fff" stroke-width="1.2"><title>${p.time} · camión ${p.truck || "—"} · ticket ${p.ticket || "—"} · acumulado ${fmt(p.acc, 1)} CY</title></circle>`;
+      ? `<g><title>RECHAZADO · camión ${esc(p.truck)} · ${esc(p.time)}</title><path d="M${X(p.min) - 4},${Y(p.acc) - 4} l8,8 M${X(p.min) + 4},${Y(p.acc) - 4} l-8,8" stroke="#c5221f" stroke-width="2.2"/></g>`
+      : `<circle cx="${X(p.min)}" cy="${Y(p.acc)}" r="3.6" fill="#0f6db4" stroke="#fff" stroke-width="1.2"><title>${esc(p.time)} · camión ${esc(p.truck || "—")} · ticket ${esc(p.ticket || "—")} · acumulado ${fmt(p.acc, 1)} CY</title></circle>`;
   }
   /* Capa de lectura (Q-35). Los camiones no caen a intervalos regulares, así
      que cada uno se queda con la mitad del hueco hasta su vecino: se apunta
@@ -162,7 +162,13 @@ function cumChart(rows) {
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%; max-width:${W}px; display:block" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
 }
 
-/* ---------- custom SVG: per-truck cycle bars ---------- */
+/* OJO CON LOS <title> DE ESTOS SVG. Van dentro de una plantilla y llevan
+   datos que teclea una persona: número de camión y de ticket. Sin `esc()`, un
+   camión llamado `A<b>X` parte el SVG y se lleva por delante el punto
+   siguiente — probado el 6 ago 2026: doce elementos colados dentro del gráfico
+   y dos títulos fusionados en uno. `verificar.js` lo vigila desde entonces.
+
+   ---------- custom SVG: per-truck cycle bars ---------- */
 function cycleChart(rows, tope) {
   const items = rows.map((t, i) => ({
     load: i + 1, truck: t.truck, ticket: t.ticket,
@@ -187,10 +193,10 @@ function cycleChart(rows, tope) {
     const over = x.cycle > db.plan.maxElapsedMin;
     const col = x.rejected ? "#c5221f" : over ? "var(--accent2)" : "#2c7fb8";
     g += `<rect x="${X(i)}" y="${Y(x.cycle)}" width="${bw}" height="${Y(0) - Y(x.cycle)}" rx="3" fill="${col}">
-      <title>Carga ${x.load} · camión ${x.truck || "—"} · batch→termina ${x.cycle} min${x.wait != null ? " · espera " + x.wait + " min" : ""}${x.rejected ? " · RECHAZADO" : ""}</title></rect>`;
+      <title>Carga ${x.load} · camión ${esc(x.truck || "—")} · batch→termina ${x.cycle} min${x.wait != null ? " · espera " + x.wait + " min" : ""}${x.rejected ? " · RECHAZADO" : ""}</title></rect>`;
     if (x.wait != null)
       g += `<rect x="${X(i)}" y="${Y(x.wait)}" width="${bw}" height="${Y(0) - Y(x.wait)}" rx="3" fill="var(--chart-wait, rgba(18,44,66,.35))"/>`;
-    g += `<text x="${X(i) + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="9.5" fill="var(--chart-text, #5a6b7c)">${x.truck || x.load}</text>`;
+    g += `<text x="${X(i) + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="9.5" fill="var(--chart-text, #5a6b7c)">${esc(x.truck || x.load)}</text>`;
   });
 
   /* Capa de lectura (Q-35): responde la columna entera, no solo la barra.

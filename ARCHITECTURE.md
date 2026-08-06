@@ -144,7 +144,7 @@ hay interruptores que alguien tenga que acordarse de mover.
 
 ---
 
-## 6. Las once pantallas
+## 6. Las catorce pantallas
 
 | Pantalla | Aparato | Para quién |
 |---|---|---|
@@ -159,6 +159,13 @@ hay interruptores que alguien tenga que acordarse de mover.
 | `produccion.html` | cualquiera | rendimiento del concretero |
 | `autoridad.html` | cualquiera | cumplimiento ACT / FHWA |
 | `reporte.html` | PC | el entregable imprimible: del vaciado del día (`?dia=`) y acumulado del proyecto |
+| `conectar.html` | cualquiera | conectar el aparato al servidor, una vez (§16) |
+| `estado.html` | PC | qué aparatos están conectados y qué hace cada quien — solo `config` |
+| `settings.html` | PC | los límites del plan de control — solo `limites`. Es la de Rubén (Q-37) |
+
+**Los tres tableros se abren solos para quien tiene `casa`.** El contratista, el
+concretero y la Autoridad entran directos al suyo, sin navegación y sin poder salirse
+(Q-37), y desde el 6 ago 2026 los tres imprimen un reporte escrito del día (Q-38).
 
 **Las dos pantallas de producción no son duplicado.** Existe una `produccion.html` en
 cada repositorio: la de QCheck enseña lo que Segarra midió (aplica surta quien surta),

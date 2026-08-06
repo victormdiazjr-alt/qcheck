@@ -188,7 +188,7 @@ Ver [`ARCHITECTURE.md` §3](ARCHITECTURE.md). Resumen: un objeto en
 
 - 397 ensayos históricos del proyecto, ingeniería inversa del Excel de Rubén.
   La Moving Average se validó contra su hoja y coincide al dígito.
-- Las once pantallas están construidas y verificadas en cuatro tamaños de aparato.
+- Las catorce pantallas están construidas y verificadas en cuatro tamaños de aparato.
 - El circuito completo está probado: se recibe un camión en Recepción, se entran
   las muestras en el iPad, el Field Display canta el veredicto y el progreso sube.
 - Cada acceso arranca **un tiro de hoy ya en marcha por la yarda 90**,

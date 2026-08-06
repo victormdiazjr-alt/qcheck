@@ -142,7 +142,25 @@ function leerOp(fila) {
 }
 
 export default {
+  /* La red de seguridad de arriba del todo — 6 ago 2026.
+
+     Sin ella, cualquier error inesperado dentro salía como la página de error
+     de Cloudflare, que es HTML. El aparato hace `r.json()` con eso y revienta
+     con un fallo de sintaxis que no dice nada de lo que pasó de verdad: el
+     técnico ve «se rompió» y nadie sabe dónde mirar.
+
+     El servidor local ya lo tenía; era el Worker el que se salía del molde.
+     Contesta SIEMPRE JSON, pase lo que pase. */
   async fetch(req, env) {
+    try {
+      return await this.atender(req, env);
+    } catch (e) {
+      console.error("fallo no previsto:", e && e.stack ? e.stack : e);
+      return json({ error: "servidor" }, 500);
+    }
+  },
+
+  async atender(req, env) {
     const url = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     if (!url.pathname.startsWith("/api/")) return json({ error: "ruta" }, 404);

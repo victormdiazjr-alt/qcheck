@@ -266,3 +266,72 @@ de lo que ya está en el aparato sigue dependiendo de quién tenga el aparato.
 **Cuándo reconsiderarlo:** si hiciera falta que un aparato perdido no enseñe nada, esto se
 resuelve cifrando la base local contra la clave del usuario, no con más candados en el
 navegador. Es otro trabajo y bastante más grande.
+
+---
+
+## 18. Un dato que teclea una persona nunca entra al HTML sin `esc()`
+
+**Salió de la auditoría del 6 ago 2026**, buscando fallos a propósito en vez de esperar
+a que aparecieran.
+
+**La raíz.** Estas pantallas arman HTML con plantillas de texto, y por ellas pasan campos
+que teclea alguien: número de camión, de ticket, identificación de losa, comentarios.
+Escribir `${t.truck}` en vez de `${esc(t.truck)}` **no da ningún error**. Funciona
+perfectamente durante meses, hasta el día en que un valor lleva un `<`.
+
+**Lo que pasó de verdad.** Un camión llamado `A<b>&"X` metió **doce elementos dentro de
+los SVG de Producción** y fusionó dos etiquetas de punto en una sola. La gráfica se
+seguía dibujando: no habría saltado ninguna alarma, solo habría enseñado mal. Se
+encontró poniendo ese valor a mano y mirando el resultado, no leyendo el código —
+leyendo el código yo había concluido antes lo contrario.
+
+**Y no hace falta un atacante.** Es la letra que se cuela al teclear con guantes, un
+pegado con caracteres raros, o lo que el lector de conduce (Q-01) proponga de una foto
+borrosa. En una herramienta de un solo equipo el riesgo no es que alguien entre: es que
+el tablero mienta y nadie se entere.
+
+**El arreglo.** Cuatro sitios corregidos (tres `<title>` de SVG en `produccion.html` y el
+de `svgChart` en `core.js`, más un rótulo de barra y un ticket en `display.html`).
+
+**Para que no vuelva:** `verificar.js` lo comprueba solo. Recorre las plantillas que
+producen HTML y canta cualquier `${…}` que mencione un campo de persona sin pasar por
+`esc()`, `fmt()` o `num()`, con archivo y línea. Se probó metiendo el fallo a mano: lo
+caza. Si añades un campo que escribe alguien, o le pones `esc()` o lo añades a la lista.
+
+## 19. Los dos servidores contestan lo mismo, y se comprueba corriéndolos
+
+`sync-servidor.js` (Node, JSONL) y `sync-worker.js` (Cloudflare, D1) tienen que
+comportarse igual. Estaba dicho en AGENTS desde el principio; lo que faltaba era una
+forma de saberlo.
+
+**La raíz.** Comparar los dos archivos leyéndolos no sirve. En la auditoría del 6 ago
+2026 el `grep` decía que el servidor local no validaba nada de lo que el Worker sí
+validaba — y era **falso**: levantar los dos y mandarles las mismas peticiones demostró
+que los dos contestaban `400 usuario`, `400 clave` y `400 rol` igual. La estructura del
+código diverge sin que diverja el comportamiento, y al revés.
+
+**Cómo se comprueba.** Se levantan los dos —`node serve.js 8461` y `npx wrangler dev
+--local --port 8462`, con el esquema aplicado a la D1 local— y se les manda la misma
+batería comparando estado, tipo de respuesta y código de error. 33 casos, incluidos
+JSON roto, métodos equivocados, parámetros con basura y rutas inventadas. Salió **una
+sola divergencia y es de diseño**: fuera de `/api/` el servidor local sirve archivos y
+el Worker no.
+
+**Lo que sí encontró:** el Worker no tenía red de seguridad arriba del todo. Un error
+inesperado salía como la página de error de Cloudflare, que es HTML; el aparato hace
+`r.json()` con eso y revienta con un fallo de sintaxis que no dice nada de lo que pasó.
+El servidor local ya lo tenía. Corregido: el Worker contesta JSON pase lo que pase.
+
+## 20. Lo que se enciende algún día se prueba antes de ese día
+
+`exigir_sesion` lleva desde Q-07 esperando a que Víctor reparta las claves. Nunca se
+había probado de punta a punta: se sabía que existía, no que funcionara.
+
+En la auditoría se probó entero contra un Worker local — 14 comprobaciones: que apagado
+la llave sola escribe, que encendido ya no, que leer sin pase tampoco, que se puede
+entrar, que la firma la pone el servidor y no el cuerpo del POST, que una cuenta de solo
+mirar entra pero **no escribe** (403), que un pase inventado se rechaza, que tras salir
+el pase deja de valer, y que se puede volver a apagar. Las 14 en verde.
+
+**La regla:** una bandera que cambia el comportamiento del sistema no se deja sin probar
+esperando al día que se encienda. Ese día siempre es un día de obra.
