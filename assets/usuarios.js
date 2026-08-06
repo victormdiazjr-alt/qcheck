@@ -33,9 +33,22 @@
 "use strict";
 
 const QC_CUENTAS = {
-  admin:    { clave: "1234", rol: "qc",       nombre: "Administrador", tablero: true, config: true },
-  ruben:    { clave: "1234", rol: "qc",       nombre: "Rubén Segarra" },
+  admin:    { clave: "1234", rol: "qc",       nombre: "Administrador", tablero: true, config: true, limites: true },
+  ruben:    { clave: "1234", rol: "qc",       nombre: "Rubén Segarra", limites: true },
   invitado: { clave: "1234", rol: "consulta", nombre: "Invitado" },
+
+  /* Las tres de fuera — Q-37, 6 ago 2026. Cada una entra y aparece en SU
+     tablero, sin portal y sin navegación: no vienen a recorrer QCheck, vienen
+     a mirar su número. Lo que ven ya era público para ellas —el contrato le
+     publica los límites a la concretera desde la v4— así que esto no abre
+     nada nuevo, solo les quita los tres clics de en medio.
+
+     `casa` va en la cuenta y NUNCA se deduce del nombre de usuario (AGENTS §3):
+     el día que la Autoridad quiera dos personas con acceso, se dan de alta dos
+     cuentas con la misma casa y no hay que tocar código. */
+  concretero:  { clave: "1234", rol: "consulta", nombre: "Concretero",  casa: "produccion.html" },
+  contratista: { clave: "1234", rol: "consulta", nombre: "Contratista", casa: "contratista.html" },
+  autoridad:   { clave: "1234", rol: "consulta", nombre: "Autoridad",   casa: "autoridad.html" },
 };
 
 /* La ficha que mandó el servidor al entrar, si la hay. */
@@ -95,3 +108,33 @@ function qcVeConfig() {
   return !!(c && c.config);
 }
 
+
+/* ¿Esta cuenta vive en una sola pantalla? — Q-37.
+
+   Devuelve el archivo de su tablero, o `null` si es alguien que navega por
+   QCheck. Quien tiene casa entra directo ahí, no ve navegación y no puede
+   salirse: `auth.js` lo devuelve a su sitio si escribe otra dirección a mano.
+   Es una comodidad, no un candado —esto vive en el navegador—, pero el
+   candado de verdad tampoco hace falta aquí: lo que ven es su propio tablero
+   de indicadores, que es justo lo que se les enseña. */
+function qcCasa() {
+  const c = qcCuenta();
+  return (c && c.casa) || null;
+}
+
+/* ¿Ve la pantalla de Settings? — Q-37.
+
+   Es la pantalla de Rubén, y a propósito NO es «Plan & Datos». Víctor lo
+   decidió el 6 ago 2026: Rubén necesita poder corregir un límite del plan de
+   control cuando el proyecto lo cambia, y para eso tenía que pasar por la
+   pantalla donde también están la llave del servidor, la ficha del proyecto y
+   la simulación. Settings enseña los límites y nada más; lo demás sigue
+   detrás de `qcVeConfig()`.
+
+   Lo que se toque aquí queda firmado en el expediente como cualquier otro
+   cambio —quién y cuándo—, así que un límite mal puesto se ve y se deshace.
+   Ese registro es lo que hace que esto no sea el riesgo que era en agosto. */
+function qcVeLimites() {
+  const c = qcCuenta();
+  return !!(c && c.limites);
+}

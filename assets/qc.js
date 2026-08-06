@@ -640,19 +640,7 @@ function viewPlan() {
           <p style="margin:4px 0" class="muted">Avisos de rechazo: ${esc(pr.notifyEmails || "— (configure emails)")}</p>
         </div>
       </div>
-      <div class="panel">
-        <div class="panel-head"><h2>Plan de control (límites SPC)</h2><div class="spacer"></div><button class="btn small" onclick="formPlan()">Editar</button></div>
-        <div class="panel-body flush"><div class="table-wrap"><table class="data">
-          <tr><th>Parámetro</th><th class="num">Objetivo</th><th class="num">Acción</th><th class="num">Suspensión</th></tr>
-          <tr><td>Slump (in)</td><td class="num mono">${p.slump.target}</td><td class="num mono">${p.slump.actLo} – ${p.slump.actHi}</td><td class="num mono">${p.slump.suspLo} – ${p.slump.suspHi}</td></tr>
-          <tr><td>Aire (%)</td><td class="num mono">${p.air.target}</td><td class="num mono">${p.air.actLo} – ${p.air.actHi}</td><td class="num mono">${p.air.suspLo} – ${p.air.suspHi}</td></tr>
-          <tr><td>Unit Weight (pcf)</td><td class="num mono">${p.uw.target}</td><td class="num mono">± ${p.uw.act}</td><td class="num mono">± ${p.uw.susp}</td></tr>
-          <tr><td>Temperatura (°F)</td><td class="num mono">—</td><td class="num mono">&gt; ${p.tempMax - 3}</td><td class="num mono">&gt; ${p.tempMax}</td></tr>
-          <tr><td>Resistencia @ ${p.cs.age}d (psi)</td><td class="num mono">${fmt(p.cs.target, 0)}</td><td class="num mono">&lt; ${fmt(p.cs.target, 0)}</td><td class="num mono">&lt; ${fmt(p.cs.action, 0)}</td></tr>
-          <tr><td>Apertura al tráfico (psi)</td><td class="num mono">${fmt(p.cs.openTarget, 0)}</td><td class="num mono" colspan="2">mínimo ${fmt(p.cs.openLow, 0)}</td></tr>
-          <tr><td>Batch → descarga (min)</td><td class="num mono">—</td><td class="num mono" colspan="2">máx ${p.maxElapsedMin}</td></tr>
-        </table></div></div>
-      </div>
+      ${panelLimites(true)}
       <div class="panel">
         <div class="panel-head"><h2>Exportar &amp; respaldo</h2></div>
         <div class="panel-body">
@@ -734,59 +722,6 @@ function formProject() {
     },
   });
 }
-function formPlan() {
-  const p = db.plan;
-  openForm({
-    title: "Plan de control — límites SPC",
-    initial: {
-      sT: p.slump.target, sAL: p.slump.actLo, sAH: p.slump.actHi, sSL: p.slump.suspLo, sSH: p.slump.suspHi,
-      aT: p.air.target, aAL: p.air.actLo, aAH: p.air.actHi, aSL: p.air.suspLo, aSH: p.air.suspHi,
-      uT: p.uw.target, uA: p.uw.act, uS: p.uw.susp,
-      tMax: p.tempMax, cT: p.cs.target, cAge: p.cs.age, cA: p.cs.action, cOT: p.cs.openTarget, cOL: p.cs.openLow,
-      maW: p.maWindow, elMax: p.maxElapsedMin,
-    },
-    fields: [
-      { type: "label", label: "Slump (in)" },
-      { key: "sT", label: "Objetivo", type: "number", step: "0.25" },
-      { key: "sAL", label: "Acción mín", type: "number", step: "0.25" },
-      { key: "sAH", label: "Acción máx", type: "number", step: "0.25" },
-      { key: "sSL", label: "Suspensión mín", type: "number", step: "0.25" },
-      { key: "sSH", label: "Suspensión máx", type: "number", step: "0.25" },
-      { type: "label", label: "Aire (%)" },
-      { key: "aT", label: "Objetivo", type: "number", step: "0.1" },
-      { key: "aAL", label: "Acción mín", type: "number", step: "0.1" },
-      { key: "aAH", label: "Acción máx", type: "number", step: "0.1" },
-      { key: "aSL", label: "Suspensión mín", type: "number", step: "0.1" },
-      { key: "aSH", label: "Suspensión máx", type: "number", step: "0.1" },
-      { type: "label", label: "Unit Weight (pcf)" },
-      { key: "uT", label: "Objetivo", type: "number", step: "0.1" },
-      { key: "uA", label: "Acción ±", type: "number", step: "0.1" },
-      { key: "uS", label: "Suspensión ±", type: "number", step: "0.1" },
-      { type: "label", label: "Temperatura y descarga" },
-      { key: "tMax", label: "Temp máx (°F)", type: "number", step: "1" },
-      { key: "elMax", label: "Batch→descarga máx (min)", type: "number", step: "5" },
-      { type: "label", label: "Resistencia (psi)" },
-      { key: "cT", label: "Objetivo f'c", type: "number", step: "50" },
-      { key: "cAge", label: "Edad (días)", type: "number", step: "1" },
-      { key: "cA", label: "Límite acción (susp. si <)", type: "number", step: "50" },
-      { key: "cOT", label: "Apertura tráfico objetivo", type: "number", step: "50" },
-      { key: "cOL", label: "Apertura tráfico mínimo", type: "number", step: "50" },
-      { key: "maW", label: "Ventana Moving Average", type: "number", step: "1" },
-    ],
-    onSave: (v) => {
-      db.plan = {
-        slump: { target: v.sT, actLo: v.sAL, actHi: v.sAH, suspLo: v.sSL, suspHi: v.sSH },
-        air: { target: v.aT, actLo: v.aAL, actHi: v.aAH, suspLo: v.aSL, suspHi: v.aSH },
-        uw: { target: v.uT, act: v.uA, susp: v.uS },
-        tempMax: v.tMax, maxElapsedMin: v.elMax,
-        cs: { target: v.cT, age: v.cAge, action: v.cA, openTarget: v.cOT, openLow: v.cOL },
-        maWindow: v.maW,
-      };
-      saveDB(); render(); toast("Plan de control actualizado");
-    },
-  });
-}
-
 /* ------------------------------------------------------------ boot */
 document.getElementById("main-tabs").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-tab]");

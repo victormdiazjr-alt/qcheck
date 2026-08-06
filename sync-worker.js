@@ -100,6 +100,7 @@ function mismoSecreto(a, b) {
 
 const ficha = (u) => ({
   usr: u.usr, nombre: u.nombre, rol: u.rol, tablero: !!u.tablero, config: !!u.config,
+  limites: !!u.limites, casa: u.casa || null,
 });
 
 /* Quién trae este pase. Estira el vencimiento con cada uso: la sincronización
@@ -215,7 +216,7 @@ export default {
       }
       if (req.method === "GET") {
         const { results } = await env.DB.prepare(
-          "SELECT usr, nombre, rol, tablero, config, activo, creado, visto FROM usuarios ORDER BY usr"
+          "SELECT usr, nombre, rol, tablero, config, limites, casa, activo, creado, visto FROM usuarios ORDER BY usr"
         ).all();
         return json({ usuarios: results || [], exigir_sesion: exige });
       }
@@ -233,22 +234,38 @@ export default {
 
         const usr = String(d.usr || "").trim().toLowerCase();
         if (!usr) return json({ error: "usuario" }, 400);
-        const rol = String(d.rol || "consulta");
-        if (rol !== "qc" && rol !== "consulta") return json({ error: "rol" }, 400);
         const antes = await env.DB.prepare("SELECT * FROM usuarios WHERE usr = ?").bind(usr).first();
+        /* EL PAPEL SE CONSERVA SI NO VIENE. Hasta el 6 ago 2026 esto era
+           `String(d.rol || "consulta")`, así que cualquier actualización
+           parcial —darle una capacidad a alguien, por ejemplo— degradaba a la
+           persona a `consulta` sin decir nada. Pasó de verdad ese día: se le
+           dio Settings a Rubén y a Víctor y los dos dejaron de llevar el
+           control de calidad hasta que se notó en la lista.
+
+           `tablero` y `config` ya se conservaban, y el servidor local también
+           conservaba el papel. Era el Worker el que se salía del molde, que es
+           justo lo que AGENTS pide vigilar: los dos servidores tienen que
+           contestar igual. */
+        const rol = d.rol != null ? String(d.rol) : ((antes && antes.rol) || "consulta");
+        if (rol !== "qc" && rol !== "consulta") return json({ error: "rol" }, 400);
         if (!antes && !d.clave) return json({ error: "clave" }, 400);
 
         const sal = d.clave ? alAzar(16) : antes.sal;
         const hash = d.clave ? await derivarClave(String(d.clave), sal, VUELTAS) : antes.hash;
         await env.DB.prepare(
-          "INSERT INTO usuarios (usr, nombre, rol, tablero, config, sal, hash, vueltas, activo, creado) " +
-          "VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(usr) DO UPDATE SET " +
+          /* `limites` y `casa` — Q-37. Ver la nota gemela en sync-servidor.js:
+             los dos servidores tienen que dar la MISMA ficha. */
+          "INSERT INTO usuarios (usr, nombre, rol, tablero, config, limites, casa, sal, hash, vueltas, activo, creado) " +
+          "VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(usr) DO UPDATE SET " +
           "nombre = excluded.nombre, rol = excluded.rol, tablero = excluded.tablero, " +
-          "config = excluded.config, sal = excluded.sal, hash = excluded.hash, " +
+          "config = excluded.config, limites = excluded.limites, casa = excluded.casa, " +
+          "sal = excluded.sal, hash = excluded.hash, " +
           "vueltas = excluded.vueltas, activo = excluded.activo"
         ).bind(usr, String(d.nombre || (antes && antes.nombre) || usr), rol,
                (d.tablero != null ? !!d.tablero : !!(antes && antes.tablero)) ? 1 : 0,
                (d.config != null ? !!d.config : !!(antes && antes.config)) ? 1 : 0,
+               (d.limites != null ? !!d.limites : !!(antes && antes.limites)) ? 1 : 0,
+               d.casa !== undefined ? (d.casa || null) : ((antes && antes.casa) || null),
                sal, hash, d.clave ? VUELTAS : antes.vueltas,
                (d.activo != null ? !!d.activo : !(antes && !antes.activo)) ? 1 : 0,
                (antes && antes.creado) || new Date().toISOString()).run();

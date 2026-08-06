@@ -124,10 +124,16 @@ const fallosAntes = fallos;
 const auth = leer("assets/auth.js");
 for (const p of ["control-center.html", "results.html", "conduce.html", "muestras.html", "reporte.html"])
   if (!auth.includes(p)) mal(`auth.js no protege ${p}`);
+if (!auth.includes("settings.html")) mal("auth.js no protege settings.html");
 const usuarios = leer("assets/usuarios.js");
-for (const u of ["admin", "ruben", "invitado"])
+const CUENTAS = ["admin", "ruben", "invitado", "concretero", "contratista", "autoridad"];
+for (const u of CUENTAS)
   if (!new RegExp("\\b" + u + ":").test(usuarios)) mal(`falta la cuenta ${u}`);
-if (fallos === fallosAntes) bien("cinco pantallas de QC protegidas · tres cuentas");
+/* Las tres de fuera tienen que tener casa: sin `casa` entrarían al portal y
+   verían la navegación entera, que es justo lo que Q-37 vino a quitar. */
+for (const u of ["concretero", "contratista", "autoridad"])
+  if (!new RegExp("\\b" + u + ":[^}]*casa:").test(usuarios)) mal(`la cuenta ${u} no tiene casa`);
+if (fallos === fallosAntes) bien(`seis pantallas de QC protegidas · ${CUENTAS.length} cuentas, tres con casa`);
 
 /* ---------- 7. ¿el idioma es el acordado? ---------- */
 titulo("Idioma");

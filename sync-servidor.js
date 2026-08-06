@@ -210,7 +210,8 @@ function crearCuentas(dir) {
 
     listar: () => Object.values(usuarios).map((u) => ({
       usr: u.usr, nombre: u.nombre, rol: u.rol, tablero: !!u.tablero,
-      config: !!u.config, activo: u.activo !== false, creado: u.creado, visto: u.visto || null,
+      config: !!u.config, limites: !!u.limites, casa: u.casa || null,
+      activo: u.activo !== false, creado: u.creado, visto: u.visto || null,
     })),
 
     async guardar(d) {
@@ -222,7 +223,14 @@ function crearCuentas(dir) {
         nombre: d.nombre != null ? String(d.nombre) : (antes.nombre || usr),
         rol: d.rol != null ? String(d.rol) : (antes.rol || "consulta"),
         tablero: d.tablero != null ? !!d.tablero : !!antes.tablero,
+      /* `casa` y `limites` — Q-37, 6 ago 2026. `casa` es el tablero en el que
+         vive una cuenta de consulta: entra ahí, no ve navegación y no puede
+         salirse. `limites` abre la pantalla de Settings, que es la de Rubén y
+         NO es «Plan & Datos». Las dos van en la cuenta y nunca se deducen del
+         nombre de usuario (AGENTS §3). */
         config: d.config != null ? !!d.config : !!antes.config,
+        limites: d.limites != null ? !!d.limites : !!antes.limites,
+        casa: d.casa !== undefined ? (d.casa || null) : (antes.casa || null),
         activo: d.activo != null ? !!d.activo : antes.activo !== false,
         creado: antes.creado || new Date().toISOString(),
         visto: antes.visto || null,
@@ -265,6 +273,7 @@ function crearCuentas(dir) {
 
     ficha: (u) => ({
       usr: u.usr, nombre: u.nombre, rol: u.rol, tablero: !!u.tablero, config: !!u.config,
+      limites: !!u.limites, casa: u.casa || null,
     }),
 
     /* Quién es el que trae este token. Estira el vencimiento: una sesión en

@@ -490,3 +490,70 @@ button.qcd-op { width: 100%; text-align: left; font-family: inherit; cursor: poi
 .qcd-op .n { font-size: 16.5px; font-weight: 700; letter-spacing: -.005em; }
 .qcd-op .r { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; line-height: 1.35; }
 .qcd-op .fl { margin-left: auto; color: var(--ink-soft); font-size: 17px; }
+
+
+/* ---------- reporte escrito de los tableros (Q-38) ----------
+   En pantalla no existe; solo sale por la impresora. Se imprime en negro
+   sobre blanco aunque la pantalla esté en modo oscuro: un tablero oscuro
+   impreso se lleva un cartucho por hoja y se lee peor. */
+#qc-impreso { display: none; }
+
+@media print {
+  /* Cuando hay reporte, la pantalla desaparece y solo queda el papel.
+     Dos caminos para lo mismo: la clase la pone `imprimirTablero()` y funciona
+     en cualquier navegador; `:has()` es la red por si alguien monta el reporte
+     por su cuenta sin pasar por ahí. */
+  body.qc-imprimiendo > *:not(#qc-impreso) { display: none !important; }
+  body:has(#qc-impreso) > *:not(#qc-impreso) { display: none !important; }
+  #qc-impreso { display: block; }
+
+  .qc-reporte {
+    color: #10161d; background: #fff;
+    font: 400 10.5pt/1.45 -apple-system, system-ui, "Segoe UI", sans-serif;
+    max-width: none;
+  }
+  .qc-reporte h1 { font-size: 16pt; font-weight: 750; margin: 0 0 2pt; letter-spacing: -.01em; }
+  .qc-reporte h2 {
+    font-size: 11pt; font-weight: 800; text-transform: uppercase; letter-spacing: .09em;
+    margin: 16pt 0 5pt; padding-bottom: 3pt; border-bottom: 1px solid #10161d;
+    break-after: avoid;
+  }
+  .qc-reporte .qc-sub { margin: 0; font-size: 9.5pt; color: #4a5866; }
+  .qc-reporte .qc-sin { color: #6b7885; font-style: italic; }
+  .qc-reporte .qc-un { color: #6b7885; font-weight: 400; }
+  .qc-reporte .qc-norma { font-size: 8pt; color: #6b7885; }
+
+  .qc-rep-cab {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 20pt;
+    border-bottom: 2.5pt solid #10161d; padding-bottom: 7pt;
+  }
+  .qc-rep-sello { text-align: right; font-size: 9.5pt; white-space: nowrap; }
+  .qc-rep-para { font-weight: 800; text-transform: uppercase; letter-spacing: .1em; font-size: 9pt; }
+  .qc-estado-tiro { margin: 0 0 7pt; font-size: 10pt; }
+
+  .qc-rep-tabla { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+  .qc-rep-tabla th {
+    text-align: left; font-size: 8pt; text-transform: uppercase; letter-spacing: .07em;
+    color: #4a5866; border-bottom: 1px solid #9aa7b4; padding: 3pt 5pt 3pt 0;
+  }
+  .qc-rep-tabla td { padding: 3pt 5pt 3pt 0; border-bottom: 1px solid #dfe5eb; vertical-align: top; }
+  .qc-rep-tabla .n { text-align: right; font-variant-numeric: tabular-nums; }
+  .qc-rep-pares td:first-child { color: #4a5866; width: 30%; }
+  .qc-rep-pares .n { text-align: left; }
+  .qc-rep-camiones { font-size: 8.5pt; }
+  .qc-rep-camiones tr.rechazado td { color: #a3201c; font-weight: 650; }
+  /* Una fila de camión partida entre dos hojas se lee fatal. */
+  .qc-rep-tabla tr { break-inside: avoid; }
+
+  .qc-rep-avisos { margin: 0; padding-left: 13pt; font-size: 9.5pt; }
+  .qc-rep-avisos li { margin-bottom: 5pt; break-inside: avoid; }
+  .qc-rep-avisos li.susp { color: #a3201c; }
+  .qc-rep-avisos .qc-accion { color: #4a5866; font-style: italic; }
+
+  .qc-rep-pie {
+    margin-top: 16pt; padding-top: 6pt; border-top: 1px solid #9aa7b4;
+    font-size: 8pt; color: #6b7885;
+  }
+  /* El botón que trajo hasta aquí no se imprime a sí mismo. */
+  .qc-imprimir { display: none !important; }
+}

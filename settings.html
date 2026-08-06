@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Aplicación en la pantalla de inicio (iOS y Android). Sin estas etiquetas
+     y sin el manifest, el icono guardado abre como un MARCADOR de Safari, con
+     una franja arriba enseñando el dominio en vez de la aplicación limpia. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QCheck">
+<link rel="apple-touch-icon" href="assets/icono-180.png">
+<meta name="theme-color" content="#0a0d12">
+<title>Settings — QCheck</title>
+<link rel="stylesheet" href="assets/qc.css?v=6b68a9ae">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
+<style>
+/* ============================================================
+   SETTINGS — la pantalla de Rubén.
+
+   Q-37, 6 ago 2026. Hasta hoy los límites del plan de control vivían
+   dentro de «Plan & Datos», que es de admin, junto a la dirección del
+   servidor, la llave del proyecto y el panel de la simulación. Rubén
+   no entraba ahí a propósito —se decidió el 1 de agosto: quien usa la
+   herramienta no ve cómo está montada— y eso dejaba un hueco raro:
+   cuando el proyecto cambia un límite, el que lo sabe es él.
+
+   Así que los límites salen de allí y se le dan en su propia pantalla,
+   sin nada más al lado que se pueda tocar sin querer. Víctor lo pidió
+   así hoy: «una pantalla que se llame Settings y ahí solo un tab de
+   límites, pero luego pondremos más settings».
+
+   POR ESO HAY PESTAÑAS CON UNA SOLA PESTAÑA. No es un descuido: la
+   siguiente que entre se añade a `TABS` y ya. Si acaba habiendo una
+   sola para siempre, quítalas.
+
+   Lo que se cambie aquí queda firmado en el expediente como cualquier
+   otro cambio —quién y cuándo—, así que un límite mal puesto se ve en
+   el registro y se deshace. Eso es lo que hace que esto no sea el
+   riesgo que era en agosto.
+   ============================================================ */
+main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
+.nota { margin-top: 16px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+</style>
+<script src="assets/usuarios.js?v=86dde610"></script>
+<script src="assets/auth.js?v=de2a7e62"></script>
+</head>
+<body>
+
+<header class="qc-header">
+  <div class="brand">
+    <a href="control-center.html" style="text-decoration:none"><svg class="mark" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
+      <defs>
+        <mask id="qcm-q1"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
+        <mask id="qcm-c1"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
+      </defs>
+      <path fill="var(--logo-blue,#0f46b5)" fill-rule="evenodd" mask="url(#qcm-q1)" d="M 509 63 A 337 337 0 1 1 508.9 63 Z M 509 174 A 226 226 0 1 0 509.1 174 Z"/>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+      <g mask="url(#qcm-c1)">
+        <path fill="var(--logo-green,#39a935)" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+        <path fill="var(--logo-g1,#68727f)" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+        <path fill="var(--logo-g2,#4f5a66)" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+      </g>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
+    </svg></a>
+    <div>
+      <div class="title">Settings</div>
+      <div class="subtitle" id="sub">Los límites con los que QCheck juzga cada camión</div>
+    </div>
+  </div>
+  <nav class="tabs">
+    <a class="btn small" style="margin:10px 0" href="control-center.html">← Control Center</a>
+  </nav>
+</header>
+
+<nav class="tabs" id="tabs-settings"></nav>
+
+<main><div id="app"></div>
+  <p class="nota">
+    Estos números son con los que QCheck decide si un camión está en zona de acción o de
+    suspensión, y son los mismos que salen en los reportes y los que el contrato le publica a
+    la concretera. Cambiar uno cambia cómo se juzga <b>desde el próximo camión</b>: lo ya
+    juzgado no se vuelve a juzgar. Cada cambio queda firmado con su autor y su hora.
+  </p>
+</main>
+
+<div id="modal-root"></div>
+
+<script src="assets/sync.js?v=8e0c9b43"></script>
+<script src="assets/seed.js?v=acf41aba"></script>
+<script src="assets/core.js?v=9fa4ca62"></script>
+<script>
+/* Las pestañas de Settings. Hoy una; se añaden aquí. */
+const TABS = [{ id: "limites", n: "Límites", pinta: () => panelLimites(true) }];
+let cual = TABS[0].id;
+
+/* Se llama `render` a propósito y no `pintar`: es el nombre que busca
+   `formPlan()` en core.js para repintar después de guardar, el mismo que usa
+   Results. Cambiarlo deja el editor guardando sin que se vea el cambio. */
+function render() {
+  const t = TABS.find((x) => x.id === cual) || TABS[0];
+  document.getElementById("app").innerHTML = t.pinta();
+  document.getElementById("tabs-settings").innerHTML =
+    TABS.map((x) => `<button class="${x.id === cual ? "active" : ""}" onclick="cual='${x.id}'; render()">${x.n}</button>`).join("");
+}
+
+loadDB();
+initTheme();
+mountThemeToggle();
+enableLiveSync(() => render());
+render();
+mountStatusBar();
+</script>
+</body>
+</html>

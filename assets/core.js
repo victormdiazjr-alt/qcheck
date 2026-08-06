@@ -1622,6 +1622,268 @@ function chartCS5(sets, rangeN) {
   return svg;
 }
 
+
+/* ------------------------------------------------------------ límites SPC
+
+   Los límites del plan de control y su editor, compartidos — Q-37, 6 ago 2026.
+   Vivían dentro de la pestaña «Plan & Datos» de Results, que es de admin. Al
+   darle a Rubén su pantalla de Settings hacían falta en dos sitios, y dos
+   copias de una tabla de límites es exactamente como se llega a que la
+   herramienta juzgue con un límite y el reporte imprima otro.
+
+   `panelLimites()` no calcula nada: enseña `db.plan` tal cual. Quien decide
+   las zonas sigue siendo el motor de siempre. */
+
+function panelLimites(editable) {
+  const p = db.plan;
+  return `<div class="panel">
+    <div class="panel-head"><h2>Plan de control (límites SPC)</h2><div class="spacer"></div>
+      ${editable ? `<button class="btn small" onclick="formPlan()">Editar</button>` : ""}</div>
+    <div class="panel-body flush"><div class="table-wrap"><table class="data">
+      <tr><th>Parámetro</th><th class="num">Objetivo</th><th class="num">Acción</th><th class="num">Suspensión</th></tr>
+      <tr><td>Slump (in)</td><td class="num mono">${p.slump.target}</td><td class="num mono">${p.slump.actLo} – ${p.slump.actHi}</td><td class="num mono">${p.slump.suspLo} – ${p.slump.suspHi}</td></tr>
+      <tr><td>Aire (%)</td><td class="num mono">${p.air.target}</td><td class="num mono">${p.air.actLo} – ${p.air.actHi}</td><td class="num mono">${p.air.suspLo} – ${p.air.suspHi}</td></tr>
+      <tr><td>Unit Weight (pcf)</td><td class="num mono">${p.uw.target}</td><td class="num mono">± ${p.uw.act}</td><td class="num mono">± ${p.uw.susp}</td></tr>
+      <tr><td>Temperatura (°F)</td><td class="num mono">—</td><td class="num mono">&gt; ${p.tempMax - 3}</td><td class="num mono">&gt; ${p.tempMax}</td></tr>
+      <tr><td>Resistencia @ ${p.cs.age}d (psi)</td><td class="num mono">${fmt(p.cs.target, 0)}</td><td class="num mono">&lt; ${fmt(p.cs.target, 0)}</td><td class="num mono">&lt; ${fmt(p.cs.action, 0)}</td></tr>
+      <tr><td>Apertura al tráfico (psi)</td><td class="num mono">${fmt(p.cs.openTarget, 0)}</td><td class="num mono" colspan="2">mínimo ${fmt(p.cs.openLow, 0)}</td></tr>
+      <tr><td>Batch → descarga (min)</td><td class="num mono">—</td><td class="num mono" colspan="2">máx ${p.maxElapsedMin}</td></tr>
+    </table></div></div>
+  </div>`;
+}
+
+function formPlan(alGuardar) {
+  const p = db.plan;
+  openForm({
+    title: "Plan de control — límites SPC",
+    initial: {
+      sT: p.slump.target, sAL: p.slump.actLo, sAH: p.slump.actHi, sSL: p.slump.suspLo, sSH: p.slump.suspHi,
+      aT: p.air.target, aAL: p.air.actLo, aAH: p.air.actHi, aSL: p.air.suspLo, aSH: p.air.suspHi,
+      uT: p.uw.target, uA: p.uw.act, uS: p.uw.susp,
+      tMax: p.tempMax, cT: p.cs.target, cAge: p.cs.age, cA: p.cs.action, cOT: p.cs.openTarget, cOL: p.cs.openLow,
+      maW: p.maWindow, elMax: p.maxElapsedMin,
+    },
+    fields: [
+      { type: "label", label: "Slump (in)" },
+      { key: "sT", label: "Objetivo", type: "number", step: "0.25" },
+      { key: "sAL", label: "Acción mín", type: "number", step: "0.25" },
+      { key: "sAH", label: "Acción máx", type: "number", step: "0.25" },
+      { key: "sSL", label: "Suspensión mín", type: "number", step: "0.25" },
+      { key: "sSH", label: "Suspensión máx", type: "number", step: "0.25" },
+      { type: "label", label: "Aire (%)" },
+      { key: "aT", label: "Objetivo", type: "number", step: "0.1" },
+      { key: "aAL", label: "Acción mín", type: "number", step: "0.1" },
+      { key: "aAH", label: "Acción máx", type: "number", step: "0.1" },
+      { key: "aSL", label: "Suspensión mín", type: "number", step: "0.1" },
+      { key: "aSH", label: "Suspensión máx", type: "number", step: "0.1" },
+      { type: "label", label: "Unit Weight (pcf)" },
+      { key: "uT", label: "Objetivo", type: "number", step: "0.1" },
+      { key: "uA", label: "Acción ±", type: "number", step: "0.1" },
+      { key: "uS", label: "Suspensión ±", type: "number", step: "0.1" },
+      { type: "label", label: "Temperatura y descarga" },
+      { key: "tMax", label: "Temp máx (°F)", type: "number", step: "1" },
+      { key: "elMax", label: "Batch→descarga máx (min)", type: "number", step: "5" },
+      { type: "label", label: "Resistencia (psi)" },
+      { key: "cT", label: "Objetivo f'c", type: "number", step: "50" },
+      { key: "cAge", label: "Edad (días)", type: "number", step: "1" },
+      { key: "cA", label: "Límite acción (susp. si <)", type: "number", step: "50" },
+      { key: "cOT", label: "Apertura tráfico objetivo", type: "number", step: "50" },
+      { key: "cOL", label: "Apertura tráfico mínimo", type: "number", step: "50" },
+      { key: "maW", label: "Ventana Moving Average", type: "number", step: "1" },
+    ],
+    onSave: (v) => {
+      db.plan = {
+        slump: { target: v.sT, actLo: v.sAL, actHi: v.sAH, suspLo: v.sSL, suspHi: v.sSH },
+        air: { target: v.aT, actLo: v.aAL, actHi: v.aAH, suspLo: v.aSL, suspHi: v.aSH },
+        uw: { target: v.uT, act: v.uA, susp: v.uS },
+        tempMax: v.tMax, maxElapsedMin: v.elMax,
+        cs: { target: v.cT, age: v.cAge, action: v.cA, openTarget: v.cOT, openLow: v.cOL },
+        maWindow: v.maW,
+      };
+      saveDB();
+      /* Results repinta con `render()`; Settings con lo suyo. Se pasa qué
+         hacer en vez de llamar a `render()` a ciegas, que solo existe en
+         Results y dejaba la pantalla de Settings sin refrescar. */
+      if (typeof alGuardar === "function") alGuardar();
+      else if (typeof render === "function") render();
+      toast("Plan de control actualizado");
+    },
+  });
+}
+
+
+/* ------------------------------------------------------------ reporte escrito
+
+   Q-38, 6 ago 2026. Los tres tableros enseñaban indicadores en pantalla y no
+   había forma de llevárselos: el contratista que quiere el número del día en
+   una reunión, o la Autoridad que necesita el papel, tenían que hacer una foto
+   a la pantalla. Ahora cada tablero imprime lo suyo escrito.
+
+   ESCRITO, NO UNA CAPTURA. Las cartas no se imprimen: una carta de control en
+   blanco y negro y sin poder pasar el cursor por encima no dice nada. Lo que
+   se imprime son las cifras que hay detrás, que es lo que se lee en una
+   reunión y lo que se archiva.
+
+   NO CALCULA NADA. Todo sale de `dayProgress()`, `estadisticasDia()`,
+   `losasDelDia()` y `trendAlerts()`, los mismos que pintan la pantalla. Si
+   aquí sale un número distinto del que se ve, es un fallo, no un criterio
+   nuevo. Y un día sin lecturas lo dice: no se rellena con ceros (§3).
+
+   Va en `core.js` y no en cada tablero a propósito. Tres copias de un reporte
+   es como se llega a que el contratista y la Autoridad reciban dos papeles
+   distintos del mismo día. */
+
+function qcFilaEstadistica(e) {
+  if (!e.est) return `<tr><td>${esc(e.n)}</td><td colspan="6" class="qc-sin">sin lecturas este día</td></tr>`;
+  const s = e.est;
+  return `<tr>
+    <td>${esc(e.n)} <span class="qc-un">(${esc(e.u)})</span><div class="qc-norma">${esc(e.norma)}</div></td>
+    <td class="n">${s.n}</td>
+    <td class="n">${fmt(s.media, e.dp)}</td>
+    <td class="n">${fmt(s.min, e.dp)}</td>
+    <td class="n">${fmt(s.max, e.dp)}</td>
+    <td class="n">${s.sd != null ? fmt(s.sd, e.dp) : "—"}</td>
+    <td class="n">${e.accion || e.susp
+      ? `${e.susp ? e.susp + " susp." : ""}${e.susp && e.accion ? " · " : ""}${e.accion ? e.accion + " acción" : ""}`
+      : "todas dentro"}</td>
+  </tr>`;
+}
+
+function reporteEscritoDelDia(day, quien) {
+  const pr = db.project, pl = db.plan;
+  const p = dayProgress(day);
+  const filas = testsOfDate(day);
+  const est = estadisticasDia(day);
+  const avisos = trendAlerts(day);
+  const abierto = day === todayISO() && !tiroCerrado(day);
+  const ahora = new Date();
+
+  if (!filas.length) {
+    return `<article class="qc-reporte">
+      <h1>${esc(pr.name)}</h1>
+      <p class="qc-sub">${esc(quien)} · vaciado del ${esc(day)}</p>
+      <p class="qc-sin" style="margin-top:26px">
+        No hay ningún camión registrado en este día. No se imprime un reporte de un vaciado
+        que no ocurrió.</p>
+    </article>`;
+  }
+
+  const cel = (t, k, dp) => num(t[k]) != null ? fmt(num(t[k]), dp) : "—";
+
+  return `<article class="qc-reporte">
+    <header class="qc-rep-cab">
+      <div>
+        <h1>${esc(pr.name)}</h1>
+        <p class="qc-sub">Mezcla ${esc(pr.mixId)} · Contratista ${esc(pr.contractor || "—")} · QC ${esc(pr.qcFirm || "—")}</p>
+      </div>
+      <div class="qc-rep-sello">
+        <div class="qc-rep-para">${esc(quien)}</div>
+        <div>Vaciado del <b>${esc(day)}</b></div>
+        <div class="qc-sin">Impreso ${esc(ahora.toLocaleString("es-PR"))}</div>
+      </div>
+    </header>
+
+    <h2>El tiro</h2>
+    <p class="qc-estado-tiro">${abierto
+      ? "Tiro <b>ABIERTO</b> en el momento de imprimir: las cifras de abajo son las de este instante y pueden cambiar antes de que termine el día."
+      : "Tiro <b>cerrado</b>. Las cifras son definitivas."}</p>
+    <table class="qc-rep-tabla qc-rep-pares">
+      <tr><td>Yardas colocadas</td><td class="n"><b>${fmt(p.placed, 1)} cy</b>${p.cyPlan ? ` de ${fmt(p.cyPlan, 0)} planificadas (${Math.round(p.pct)} %)` : ` <span class="qc-sin">— sin plan de yardas declarado</span>`}</td></tr>
+      ${p.enCurso ? `<tr><td>Descargando ahora</td><td class="n">${fmt(p.enCurso, 1)} cy</td></tr>` : ""}
+      <tr><td>Camiones</td><td class="n">${p.loads} recibidos${p.rejected ? ` · <b>${p.rejected} rechazado${p.rejected === 1 ? "" : "s"}</b>` : " · ninguno rechazado"}${p.waiting.length ? ` · ${p.waiting.length} esperando (${fmt(p.waitingCY, 1)} cy)` : ""}</td></tr>
+      <!-- Las losas salen de dayProgress y NO de losasDelDia. Las dos existen y
+           cuentan cosas distintas: losasDelDia solo tiene lista cuando las losas
+           van declaradas en el plan del día, y sin plan devuelve cero. El
+           tablero enseña dayProgress.losasDone, que las cuenta por la
+           identificación de losa de los camiones descargados. El 6 ago 2026
+           este reporte imprimió «0 losas» mientras el tablero decía 23. -->
+      <tr><td>Losas</td><td class="n">${p.losasDone} vaciada${p.losasDone === 1 ? "" : "s"}${p.losasPlan ? ` de ${p.losasPlan} planificadas` : ""}${p.rango ? ` · ${esc(p.rango)}` : ""}</td></tr>
+      <tr><td>Cumplimiento</td><td class="n">${p.compliancePct != null
+        ? `<b>${Math.round(p.compliancePct)} %</b> — ${p.conforming} de ${p.evaluated} camiones evaluados dentro de límites`
+        : `<span class="qc-sin">todavía no hay camiones con veredicto</span>`}</td></tr>
+    </table>
+
+    <h2>Indicadores del hormigón fresco</h2>
+    <table class="qc-rep-tabla">
+      <tr><th>Propiedad</th><th class="n">Lecturas</th><th class="n">Media</th><th class="n">Mín</th><th class="n">Máx</th><th class="n">Desv.</th><th class="n">Fuera de zona</th></tr>
+      ${est.map((e) => qcFilaEstadistica(e)).join("")}
+    </table>
+
+    ${avisos.length ? `<h2>Avisos del día</h2>
+    <ul class="qc-rep-avisos">
+      ${avisos.map((a) => `<li class="${a.level === "susp" ? "susp" : "act"}">
+        <b>${esc(a.title)}</b> — ${esc(a.text)}
+        <div class="qc-accion">Acción: ${esc(a.action)}</div></li>`).join("")}
+    </ul>` : `<h2>Avisos del día</h2><p class="qc-sin">Ninguno. Tendencias estables.</p>`}
+
+    <h2>Camión por camión</h2>
+    <table class="qc-rep-tabla qc-rep-camiones">
+      <tr><th class="n">#</th><th>Ticket</th><th>Camión</th><th>Losa</th><th class="n">cy</th>
+          <th class="n">Slump</th><th class="n">Aire</th><th class="n">Unit Weight</th><th class="n">Temp</th><th>Estado</th></tr>
+      ${filas.map((t, i) => `<tr class="${t.rejected ? "rechazado" : ""}">
+        <td class="n">${i + 1}</td>
+        <td>${esc(t.ticket || "—")}</td>
+        <td>${esc(t.truck || "—")}</td>
+        <td>${esc(t.ident || "—")}</td>
+        <td class="n">${cel(t, "vol", 1)}</td>
+        <td class="n">${cel(t, "slump", 2)}</td>
+        <td class="n">${cel(t, "air", 1)}</td>
+        <td class="n">${cel(t, "uw", 1)}</td>
+        <td class="n">${cel(t, "temp", 0)}</td>
+        <td>${t.rejected ? "RECHAZADO" : (num(t.slump) != null && num(t.uw) != null ? "evaluado" : "sin veredicto")}</td>
+      </tr>`).join("")}
+    </table>
+
+    <h2>Contra qué se juzgó</h2>
+    <p class="qc-sin" style="margin-bottom:8px">Plan de control vigente en el momento de imprimir.</p>
+    ${panelLimitesTexto()}
+
+    <footer class="qc-rep-pie">
+      Generado por QCheck · ${esc(pr.name)} · ${esc(day)} · las cifras salen del expediente
+      del proyecto y no se rellena ningún hueco: lo que no se midió aparece como «—».
+    </footer>
+  </article>`;
+}
+
+/* Los límites en versión de papel: la misma tabla que enseña `panelLimites()`,
+   sin el marco de panel ni el botón de editar. */
+function panelLimitesTexto() {
+  const p = db.plan;
+  return `<table class="qc-rep-tabla">
+    <tr><th>Parámetro</th><th class="n">Objetivo</th><th class="n">Acción</th><th class="n">Suspensión</th></tr>
+    <tr><td>Slump (in)</td><td class="n">${p.slump.target}</td><td class="n">${p.slump.actLo} – ${p.slump.actHi}</td><td class="n">${p.slump.suspLo} – ${p.slump.suspHi}</td></tr>
+    <tr><td>Aire (%)</td><td class="n">${p.air.target}</td><td class="n">${p.air.actLo} – ${p.air.actHi}</td><td class="n">${p.air.suspLo} – ${p.air.suspHi}</td></tr>
+    <tr><td>Unit Weight (pcf)</td><td class="n">${p.uw.target}</td><td class="n">± ${p.uw.act}</td><td class="n">± ${p.uw.susp}</td></tr>
+    <tr><td>Temperatura (°F)</td><td class="n">—</td><td class="n">&gt; ${p.tempMax - 3}</td><td class="n">&gt; ${p.tempMax}</td></tr>
+    <tr><td>Resistencia @ ${p.cs.age}d (psi)</td><td class="n">${fmt(p.cs.target, 0)}</td><td class="n">&lt; ${fmt(p.cs.target, 0)}</td><td class="n">&lt; ${fmt(p.cs.action, 0)}</td></tr>
+    <tr><td>Batch → descarga (min)</td><td class="n">—</td><td class="n" colspan="2">máx ${p.maxElapsedMin}</td></tr>
+  </table>`;
+}
+
+/* El botón. Se arma el reporte, se imprime y se retira: dejarlo colgado del
+   documento haría que la siguiente impresión sacara dos. */
+function imprimirTablero(quien, day) {
+  const d = day || diaActivo();
+  const caja = document.createElement("div");
+  caja.id = "qc-impreso";
+  caja.innerHTML = reporteEscritoDelDia(d, quien);
+  document.body.appendChild(caja);
+  /* La clase es la que de verdad esconde la pantalla al imprimir. El CSS
+     también lo hace con `body:has(#qc-impreso)`, pero `:has()` no está en
+     todas partes y sin él saldría el tablero entero debajo del reporte. Con
+     las dos, si una falla la otra responde. */
+  document.body.classList.add("qc-imprimiendo");
+  const quitar = () => {
+    document.body.classList.remove("qc-imprimiendo");
+    if (caja.parentNode) caja.parentNode.removeChild(caja);
+  };
+  addEventListener("afterprint", quitar, { once: true });
+  /* Safari en iPad no siempre dispara `afterprint`. La red de seguridad evita
+     que el reporte se quede pegado al final de la pantalla. */
+  setTimeout(quitar, 60000);
+  print();
+}
+
 /* ------------------------------------------------------------ CSV / files */
 function downloadFile(name, content, type) {
   const blob = new Blob([content], { type });

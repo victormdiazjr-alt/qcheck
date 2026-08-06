@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Control Center — QCheck</title>
-<link rel="stylesheet" href="assets/qc.css?v=75d96e21">
+<link rel="stylesheet" href="assets/qc.css?v=6b68a9ae">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%2396c93d' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -261,11 +261,11 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=93396396"></script>
+<script src="assets/core.js?v=9fa4ca62"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script src="assets/clima.js?v=d5c4fb65"></script>
-<script src="assets/usuarios.js?v=d62512d9"></script>
-<script src="assets/auth.js?v=c77eb346"></script>
+<script src="assets/usuarios.js?v=86dde610"></script>
+<script src="assets/auth.js?v=de2a7e62"></script>
 <script>
 "use strict";
 const state = { day: null };
@@ -430,6 +430,9 @@ function abrirTiro() {
 }
 /* Sala de máquinas: aparatos enlazados y latiendo */
 const ICONO_ESTADO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="11" rx="2"/><path d="M8 18.5h8M12 14.5v4"/><path d="M6.5 9h2.2l1.4-2.6 1.8 5 1.4-2.4h4.2"/></svg>`;
+/* Una rueda dentada: es el icono que todo el mundo reconoce como ajustes,
+   y aquí no hace falta ser original. Q-37. */
+const ICONO_SETTINGS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .32 1.77l.06.06a1.9 1.9 0 1 1-2.7 2.7l-.05-.06a1.6 1.6 0 0 0-1.78-.32 1.6 1.6 0 0 0-.97 1.47V21a1.9 1.9 0 0 1-3.8 0v-.1a1.6 1.6 0 0 0-1.05-1.46 1.6 1.6 0 0 0-1.77.32l-.06.06a1.9 1.9 0 1 1-2.7-2.7l.06-.06a1.6 1.6 0 0 0 .32-1.77 1.6 1.6 0 0 0-1.47-.97H3a1.9 1.9 0 0 1 0-3.8h.1a1.6 1.6 0 0 0 1.46-1.05 1.6 1.6 0 0 0-.32-1.77l-.06-.06a1.9 1.9 0 1 1 2.7-2.7l.06.06a1.6 1.6 0 0 0 1.77.32H9a1.6 1.6 0 0 0 .97-1.47V3a1.9 1.9 0 0 1 3.8 0v.1a1.6 1.6 0 0 0 .97 1.47 1.6 1.6 0 0 0 1.77-.32l.06-.06a1.9 1.9 0 1 1 2.7 2.7l-.06.06a1.6 1.6 0 0 0-.32 1.77V9a1.6 1.6 0 0 0 1.47.97H21a1.9 1.9 0 0 1 0 3.8h-.1a1.6 1.6 0 0 0-1.47.97z"/></svg>`;
 
 function menu() {
   return `<div class="navmenu">
@@ -450,6 +453,16 @@ function menu() {
          Nada de acentos graves aquí: cierran la cadena y se lleva por delante
          el archivo entero. Pasó el 1 ago 2026 y dejó el Control Center en
          blanco en producción. -->
+    <!-- Settings: los límites del plan de control, y nada más al lado. Va
+         detrás de su propia llave -- qcVeLimites() -- y no de la de
+         Plan and Datos: Ruben entra aqui y a Plan and Datos no. Q-37.
+         OJO: sin acentos graves en este comentario. Vive DENTRO de una
+         plantilla de JavaScript y una comilla invertida cierra la cadena y
+         deja el Control Center en blanco. Paso el 1 ago 2026. -->
+    ${typeof qcVeLimites === "function" && qcVeLimites() ? `
+    <a href="settings.html" title="Los límites con los que QCheck juzga cada camión">
+      ${ICONO_SETTINGS}<span class="n">Settings</span>
+    </a>` : ""}
     ${typeof qcVeConfig === "function" && qcVeConfig() ? `
     <a href="estado.html" title="Qué aparatos están conectados, en qué pantalla y desde cuándo">
       ${ICONO_ESTADO}<span class="n">Estado del sistema</span>

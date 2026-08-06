@@ -16,4 +16,41 @@
   if (!qcEsQC() && SOLO_QC.indexOf(aqui) >= 0) {
     location.replace("movil.html");
   }
+
+  /* Settings es de quien lleva el control de calidad, no de quien mira — Q-37. */
+  if (aqui === "settings.html" && !(typeof qcVeLimites === "function" && qcVeLimites())) {
+    location.replace("control-center.html");
+    return;
+  }
+
+  /* Quien tiene casa vive en una sola pantalla — Q-37.
+
+     El contratista, el concretero y la Autoridad entran a su tablero y ahí se
+     quedan. Escribir otra dirección a mano los devuelve a lo suyo, y la
+     navegación de la cabecera se retira: el logo deja de ser una puerta y los
+     enlaces a otras pantallas no se enseñan. Enseñarles botones que los van a
+     mandar de vuelta es peor que no enseñarlos. */
+  var casa = typeof qcCasa === "function" ? qcCasa() : null;
+  if (casa) {
+    if (aqui !== casa) { location.replace(casa); return; }
+    addEventListener("DOMContentLoaded", function () {
+      var enlaces = document.querySelectorAll("header a[href]");
+      for (var i = 0; i < enlaces.length; i++) {
+        var a = enlaces[i];
+        if (!/\.html([?#]|$)/.test(a.getAttribute("href") || "")) continue;
+        if (a.closest(".brand")) {
+          /* El logo se queda —es la marca, y quitarlo dejaría la cabecera
+             coja— pero deja de llevar a ningún sitio. */
+          a.removeAttribute("href");
+          a.removeAttribute("target");
+          a.style.cursor = "default";
+        } else {
+          /* En línea a propósito: una regla de hoja puede traer su propio
+             `display` y volver a enseñarlo. Ya pasó con `[hidden]` en el
+             estado del sistema. */
+          a.style.display = "none";
+        }
+      }
+    });
+  }
 })();

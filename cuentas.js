@@ -6,7 +6,8 @@
    contra Cloudflare: solo cambia la dirección.
 
      node cuentas.js listar
-     node cuentas.js crear ruben --rol qc --nombre "Rubén Segarra"
+     node cuentas.js crear ruben --rol qc --nombre "Rubén Segarra" --limites
+     node cuentas.js crear contratista --nombre Contratista --casa contratista.html
      node cuentas.js clave ruben
      node cuentas.js baja ruben
      node cuentas.js alta ruben
@@ -126,6 +127,7 @@ async function main() {
     if (!d.usuarios.length) console.log("  (todavía no hay ninguna cuenta)");
     for (const u of d.usuarios) {
       const marcas = [u.rol, u.tablero ? "tablero" : null, u.config ? "Plan & Datos" : null,
+        u.limites ? "Settings" : null, u.casa ? "vive en " + u.casa : null,
                       u.activo ? null : "DE BAJA"].filter(Boolean).join(" · ");
       console.log(`  ${u.usr.padEnd(12)} ${String(u.nombre).padEnd(22)} ${marcas}`);
     }
@@ -161,7 +163,27 @@ async function main() {
 
   if (orden === "crear" || orden === "clave") {
     let clave;
-    if (opcion(args, "generar")) {
+    /* Una cuenta de mirar encerrada en un tablero puede llevar clave corta
+       — Q-37, 6 ago 2026, decisión de Víctor.
+
+       El mínimo de doce sigue en pie para todo lo demás y no se toca. Aquí
+       se levanta porque estas tres cuentas no son lo mismo: no escriben en el
+       expediente, no firman nada y solo ven su propio tablero de indicadores,
+       que es lo que se les enseña de todos modos. Y se reparten en voz alta
+       en una reunión — una clave de veinte caracteres al azar acabaría
+       apuntada en un papel pegado a la pantalla, que es peor.
+
+       La condición es doble y se comprueba de verdad: `consulta` Y con casa.
+       Sin las dos, el mínimo vuelve. */
+    const casaCorta = opcion(args, "casa");
+    const rolCorto = opcion(args, "rol") || "consulta";
+    const permiteCorta = orden === "crear" && casaCorta && rolCorto === "consulta";
+    const claveDada = opcion(args, "clave");
+    if (claveDada && claveDada !== true) {
+      if (!permiteCorta && String(claveDada).length < 12)
+        morir("--clave solo admite claves cortas en cuentas de consulta con --casa.");
+      clave = String(claveDada);
+    } else if (opcion(args, "generar")) {
       clave = claveInventada();
     } else {
       clave = await preguntarClave(`  Clave para ${usr}: `);
@@ -169,7 +191,7 @@ async function main() {
          Cloudflare, así que lo que de verdad separa una clave buena de una
          mala aquí es su largo. Con `--generar` esto no aplica: salen 20
          caracteres al azar. */
-      if (clave.length < 12) morir("al menos 12 caracteres. O usa --generar.");
+      if (clave.length < 12 && !permiteCorta) morir("al menos 12 caracteres. O usa --generar.");
       const otra = await preguntarClave("  Otra vez: ");
       if (clave !== otra) morir("no coinciden.");
     }
@@ -180,11 +202,24 @@ async function main() {
       cuerpo.nombre = opcion(args, "nombre") || usr;
       cuerpo.tablero = !!opcion(args, "tablero");
       cuerpo.config = !!opcion(args, "config");
+      /* Q-37. `--limites` abre Settings; `--casa` encierra la cuenta en un
+         solo tablero. Se comprueba que la casa exista de verdad: un archivo
+         mal escrito dejaría a esa persona rebotando entre una pantalla que no
+         está y el portal, sin poder entrar a nada. */
+      cuerpo.limites = !!opcion(args, "limites");
+      const casa = opcion(args, "casa");
+      if (casa) {
+        const CASAS = ["produccion.html", "contratista.html", "autoridad.html", "movil.html"];
+        if (CASAS.indexOf(String(casa)) < 0) morir(`la casa tiene que ser una de: ${CASAS.join(", ")}`);
+        cuerpo.casa = String(casa);
+      }
       if (cuerpo.rol !== "qc" && cuerpo.rol !== "consulta") morir("el papel es `qc` o `consulta`.");
     }
     await pedir("/api/cuentas", "POST", cuerpo);
 
     console.log(`\n  ✓ ${orden === "crear" ? "cuenta creada" : "clave cambiada"}: ${usr}`);
+    if (clave.length < 12)
+      console.log(`    ⚠ clave corta. Vale porque solo ve ${cuerpo.casa || "su tablero"} y no escribe nada.`);
     if (opcion(args, "generar")) {
       console.log(`\n    clave: ${clave}\n`);
       console.log("    Apúntala AHORA: no se puede volver a leer, solo cambiar.");

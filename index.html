@@ -207,7 +207,7 @@ button:active { transform: scale(.98); }
   </div>
 </form>
 
-<script src="assets/usuarios.js?v=d62512d9"></script>
+<script src="assets/usuarios.js?v=86dde610"></script>
 <script>
 "use strict";
 
@@ -285,7 +285,8 @@ async function entrar(e) {
   const boton = document.querySelector("button[type=submit]");
   boton.disabled = true;
 
-  /* Derivar la clave lleva su rato a propósito —210.000 vueltas— así que el
+  /* Derivar la clave lleva su rato a propósito —100.000 vueltas, el techo
+     que admite Cloudflare— así que el
      botón se apaga mientras: si no, dos toques seguidos abren dos sesiones. */
   const delServidor = await entrarEnServidor(u, p);
   boton.disabled = false;
@@ -320,9 +321,15 @@ async function entrar(e) {
     /* Quien no lleva el control de calidad va siempre al portal. Quien sí lo
        lleva, al portal desde el teléfono y al Control Center desde la
        computadora. */
-    const casa = (telefono || cuenta.rol !== "qc") ? "movil.html" : "control-center.html";
+    /* Quien tiene casa entra a su casa y punto — Q-37. El contratista, el
+       concretero y la Autoridad no pasan por el portal ni por el Control
+       Center: aparecen en su tablero. Su casa pisa incluso al `next=`, que
+       si no sería la puerta de atrás para colarse en otra pantalla. */
+    const suya = cuenta.casa || null;
+    const casa = suya || ((telefono || cuenta.rol !== "qc") ? "movil.html" : "control-center.html");
     // solo rutas internas: nunca redirigir a un destino externo
-    const destino = next && /^[\w.-]+\.html([?#].*)?$/.test(next) ? next : casa;
+    const destino = suya ? suya
+      : (next && /^[\w.-]+\.html([?#].*)?$/.test(next) ? next : casa);
     location.replace(destino);
   } else {
     document.getElementById("err").classList.add("show");
