@@ -45,12 +45,15 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .          # el repositorio entero, sin tocar nada
+      # OJO CON EL TIEMPO DE ESPERA: 600000 ms (10 min) es el MÁXIMO que admite
+      # `deploy-pages`. Pedir más no lo amplía — la acción avisa y lo recorta:
+      #   «timeout value is greater than the allowed maximum»
+      # Se probó el 6 ago 2026 y no sirvió de nada.
+      #
+      # Ese día los despliegues abortaron varias veces tras quedarse diez
+      # minutos en `deployment_in_progress`. La subida iba bien; lo lento era
+      # Pages del lado de GitHub, y desde aquí no hay nada que tocar: se
+      # reintenta (`gh workflow run "Publicar el sitio"`) y ya. Si vuelve a
+      # pasar, no es el repositorio.
       - id: deploy
         uses: actions/deploy-pages@v4
-        with:
-          # 20 minutos en vez de los 10 de fábrica. El 6 ago 2026 el despliegue
-          # del lado de GitHub se quedó en `deployment_in_progress` diez minutos
-          # justos y la acción abortó: la subida estaba bien, lo lento era
-          # Pages. Con el margen corto, una tarde renqueante de GitHub deja el
-          # sitio sin actualizar y en obra eso no se nota hasta que se nota.
-          timeout: 1200000
