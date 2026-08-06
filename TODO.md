@@ -8,10 +8,21 @@ entre agentes. Este archivo dice *qué* hay que hacer; aquél, *quién lo está 
 
 ## Primero
 
-### Q-01 · OCR del conduce en papel — **grande**
-La mayoría de las concreteras no tendrán QR: llegan con conduce en papel. Hoy la foto
-se guarda como evidencia y los datos se entran a mano. **Esta es la vía principal de
-entrada, no el respaldo.** Es lo que más trabajo manual quita en el campo.
+### Q-32 · Encender el lector de conduce y probarlo en obra — pequeño · **es de Víctor**
+El código de Q-01 está escrito y probado hasta donde se puede sin llave. Falta:
+
+1. Sacar una llave de API en console.anthropic.com
+2. `npx wrangler secret put QC_ANTHROPIC` (y `QC_ANTHROPIC=... node serve.js` en local)
+3. **Probarlo con conduces de verdad** — de las plantas que surten la PR-52, no con
+   una foto de muestra. Lo que hay que medir no es si lee, sino **si deja campos
+   vacíos cuando no está seguro**: un campo inventado que parece bueno es el fallo
+   que este proyecto no puede tener.
+
+Coste estimado: unos 3 ¢ por conduce (~50 ¢ en un vaciado de 16 camiones).
+
+Si en obra falla mucho con conduces de matriz de puntos, el sitio donde se cambia el
+lector es una sola función: `leerConduce()` en `sync-servidor.js` y su gemela en
+`sync-worker.js`.
 
 ---
 

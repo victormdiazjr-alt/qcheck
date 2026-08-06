@@ -81,6 +81,18 @@ body { background: var(--bg); }
   border-color: var(--susp);
   box-shadow: 0 0 0 3px rgba(255,90,82,.16), 0 0 20px -6px var(--susp);
 }
+/* Leído de la foto y todavía sin mirar (Q-01). Ámbar, que es la zona de acción
+   del proyecto: ni bien ni mal, pendiente de que alguien lo confirme. Entra por
+   el resplandor y no por el relleno, como todo lo demás (AGENTS §10). */
+.field input.sugerido {
+  border-color: var(--act);
+  box-shadow: 0 0 0 3px rgba(245,184,61,.14), 0 0 20px -6px var(--act);
+}
+#aviso-lectura {
+  display: none; margin-top: 12px; font-size: 13px; font-weight: 600;
+  color: var(--act); border: 1px solid var(--line); border-left: 3px solid var(--act);
+  border-radius: 8px; padding: 9px 13px; background: var(--panel-2);
+}
 </style>
 <script src="assets/usuarios.js?v=d62512d9"></script>
 <script src="assets/auth.js?v=c77eb346"></script>
@@ -158,6 +170,8 @@ body { background: var(--bg); }
           <button class="now-btn" onclick="setNow('f-arrive')">AHORA</button></div>
         <div class="field"><label>Losa / Identificación *</label><input id="f-ident" placeholder="L3-0.443"></div>
       </div>
+      <!-- Lo que el lector sacó de la foto, y lo que no pudo (Q-01). -->
+      <div id="aviso-lectura"></div>
       <div style="display:flex; gap:10px; margin-top:14px; align-items:center">
         <span id="photo-slot"></span>
         <div style="flex:1"></div>
@@ -238,25 +252,99 @@ function applyScan(raw) {
 }
 
 /* ---------- photo evidence ---------- */
+/* Una foto, dos usos y dos tamaños (Q-01).
+
+   La que se GUARDA sigue siendo la de 900 px al 60 % — es evidencia, pesa poco
+   y viaja bien. La que se MANDA A LEER va en grande, hasta 2576 px, que es el
+   máximo que aprovecha el lector: los dígitos de un conduce impreso en matriz
+   de puntos no sobreviven a 900 px al 60 %, y de ahí salen números inventados
+   en vez de huecos. Esa segunda copia no se guarda en ningún sitio. */
+function reducir(img, ancho, calidad) {
+  const c = document.createElement("canvas");
+  const escala = Math.min(1, ancho / Math.max(img.width, img.height));
+  c.width = Math.round(img.width * escala);
+  c.height = Math.round(img.height * escala);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", calidad);
+}
+
 function photoCapture(input) {
   const file = input.files && input.files[0];
   if (!file) return;
   const img = new Image();
   img.onload = () => {
-    const c = document.createElement("canvas");
-    const scale = Math.min(1, 900 / img.width);
-    c.width = Math.round(img.width * scale);
-    c.height = Math.round(img.height * scale);
-    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-    pendingPhoto = c.toDataURL("image/jpeg", 0.6);
+    pendingPhoto = reducir(img, 900, 0.6);          // la que se guarda
     document.getElementById("photo-slot").innerHTML =
       `<img class="photo-chip" src="${pendingPhoto}"> <span class="muted" style="font-size:12px">foto adjunta</span>`;
     document.getElementById("f-arrive").value = document.getElementById("f-arrive").value || nowHM();
     toast("Foto del conduce adjuntada");
+    leerDeLaFoto(reducir(img, 2576, 0.92));          // la que se lee, y no se guarda
     URL.revokeObjectURL(img.src);
   };
   img.src = URL.createObjectURL(file);
   input.value = "";
+}
+
+/* Los campos que el lector puede rellenar. La llegada NO está: es «ahora», la
+   pone el propio aparato. La losa tampoco: la decide el técnico en obra y no
+   viene impresa en el conduce. */
+const CAMPOS_LEIDOS = [
+  ["ticket", "f-ticket"], ["truck", "f-truck"], ["vol", "f-vol"], ["batch", "f-batch"],
+];
+
+/* El lector PROPONE. Nunca guarda.
+
+   Lo que entra queda marcado como sugerido —resplandor ámbar, que es la zona de
+   acción del proyecto— hasta que el técnico toca el campo. Al registrar, si
+   queda alguno sin tocar, se pregunta enseñándolos: un dato leído de una foto
+   que nadie miró es exactamente el número inventado que este proyecto no puede
+   tener en el expediente. */
+async function leerDeLaFoto(dataUrl) {
+  const api = (localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
+  if (!api) return;                                  // sin servidor no hay lector
+  const aviso = document.getElementById("aviso-lectura");
+  aviso.textContent = "Leyendo el conduce…";
+  aviso.style.display = "block";
+
+  const cab = { "Content-Type": "application/json" };
+  const tk = localStorage.getItem("qc-token");
+  if (tk) cab["X-QC-Token"] = tk;
+  const ses = sessionStorage.getItem("qc-sesion");
+  if (ses) cab["X-QC-Sesion"] = ses;
+
+  let r, d;
+  try {
+    r = await fetch(api + "/api/leer-conduce", {
+      method: "POST", headers: cab,
+      body: JSON.stringify({ imagen: dataUrl.split(",")[1], tipo: "image/jpeg" }),
+    });
+    d = await r.json();
+  } catch (_) {
+    aviso.textContent = "No se pudo leer la foto. Entra los datos a mano.";
+    return;
+  }
+  if (!r.ok) {
+    aviso.textContent = d && d.error === "sin-lector"
+      ? "Este servidor no tiene lector de conduce. Entra los datos a mano."
+      : "No se pudo leer la foto. Entra los datos a mano.";
+    return;
+  }
+
+  const c = d.campos || {};
+  let puestos = 0;
+  for (const [clave, id] of CAMPOS_LEIDOS) {
+    const el = document.getElementById(id);
+    if (!el || el.value || c[clave] == null || c[clave] === "") continue;
+    el.value = c[clave];
+    el.classList.add("sugerido");
+    el.addEventListener("input", () => el.classList.remove("sugerido"), { once: true });
+    puestos++;
+  }
+  const faltan = (c.ilegible || []).length;
+  aviso.textContent = puestos
+    ? `Leídos ${puestos} campo${puestos === 1 ? "" : "s"} — revísalos antes de registrar.`
+      + (faltan ? ` ${faltan} no se leyeron y quedan vacíos.` : "")
+    : "No se pudo leer ningún campo con seguridad. Entra los datos a mano.";
 }
 
 /* ---------- save arrival ---------- */
@@ -287,6 +375,24 @@ function saveArrival() {
       return;
     }
   }
+  /* Un campo leído de la foto que nadie ha mirado no entra al expediente sin
+     que alguien lo diga (Q-01). Se enseñan cuáles son y qué dicen: un «¿está
+     seguro?» a secas se contesta que sí sin leerlo, y aquí lo que se está
+     confirmando es justamente el número. Tocar el campo lo saca de la lista. */
+  const sinMirar = [...document.querySelectorAll(".field input.sugerido")];
+  if (sinMirar.length) {
+    const lista = sinMirar.map((el) => {
+      const et = el.closest(".field").querySelector("label");
+      return `  · ${et ? et.textContent.replace(" *", "") : el.id}: ${el.value}`;
+    }).join("\n");
+    if (!confirm(`Estos datos los leyó el sistema de la foto y todavía no los ha revisado nadie:\n\n${lista}\n\n`
+                 + "Compáralos con el papel. ¿Están bien?")) {
+      sinMirar[0].focus();
+      return;
+    }
+    sinMirar.forEach((el) => el.classList.remove("sugerido"));
+  }
+
   const ticket = document.getElementById("f-ticket").value.trim();
 
   /* Un conduce no se registra dos veces. La llave es compañía + ticket, no el

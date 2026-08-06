@@ -5,6 +5,29 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.15] — 6 de agosto · «el conduce se lee solo»
+
+### Añadido
+- **Q-01 — El conduce se lee de la foto.** `/api/leer-conduce` en los dos servidores:
+  entra la foto, salen ticket, camión, yardas y hora de batch. **Propone y nunca
+  guarda**: lo leído se pinta en ámbar y al registrar se pregunta enseñando cada campo
+  con su valor, porque lo que se está confirmando es justo el número. Un campo que no se
+  lee con seguridad vuelve `null` y se queda vacío — DECISIONS §3 aplicado a la foto.
+- **Una foto, dos tamaños.** La de 900 px sigue guardándose como evidencia; una de
+  2576 px se manda a leer y no se guarda. A 900 px al 60 % los dígitos de un conduce de
+  matriz de puntos no sobreviven, y de ahí no salen huecos sino números inventados.
+
+### Sin cambiar, a propósito
+- **Ni una dependencia nueva.** Se llama por HTTP con `fetch`; el SDK de Anthropic sería
+  una dependencia de npm y el §1 de DECISIONS no las admite.
+- **Sin llave, Recepción funciona como hoy.** Sin `QC_ANTHROPIC` la ruta da 501 y la
+  pantalla lo dice.
+
+### Falta
+- La llave y **probarlo con conduces de verdad** de las plantas de la PR-52 — Q-32.
+
+---
+
 ## [0.14] — 6 de agosto · «la historia y el aire»
 
 ### Añadido

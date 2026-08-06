@@ -286,6 +286,81 @@ function crearCuentas(dir) {
   };
 }
 
+/* ------------------------------------------------------------ Q-01: leer el conduce
+
+   Se llama por HTTP a pelo y no con el SDK de Anthropic a propósito: el SDK es
+   una dependencia de npm y el §1 de DECISIONS no las admite. `fetch` ya viene
+   dentro de Node.
+
+   El esquema deja `null` en cada campo **a propósito**. Obligar a un tipo haría
+   que el modelo rellenara el hueco con algo, y en este proyecto un número
+   equivocado que parece bueno es peor que un hueco (DECISIONS §3). */
+const QC_NULO = (t) => ({ anyOf: [{ type: t }, { type: "null" }] });
+const QC_ESQUEMA_CONDUCE = {
+  type: "object",
+  properties: {
+    ticket: QC_NULO("string"), truck: QC_NULO("string"), vol: QC_NULO("number"),
+    batch: QC_NULO("string"), plant: QC_NULO("string"),
+    company: QC_NULO("string"), mix: QC_NULO("string"),
+    ilegible: { type: "array", items: { type: "string" } },
+  },
+  required: ["ticket", "truck", "vol", "batch", "plant", "company", "mix", "ilegible"],
+  additionalProperties: false,
+};
+const QC_INSTRUCCIONES_CONDUCE = [
+  "Esta es la foto de un conduce de hormigón premezclado (delivery ticket) de una obra en Puerto Rico.",
+  "Saca solo los campos del esquema, tal como están impresos en el papel.",
+  "",
+  "REGLA QUE MANDA SOBRE TODO: si un campo no se lee con seguridad, devuélvelo como null",
+  "y pon su nombre en `ilegible`. No adivines, no completes, no deduzcas de otro campo,",
+  "no arregles un dígito que se ve a medias. Este dato entra en un expediente de calidad",
+  "que firma la Autoridad de Carreteras: un número equivocado que parece bueno hace más",
+  "daño que un hueco, porque nadie lo va a mirar dos veces.",
+  "",
+  "- `vol` en yardas cúbicas, solo el número.",
+  "- `batch` en formato de 24 horas, HH:MM. Es la hora que trae impresa el conduce,",
+  "  no la de ahora. Si el papel la trae en 12 horas, conviértela.",
+  "- `ticket` y `truck` tal cual, incluidos ceros a la izquierda si los hay.",
+].join("\n");
+
+async function leerConduce(llave, imagen, tipo) {
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": llave,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-opus-5",
+      /* La respuesta es un JSON corto, pero el razonamiento del modelo también
+         cuenta contra este tope y quedarse corto la trunca a media llave. */
+      max_tokens: 8000,
+      /* `medium` y no `high`: el técnico está de pie al lado del camión, y la
+         tarea es leer un papel, no razonar. */
+      output_config: { effort: "medium", format: { type: "json_schema", schema: QC_ESQUEMA_CONDUCE } },
+      messages: [{
+        role: "user",
+        content: [
+          { type: "image", source: { type: "base64", media_type: tipo || "image/jpeg", data: imagen } },
+          { type: "text", text: QC_INSTRUCCIONES_CONDUCE },
+        ],
+      }],
+    }),
+  });
+  /* Solo el código: el cuerpo del error puede traer trozos de la petición y
+     esto acaba en un aparato en la obra. */
+  if (!r.ok) return { codigo: 502, cuerpo: { error: "lector", codigo: r.status } };
+  const m = await r.json();
+  /* El modelo puede declinar; entonces `content` viene vacío o a medias. Se
+     comprueba ANTES de leerlo, o esto revienta con un camión esperando. */
+  if (m.stop_reason === "refusal") return { codigo: 422, cuerpo: { error: "rechazado" } };
+  const texto = (m.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+  try {
+    return { codigo: 200, cuerpo: { campos: JSON.parse(texto), uso: m.usage || null } };
+  } catch (_) { return { codigo: 502, cuerpo: { error: "ilegible" } }; }
+}
+
 /* ------------------------------------------------------------ la API
 
    Devuelve `true` si atendió la petición, para que `serve.js` sepa si le
@@ -425,6 +500,23 @@ function montarAPI(almacen, token, opciones) {
     if (url.pathname === "/api/presencia" && req.method === "GET") {
       const aparatos = [...presencia.values()].sort((a, b) => b.visto.localeCompare(a.visto));
       return responder(res, 200, { ahora: new Date().toISOString(), aparatos });
+    }
+
+    /* Leer el conduce de la foto — Q-01. Idéntico a `sync-worker.js`: el mismo
+       aparato habla con la laptop de la obra y con Cloudflare, y no puede notar
+       la diferencia. **Propone; no guarda nada.** La llave va en QC_ANTHROPIC;
+       sin ella contesta 501 y Recepción sigue a mano, como hoy. */
+    if (url.pathname === "/api/leer-conduce" && req.method === "POST") {
+      if (exige && !quien) return responder(res, 401, { error: "sesion" });
+      if (quien && quien.rol !== "qc") return responder(res, 403, { error: "rol" });
+      if (!cfg.anthropic) return responder(res, 501, { error: "sin-lector" });
+      let d;
+      try { d = await cuerpoDe(req, 3e7); } catch (_) { return responder(res, 400, { error: "json" }); }
+      if (!d.imagen) return responder(res, 400, { error: "imagen" });
+      try {
+        const leido = await leerConduce(cfg.anthropic, d.imagen, d.tipo);
+        return responder(res, leido.codigo || 200, leido.cuerpo);
+      } catch (_) { return responder(res, 502, { error: "sin-respuesta" }); }
     }
 
     /* La historia de un conduce — Q-05. Se pide por registro, no por número de

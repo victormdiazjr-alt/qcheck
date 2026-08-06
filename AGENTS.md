@@ -783,6 +783,29 @@ Dónde vive: `sync-servidor.js` y `sync-worker.js` (los dos, y tienen que decir 
 las tablas `usuarios`/`sesiones`/`ajustes` de `sync-esquema.sql`, `assets/usuarios.js`
 (`qcCuenta()`), el acceso en `index.html` y `cuentas.js` para dar de alta.
 
+## 16. El lector del conduce — propone, nunca guarda (Q-01)
+
+La foto del conduce entra por `/api/leer-conduce` y salen los campos. Reglas duras:
+
+- **Una foto, dos tamaños.** La que se GUARDA sigue siendo la de 900 px al 60 % —es
+  evidencia y tiene que pesar poco—; la que se MANDA A LEER va hasta 2576 px al 92 % y
+  **no se guarda en ningún sitio**. Los dígitos de un conduce de matriz de puntos no
+  sobreviven a 900 px al 60 %, y de ahí no salen huecos: salen números inventados.
+- **Un campo que no se lee con seguridad vuelve como `null` y se queda vacío.** El
+  esquema de la respuesta admite `null` en todos los campos a propósito: obligar a un
+  tipo haría que el modelo rellenara el hueco. Es DECISIONS §3 aplicado a la foto.
+- **Lo leído sale en ámbar y nadie lo guarda sin mirarlo.** Al registrar, si queda algún
+  campo sin tocar, se pregunta **enseñando cada campo con su valor** — un «¿está seguro?»
+  a secas se contesta que sí sin leerlo, y aquí lo que se confirma es justo el número.
+  Tocar el campo lo saca de la lista.
+- **Sin llave, Recepción sigue funcionando a mano.** Sin `QC_ANTHROPIC` la ruta contesta
+  501 y la pantalla lo dice; no se rompe nada. Así entra hoy y así seguirá entrando
+  cuando el lector falle.
+- **Se llama por HTTP, no con el SDK de Anthropic.** El SDK es una dependencia de npm y
+  el §1 de DECISIONS no las admite. `fetch` ya está en el Worker y en Node.
+- **`leerConduce()` es el único sitio donde se cambia el lector**, en los dos servidores.
+  Si algún día se cambia de proveedor, se toca esa función y nada más.
+
 ## 13b. Recepción, el conduce repetido
 
 **La comprobación de conduce repetido vive ahora en `saveArrival()` de `conduce.html`.**

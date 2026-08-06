@@ -34,6 +34,9 @@ const cuentas = crearCuentas(path.join(ROOT, "datos"));
 const atenderAPI = montarAPI(almacen, process.env.QC_TOKEN || "", {
   cuentas,
   admin: process.env.QC_ADMIN || "",
+  /* La llave que lee el conduce de la foto (Q-01). Sin ella, Recepción sigue
+     funcionando a mano — que es como funciona hoy. */
+  anthropic: process.env.QC_ANTHROPIC || "",
 });
 
 http.createServer((req, res) => {

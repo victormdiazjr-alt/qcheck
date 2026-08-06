@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-01 | **OCR del conduce en papel** | claude | 2026-08-06 |
+_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 
 ---
 
@@ -49,6 +49,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-08-06 | **Q-01 — El conduce se lee de la foto**: una sola foto, dos tamaños — la de 900 px se guarda como evidencia y una de 2576 px se manda a leer y no se guarda. El lector **propone y nunca guarda**: lo leído sale en ámbar y al registrar se pregunta enseñando cada campo con su valor. Un campo que no se lee con seguridad queda en `null` y vacío. Por HTTP directo, sin SDK ni dependencias. **Falta la llave `QC_ANTHROPIC` y probarlo con conduces de verdad — Q-32** | claude |
 | 2026-08-06 | **Q-05 — La historia de cada conduce**: dos relatos juntos, el del camión en la obra (hitos y tiempos entre ellos) y el del expediente (quién entró qué campo y cuándo, del registro de cambios). Ruta `/api/registro` en los dos servidores, apoyada en el índice que Q-02 dejó puesto. Se abre desde Results y desde Recepción | claude |
 | 2026-08-06 | **Q-09 — El aire, en el tablero del concretero**: tercera carta de control con sus límites, que el contrato ya publicaba y nadie enseñaba. Un día sin lecturas lo dice; no se rellena con un cero | claude |
 | 2026-08-05 | **Q-07 — Autenticación real**: el `usr` de cada línea del expediente lo estampa el servidor desde la sesión, no el cuerpo del POST. Claves con PBKDF2 (100.000 vueltas, sal por usuario), pases de sesión guardados por su huella, papeles aplicados en el servidor, `cuentas.js` para dar de alta y la bandera `exigir_sesion` para migrar sin dejar a nadie fuera. Sin tocar el enlace de Rubén (§16) y sin una sola dependencia nueva. **Desplegado y verificado en producción** el mismo día; falta encender el candado — Q-30 | claude |

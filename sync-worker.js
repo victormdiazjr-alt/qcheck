@@ -296,6 +296,125 @@ export default {
       return json({ ahora: new Date().toISOString(), aparatos: results || [] });
     }
 
+    /* ---------------------------------------------------------- Q-01: leer el conduce
+
+       La foto del conduce en papel entra aquí y salen los campos. **Propone; no
+       guarda nada.** Lo que devuelve se pinta en gris en Recepción y el técnico
+       confirma campo por campo — es el mismo trato que ya tenían el próximo
+       conduce sugerido y la primera losa pendiente.
+
+       Por qué así y no de otra manera: leer un papel arrugado con una foto
+       nunca sale perfecto, y en este proyecto **un número equivocado que parece
+       bueno es peor que un hueco** (DECISIONS §3). Si el modelo no lee un
+       campo con seguridad devuelve `null` y el campo se queda vacío.
+
+       La llamada se hace por HTTP a pelo y no con el SDK de Anthropic a
+       propósito: el SDK es una dependencia de npm y el §1 de DECISIONS no las
+       admite. `fetch` ya está en el Worker.
+
+       La llave va en `QC_ANTHROPIC`, otro secreto más:
+         npx wrangler secret put QC_ANTHROPIC
+       Sin ella la ruta contesta 501 y Recepción sigue funcionando a mano, que
+       es como funciona hoy. */
+    if (url.pathname === "/api/leer-conduce" && req.method === "POST") {
+      if (exige && !quien) return json({ error: "sesion" }, 401);
+      if (quien && quien.rol !== "qc") return json({ error: "rol" }, 403);
+      if (!env.QC_ANTHROPIC) return json({ error: "sin-lector" }, 501);
+
+      let d;
+      try { d = await req.json(); } catch (_) { return json({ error: "json" }, 400); }
+      if (!d.imagen) return json({ error: "imagen" }, 400);
+
+      /* Un campo que no se lee con seguridad vale `null`. El esquema lo permite
+         a propósito: obligar a un tipo haría que el modelo rellenara el hueco
+         con algo, y eso es justo lo que no puede pasar. */
+      const oNulo = (t) => ({ anyOf: [{ type: t }, { type: "null" }] });
+      const ESQUEMA = {
+        type: "object",
+        properties: {
+          ticket:  oNulo("string"),   // número de conduce
+          truck:   oNulo("string"),   // número de camión
+          vol:     oNulo("number"),   // yardas (CY)
+          batch:   oNulo("string"),   // hora de batch, HH:MM en 24 horas
+          plant:   oNulo("string"),
+          company: oNulo("string"),
+          mix:     oNulo("string"),
+          ilegible: { type: "array", items: { type: "string" } },
+        },
+        required: ["ticket", "truck", "vol", "batch", "plant", "company", "mix", "ilegible"],
+        additionalProperties: false,
+      };
+
+      const INSTRUCCIONES = [
+        "Esta es la foto de un conduce de hormigón premezclado (delivery ticket) de una obra en Puerto Rico.",
+        "Saca solo los campos del esquema, tal como están impresos en el papel.",
+        "",
+        "REGLA QUE MANDA SOBRE TODO: si un campo no se lee con seguridad, devuélvelo como null",
+        "y pon su nombre en `ilegible`. No adivines, no completes, no deduzcas de otro campo,",
+        "no arregles un dígito que se ve a medias. Este dato entra en un expediente de calidad",
+        "que firma la Autoridad de Carreteras: un número equivocado que parece bueno hace más",
+        "daño que un hueco, porque nadie lo va a mirar dos veces.",
+        "",
+        "- `vol` en yardas cúbicas, solo el número.",
+        "- `batch` en formato de 24 horas, HH:MM. Es la hora que trae impresa el conduce,",
+        "  no la de ahora. Si el papel la trae en 12 horas, conviértela.",
+        "- `ticket` y `truck` tal cual, incluidos ceros a la izquierda si los hay.",
+      ].join("\n");
+
+      let r;
+      try {
+        r = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": env.QC_ANTHROPIC,
+            "anthropic-version": "2023-06-01",
+          },
+          body: JSON.stringify({
+            model: "claude-opus-5",
+            /* Hay sitio de sobra: la respuesta es un JSON corto, pero el
+               razonamiento del modelo también cuenta contra este tope y
+               quedarse corto trunca la respuesta a media llave. */
+            max_tokens: 8000,
+            /* `medium` y no `high`: el técnico está de pie al lado del camión.
+               En este modelo los niveles bajos rinden bastante más de lo que su
+               nombre sugiere, y aquí la tarea es leer un papel, no razonar. */
+            output_config: {
+              effort: "medium",
+              format: { type: "json_schema", schema: ESQUEMA },
+            },
+            messages: [{
+              role: "user",
+              content: [
+                { type: "image", source: { type: "base64", media_type: d.tipo || "image/jpeg", data: d.imagen } },
+                { type: "text", text: INSTRUCCIONES },
+              ],
+            }],
+          }),
+        });
+      } catch (_) {
+        return json({ error: "sin-respuesta" }, 502);
+      }
+
+      if (!r.ok) {
+        /* Se dice el código y ya. El cuerpo del error puede traer trozos de la
+           petición, y esto va a un aparato en la obra. */
+        return json({ error: "lector", codigo: r.status }, 502);
+      }
+
+      const m = await r.json();
+      /* El modelo puede declinar una petición; entonces `content` viene vacío o
+         a medias. Se comprueba ANTES de leerlo — si no, esto revienta con un
+         camión esperando. */
+      if (m.stop_reason === "refusal") return json({ error: "rechazado" }, 422);
+
+      const texto = (m.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+      let campos;
+      try { campos = JSON.parse(texto); } catch (_) { return json({ error: "ilegible" }, 502); }
+
+      return json({ campos, uso: m.usage || null });
+    }
+
     /* La historia de un conduce — Q-05. Se apoya en el índice `ops_registro`,
        que existe desde Q-02 esperando justamente a esto: el dato ya estaba
        —cada línea dice qué campo cambió, cuándo y quién—, faltaba poder pedirlo
