@@ -11,7 +11,8 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-34 | **El estado del servidor, en inglés y consistente** — hoy `index.html` dice «Online» y dos líneas abajo «Sin conexión» | claude | 2026-08-06 |
+| Q-35 | **Valor del punto al pasar el cursor, en todas las gráficas** — hoy solo los puntos fuera de límites tienen `<title>`, y `<title>` no existe en el iPad | claude | 2026-08-06 |
 
 ---
 
