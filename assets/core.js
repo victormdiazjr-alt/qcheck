@@ -1534,6 +1534,137 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
 }
 function closeForm() { const r = document.getElementById("modal-root"); if (r) r.innerHTML = ""; }
 
+/* ============================================================ Q-05
+   LA HISTORIA DE UN CONDUCE
+
+   Dos cosas distintas, y por eso van en dos bloques:
+
+   1. **El recorrido del camión** — sale de planta, llega, empieza a vaciar, se
+      le toma la muestra, termina. Sale de los propios campos del registro y es
+      lo que pasó *en la obra*.
+
+   2. **Quién entró qué y cuándo** — sale del registro de cambios, que existe
+      desde Q-02 y guarda una línea por campo que cambió. Es lo que pasó *en el
+      expediente*, y desde Q-07 dice la verdad sobre el autor: el servidor lo
+      estampa desde la sesión y el aparato no tiene voz. Antes de eso esta
+      pantalla habría enseñado nombres autodeclarados, que para un expediente
+      es peor que no enseñar ninguno.
+
+   Los dos bloques pueden no cuadrar, y eso ES el dato: un camión que llegó a
+   las 9:14 y cuyo Slump se entró a las 11:40 tuvo dos horas sin muestrear.
+
+   El segundo bloque **necesita servidor**. Sin él se dice que no hay, no se
+   inventa: el aparato suelto no guarda el registro de cambios, solo lo produce.
+   ============================================================ */
+
+/* Los hitos del camión, en el orden en que ocurren. */
+const QC_HITOS = [
+  { k: "batch",    n: "Sale de planta" },
+  { k: "arrive",   n: "Llega a la obra" },
+  { k: "start",    n: "Comienza a vaciar" },
+  { k: "testTime", n: "Se toma la muestra" },
+  { k: "end",      n: "Termina de vaciar" },
+];
+
+/* Cómo se llama cada campo cuando se cuenta quién lo tocó. Un renglón que
+   dijera «uwTarget» no se lo puede leer nadie que no haya escrito el código. */
+const QC_NOMBRE_CAMPO = {
+  date: "Fecha", ticket: "Ticket", truck: "Camión", vol: "Volumen", plant: "Planta",
+  lot: "Lote", ident: "Losa", company: "Concretera", mix: "Mezcla",
+  batch: "Batch", arrive: "Llegada", start: "Comienza vaciado",
+  testTime: "Toma de muestra", end: "Termina vaciado",
+  slump: "Slump", uw: "Unit Weight", air: "Aire", temp: "Temperatura",
+  uwTarget: "Objetivo de Unit Weight", rejected: "Rechazo",
+  cs1: "Resistencia 1 día", cs5: "Resistencia 5 días", cs28: "Resistencia 28 días",
+  comments: "Comentarios", source: "Origen", n: "Número de fila",
+};
+
+/* Un valor, como se lee en una frase. `false` en un campo de rechazo no es
+   «false», es «retirado». */
+function qcValorLegible(campo, v) {
+  if (v == null || v === "") return "—";
+  if (campo === "rejected") return v ? "RECHAZADO" : "rechazo retirado";
+  return String(v);
+}
+
+function qcLineaHito(t, hito, previo) {
+  const hora = t[hito.k];
+  if (!hora) return `<tr class="qc-hito-no"><td>${esc(hito.n)}</td><td class="mono">—</td><td class="muted">sin registrar</td></tr>`;
+  const salto = previo ? minutesBetween(previo, hora) : null;
+  return `<tr><td>${esc(hito.n)}</td><td class="mono">${esc(hora)}</td>`
+    + `<td class="muted">${salto != null && salto > 0 ? "+" + salto + " min" : ""}</td></tr>`;
+}
+
+async function lineaDeTiempo(n) {
+  const t = db.tests.find((x) => x.n === n);
+  if (!t) return;
+  const raiz = document.getElementById("modal-root");
+  if (!raiz) return;
+
+  const rotulo = `Ticket ${t.ticket || "—"}${t.truck ? " · Camión " + t.truck : ""}`;
+
+  /* El recorrido: cada hito con el tiempo que pasó desde el anterior QUE SÍ
+     existe, no desde el de arriba en la lista — si nadie apuntó la llegada, el
+     salto se mide contra el batch y no queda un hueco mudo. */
+  let previo = null;
+  const hitos = QC_HITOS.map((h) => {
+    const fila = qcLineaHito(t, h, previo);
+    if (t[h.k]) previo = t[h.k];
+    return fila;
+  }).join("");
+
+  const veredicto = t.rejected
+    ? `<div class="qc-veredicto susp">RECHAZADO</div>`
+    : (num(t.slump) != null || num(t.uw) != null)
+      ? `<div class="qc-veredicto ok">Aprobado</div>`
+      : `<div class="qc-veredicto">Sin muestrear</div>`;
+
+  raiz.innerHTML = `
+    <div class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-head">Historia del conduce — ${esc(rotulo)}
+          <div class="spacer"></div><button class="btn small" onclick="closeForm()">✕</button></div>
+        <div class="modal-body">
+          ${veredicto}
+          <div class="fieldset-label">En la obra</div>
+          <div class="table-wrap"><table class="data"><tr><th>Hito</th><th>Hora</th><th>Desde el anterior</th></tr>${hitos}</table></div>
+          <div class="fieldset-label" style="margin-top:18px">En el expediente</div>
+          <div id="qc-registro" class="muted">Buscando…</div>
+        </div>
+      </div>
+    </div>`;
+
+  const caja = document.getElementById("qc-registro");
+  if (typeof qcSyncActivo !== "function" || !qcSyncActivo()) {
+    caja.textContent = "Este aparato no está conectado al servidor, así que no tiene el registro de cambios. Se ve desde un aparato conectado.";
+    return;
+  }
+  try {
+    const r = await QCSync._pedir("/api/registro?ent=test&id=" + encodeURIComponent(qcIdDe(t, "t")));
+    const ops = r.ops || [];
+    if (!ops.length) {
+      caja.textContent = "Sin cambios registrados. Los ensayos que vienen del Excel histórico no pasaron por aquí.";
+      return;
+    }
+    /* Cinco columnas no caben en un teléfono, así que la tabla se desplaza
+       DENTRO de su caja y no empuja la página a lo ancho (AGENTS §9b). */
+    caja.innerHTML = `<div class="table-wrap"><table class="data"><tr><th>Cuándo</th><th>Qué</th><th>Valor</th><th>Quién</th><th>Aparato</th></tr>`
+      + ops.map((o) => `<tr>
+          <td class="mono">${esc((o.ts || "").replace("T", " ").slice(0, 16))}</td>
+          <td>${esc(QC_NOMBRE_CAMPO[o.campo] || o.campo)}</td>
+          <td class="mono">${esc(qcValorLegible(o.campo, o.valor))}</td>
+          <td>${esc(o.usr || "—")}</td>
+          <td class="muted">${esc(o.dev || "—")}</td>
+        </tr>`).join("") + `</table></div>`;
+  } catch (e) {
+    /* Se dice lo que pasó. Un «no hay cambios» cuando lo que hubo fue un fallo
+       de red sería mentir sobre el expediente. */
+    caja.textContent = e.message === "sesion"
+      ? "Hay que entrar otra vez para ver el registro."
+      : "No se pudo leer el registro del servidor.";
+  }
+}
+
 /* ------------------------------------------------------------ plan del día
    El plan del día lo escriben DOS pantallas —Results, en Plan & Datos, y el
    Control Center al programar el tiro—, así que vive aquí y no se duplica.

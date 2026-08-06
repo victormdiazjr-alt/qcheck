@@ -78,6 +78,14 @@ function crearAlmacen(archivo) {
       return fuera;
     },
 
+    /* Todo lo que le ha pasado a UN registro, en orden. Es lo que hace posible
+       la línea de tiempo de un conduce (Q-05): el dato ya estaba aquí desde
+       Q-02 —cada línea dice qué campo cambió, cuándo y quién— y lo único que
+       faltaba era poder pedirlo por registro en vez de por número de cambio. */
+    deRegistro(ent, id) {
+      return ops.filter((o) => o.ent === ent && String(o.id) === String(id));
+    },
+
     /* Añade y devuelve las que entraron de verdad. Un cambio que ya
        estaba —el aparato reintentó porque se cayó la señal justo al
        contestar— se reconoce por su uid y no se duplica.
@@ -417,6 +425,16 @@ function montarAPI(almacen, token, opciones) {
     if (url.pathname === "/api/presencia" && req.method === "GET") {
       const aparatos = [...presencia.values()].sort((a, b) => b.visto.localeCompare(a.visto));
       return responder(res, 200, { ahora: new Date().toISOString(), aparatos });
+    }
+
+    /* La historia de un conduce — Q-05. Se pide por registro, no por número de
+       cambio, porque lo que se quiere ver es «qué le pasó a ESTE camión». */
+    if (url.pathname === "/api/registro" && req.method === "GET") {
+      if (exige && !quien) return responder(res, 401, { error: "sesion" });
+      const ent = url.searchParams.get("ent") || "test";
+      const id = url.searchParams.get("id") || "";
+      if (!id) return responder(res, 400, { error: "id" });
+      return responder(res, 200, { ops: almacen.deRegistro(ent, id) });
     }
 
     if (url.pathname === "/api/cambios" && req.method === "GET") {

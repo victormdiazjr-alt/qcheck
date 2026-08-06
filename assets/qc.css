@@ -346,6 +346,21 @@ tr.rejected td { background: var(--susp-bg); color: var(--susp); }
 .field.invalid input { border-color: var(--susp); }
 .fieldset-label { grid-column: 1/-1; font-size: 12px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--line); padding-bottom: 3px; margin-top: 4px; }
 
+/* ---------- la historia de un conduce (Q-05) ----------
+   El veredicto entra por el resplandor y el borde teñido, no por el relleno
+   (AGENTS §10): verde y rojo significan cumplimiento y rechazo, y si se usan
+   como decoración dejan de significarlo. */
+.qc-veredicto {
+  display: inline-block; padding: 5px 13px; border-radius: 999px;
+  font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase;
+  border: 1px solid var(--line); color: var(--ink-soft); margin-bottom: 14px;
+}
+.qc-veredicto.ok   { color: var(--ok);   border-color: var(--ok);   box-shadow: 0 0 18px -4px var(--ok); }
+.qc-veredicto.susp { color: var(--susp); border-color: var(--susp); box-shadow: 0 0 18px -4px var(--susp); }
+/* Un hito sin registrar se apaga, pero NO se esconde: que falte la hora de
+   llegada es un dato del expediente, no un renglón que sobre. */
+.qc-hito-no td { opacity: .5; }
+
 /* ---------- live display board ---------- */
 .stat .value.live-big { font-size: 40px; }
 .live-verdict {

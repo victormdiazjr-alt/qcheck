@@ -296,6 +296,21 @@ export default {
       return json({ ahora: new Date().toISOString(), aparatos: results || [] });
     }
 
+    /* La historia de un conduce — Q-05. Se apoya en el índice `ops_registro`,
+       que existe desde Q-02 esperando justamente a esto: el dato ya estaba
+       —cada línea dice qué campo cambió, cuándo y quién—, faltaba poder pedirlo
+       por registro en vez de por número de cambio. */
+    if (url.pathname === "/api/registro" && req.method === "GET") {
+      if (exige && !quien) return json({ error: "sesion" }, 401);
+      const ent = url.searchParams.get("ent") || "test";
+      const id = url.searchParams.get("id") || "";
+      if (!id) return json({ error: "id" }, 400);
+      const { results } = await env.DB.prepare(
+        "SELECT * FROM ops WHERE ent = ? AND id = ? ORDER BY seq"
+      ).bind(ent, id).all();
+      return json({ ops: (results || []).map(leerOp) });
+    }
+
     if (url.pathname === "/api/cambios" && req.method === "GET") {
       if (exige && !quien) return json({ error: "sesion" }, 401);
       const desde = Number(url.searchParams.get("desde") || 0) || 0;

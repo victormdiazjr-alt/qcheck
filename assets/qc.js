@@ -320,7 +320,7 @@ function viewDaily() {
             <td${zClass(zoneTemp(t))}>${fmt(t.temp, 0)}</td>
             <td>${estadoBadge(t)}</td>
             <td style="white-space:normal; min-width:120px; font-size:12px">${esc(t.comments || "")}</td>
-            <td class="no-print"><button class="btn link small" onclick="formTest(null,${t.n})">Editar</button>${t.rejected ? `<button class="btn link small" style="color:var(--susp)" onclick="notifyReject(${t.n})">✉</button>` : ""}</td>
+            <td class="no-print"><button class="btn link small" onclick="formTest(null,${t.n})">Editar</button><button class="btn link small" onclick="lineaDeTiempo(${t.n})" title="Qué le pasó a este camión y quién entró cada dato">Historia</button>${t.rejected ? `<button class="btn link small" style="color:var(--susp)" onclick="notifyReject(${t.n})">✉</button>` : ""}</td>
           </tr>`;
         }).join("")}
       </table></div>` : `<div class="empty">Sin camiones para esta fecha — pulse “＋ Camión”.</div>`}
