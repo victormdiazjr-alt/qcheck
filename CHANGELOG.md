@@ -5,6 +5,32 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ---
 
+## [0.14] — 6 de agosto · «la historia y el aire»
+
+### Añadido
+- **La historia de cada conduce (Q-05).** Dos relatos juntos, y el valor está en que
+  pueden no cuadrar: **en la obra** —sale de planta, llega, vacía, se muestrea, termina,
+  con el tiempo entre hitos— y **en el expediente** —quién entró qué campo y cuándo—. Un
+  camión que llegó a las 9:14 y cuyo Slump se entró a las 11:40 tuvo dos horas sin
+  muestrear, y eso solo se ve poniendo las dos historias una al lado de la otra. Ruta
+  `/api/registro` en los dos servidores, apoyada en el índice `ops_registro` que Q-02 ya
+  había dejado puesto para esto. Se abre desde Results y desde Recepción.
+- **El aire, en el tablero del concretero (Q-09).** Tercera carta de control, con sus
+  límites de acción y suspensión —los que el contrato ya le publicaba a la concretera y
+  aquí no se veían— y el resumen del día en la cabecera del panel.
+
+### Cambiado
+- Sin cuentas dadas de alta, `/api/sesion` contesta **501 y no 401**, para que el aparato
+  caiga a su lista local en vez de quedarse fuera. Un servidor recién levantado dejaba a
+  todo el mundo en la calle.
+
+### Cuidado con
+- Un comentario HTML con acentos graves dentro de una plantilla volvió a romper una
+  pantalla al escribir Q-09. `verificar.js` lo cazó antes de subirlo. Es lo que avisa
+  `AGENTS.md` §1b, y sigue siendo fácil de repetir.
+
+---
+
 ## [0.13] — 5 de agosto · «la firma del expediente»
 
 Q-07. **Desplegado y verificado en producción el 5 ago 2026.** Falta encender el candado —Q-30—, que espera a que cada aparato entre una vez.

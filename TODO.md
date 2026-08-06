@@ -8,15 +8,6 @@ entre agentes. Este archivo dice *qué* hay que hacer; aquél, *quién lo está 
 
 ## Primero
 
-### Q-02 · Backend y base de datos en la nube — **grande**
-Hoy cada navegador guarda lo suyo en `localStorage` y los aparatos no se sincronizan.
-Es la limitación de fondo del proyecto: sin esto no hay «en vivo» de verdad para el
-equipo, y bloquea Q-04, Q-06 y Q-07.
-
-**Por dónde empezar:** la capa de datos está aislada a propósito. Reescribe solo
-`loadDB()` y `saveDB()` en `assets/core.js` contra una API; el resto del motor no
-debería enterarse. Mantén `enableLiveSync()` funcionando.
-
 ### Q-01 · OCR del conduce en papel — **grande**
 La mayoría de las concreteras no tendrán QR: llegan con conduce en papel. Hoy la foto
 se guarda como evidencia y los datos se entran a mano. **Esta es la vía principal de
@@ -54,10 +45,6 @@ deliberado —dejar al técnico fuera en obra es peor—, pero significa que qui
 iPad ve lo que hay dentro. La salida no son más candados en el navegador, que se saltan
 con la consola: es cifrar la base local contra la clave del usuario. Ver `DECISIONS.md` §17.
 
-### Q-05 · Línea de tiempo de eventos por conduce — mediano
-Modelo de datos definitivo: salida de planta, llegada, muestra, veredicto, vaciado,
-cilindros. Hoy son campos sueltos en el registro.
-
 ### Q-06 · Adjuntos en el conduce — mediano · necesita Q-02
 Foto del conduce, pesadas, fotos de losa y cilindros. Cierra el expediente digital
 que hoy se arma a mano.
@@ -65,9 +52,6 @@ que hoy se arma a mano.
 ### Q-08 · Más reglas de inteligencia — pequeño
 `trendAlerts()` ya detecta agua, tendencia y humedad vencida. Faltan reglas de
 temperatura y de tiempo de viaje.
-
-### Q-09 · Aire en el tablero del productor — pequeño
-El contrato ya publica los límites de aire y nadie los muestra.
 
 ### Q-11 · Avance exacto por losa — pequeño
 Un camión que reparte su carga entre varias losas no registra cuánto dejó en cada una.
