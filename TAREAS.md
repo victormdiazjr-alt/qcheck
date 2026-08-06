@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-11 | **Avance exacto por losa** | claude | 2026-08-06 |
 
 ---
 
@@ -25,7 +25,6 @@ _(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 | Q-06 | **Adjuntos en el conduce**: foto del conduce, pesadas, fotos de losa y cilindros | Cierra el expediente digital que hoy se arma a mano | mediano |
 | Q-08 | **Más reglas de inteligencia** | La capa de avisos ya detecta agua, tendencia y humedad vencida; faltan reglas de temperatura y de tiempo de viaje | pequeño |
 | Q-10 | **Integración con ArcGIS** | La inspección ya georreferencia losas ahí; evaluar el enlace | investigación |
-| Q-11 | **Avance exacto por losa** | Un camión que reparte su carga no registra cuánto dejó en cada una | pequeño |
 
 **El detalle de cada tarea está en [`TODO.md`](TODO.md).** Aquí solo se reclama.
 
