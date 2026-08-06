@@ -1,0 +1,49 @@
+# Publicar QCheck en GitHub Pages.
+#
+# POR QUÉ ESTE ARCHIVO EXISTE
+#
+# Hasta el 6 ago 2026 el sitio se publicaba con el constructor «legacy» de
+# Pages, que pasa el repositorio por Jekyll. Ese constructor empezó a fallar sin
+# decir por qué —«Page build failed.» y nada más—, y el sitio se quedó ocho
+# horas sirviendo una versión vieja: el arreglo de Muestras que pidió Rubén
+# estaba en GitHub y no en la obra. Añadir `.nojekyll` no lo arregló.
+#
+# Esto publica los archivos TAL CUAL, sin Jekyll de por medio, que es lo que
+# necesita un sitio de HTML, CSS y JavaScript planos. Y cuando algo falle, lo
+# dice en los registros de la acción en vez de en un mensaje de cuatro palabras.
+#
+# NO ES UNA DEPENDENCIA DEL PRODUCTO. Aquí no se instala nada ni se compila
+# nada: se coge el repositorio y se sube. La regla del §1 de DECISIONS sigue
+# intacta — QCheck se puede seguir abriendo con doble clic.
+name: Publicar el sitio
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # para republicar a mano si hace falta
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Si llegan dos push seguidos, se publica el último y no se cancela el que ya
+# está a medio subir: en obra vale más terminar una publicación que empezar dos.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .          # el repositorio entero, sin tocar nada
+      - id: deploy
+        uses: actions/deploy-pages@v4
