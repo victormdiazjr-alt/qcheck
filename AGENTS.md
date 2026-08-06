@@ -105,6 +105,19 @@ un framework ni dependencias de npm** sin acuerdo explícito de Víctor.
 31 jul 2026. Se sirve por HTTP y punto. Sigue en pie lo de no meter dependencias:
 el valor está en que cualquiera pueda abrir un archivo y entenderlo.
 
+**El sitio se publica con una acción de GitHub**, no con el constructor «legacy» de Pages
+(`.github/workflows/pages.yml`). El legacy pasaba el repositorio por Jekyll y el 6 ago 2026
+empezó a fallar con un «Page build failed.» sin más detalle: el sitio se quedó **ocho horas
+sirviendo una versión vieja** con el arreglo de Muestras ya subido a GitHub y sin llegar a
+la obra. La acción sube los archivos tal cual y, cuando algo falla, lo dice en sus
+registros. **No es una dependencia del producto**: no instala ni compila nada.
+
+Si algún día el sitio no refleja lo que hay en `main`, se mira ahí antes que en el código:
+
+```bash
+gh run list --workflow=pages.yml --limit 5
+```
+
 **Antes de cada commit que toque `assets/` o `shared/`, corre `node sello.js`.**
 Le pone a cada `<script>` y `<link>` un sello sacado del contenido del archivo
 (`core.js?v=b91072e1`). GitHub Pages cachea los .js diez minutos: sin el sello,
