@@ -52,7 +52,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
-| 2026-08-05 | **Q-07 — Autenticación real**: el `usr` de cada línea del expediente lo estampa el servidor desde la sesión, no el cuerpo del POST. Claves con PBKDF2 (210.000 vueltas, sal por usuario), pases de sesión guardados por su huella, papeles aplicados en el servidor, `cuentas.js` para dar de alta y la bandera `exigir_sesion` para migrar sin dejar a nadie fuera. Sin tocar el enlace de Rubén (§16) y sin una sola dependencia nueva. **Falta desplegarlo — Q-30** | claude |
+| 2026-08-05 | **Q-07 — Autenticación real**: el `usr` de cada línea del expediente lo estampa el servidor desde la sesión, no el cuerpo del POST. Claves con PBKDF2 (100.000 vueltas, sal por usuario), pases de sesión guardados por su huella, papeles aplicados en el servidor, `cuentas.js` para dar de alta y la bandera `exigir_sesion` para migrar sin dejar a nadie fuera. Sin tocar el enlace de Rubén (§16) y sin una sola dependencia nueva. **Falta desplegarlo — Q-30** | claude |
 | 2026-08-01 | **Q-02 — Sincronización entre aparatos**, por registro de cambios campo a campo. Desplegada en Cloudflare Workers + D1 (`qcheck-api.qcheck.workers.dev`) y probada de punta a punta entre el sitio publicado y un segundo aparato | claude |
 | 2026-07-31 | **Q-28 — El ciclo cierra**: Muestras solo engancha camiones que esperan resultados y se limpia al enviar; la simulación deja de borrar el trabajo real en cada acceso | claude |
 | 2026-07-31 | **Q-27 — La marca**: «Smart Quality Control» como descripción del nombre y «Build Connected» como lema | claude |

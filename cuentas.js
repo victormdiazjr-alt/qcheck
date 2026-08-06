@@ -165,7 +165,11 @@ async function main() {
       clave = claveInventada();
     } else {
       clave = await preguntarClave(`  Clave para ${usr}: `);
-      if (clave.length < 8) morir("al menos 8 caracteres.");
+      /* Doce y no ocho. El derivado está topado a 100.000 vueltas por
+         Cloudflare, así que lo que de verdad separa una clave buena de una
+         mala aquí es su largo. Con `--generar` esto no aplica: salen 20
+         caracteres al azar. */
+      if (clave.length < 12) morir("al menos 12 caracteres. O usa --generar.");
       const otra = await preguntarClave("  Otra vez: ");
       if (clave !== otra) morir("no coinciden.");
     }

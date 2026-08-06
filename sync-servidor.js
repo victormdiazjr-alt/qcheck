@@ -123,7 +123,15 @@ function crearAlmacen(archivo) {
    DECISIONS sigue en pie— y por eso el código de aquí y el de `sync-worker.js`
    son el mismo salvo el almacén. */
 
-const VUELTAS = 210000;        /* recomendación OWASP para PBKDF2-SHA256 */
+/* 100.000 y NO MÁS: es el techo que impone Cloudflare Workers a PBKDF2, y este
+   número tiene que ser el MISMO que el de `sync-worker.js` — una clave creada
+   aquí, en la laptop de la obra, se comprueba después contra Cloudflare. Node
+   aguantaría más, pero entonces la cuenta entraría en un sitio y no en el otro.
+
+   Lo que compensa el techo es de dónde salen las claves: `cuentas.js` las
+   inventa con unos 115 bits de entropía, y contra eso las vueltas dan igual.
+   Protegen a la clave escrita a mano, y por eso ahí se exigen 12 caracteres. */
+const VUELTAS = 100000;
 const SESION_HORAS = 12;       /* lo que dura un turno; se estira con el uso */
 
 function aHex(buf) {

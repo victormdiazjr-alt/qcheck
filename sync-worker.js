@@ -51,7 +51,19 @@ const CORS = {
    Sale todo de `crypto.subtle`, que viene dentro del Worker: **ni una
    dependencia**, que es la regla del §1 de DECISIONS. */
 
-const VUELTAS = 210000;        /* recomendación OWASP para PBKDF2-SHA256 */
+/* 100.000 y NO MÁS: es el techo que impone Cloudflare Workers a PBKDF2. Por
+   encima, `deriveBits` lanza excepción y el Worker devuelve 500 — pasó en el
+   despliegue del 5 ago 2026 con 210.000, que era lo que pedía OWASP.
+
+   Y tiene que ser el MISMO número aquí y en `sync-servidor.js`: una clave
+   creada contra la laptop de la obra se comprueba después contra esto. Si no
+   coinciden, la cuenta entra en un sitio y no en el otro.
+
+   Lo que compensa el techo es de dónde salen las claves: `cuentas.js` las
+   inventa con 20 caracteres de un alfabeto de 54 —unos 115 bits—, y contra eso
+   el número de vueltas da igual. Las vueltas protegen a la clave escrita a
+   mano, y por eso ahí se exigen 12 caracteres. Ver DECISIONS §17. */
+const VUELTAS = 100000;
 const SESION_HORAS = 12;       /* lo que dura un turno; se estira con el uso */
 
 function aHex(buf) {

@@ -755,7 +755,7 @@ Reglas que no se rompen aquí:
 - **`QC_ADMIN` es OTRO secreto y no puede ser la llave del proyecto.** La llave va dentro
   del enlace que tiene Rubén; si sirviera además para dar de alta cuentas, cualquiera que
   viese ese enlace podría hacerse una. Dar de alta a alguien es cosa de Víctor.
-- **Las claves no se guardan.** Se guarda PBKDF2-SHA256 con 210.000 vueltas y una sal por
+- **Las claves no se guardan.** Se guarda PBKDF2-SHA256 con 100.000 vueltas y una sal por
   usuario. Del pase de sesión se guarda su SHA-256, no el pase: con una copia de la base no
   se entra como nadie. Todo con `crypto.subtle`, que viene dentro de Node y del Worker —
   **ni una dependencia**, que es §1 de DECISIONS.

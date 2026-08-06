@@ -24,7 +24,7 @@ estampa el servidor desde la sesión y el cuerpo no tiene voz.
 | Cliente | `index.html` (entrar), `assets/usuarios.js` (`qcCuenta()`), `assets/sync.js` (el pase) |
 | Dar de alta cuentas | `cuentas.js` — protegido por `QC_ADMIN`, que **no** es la llave del proyecto |
 
-Claves con PBKDF2-SHA256, 210.000 vueltas y sal por usuario; del pase de sesión se guarda
+Claves con PBKDF2-SHA256, 100.000 vueltas y sal por usuario; del pase de sesión se guarda
 su huella, no el pase. Todo con `crypto.subtle` — **ni una dependencia nueva**. El enlace
 de Rubén (`DECISIONS.md` §16) no se tocó: la llave pasó de ser el candado a ser la
 matrícula del aparato. Las reglas completas en `AGENTS.md` §15 y el porqué en

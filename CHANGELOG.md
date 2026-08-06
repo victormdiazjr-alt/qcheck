@@ -10,7 +10,7 @@ El proyecto no versiona por números todavía: se marca por hitos.
 Q-07. **Escrito y probado, todavía no desplegado** — ver Q-30 en `TAREAS.md`.
 
 ### Añadido
-- **La identidad la pone el servidor.** Cuentas con clave derivada (PBKDF2-SHA256, 210.000
+- **La identidad la pone el servidor.** Cuentas con clave derivada (PBKDF2-SHA256, 100.000
   vueltas, sal por usuario) y sesiones con vencimiento deslizante de 12 h. Tres tablas
   nuevas en `sync-esquema.sql`: `usuarios`, `sesiones` y `ajustes`. Rutas nuevas:
   `/api/sesion` (entrar, mirar, salir) y `/api/cuentas` (dar de alta, solo Víctor).
