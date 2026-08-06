@@ -60,6 +60,20 @@ body { background: var(--bg); }
   text-transform: uppercase; color: var(--ink-soft); }
 .ap .pant { font-size: 20px; font-weight: 300; letter-spacing: -.01em; }
 .ap .filas { margin-top: 10px; display: grid; gap: 5px; font-size: 12.5px; color: var(--ink-soft); }
+/* Lo último que tocó esa persona en el expediente — Q-36. Va pegado a la
+   pantalla porque se leen juntos: dónde está y qué hizo. */
+.ap .hizo { margin-top: 7px; font-size: 13px; line-height: 1.35; color: var(--ink); }
+.ap .hizo b { font-weight: 750; }
+.ap .hizo .cuando { color: var(--ink-soft); font-weight: 400; }
+.ap .hizo.nada { color: var(--ink-soft); font-style: italic; }
+.idos-barra { margin: 18px 0 0; }
+.idos-barra:empty { margin: 0; }
+#aparatos-idos { margin-top: 14px; }
+/* `.aps` lleva `display: grid`, y una regla de hoja propia pisa el
+   `[hidden] { display: none }` del navegador. Sin esta línea el botón de
+   «ver los desconectados» se pulsa y no pasa nada visible: la lista estaba
+   ahí desde el principio. */
+.aps[hidden] { display: none; }
 .ap .filas b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
 
 .vacio { text-align: center; padding: 46px 20px; color: var(--ink-soft); font-size: 14px; }
@@ -107,6 +121,8 @@ body { background: var(--bg); }
   <div id="aviso"></div>
   <div class="res" id="resumen"></div>
   <div class="aps" id="aparatos"></div>
+  <div class="idos-barra" id="idos-barra"></div>
+  <div class="aps" id="aparatos-idos" hidden></div>
   <div class="pie-nota" id="pie"></div>
 </main>
 
@@ -138,6 +154,33 @@ const PANTALLA = {
   "estado.html": "Estado del sistema",
 };
 
+/* Lo que se está haciendo en cada pantalla — Q-36. La presencia dice DÓNDE
+   está cada quien; esto lo dice en voz de obra. Lo que no esté en la lista
+   cae en `PANTALLA` y, si tampoco está, sale el nombre del archivo: un nombre
+   feo antes que uno inventado. */
+const HACIENDO = {
+  "muestras.html": "Entrando resultados de muestras",
+  "conduce.html": "Recibiendo camiones",
+  "display.html": "Pantalla de obra",
+  "control-center.html": "En el Control Center",
+  "results.html": "Mirando datos y cartas",
+  "reporte.html": "Sacando un reporte",
+  "movil.html": "En el portal",
+  "estado.html": "Mirando el estado del sistema",
+  "conectar.html": "Conectando el aparato",
+  "index.html": "En el acceso",
+  "contratista.html": "Mirando el tablero del contratista",
+  "produccion.html": "Mirando el tablero del concretero",
+  "autoridad.html": "Mirando el tablero de la autoridad",
+};
+
+/* Los que no están conectados se guardan detrás de un botón. En un día de
+   vaciado hay tres aparatos trabajando y una lista de aparatos viejos debajo:
+   lo que importa es quién está AHORA. Se recuerda entre refrescos —la pantalla
+   se repinta sola cada 5 s— porque si no, la lista se cerraría sola en la cara
+   de quien acaba de abrirla. */
+let verIdos = false;
+
 /* Un aparato se da por conectado si latió hace menos de un minuto. El latido
    va cada 20 s, así que se puede perder dos seguidos antes de darlo por ido —
    en obra la señal parpadea y no por eso alguien dejó de trabajar. */
@@ -151,6 +194,50 @@ function hace(ms) {
   if (m < 60) return m + " min";
   const h = Math.floor(m / 60);
   return h + " h " + String(m % 60).padStart(2, "0") + " min";
+}
+
+/* Lo último que tocó cada persona, sacado del registro de cambios. No se
+   inventa nada: si alguien no ha tocado el expediente en lo que abarca la
+   ventana que se pidió, la tarjeta lo dice y ya. `ultimoDe` se rellena en
+   `refrescar()`; si el servidor todavía no tiene la ruta, queda vacío y las
+   tarjetas salen como salían antes. */
+let ultimoDe = {};        /* por persona */
+let ultimoDeAparato = {}; /* por aparato */
+
+function loQueHizo(dev, usr, ahora) {
+  /* Se pregunta primero por el aparato y solo después por la persona. Víctor
+     entra como `admin` desde la oficina y desde el portátil: si se fuera solo
+     por el nombre, los dos aparatos dirían que acaban de anotar el mismo
+     slump y uno de los dos estaría mintiendo. */
+  let op = ultimoDeAparato[dev], deOtro = false;
+  if (!op && usr) { op = ultimoDe[usr]; deOtro = !!op; }
+  if (!op) return `<div class="hizo nada">Sin cambios suyos en el expediente reciente.</div>`;
+  const campo = QC_NOMBRE_CAMPO[op.campo] || op.campo;
+  const valor = qcValorLegible(op.campo, op.valor);
+  /* El cambio se guarda contra el número de fila, no contra el camión. Si este
+     aparato ya tiene esa fila sincronizada se dice el camión, que es como se
+     habla en obra; si no, se dice la fila y no se adivina. */
+  const fila = (db.tests || []).find((x) => String(x.n) === String(op.id));
+  const donde = fila && fila.truck ? `camión ${esc(fila.truck)}` : `registro #${esc(op.id)}`;
+  const cuando = hace(ahora - Date.parse(op.ts));
+  return `<div class="hizo"><b>${esc(campo)} ${esc(valor)}</b> · ${donde}` +
+         ` <span class="cuando">· hace ${cuando}${deOtro ? ", desde otro aparato" : ""}</span></div>`;
+}
+
+function tarjeta(a, vivo, ahora) {
+  return `<div class="ap ${vivo ? "vivo" : "ido"}">
+    <div class="cab">
+      <i class="luz"></i>
+      <span class="nom">${esc(a.dev)}</span>
+      <span class="quien">${esc(a.usr || "—")}</span>
+    </div>
+    <div class="pant">${esc(HACIENDO[a.pagina] || PANTALLA[a.pagina] || a.pagina || "—")}</div>
+    ${loQueHizo(a.dev, a.usr, ahora)}
+    <div class="filas">
+      <div>Usando QCheck desde hace <b>${hace(a.usando)}</b></div>
+      <div>${vivo ? `Última señal hace <b>${hace(a.inactivo)}</b>` : `Sin señal desde hace <b>${hace(a.inactivo)}</b>`}</div>
+    </div>
+  </div>`;
 }
 
 function pintar(datos) {
@@ -173,23 +260,25 @@ function pintar(datos) {
       <div class="v" style="font-size:26px">${vivos.length ? hace(Math.max(...vivos.map((a) => a.usando))) : "—"}</div>
       <div class="s">llevan trabajando</div></div>`;
 
+  const vivosDom = aps.filter((a) => a.inactivo < VIVO_MS);
+  const idos = aps.filter((a) => a.inactivo >= VIVO_MS);
+
   document.getElementById("aparatos").innerHTML = aps.length
-    ? aps.map((a) => {
-        const vivo = a.inactivo < VIVO_MS;
-        return `<div class="ap ${vivo ? "vivo" : "ido"}">
-          <div class="cab">
-            <i class="luz"></i>
-            <span class="nom">${esc(a.dev)}</span>
-            <span class="quien">${esc(a.usr || "—")}</span>
-          </div>
-          <div class="pant">${esc(PANTALLA[a.pagina] || a.pagina || "—")}</div>
-          <div class="filas">
-            <div>Usando QCheck desde hace <b>${hace(a.usando)}</b></div>
-            <div>${vivo ? `Última señal hace <b>${hace(a.inactivo)}</b>` : `Sin señal desde hace <b>${hace(a.inactivo)}</b>`}</div>
-          </div>
-        </div>`;
-      }).join("")
+    ? (vivosDom.length
+        ? vivosDom.map((a) => tarjeta(a, true, ahora)).join("")
+        : `<div class="vacio">Nadie está conectado ahora mismo.</div>`)
     : `<div class="vacio">Ningún aparato ha latido todavía.<br>Aparecen solos en cuanto alguien abre QCheck conectado.</div>`;
+
+  const caja = document.getElementById("aparatos-idos");
+  caja.innerHTML = idos.map((a) => tarjeta(a, false, ahora)).join("");
+  caja.hidden = !verIdos;
+  document.getElementById("idos-barra").innerHTML = idos.length
+    ? `<button class="btn small" id="btn-idos">${verIdos
+        ? "Ocultar los que no están conectados"
+        : `Ver ${idos.length === 1 ? "el aparato" : "los " + idos.length + " aparatos"} que no ${idos.length === 1 ? "está" : "están"} conectado${idos.length === 1 ? "" : "s"}`}</button>`
+    : "";
+  const btn = document.getElementById("btn-idos");
+  if (btn) btn.onclick = () => { verIdos = !verIdos; pintar(datos); };
 
   document.getElementById("pie").textContent =
     `Se refresca sola cada 5 segundos · un aparato se da por ido si pasa un minuto sin latir · hora del servidor ${new Date(ahora).toLocaleTimeString("es-PR")}`;
@@ -217,6 +306,24 @@ async function refrescar() {
     const r = await fetch(qcApiURL() + "/api/presencia", { headers: cab });
     if (r.status === 401) throw new Error("La llave de este aparato no es la del proyecto.");
     if (!r.ok) throw new Error("El servidor contestó " + r.status + ".");
+
+    /* La actividad va aparte y no puede tumbar la pantalla: un servidor que
+       todavía no tenga la ruta deja las tarjetas como estaban en vez de
+       dejar a quien mira sin saber quién está conectado. */
+    ultimoDe = {}; ultimoDeAparato = {};
+    try {
+      const ra = await fetch(qcApiURL() + "/api/actividad?n=300", { headers: cab });
+      if (ra.ok) {
+        const d = await ra.json();
+        /* Vienen de la más reciente hacia atrás, así que la primera de cada
+           persona es la suya más nueva. */
+        for (const op of d.ops || []) {
+          if (op.usr && !ultimoDe[op.usr]) ultimoDe[op.usr] = op;
+          if (op.dev && !ultimoDeAparato[op.dev]) ultimoDeAparato[op.dev] = op;
+        }
+      }
+    } catch (_) { /* sin actividad se sigue igual */ }
+
     document.getElementById("aviso").innerHTML = "";
     pintar(await r.json());
   } catch (e) {

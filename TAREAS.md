@@ -11,8 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-34 | **El estado del servidor, en inglés y consistente** — hoy `index.html` dice «Online» y dos líneas abajo «Sin conexión» | claude | 2026-08-06 |
-| Q-35 | **Valor del punto al pasar el cursor, en todas las gráficas** — hoy solo los puntos fuera de límites tienen `<title>`, y `<title>` no existe en el iPad | claude | 2026-08-06 |
+_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 
 ---
 
@@ -50,6 +49,9 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-08-06 | **Q-36 — El estado del sistema dice qué está haciendo cada quien**, y guarda los desconectados. Ruta nueva `/api/actividad` en los dos servidores (las ÚLTIMAS del registro; `/api/cambios` devuelve las primeras y no servía). Cada tarjeta dice la faena en voz de obra y el último cambio real de ese aparato —con su camión, no con el número de fila—, y si viene de otro aparato de la misma persona lo dice. Los idos, detrás de un botón que aguanta abierto entre refrescos | claude |
+| 2026-08-06 | **Q-35 — Las gráficas dicen su cifra al pasar por encima**: capa de lectura de rectángulo por punto y una sola pista compartida, con guía y marcador. Las siete cartas, incluidas las dos propias de Producción. Sustituye al `<title>` nativo, que tardaba un segundo y en el iPad no salía | claude |
+| 2026-08-06 | **Q-34 — El estado del servidor habla un solo idioma**: estaba a medias —«Online» y «Sin conexión» en la misma pantalla— y ahora el vocabulario va en inglés en los tres sitios donde aparece. Las explicaciones de qué hacer siguen en español | claude |
 | 2026-08-06 | **Q-33 — Lo que se mide en Muestras no se pierde.** Feedback de Rubén en obra: lo llamó navegación, era pérdida de datos. Cambiar de camión borraba lo tecleado y no enviado, y una temperatura sola no se podía enviar. Ahora se guarda al asentarse, en cada transición y al irse la pantalla a segundo plano, **sin disparar el veredicto**. Más la rejilla de camiones que pidió («click al campo que no tenga info»), el estado A MEDIAS y el paso lateral a Recepción | claude |
 | 2026-08-06 | **Q-08 — El calor y el reloj**: aviso de temperatura subiendo hacia el límite (umbral del plan + dirección) y de camión que no llega a tiempo, avisado mientras todavía viene. El umbral del reloj sale del propio día —lo que se tarda HOY en descargar—, y sin ningún camión terminado no se avisa. El texto cambia según el tiro esté abierto o cerrado, porque `trendAlerts()` también alimenta el reporte | claude |
 | 2026-08-06 | **Q-11 — El reparto de una carga se puede declarar**: `L3-0.943:6, L3-0.936:4` en el conduce, la misma sintaxis del plan del día. Con todas las cargas declaradas la losa da cifra exacta y desaparece el `≥`; sin declarar, todo igual que antes. Un reparto que no suma se canta y no se corrige, en la capa de avisos y en Recepción mientras se escribe. Los 161 repartidos del histórico no se tocaron: ninguno activa el camino nuevo | claude |

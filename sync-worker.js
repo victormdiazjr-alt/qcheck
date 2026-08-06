@@ -430,6 +430,23 @@ export default {
       return json({ ops: (results || []).map(leerOp) });
     }
 
+    /* Lo último que ha pasado en el expediente — Q-36. `estado.html` la usa
+       para decir qué está haciendo cada quien: la presencia dice en qué
+       pantalla está, y esto dice qué tocó de verdad y cuándo.
+
+       Va al revés que `/api/cambios`, que sirve para ponerse al día desde un
+       número de cambio y devuelve las PRIMERAS. Aquí hacen falta las ÚLTIMAS,
+       y pedirlas con `desde=0` traería las de la primera importación de 2026.
+       Es de solo lectura y no mueve el reloj de sincronización de nadie. */
+    if (url.pathname === "/api/actividad" && req.method === "GET") {
+      if (exige && !quien) return json({ error: "sesion" }, 401);
+      const n = Math.min(500, Math.max(1, Number(url.searchParams.get("n")) || 120));
+      const { results } = await env.DB.prepare(
+        "SELECT * FROM ops ORDER BY seq DESC LIMIT ?"
+      ).bind(n).all();
+      return json({ ahora: new Date().toISOString(), ops: (results || []).map(leerOp) });
+    }
+
     if (url.pathname === "/api/cambios" && req.method === "GET") {
       if (exige && !quien) return json({ error: "sesion" }, 401);
       const desde = Number(url.searchParams.get("desde") || 0) || 0;

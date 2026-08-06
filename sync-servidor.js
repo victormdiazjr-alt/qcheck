@@ -86,6 +86,11 @@ function crearAlmacen(archivo) {
       return ops.filter((o) => o.ent === ent && String(o.id) === String(id));
     },
 
+    /* Las últimas `n`, de la más reciente hacia atrás — Q-36. */
+    ultimas(n = 120) {
+      return ops.slice(Math.max(0, ops.length - n)).reverse();
+    },
+
     /* Añade y devuelve las que entraron de verdad. Un cambio que ya
        estaba —el aparato reintentó porque se cayó la señal justo al
        contestar— se reconoce por su uid y no se duplica.
@@ -527,6 +532,20 @@ function montarAPI(almacen, token, opciones) {
       const id = url.searchParams.get("id") || "";
       if (!id) return responder(res, 400, { error: "id" });
       return responder(res, 200, { ops: almacen.deRegistro(ent, id) });
+    }
+
+    /* Lo último que ha pasado en el expediente — Q-36. `estado.html` la usa
+       para decir qué está haciendo cada quien: la presencia dice en qué
+       pantalla está, y esto dice qué tocó de verdad y cuándo.
+
+       Va al revés que `/api/cambios`, que sirve para ponerse al día desde un
+       número de cambio y devuelve las PRIMERAS. Aquí hacen falta las ÚLTIMAS,
+       y pedirlas con `desde=0` traería las de la primera importación de 2026.
+       Es de solo lectura y no mueve el reloj de sincronización de nadie. */
+    if (url.pathname === "/api/actividad" && req.method === "GET") {
+      if (exige && !quien) return responder(res, 401, { error: "sesion" });
+      const n = Math.min(500, Math.max(1, Number(url.searchParams.get("n")) || 120));
+      return responder(res, 200, { ahora: new Date().toISOString(), ops: almacen.ultimas(n) });
     }
 
     if (url.pathname === "/api/cambios" && req.method === "GET") {
