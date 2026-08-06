@@ -47,3 +47,10 @@ jobs:
           path: .          # el repositorio entero, sin tocar nada
       - id: deploy
         uses: actions/deploy-pages@v4
+        with:
+          # 20 minutos en vez de los 10 de fábrica. El 6 ago 2026 el despliegue
+          # del lado de GitHub se quedó en `deployment_in_progress` diez minutos
+          # justos y la acción abortó: la subida estaba bien, lo lento era
+          # Pages. Con el margen corto, una tarde renqueante de GitHub deja el
+          # sitio sin actualizar y en obra eso no se nota hasta que se nota.
+          timeout: 1200000
