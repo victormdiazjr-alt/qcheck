@@ -217,10 +217,18 @@ function loQueHizo(dev, usr, ahora) {
   /* El cambio se guarda contra el número de fila, no contra el camión. Si este
      aparato ya tiene esa fila sincronizada se dice el camión, que es como se
      habla en obra; si no, se dice la fila y no se adivina. */
-  const fila = (db.tests || []).find((x) => String(x.n) === String(op.id));
-  const donde = fila && fila.truck ? `camión ${esc(fila.truck)}` : `registro #${esc(op.id)}`;
+  let donde;
+  if (op.ent === "dayMeta") {
+    donde = `plan del ${esc(op.id)}`;
+  } else {
+    const fila = (db.tests || []).find((x) => String(x.n) === String(op.id));
+    donde = fila && fila.truck ? `camión ${esc(fila.truck)}` : `registro #${esc(op.id)}`;
+  }
   const cuando = hace(ahora - Date.parse(op.ts));
-  return `<div class="hizo"><b>${esc(campo)} ${esc(valor)}</b> · ${donde}` +
+  /* Un campo que se vació da «—» en `qcValorLegible`, y «Comentarios —» no
+     se lee como una frase. Vaciar un campo es una acción y se dice así. */
+  const que = valor === "—" ? `<b>${esc(campo)}</b> sin valor` : `<b>${esc(campo)} ${esc(valor)}</b>`;
+  return `<div class="hizo">${que} · ${donde}` +
          ` <span class="cuando">· hace ${cuando}${deOtro ? ", desde otro aparato" : ""}</span></div>`;
 }
 
@@ -317,7 +325,13 @@ async function refrescar() {
         const d = await ra.json();
         /* Vienen de la más reciente hacia atrás, así que la primera de cada
            persona es la suya más nueva. */
+        /* Solo cuenta lo que es trabajo: los camiones del expediente y el
+           plan del día. `config` son ajustes internos del propio programa
+           —encender la demostración, por ejemplo— y salían los primeros
+           porque son de lo más reciente que se escribe. Decir que alguien
+           «está haciendo demo = false» no es decir nada. */
         for (const op of d.ops || []) {
+          if (op.ent === "config" || !op.id) continue;
           if (op.usr && !ultimoDe[op.usr]) ultimoDe[op.usr] = op;
           if (op.dev && !ultimoDeAparato[op.dev]) ultimoDeAparato[op.dev] = op;
         }
