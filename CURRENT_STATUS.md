@@ -8,8 +8,19 @@ usado en obra**.
 
 ## Lo último: Q-07, la firma del expediente (5 ago 2026)
 
-**Hecho y probado, PERO todavía no desplegado.** El código está en `main`; en producción
-sigue mandando la llave sola hasta que se haga **Q-30**, que es de Víctor.
+**Hecho, desplegado y verificado en producción** — 16 pruebas contra
+`qcheck-api.qcheck.workers.dev`, sin fallos. Las tres cuentas están creadas (`ruben`,
+`admin`, `invitado`) y sus claves en `datos/claves-nuevas.txt`, fuera del repositorio.
+
+**Pero el candado sigue APAGADO a propósito.** `exigir_sesion` está en `false`: hasta que
+cada aparato haya entrado una vez con su cuenta, encenderlo dejaría a la cuadrilla sin
+poder escribir. Eso es **Q-30** y es de Víctor.
+
+Al desplegar salió un fallo que no se veía en local: **Cloudflare Workers topa PBKDF2 en
+100.000 vueltas** y estaban puestas 210.000, así que toda ruta que derivara una clave
+contestaba 500. Corregido en los dos servidores —tienen que llevar el mismo número, o una
+clave creada en la laptop de la obra no valdría contra Cloudflare—, y compensado exigiendo
+12 caracteres a la clave escrita a mano.
 
 Lo que arregla no era la clave `1234`. Era que el `usr` de cada línea del registro de
 cambios **lo decía el aparato**: viajaba en el cuerpo del POST y nadie lo comprobaba, así
@@ -91,9 +102,10 @@ rompen están en `AGENTS.md` §14.
 
 ## Lo siguiente, por prioridad
 
-1. **Q-30 — desplegar Q-07 y migrar los aparatos.** Es de Víctor: hace falta la cuenta de
-   Cloudflare. Mientras no se haga, el expediente en producción sigue aceptando autoría
-   autodeclarada. El orden está en `TODO.md` y **no se hace un día de vaciado**.
+1. **Q-30 — migrar los aparatos y encender el candado.** Es de Víctor: repartir las claves
+   de `datos/claves-nuevas.txt`, que cada aparato entre una vez —se comprueba en
+   `estado.html`— y entonces `node cuentas.js exigir-sesion on`. **No se hace un día de
+   vaciado.**
 2. **Q-29 — mudanza a `qcheck.dcreationspr.com`.** Acordado con Víctor: **al terminar de
    construir**, no antes. Cambia el enlace de Rubén, y eso se hace una vez y avisando.
 3. **Q-01 — OCR del conduce en papel.** La vía de entrada principal a medio plazo.

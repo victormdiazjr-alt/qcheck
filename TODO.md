@@ -26,19 +26,19 @@ entrada, no el respaldo.** Es lo que más trabajo manual quita en el campo.
 
 ## Después
 
-### Q-30 · Desplegar Q-07 y migrar los aparatos — mediano · **es de Víctor**
-El código de la autenticación está hecho y probado (5 ago 2026), pero **en producción
-todavía manda la llave sola**: mientras no se despliegue, el expediente sigue aceptando
-que cada aparato diga quién es. El orden no se puede saltar:
+### Q-30 · Migrar los aparatos y encender el candado — pequeño · **es de Víctor**
+El Worker está desplegado y las cuentas creadas (5 ago 2026), pero **`exigir_sesion` sigue
+apagada**: hasta encenderla, un aparato sin migrar todavía puede escribir declarando su
+propio autor. Lo que falta no es código:
+
+1. Repartir las claves de `datos/claves-nuevas.txt` — **no por el mismo sitio que el
+   enlace de conexión**
+2. Que **cada aparato entre una vez** con su cuenta: el iPad de Rubén, su teléfono, la PC
+3. Comprobarlo en `estado.html` (Víctor lo ve; Rubén no)
+4. Y entonces:
 
 ```bash
-npx wrangler d1 execute qcheck --remote --file=./sync-esquema.sql
-npx wrangler secret put QC_ADMIN
-npx wrangler deploy
-node cuentas.js crear ruben --rol qc --nombre "Rubén Segarra" --generar
-node cuentas.js listar
-# repartir las claves · que CADA aparato entre una vez · comprobarlo en estado.html
-node cuentas.js exigir-sesion on      # ← solo cuando todos estén dentro
+QC_API=https://qcheck-api.qcheck.workers.dev node cuentas.js exigir-sesion on
 ```
 
 Encender la bandera antes de que los aparatos hayan entrado deja a la cuadrilla sin poder

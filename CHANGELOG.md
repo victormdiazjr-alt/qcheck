@@ -7,7 +7,7 @@ El proyecto no versiona por números todavía: se marca por hitos.
 
 ## [0.13] — 5 de agosto · «la firma del expediente»
 
-Q-07. **Escrito y probado, todavía no desplegado** — ver Q-30 en `TAREAS.md`.
+Q-07. **Desplegado y verificado en producción el 5 ago 2026.** Falta encender el candado —Q-30—, que espera a que cada aparato entre una vez.
 
 ### Añadido
 - **La identidad la pone el servidor.** Cuentas con clave derivada (PBKDF2-SHA256, 100.000
