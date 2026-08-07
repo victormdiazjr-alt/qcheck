@@ -49,6 +49,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-08-07 | **Q-42 — Salir deja de ocupar un mosaico.** Era del mismo tamaño que Recepción o Muestras dentro de la rejilla de puertas, y salir se hace una vez al día. Pasa a la cabecera, pequeño y apartado por una línea fina, en rojo solo al pasar por encima | claude |
 | 2026-08-07 | **Q-41 — Un vaciado cerrado queda cerrado.** Solo el ingeniero de récord (capacidad `firma`, nunca el nombre de usuario) puede reabrirlo o corregir un dato. Ni el administrador. Guardado en Muestras, en Recepción y al reabrir, siempre con el motivo a la vista | claude |
 | 2026-08-07 | **Q-40 — Los límites tienen fecha.** Cambiarlos rige de hoy en adelante; lo ya vaciado se sigue juzgando con los suyos y las cartas y reportes los dibujan. Al cerrar un tiro se le congela una copia encima. Antes, tocar un límite volvía a juzgar los 397 ensayos desde noviembre de 2025 — el récord cambiaba solo. Al actualizar no se altera ni un veredicto | claude |
 | 2026-08-06 | **Q-39 — QCheck manda correo por su cuenta.** Ruta `/api/correo` en los dos servidores, por HTTP directo y sin dependencias. Manda el SERVIDOR, así que sale de noche y con el iPad apagado. Detrás del secreto de administración y no de la llave del proyecto. **Dormida sin llave**: contesta 501 y lo dice, en vez de hacer creer que envió. Falta la llave de envío y verificar el dominio — es de Víctor. Desbloquea Q-04 | claude |
