@@ -327,8 +327,20 @@ function mountStatusBar(day, opciones) {
     bar = document.createElement("div");
     bar.id = "qc-status";
     bar.className = "qcs";
-    bar.innerHTML = `
+      /* El atajo al estado del sistema — Q-45, 7 ago 2026. Era un mosaico del
+         Control Center del mismo tamaño que Recepción, y es una pantalla de
+         mirar, no una puerta de trabajo. Aquí queda a mano desde CUALQUIER
+         pantalla, que es donde de verdad se echa en falta: uno se pregunta
+         «¿estarán conectados?» estando en Muestras, no en el Control Center.
+
+         Pegado al indicador de conexión porque cuentan lo mismo: quién está y
+         cómo va la señal. Y solo lo ve quien puede entrar. */
+      const veSistema = typeof qcVeConfig === "function" && qcVeConfig();
+      bar.innerHTML = `
       <a class="qcs-tiro" id="qcs-tiro" href="results.html#daily"></a>
+      ${veSistema ? `<a class="qcs-sistema" href="estado.html" title="Estado del sistema — qué aparatos están conectados">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3.5" width="18" height="6" rx="1.6"/><rect x="3" y="14.5" width="18" height="6" rx="1.6"/><path d="M6.6 6.5h.01M6.6 17.5h.01"/></svg>
+      </a>` : ""}
       <div class="qcs-conn" id="qcs-conn"><i></i><span></span></div>`;
     document.body.appendChild(bar);
     document.documentElement.classList.add("qcs-fija");
@@ -473,6 +485,18 @@ html.qcs-fija header.qc-header { top: var(--qcs-h); }
   padding-right: calc(12px * var(--qcs-e,1)); }
 /* con la conexión ya empujada a la derecha, el botón la sigue */
 .qcs-conn + .close-btn { margin-left: 0; }
+/* El atajo al estado del sistema (Q-45). Cuando está, es él quien empuja hacia
+   la derecha y la conexión lo sigue pegada. */
+.qcs-sistema {
+  display: flex; align-items: center; flex: none; margin-left: auto;
+  color: rgba(238,242,246,.42); text-decoration: none;
+  padding: calc(3px * var(--qcs-e,1)) calc(9px * var(--qcs-e,1)) calc(3px * var(--qcs-e,1)) 0;
+  transition: color .18s ease;
+}
+.qcs-sistema svg { width: calc(15px * var(--qcs-e,1)); height: calc(15px * var(--qcs-e,1)); display: block; }
+.qcs-sistema:hover { color: #eef2f6; }
+.qcs-sistema:focus-visible { outline: 2px solid #4a63d8; outline-offset: 2px; border-radius: 3px; }
+.qcs-sistema + .qcs-conn { margin-left: 0; }
 .qcs-conn i { width: calc(6px * var(--qcs-e,1)); height: calc(6px * var(--qcs-e,1));
   border-radius: 50%; background: currentColor; box-shadow: 0 0 calc(7px * var(--qcs-e,1)) currentColor;
   animation: qcsLatir 1.9s ease-in-out infinite; }
