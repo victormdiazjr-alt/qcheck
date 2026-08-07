@@ -116,11 +116,14 @@ h2.sec-title { font-size: 18px; margin: 26px 0 12px; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=591d4255"></script>
+<script src="assets/core.js?v=ae9fd4cf"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
-const state = { chartRange: "all" };
+/* `dia` = "todo" para el proyecto entero, o una fecha concreta para mirar un
+   solo vaciado — Q-44, 7 ago 2026. La Autoridad podía ver el acumulado pero no
+   podía entrar en un tiro. Ahora puede hacer las dos cosas. */
+const state = { chartRange: "all", dia: "todo" };
 
 function donut(pct, color, size = 86) {
   const r = 34, c = 2 * Math.PI * r;
@@ -135,9 +138,14 @@ function donut(pct, color, size = 86) {
 }
 
 function render() {
-  const tests = sortedTests();
-  const sets = strengthSets();
-  const days = testDates();
+  const days = diasDelProyecto();
+  if (state.dia !== "todo" && !days.includes(state.dia)) state.dia = "todo";
+  const unDia = state.dia !== "todo";
+  /* Todo lo de abajo cuelga de `tests` y `sets`: filtrando aquí, el tablero
+     entero —cumplimiento, resistencia, cartas, lotes y rechazos— pasa a hablar
+     de ese vaciado y de ningún otro. */
+  const tests = unDia ? sortedTests().filter((t) => t.date === state.dia) : sortedTests();
+  const sets = unDia ? strengthSets().filter((s) => s.date === state.dia) : strengthSets();
   const totalCY = tests.reduce((a, t) => a + (num(t.vol) || 0), 0);
   const rejected = tests.filter((t) => t.rejected);
   const evaluated = tests.filter((t) => worstZone(t) != null);
@@ -188,6 +196,17 @@ function render() {
 
   const r = state.chartRange;
   document.getElementById("content").innerHTML = `
+    <!-- Elegir qué se está mirando: todo el proyecto o un vaciado — Q-44. -->
+    <div class="toolbar" style="margin-bottom:14px">
+      <select onchange="state.dia=this.value; render()" aria-label="Qué vaciado se está mirando">
+        <option value="todo" ${state.dia === "todo" ? "selected" : ""}>Todo el proyecto — ${days.length} vaciados</option>
+        ${days.map((d) => `<option value="${d}" ${state.dia === d ? "selected" : ""}>Vaciado del ${fmtDate(d)}${d === todayISO() ? " · hoy" : ""}</option>`).join("")}
+      </select>
+      <span class="muted" style="font-size:12.5px">${unDia
+        ? `Cumplimiento, resistencia, cartas, lotes y rechazos de ese día`
+        : `Acumulado de todo el proyecto`}</span>
+    </div>
+
     <h2 class="sec-title" id="compliance">Resumen de cumplimiento</h2>
     <div class="wgrid">
       <div class="stat ${compliancePct >= 90 ? "good" : ""}"><div class="label">Dentro de límites de acción</div>

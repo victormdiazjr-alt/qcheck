@@ -132,14 +132,14 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=591d4255"></script>
+<script src="assets/core.js?v=ae9fd4cf"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
 const state = { day: null };
 
 function render() {
-  const days = testDates();
+  const days = diasDelProyecto();
   if (!state.day || !days.includes(state.day)) state.day = days[0];
   if (typeof pintarTiro === "function") pintarTiro(state.day);   // el tiro sube en vivo
   const sel = document.getElementById("day-sel");

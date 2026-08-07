@@ -725,6 +725,24 @@ function zClass(z) { return z ? ` class="num z-${z}"` : ` class="num"`; }
    de verdad no tendría cómo. */
 function vivos(lista) { return lista.filter((t) => !t.borrado); }
 function sortedTests() { return vivos(db.tests).sort((a, b) => a.n - b.n); }
+/* Los días que un tablero puede enseñar — Q-44, 7 ago 2026.
+
+   `testDates()` devuelve los días que tienen camiones. Eso deja fuera HOY
+   hasta que llega el primero, y en un día de vaciado eso es justo cuando más
+   se mira el tablero: a las siete de la mañana, esperando.
+
+   Aquí se añade hoy si el día está en marcha —hay tiro programado o el día
+   está abierto—, para que aparezca en la lista desde el principio aunque
+   todavía no haya nada que contar. */
+function diasDelProyecto() {
+  const dias = testDates();
+  const hoy = todayISO();
+  if (dias.includes(hoy)) return dias;
+  const meta = (db.dayMeta || {})[hoy];
+  const enMarcha = meta && (meta.cyPlan != null || meta.losas || meta.fase || meta.cerradoA);
+  return enMarcha ? [hoy, ...dias] : dias;
+}
+
 function testDates() { return [...new Set(vivos(db.tests).map((t) => t.date))].sort().reverse(); }
 
 /* Retira todo lo registrado en un día. Es lo que hace falta antes del primer

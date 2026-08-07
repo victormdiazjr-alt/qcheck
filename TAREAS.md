@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-44 | **Cada tablero puede mirar cualquier tiro** — pasado o el de hoy. La Autoridad no tenía selector, y en los otros dos hoy no salía hasta el primer camión | claude | 2026-08-07 |
+| Q-45 | **Estado del sistema sale de los botones** — va arriba, junto al indicador de conexión, con icono de servidor | claude | 2026-08-07 |
 
 ---
 
@@ -49,6 +49,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-08-07 | **Q-44 — Cada tablero puede mirar cualquier tiro.** La Autoridad no tenía forma de entrar en un vaciado concreto: solo veía el acumulado. Ahora los tres eligen día, y hoy aparece en la lista desde que hay tiro programado, no desde el primer camión — que es justo cuando más se mira el tablero | claude |
 | 2026-08-07 | **Q-43 — Los avisos solo en el Control Center.** Fuera de Results (dos juegos distintos), del reporte impreso y del reporte de los tableros. Son ayudas para actuar durante el vaciado, no material de archivo: en un informe firmado son una deducción automática sin firma junto a mediciones que sí la tienen. El control de humedad se conserva, que eso es un dato entrado y no una deducción | claude |
 | 2026-08-07 | **Q-42 — Salir deja de ocupar un mosaico.** Era del mismo tamaño que Recepción o Muestras dentro de la rejilla de puertas, y salir se hace una vez al día. Pasa a la cabecera, pequeño y apartado por una línea fina, en rojo solo al pasar por encima | claude |
 | 2026-08-07 | **Q-41 — Un vaciado cerrado queda cerrado.** Solo el ingeniero de récord (capacidad `firma`, nunca el nombre de usuario) puede reabrirlo o corregir un dato. Ni el administrador. Guardado en Muestras, en Recepción y al reabrir, siempre con el motivo a la vista | claude |
