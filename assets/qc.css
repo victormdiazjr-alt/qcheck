@@ -621,4 +621,14 @@ button.qcd-op { width: 100%; text-align: left; font-family: inherit; cursor: poi
 .tabla-ancha { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table.descartados td { white-space: normal; }
 table.descartados td:first-child { white-space: nowrap; }
-table.descartados td:nth-child(2) { min-width: 16rem; }
+/* Sin `min-width`: era lo que empujaba el botón fuera de la vista. El motivo
+   se estrecha todo lo que haga falta y parte líneas; lo que no puede pasar es
+   que la acción quede detrás de un arrastre lateral. */
+table.descartados td:nth-child(2) { min-width: 0; }
+@media (max-width: 640px) {
+  table.descartados, table.descartados tbody, table.descartados tr { display: block; }
+  table.descartados thead { display: none; }
+  table.descartados tr { padding: 10px 0; border-bottom: 1px solid var(--line); }
+  table.descartados td { display: block; border: 0; padding: 2px 0; }
+  table.descartados td:last-child { padding-top: 8px; }
+}
