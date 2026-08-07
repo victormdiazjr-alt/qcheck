@@ -699,3 +699,18 @@ Rubén y solo Rubén: reabrir un tiro cerrado y descartar un vaciado del
 expediente no los puede hacer nadie más. Es coherente con §22, pero conviene
 saberlo antes y no delante de la pantalla.
 
+**Ampliación (Q-51b, 7 ago 2026).** Quedaban seis botones-enlace en las
+cabeceras: tres «🖥 Field Display» (contratista, conduce, producción) y tres
+«← Control Center» (estado, reporte, settings). Eran lo mismo que los links de
+la cabecera del Control Center —destinos elegidos a dedo, disfrazados de
+botón— y sobraban desde que la barra de arriba lleva atrás, adelante, casa y
+cerrar en todas las pantallas.
+
+Antes de quitarlos se comprobó pantalla por pantalla que ninguna se quedaba
+sin salida: las tres que no son casa de nadie ganan el botón de casa y la ✕;
+las dos que sí lo son —contratista y producción— se quedan con atrás y
+adelante, que es lo que corresponde a un tablero de una sola pantalla.
+
+Lo que **no** se toca: «Conectar este aparato» en Estado del sistema y «Print
+report» en el tablero del contratista. Son acciones, no navegación.
+
