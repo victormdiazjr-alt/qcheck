@@ -126,9 +126,9 @@ body { background: var(--bg); }
   <div class="pie-nota" id="pie"></div>
 </main>
 
-<script src="assets/sync.js?v=8e0c9b43"></script>
+<script src="assets/sync.js?v=426ef405"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=b374ba71"></script>
+<script src="assets/core.js?v=d46f675c"></script>
 <script>
 "use strict";
 
@@ -289,7 +289,7 @@ function pintar(datos) {
   if (btn) btn.onclick = () => { verIdos = !verIdos; pintar(datos); };
 
   document.getElementById("pie").textContent =
-    `Se refresca sola cada 5 segundos · un aparato se da por ido si pasa un minuto sin latir · hora del servidor ${new Date(ahora).toLocaleTimeString("es-PR")}`;
+    `Se refresca sola cada 10 segundos · un aparato se da por ido si pasa un minuto sin latir · hora del servidor ${new Date(ahora).toLocaleTimeString("es-PR")}`;
 }
 
 /* Un aviso que dice «conéctelo primero» y no dice por dónde deja a alguien
@@ -351,7 +351,7 @@ mountThemeToggle();
 mountStatusBar();
 enableLiveSync(() => {});   // el latido de este aparato también sale de aquí
 refrescar();
-setInterval(refrescar, 5000);
+setInterval(refrescar, 10000);
 </script>
 </body>
 </html>

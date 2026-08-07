@@ -655,3 +655,47 @@ parece una decisión de diseño. La clase de la casa es `.panel`, con
 `panel-body`, `w`, `grid`, `data`, `btn`— tienen que estar definidas en
 `qc.css`, o falla. Probada reintroduciendo el fallo a propósito: lo caza.
 
+## 30 · Auditoría de la víspera del primer vaciado en vivo
+
+**Q-53 — 7 de agosto de 2026**
+
+Repaso completo antes de correr un tiro de verdad en varios aparatos.
+
+**Los campos del expediente salían en crudo.** «Estado del sistema» enseñaba
+`resultsAt 16:38` y `losasPlan 13` en vez de frases: la lista de nombres
+legibles se quedó en los campos del camión y nunca creció con el plan del día.
+Se sacaron del **propio expediente de producción** —879 ops, 16 campos escritos
+de verdad y sin nombre— en vez de adivinarlos, más los de Q-47 y Q-48 que
+mañana aparecen por primera vez.
+
+**Cuando Cloudflare corta por cuota, decía «No signal».** Nada se perdía —lo
+pendiente queda en cola y sube solo al volver— pero el rótulo mandaba al
+técnico a mirar el WiFi mientras las muestras se amontonaban por otra razón.
+El 429, el 1027 del plan gratis y el 503 ahora se dicen con su nombre:
+«Server limit · N unsent». Probado de punta a punta: se corta el servidor, se
+registra un camión, el camión se queda en pantalla y en cola, vuelve el
+servidor y el camión sube solo.
+
+**El sondeo de «Estado del sistema» pasa de 5 s a 10 s.** Era la pantalla más
+cara —dos peticiones cada cinco segundos— y es de mirar, no de trabajar. El
+sondeo del expediente **se queda en 3 s y no se toca**: es el corazón del
+vaciado en vivo, y la víspera de un tiro no es el día de tocarlo.
+
+**Lo que se midió y está bien.** Los dos servidores responden igual (33 casos,
+una divergencia y es de diseño) y el candado de sesión sale entero —y `git`
+confirma que esta auditoría no tocó ni `sync-worker.js` ni `sync-servidor.js`,
+así que esa corrida sigue valiendo—. Lo publicado en las nueve pantallas es lo
+último. Los assets viajan comprimidos: 422 KB en disco, 90 KB por el cable.
+Producción contesta entre 0,13 y 0,30 s.
+
+**Lo que queda como riesgo y no es código.** Con el plan gratis de Workers
+—100.000 peticiones al día— seis aparatos durante nueve horas rondan las
+75.000. Cabe, pero sin holgura, y el aviso de cuota existe precisamente porque
+ese techo está más cerca de lo que parece.
+
+**Y una capacidad que no está donde se creía.** La cuenta `admin` tiene
+`firma: 0`, tanto en el cliente como en el servidor. El ingeniero de récord es
+Rubén y solo Rubén: reabrir un tiro cerrado y descartar un vaciado del
+expediente no los puede hacer nadie más. Es coherente con §22, pero conviene
+saberlo antes y no delante de la pantalla.
+

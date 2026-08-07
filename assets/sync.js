@@ -275,6 +275,11 @@ const QCSync = {
       throw new Error(motivo === "sesion" ? "sesion" : "token");
     }
     if (r.status === 403) throw new Error("rol");
+    /* Cloudflare corta por cuota con 429 (y con 1027 cuando es el límite
+       diario del plan gratis). Se distingue de «no hay señal» porque se
+       arregla de otra manera: el WiFi está perfecto y mirarlo es perder el
+       tiempo mientras las muestras se amontonan. Auditoría del 7 ago 2026. */
+    if (r.status === 429 || r.status === 1027 || r.status === 503) throw new Error("cuota");
     if (!r.ok) throw new Error("http " + r.status);
     return r.json();
   },
@@ -292,6 +297,7 @@ const QCSync = {
       this.estado = e.message === "token" ? "sin-llave"
         : e.message === "sesion" ? "sin-sesion"
         : e.message === "rol" ? "sin-permiso"
+        : e.message === "cuota" ? "sin-cuota"
         : "sin-senal";
     }
   },
@@ -320,6 +326,7 @@ const QCSync = {
       this.estado = e.message === "token" ? "sin-llave"
         : e.message === "sesion" ? "sin-sesion"
         : e.message === "rol" ? "sin-permiso"
+        : e.message === "cuota" ? "sin-cuota"
         : "sin-senal";
     }
   },

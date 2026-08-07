@@ -497,6 +497,10 @@ function pintarConexion() {
      amontonan por otra razón. */
   else if (s === "sin-sesion") { clase = " off"; texto = pend ? `Sign in again · ${pend} unsent` : "Sign in again"; }
   else if (s === "sin-permiso") { clase = " off"; texto = "No write access"; }
+  /* Cuota del servidor agotada. Nada se pierde —lo pendiente sigue en cola y
+     sube solo cuando el servidor vuelve—, pero hay que decirlo con su nombre:
+     el WiFi está bien y no hay nada que revisar en la obra. */
+  else if (s === "sin-cuota") { clase = " off"; texto = pend ? `Server limit · ${pend} unsent` : "Server limit reached"; }
   else if (s === "sin-senal") { clase = " off"; texto = pend ? `No signal · ${pend} unsent` : "No signal"; }
   else { clase = " solo"; texto = "Connecting…"; }
   el.className = "qcs-conn" + clase;
@@ -2531,6 +2535,23 @@ const QC_NOMBRE_CAMPO = {
   uwTarget: "Objetivo de Unit Weight", rejected: "Rechazo",
   cs1: "Resistencia 1 día", cs5: "Resistencia 5 días", cs28: "Resistencia 28 días",
   comments: "Comentarios", source: "Origen", n: "Número de fila",
+  resultsAt: "Resultados registrados",
+
+  /* El plan del día. Salían en crudo en «Estado del sistema» —«losasPlan», «cyPlan»,
+     «cerradoA»— hasta la auditoría del 7 ago 2026, que los sacó del propio
+     expediente de producción en vez de adivinarlos: 16 campos escritos de verdad
+     y sin nombre. Q-53. */
+  cyPlan: "Yardas planificadas", losasPlan: "Losas planificadas", losas: "Losas",
+  horaInicio: "Hora de arranque", fase: "Fase", lane: "Carril", km: "Kilómetro",
+  cierre: "Cierre", notas: "Notas del día", fecha: "Día del vaciado",
+  cerradoA: "Tiro cerrado a las", cerradoPor: "Tiro cerrado por",
+  plan: "Límites congelados del día",
+  borrado: "Tiro descartado", borradoMotivo: "Motivo del descarte",
+  borradoPor: "Descartado por", borradoA: "Descartado el",
+
+  /* Del plan de control y de la configuración. */
+  humidityMaxHours: "Horas máximas entre humedades", tempMax: "Temperatura máxima",
+  demo: "Simulación",
 };
 
 /* Un valor, como se lee en una frase. `false` en un campo de rechazo no es
