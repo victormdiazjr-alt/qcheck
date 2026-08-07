@@ -428,3 +428,19 @@ certifica.
 que sí. Si la única diferencia es un campo que la sincronización descarta, entonces desde el
 otro lado no hay diferencia ninguna — y el expediente deja de ser una sola verdad, que es lo
 único que QCheck vende.
+
+**Ampliación del 7 ago 2026, tras dos arreglos fallidos.** La causa de verdad no era el
+sembrado: era que **el plan del día se fusiona al guardarlo** (`{...lo que había, ...lo
+nuevo}`), y esa fusión conservaba `source: "demo"`. Rubén programaba un tiro REAL sobre un
+día que la simulación había sembrado, el tiro heredaba la marca, y la sincronización —que
+excluye lo marcado, y con razón— **no lo mandaba nunca**. Él lo veía en su pantalla; nadie
+más. Los dos Control Center decían cosas distintas y ninguno estaba roto.
+
+Ahora la marca se cae en cuanto una persona guarda el plan: **quien programa un tiro es una
+persona, y desde ese momento el día es de verdad y viaja.**
+
+Y la limpieza automática se volvió prudente: solo borra un día marcado si **sigue siendo la
+simulación tal cual la sembró** (260 cy y 13 losas, sin camiones). Si hay camiones detrás, o
+el plan ya no es el suyo, le quita la marca en vez de borrarlo. Borrar de más habría sido
+peor que el fallo: se llevaría por delante el tiro que alguien acaba de programar y todavía
+no tiene camiones — la mañana de cualquier vaciado.

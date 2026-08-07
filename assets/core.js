@@ -53,7 +53,21 @@ function limpiarResiduoSimulacion() {
   db.tests = db.tests.filter((t) => t.source !== "demo");
   let toco = db.tests.length !== antes;
   for (const [dia, m] of Object.entries(db.dayMeta || {})) {
-    if (m && m.source === "demo") { delete db.dayMeta[dia]; toco = true; }
+    if (!m || m.source !== "demo") continue;
+    /* SOLO se borra lo que sigue siendo la simulación tal cual la sembró.
+       Si hay camiones de verdad detrás, o el plan ya no es el de la
+       simulación, es que una persona lo tocó: entonces se le quita la marca
+       —que es lo que estaba mal— y el día pasa a viajar.
+
+       Borrar de más aquí sería peor que el fallo original: se llevaría por
+       delante el tiro que alguien acaba de programar y todavía no tiene
+       camiones, que es la mañana de cualquier vaciado. */
+    const hayCamionReal = testsOfDate(dia).some((x) => x.source !== "demo");
+    const planIntacto = num(m.cyPlan) === 260 && num(m.losasPlan) === 13;
+    if (hayCamionReal || !planIntacto) {
+      delete db.dayMeta[dia].source; toco = true; continue;
+    }
+    delete db.dayMeta[dia]; toco = true;
   }
   if (toco) {
     console.warn("QCheck: se retiraron " + (antes - db.tests.length) +
@@ -2576,7 +2590,22 @@ function formDayMeta(day) {
     // Se fusiona: este formulario y el del contratista escriben el mismo día,
     // y reemplazar el objeto le borraba el plan al otro.
     onSave: (v) => {
+        /* AL TOCARLO UNA PERSONA, DEJA DE SER SIMULACIÓN — Q-46, 7 ago 2026.
+
+           El objeto se fusiona porque este formulario y el del contratista
+           escriben el mismo día. Pero fusionar conservaba también `source`, y
+           si la simulación había sembrado ese día, el plan REAL heredaba la
+           marca `source: "demo"` — que es justo la que hace que la
+           sincronización NO lo mande.
+
+           Resultado: Rubén programaba el tiro, lo veía en su pantalla, y no
+           salía de su PC. Víctor no veía ningún tiro y los dos Control Center
+           decían cosas distintas. Costó dos arreglos fallidos encontrarlo.
+
+           Quien programa un tiro es una persona. Desde ese momento el día es
+           de verdad y viaja. */
       db.dayMeta[day] = { ...(db.dayMeta[day] || {}), ...v };
+      delete db.dayMeta[day].source;
       saveDB(); render(); toast("Datos del día guardados");
     },
   });
