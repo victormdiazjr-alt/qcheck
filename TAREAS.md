@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-39 | **QCheck manda correo por su cuenta** — envío desde el servidor, sin depender de que Víctor esté delante. Es lo que Q-04 (aviso de rechazo) lleva esperando | claude | 2026-08-06 |
 
 ---
 
