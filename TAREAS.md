@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-39 | **QCheck manda correo por su cuenta** — envío desde el servidor, sin depender de que Víctor esté delante. Es lo que Q-04 (aviso de rechazo) lleva esperando | claude | 2026-08-06 |
+_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 
 ---
 
@@ -49,6 +49,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-08-06 | **Q-39 — QCheck manda correo por su cuenta.** Ruta `/api/correo` en los dos servidores, por HTTP directo y sin dependencias. Manda el SERVIDOR, así que sale de noche y con el iPad apagado. Detrás del secreto de administración y no de la llave del proyecto. **Dormida sin llave**: contesta 501 y lo dice, en vez de hacer creer que envió. Falta la llave de envío y verificar el dominio — es de Víctor. Desbloquea Q-04 | claude |
 | 2026-08-06 | **Q-38 — Los tableros imprimen un reporte escrito** del tiro y de sus indicadores: cifras del día, estadísticas de las cuatro propiedades, avisos, camión por camión y los límites contra los que se juzgó. Escrito y no captura: una carta de control en papel y en blanco y negro no dice nada. Vive en `core.js` para que el contratista y la Autoridad no reciban dos papeles distintos del mismo día | claude |
 | 2026-08-06 | **Q-37 — Cada quien entra a lo suyo**: tres cuentas de consulta (concretero, contratista, autoridad) que caen directas en su tablero, sin navegación y sin poder salirse; Rubén con pantalla `Settings` propia —solo los límites, sin la llave del servidor ni la simulación—; admin lo ve todo. Capacidades `casa` y `limites` en la cuenta, nunca deducidas del nombre. Encontrado y corregido de paso un fallo del Worker desde Q-07: una actualización parcial degradaba el papel a `consulta` | claude |
 | 2026-08-06 | **Q-36 — El estado del sistema dice qué está haciendo cada quien**, y guarda los desconectados. Ruta nueva `/api/actividad` en los dos servidores (las ÚLTIMAS del registro; `/api/cambios` devuelve las primeras y no servía). Cada tarjeta dice la faena en voz de obra y el último cambio real de ese aparato —con su camión, no con el número de fila—, y si viene de otro aparato de la misma persona lo dice. Los idos, detrás de un botón que aguanta abierto entre refrescos | claude |

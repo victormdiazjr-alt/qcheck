@@ -37,6 +37,11 @@ const atenderAPI = montarAPI(almacen, process.env.QC_TOKEN || "", {
   /* La llave que lee el conduce de la foto (Q-01). Sin ella, Recepción sigue
      funcionando a mano — que es como funciona hoy. */
   anthropic: process.env.QC_ANTHROPIC || "",
+  /* La llave con la que QCheck manda correo (Q-39). Sin ella, la ruta de
+     correo contesta 501 y nadie se entera de nada — que es lo correcto:
+     mejor callar que hacer creer que un aviso salió. */
+  correo: process.env.QC_CORREO || "",
+  correoDe: process.env.QC_CORREO_DE || "",
 });
 
 http.createServer((req, res) => {

@@ -379,6 +379,56 @@ async function leerConduce(llave, imagen, tipo) {
 
    Devuelve `true` si atendió la petición, para que `serve.js` sepa si le
    toca servir un archivo. */
+/* ------------------------------------------------------------ correo saliente
+
+   Q-39, 6 ago 2026. Hasta hoy QCheck no mandaba nada: el aviso de rechazo
+   (Q-04) abría un correo pre-llenado y esperaba a que una persona le diera a
+   enviar. Eso significa que si el técnico está con las manos llenas, el aviso
+   no sale — y un rechazo que nadie ve a tiempo es hormigón colocado.
+
+   Manda el SERVIDOR, no el aparato. Así sale igual de noche, con el iPad
+   apagado y sin nadie delante.
+
+   POR HTTP DIRECTO, SIN SDK. Igual que el lector de conduce (Q-01): una
+   llamada `fetch` y ya. Aquí no entra una dependencia por mandar un correo.
+
+   DORMIDO SIN LLAVE. Sin `QC_CORREO` puesta, la ruta contesta 501 y lo dice.
+   No falla a medias ni se inventa que envió.
+
+   LA CONTRASEÑA DE NADIE VIVE AQUÍ. Es una llave de ENVÍO: solo sirve para
+   mandar correo, no da acceso a ningún buzón. Si se filtra, se revoca y ya.
+   Una contraseña de Gmail habría abierto el buzón entero. */
+
+async function enviarCorreo(env, { para, asunto, html, texto, responderA }) {
+  if (!env.QC_CORREO) return { ok: false, codigo: 501, error: "sin-correo" };
+  const de = env.QC_CORREO_DE || "QCheck <onboarding@resend.dev>";
+  const destinos = Array.isArray(para) ? para : [para];
+  if (!destinos.length || destinos.some((d) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(d))))
+    return { ok: false, codigo: 400, error: "destino" };
+
+  const cuerpo = { from: de, to: destinos, subject: String(asunto || "").slice(0, 200) };
+  if (html) cuerpo.html = html;
+  if (texto) cuerpo.text = texto;
+  if (!html && !texto) return { ok: false, codigo: 400, error: "vacio" };
+  if (responderA) cuerpo.reply_to = responderA;
+
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + env.QC_CORREO, "Content-Type": "application/json" },
+      body: JSON.stringify(cuerpo),
+    });
+    const d = await r.json().catch(() => ({}));
+    /* El id que devuelve el servicio se guarda: es lo único que permite
+       después preguntar si un aviso llegó de verdad o rebotó. */
+    if (!r.ok) return { ok: false, codigo: r.status, error: (d && d.message) || "envio" };
+    return { ok: true, id: d.id || null };
+  } catch (e) {
+    return { ok: false, codigo: 502, error: "sin-respuesta" };
+  }
+}
+
+
 function montarAPI(almacen, token, opciones) {
   const presencia = new Map();   // dev → { dev, usr, pagina, desde, visto }
   const cfg = opciones || {};
@@ -555,6 +605,18 @@ function montarAPI(almacen, token, opciones) {
       if (exige && !quien) return responder(res, 401, { error: "sesion" });
       const n = Math.min(500, Math.max(1, Number(url.searchParams.get("n")) || 120));
       return responder(res, 200, { ahora: new Date().toISOString(), ops: almacen.ultimas(n) });
+    }
+
+    /* Mandar un correo — Q-39. Gemela de la del Worker: los dos servidores
+       tienen que contestar lo mismo (DECISIONS §19). */
+    if (url.pathname === "/api/correo" && req.method === "POST") {
+      if (!esAdmin(req)) return responder(res, 403, { error: "admin" });
+      let d;
+      try { d = await cuerpoDe(req, 2e6); } catch (_) { return responder(res, 400, { error: "json" }); }
+      const r = await enviarCorreo({ QC_CORREO: cfg.correo || "", QC_CORREO_DE: cfg.correoDe || "" }, {
+        para: d.para, asunto: d.asunto, html: d.html, texto: d.texto, responderA: d.responderA,
+      });
+      return responder(res, r.ok ? 200 : r.codigo, r.ok ? { ok: true, id: r.id } : { error: r.error });
     }
 
     if (url.pathname === "/api/cambios" && req.method === "GET") {
