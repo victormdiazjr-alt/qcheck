@@ -215,6 +215,14 @@ function mountThemeToggle() {
    - en un teléfono, al portal — el Control Center no cabe en la mano;
    - el invitado, siempre al portal: no tiene tablero.                    */
 function casaDe() {
+  /* La casa de la cuenta manda — Q-51. El contratista, el concretero y la
+     Autoridad tienen su tablero por casa (`casa:` en usuarios.js), y hasta
+     ahora tanto la ✕ como el volver los mandaban a `movil.html`, que no es su
+     sitio: es el portal de campo del equipo de QC. Se deducía de `rol`, y el
+     papel de cada quien sale de las capacidades de la cuenta, nunca de otra
+     cosa (AGENTS §3). */
+  const propia = typeof qcCasa === "function" && qcCasa();
+  if (propia) return propia;
   if (typeof qcEsQC === "function" && !qcEsQC()) return "movil.html";
   return esTelefono() ? "movil.html" : "control-center.html";
 }
@@ -261,6 +269,49 @@ function salirDeQCheck() {
   location.href = "index.html";
 }
 const ICONO_SALIR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5H19a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5h-4.5"/><path d="M9.5 16 5.5 12l4-4"/><path d="M5.5 12h9"/></svg>`;
+
+/* NAVEGACIÓN DE VERDAD, NO UNA LISTA DE ATAJOS — Q-51, 7 de agosto de 2026.
+
+   La cabecera llevaba «Results ↗ · Reportes ↗ · Field Display ↗»: tres links
+   sueltos que no eran navegación sino tres destinos elegidos a dedo. No
+   servían para volver, que es lo que uno necesita el 90% de las veces, y en
+   cambio ocupaban el sitio donde la vista busca los controles.
+
+   Se cambian por lo que hace un navegador: atrás, adelante, casa y cerrar.
+   A los destinos se entra por los mosaicos del Control Center, que ya están.
+
+   «Adelante» solo se enciende si de verdad hay algo delante. El navegador no
+   lo dice, así que se mira el tipo de navegación de esta carga: si llegamos
+   aquí con el botón de atrás hay historia por delante; si llegamos siguiendo
+   un enlace, no la hay y se apaga. Un botón que no hace nada es peor que un
+   botón ausente. */
+function hayAdelante() {
+  try {
+    const nav = performance.getEntriesByType("navigation")[0];
+    if (nav && nav.type === "back_forward") { sessionStorage.setItem("qc-fwd", "1"); return true; }
+    if (nav && nav.type === "navigate") sessionStorage.removeItem("qc-fwd");
+  } catch (_) {}
+  return sessionStorage.getItem("qc-fwd") === "1";
+}
+
+const ICONO_NAV = {
+  atras:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>`,
+  adelante: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>`,
+  casa:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.6 12 4l8.5 6.6"/><path d="M5.6 9.4V19a1 1 0 0 0 1 1h10.8a1 1 0 0 0 1-1V9.4"/><path d="M9.8 20v-5.4h4.4V20"/></svg>`,
+};
+
+function navHTML() {
+  const casa = casaDe();
+  const enCasa = location.pathname.split("/").pop() === casa;
+  const fwd = hayAdelante();
+  return `<div class="qcs-nav" id="qcs-nav">
+    <button class="qcs-b" onclick="history.back()" title="Atrás" aria-label="Atrás">${ICONO_NAV.atras}</button>
+    <button class="qcs-b" onclick="sessionStorage.removeItem('qc-fwd'); history.forward()"
+            title="Adelante" aria-label="Adelante"${fwd ? "" : " disabled"}>${ICONO_NAV.adelante}</button>
+    ${enCasa ? "" : `<a class="qcs-b" href="${esc(casa)}" title="${casa === "movil.html" ? "Portal" : "Control Center"}"
+            aria-label="Ir al inicio">${ICONO_NAV.casa}</a>`}
+  </div>`;
+}
 
 function mountCloseButton() {
   if (document.getElementById("close-btn")) return;
@@ -397,6 +448,7 @@ function mountStatusBar(day, opciones) {
       ${veSistema ? `<a class="qcs-sistema" href="estado.html" title="Estado del sistema — qué aparatos están conectados">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3.5" width="18" height="6" rx="1.6"/><rect x="3" y="14.5" width="18" height="6" rx="1.6"/><path d="M6.6 6.5h.01M6.6 17.5h.01"/></svg>
       </a>` : ""}
+      ${navHTML()}
       <div class="qcs-conn" id="qcs-conn"><i></i><span></span></div>`;
     document.body.appendChild(bar);
     document.documentElement.classList.add("qcs-fija");
@@ -515,6 +567,22 @@ html.qcs-fija header.qc-header { top: var(--qcs-h); }
 
 /* El botón vive dentro de la barra: se define aquí completo para que las
    pantallas de campo, que no cargan qc.css, lo vean igual. */
+/* Los botones de navegación — Q-51. Mismo tamaño y mismo aire que la ✕, que
+   es el cuarto del grupo: se leen como una sola pieza de mando. */
+.qcs-nav { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+.qcs-b {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: calc(26px * var(--qcs-e,1)); height: calc(26px * var(--qcs-e,1));
+  border: 0; border-radius: 7px; background: transparent; cursor: pointer;
+  color: rgba(238,242,246,.66); text-decoration: none; padding: 0;
+}
+.qcs-b svg { width: calc(16px * var(--qcs-e,1)); height: calc(16px * var(--qcs-e,1)); }
+.qcs-b:hover { background: rgba(238,242,246,.10); color: rgba(238,242,246,.95); }
+.qcs-b[disabled] { opacity: .26; cursor: default; }
+.qcs-b[disabled]:hover { background: transparent; color: rgba(238,242,246,.66); }
+/* La ✕ ya no necesita empujarse sola a la derecha: la lleva el grupo. */
+.qcs-nav ~ .close-btn, .qcs-nav ~ .qcs-conn { margin-left: 0; }
+
 .qcs .close-btn {
   position: static; flex: none; padding: 0; cursor: pointer; margin-left: auto;
   display: flex; align-items: center; justify-content: center;

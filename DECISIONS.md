@@ -597,3 +597,29 @@ se sacrifican los segmentos de avance, que son adorno, y se queda el rótulo.
 comprobar que el día que enseña es hoy. Una pantalla que cae a otro día por su
 cuenta está obligada a decir a cuál.
 
+## 28 · Navegación, no una lista de atajos
+
+**Q-51 — 7 de agosto de 2026**
+
+La cabecera llevaba «Results ↗ · Reportes ↗ · Field Display ↗»: tres links
+sueltos que no eran navegación sino tres destinos elegidos a dedo. No servían
+para lo que uno necesita el 90% de las veces —volver— y ocupaban el sitio
+donde la vista busca los controles.
+
+Fuera. En su lugar, en la barra de arriba y en **todas** las pantallas, lo que
+hace cualquier navegador: **atrás · adelante · casa · cerrar**. A Results y a
+Reportes se entra por los mosaicos del Control Center, que ya estaban.
+
+  · **Adelante solo se enciende si hay algo delante.** El navegador no lo
+    dice, así que se mira el tipo de navegación de esta carga: si llegamos con
+    el botón de atrás, hay historia por delante; si llegamos siguiendo un
+    enlace, no la hay. Un botón que no hace nada es peor que un botón ausente.
+  · **Casa y cerrar desaparecen cuando ya estás en casa.**
+
+**Y un fallo que salió por el camino.** `casaDe()` deducía la casa del `rol`,
+así que al contratista, al concretero y a la Autoridad los mandaba a
+`movil.html` —el portal de campo del equipo de QC— en vez de a su tablero. Ya
+fallaba con la ✕ desde antes; el botón de casa lo habría heredado. Ahora manda
+la capacidad `casa:` de la cuenta, que es de donde sale siempre el papel de
+cada quien (AGENTS §3).
+
