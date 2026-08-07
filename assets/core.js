@@ -32,7 +32,40 @@ function loadDB() {
 /* La simulación: si hoy no tiene ni un camión, se arranca con un tiro ya en
    marcha para que el sistema se pueda enseñar. Ver assets/demo.js. */
 const QC_NUEVO_TIRO = "qc-nuevo-tiro";
+/* La limpieza de la simulación vive AQUÍ y no en demo.js — Q-46, 7 ago 2026.
+
+   Estaba en `demo.js`, detrás de `if (DEMO_ACTIVA) return false`. Eso quiere
+   decir que un aparato con ese archivo cacheado de cuando la simulación
+   estaba encendida NO LIMPIA NUNCA: se queda con sus camiones inventados para
+   siempre, y como llevan `source: "demo"` tampoco viajan al servidor. Nadie
+   más los ve y él no puede dejar de verlos.
+
+   Fue justo lo que pasó: el Control Center de Rubén decía 197 yardas y el de
+   Víctor 157, y el arreglo que puse en `demo.js` tampoco le llegaba, por la
+   misma razón que el problema.
+
+   `core.js` es otro archivo, con su propio sello de versión, y lo carga toda
+   pantalla que hace algo. Aquí la limpieza corre pase lo que pase con demo.js.
+   Se cura solo al abrir. */
+function limpiarResiduoSimulacion() {
+  if (!db || !Array.isArray(db.tests)) return false;
+  const antes = db.tests.length;
+  db.tests = db.tests.filter((t) => t.source !== "demo");
+  let toco = db.tests.length !== antes;
+  for (const [dia, m] of Object.entries(db.dayMeta || {})) {
+    if (m && m.source === "demo") { delete db.dayMeta[dia]; toco = true; }
+  }
+  if (toco) {
+    console.warn("QCheck: se retiraron " + (antes - db.tests.length) +
+                 " ensayos de la simulación que quedaban en este aparato.");
+    saveDB();
+  }
+  return toco;
+}
+
 function sembrarDia() {
+  /* Primero limpiar, siempre. No depende de demo.js. */
+  limpiarResiduoSimulacion();
   /* La simulación se retiró para la primera prueba real (`DEMO_ACTIVA` en
      demo.js). Además de no sembrar, limpia el aparato: cuando se apagó ya
      estaba dentro del iPad, de la PC y del teléfono, y cada uno guarda lo
