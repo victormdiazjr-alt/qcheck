@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Settings — QCheck</title>
-<link rel="stylesheet" href="assets/qc.css?v=74da26be">
+<link rel="stylesheet" href="assets/qc.css?v=73b606bc">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -114,7 +114,7 @@ function panelDescartados() {
   return `<section class="panel"><div class="panel-head"><h2>Vaciados descartados</h2></div><div class="panel-body">
     <p class="muted">Siguen en el archivo y no cuentan en ningún reporte.
     Devolverlos los hace contar otra vez.</p>
-    <table class="data"><thead><tr>
+    <div class="tabla-ancha"><table class="data descartados"><thead><tr>
       <th>Día</th><th>Motivo</th><th>Descartado por</th><th></th>
     </tr></thead><tbody>
     ${filas.map(([d, m]) => `<tr>
@@ -123,7 +123,7 @@ function panelDescartados() {
       <td>${esc(m.borradoPor || "—")}${m.borradoA ? ` · ${esc(fmtDate(String(m.borradoA).slice(0, 10)))}` : ""}</td>
       <td><button class="btn sm" onclick="if (restaurarTiro('${esc(d)}')) render()">Devolver</button></td>
     </tr>`).join("")}
-    </tbody></table></div></section>`;
+    </tbody></table></div></div></section>`;
 }
 
 const TABS = [

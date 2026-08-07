@@ -613,3 +613,12 @@ button.qcd-op { width: 100%; text-align: left; font-family: inherit; cursor: poi
 .avisos-fondo .alert-row:first-child { padding-top: 0; }
 .avisos-fondo:hover { opacity: 1; }
 .avisos-fondo .lbl { margin-bottom: 8px; }
+
+/* Una tabla con texto libre dentro —el motivo de un descarte lo escribe una
+   persona— no cabe en un teléfono, y `white-space: nowrap` de `table.data`
+   la empuja fuera de la pantalla llevándose el botón. Se le da su propio
+   carril con scroll y se deja que el motivo parta líneas. Q-53. */
+.tabla-ancha { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.descartados td { white-space: normal; }
+table.descartados td:first-child { white-space: nowrap; }
+table.descartados td:nth-child(2) { min-width: 16rem; }
