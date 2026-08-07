@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-43 | **Los avisos solo en el Control Center** — fuera de Results, del reporte impreso y del reporte de los tableros | claude | 2026-08-07 |
 
 ---
 
