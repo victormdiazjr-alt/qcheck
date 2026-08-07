@@ -584,10 +584,23 @@ function esc(s) {
     .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 function num(v) { if (v === "" || v == null) return null; const n = Number(v); return Number.isFinite(n) ? n : null; }
-function fmt(n, dp = 1) {
+function fmt(n, dp = 1, min = 0) {
   if (n == null || !Number.isFinite(n)) return "—";
-  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: dp });
+  return n.toLocaleString(undefined, { minimumFractionDigits: Math.min(min, dp), maximumFractionDigits: dp });
 }
+
+/* EL SLUMP SIEMPRE CON DOS DECIMALES — Q-49, 7 de agosto de 2026.
+
+   `fmt` recorta los ceros de la derecha, así que un slump de 3" salía «3» y
+   uno de 3½" salía «3.5». En una medida de campo eso no vale: 3.00 y 3.50
+   dicen con qué precisión se midió, y en una columna de números leídos a toda
+   prisa en obra, «3» y «3.5» no se alinean ni se comparan de un vistazo.
+
+   Vale para el valor medido y para los límites del plan: si el reporte dice
+   que la zona de acción es 3.00–5.00", el camión que sale 3.00 se lee contra
+   ella sin traducir nada. Una sola función para que no vuelva a haber dos
+   criterios. */
+function fmtSlump(n) { return fmt(n, 2, 2); }
 function todayISO() {
   const d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -922,7 +935,7 @@ function estadisticas(vals) {
    tablero (`zoneSlump`, `zoneAir`…): la hoja firmada y la pantalla no pueden
    discrepar. */
 const QC_PROPIEDADES = [
-  { k: "slump", n: "Slump", u: "in", dp: 2, norma: "ASTM C143" },
+  { k: "slump", n: "Slump", u: "in", dp: 2, dpMin: 2, norma: "ASTM C143" },
   { k: "uw", n: "Unit Weight", u: "pcf", dp: 1, norma: "ASTM C138" },
   { k: "air", n: "Aire", u: "%", dp: 1, norma: "ASTM C231" },
   { k: "temp", n: "Temperatura", u: "°F", dp: 0, norma: "ASTM C1064" },
@@ -1451,13 +1464,13 @@ function trendAlerts(day) {
     if (dUW <= -0.8 && dSL >= 0.4) {
       out.push({
         level: "susp", icon: "💧", title: "Posible exceso de agua",
-        text: `Unit Weight bajó ${fmt(Math.abs(dUW), 1)} pcf mientras el slump subió ${fmt(dSL, 2)}" en las últimas 3 pruebas.`,
+        text: `Unit Weight bajó ${fmt(Math.abs(dUW), 1)} pcf mientras el slump subió ${fmtSlump(dSL)}" en las últimas 3 pruebas.`,
         action: "Avisar a la planta: verificar humedades de los agregados.",
       });
     } else if (dUW >= 0.8 && dSL <= -0.4) {
       out.push({
         level: "act", icon: "🧱", title: "Mezcla secándose",
-        text: `Unit Weight subió ${fmt(dUW, 1)} pcf y el slump bajó ${fmt(Math.abs(dSL), 2)}".`,
+        text: `Unit Weight subió ${fmt(dUW, 1)} pcf y el slump bajó ${fmtSlump(Math.abs(dSL))}".`,
         action: "Verificar dosificación de agua y humedades en planta.",
       });
     }
@@ -1639,14 +1652,14 @@ function trendLabel(day, key) {
   if (rows.length < 4) return "";
   const v = rows.map((t) => num(t[key]));
   const d = (v.slice(-2).reduce((a, b) => a + b, 0) / 2) - (v.slice(-4, -2).reduce((a, b) => a + b, 0) / 2);
-  const dp = key === "uw" ? 1 : 2;
   if (Math.abs(d) < (key === "uw" ? 0.3 : 0.15)) return "▬ estable";
-  return (d > 0 ? "▲ subiendo " : "▼ bajando ") + fmt(Math.abs(d), dp) + (key === "uw" ? " pcf" : '"');
+  const txt = key === "slump" ? fmtSlump(Math.abs(d)) : fmt(Math.abs(d), key === "uw" ? 1 : 2);
+  return (d > 0 ? "▲ subiendo " : "▼ bajando ") + txt + (key === "uw" ? " pcf" : '"');
 }
 
 /* ------------------------------------------------------------ charts */
 const CHART_DEFS = [
-  { key: "slump", label: 'Slump (in)', get: (t) => num(t.slump), dp: 2 },
+  { key: "slump", label: 'Slump (in)', get: (t) => num(t.slump), dp: 2, dpMin: 2 },
   { key: "air", label: "Aire (%)", get: (t) => num(t.air), dp: 1 },
   { key: "uw", label: "Unit Weight (pcf)", get: (t) => num(t.uw), dp: 1 },
   { key: "temp", label: "Temperatura (°F)", get: (t) => num(t.temp), dp: 0 },
@@ -1762,7 +1775,7 @@ if (typeof document !== "undefined") {
   else addEventListener("DOMContentLoaded", pistaGrafica);
 }
 
-function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
+function svgChart({ pts, bands, dp, dpMin = 0, yUnit = "", pw = 13, h = 230 }) {
   if (!pts.length) return `<div class="empty">Sin datos.</div>`;
   /* Estética de gráfica de mercado, no de hoja de cálculo:
      línea fina con degradado debajo, límites como líneas de umbral
@@ -1795,15 +1808,15 @@ function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
     <line x1="${ML}" x2="${W - MR}" y1="${Y(v)}" y2="${Y(v)}" stroke="${color}"
           stroke-width="1" stroke-dasharray="5 5" opacity="${op}"/>
     <text x="${W - MR + 6}" y="${Y(v) + 3.2}" font-size="9.5" fill="${color}" opacity="${op + .25}">${txt}</text>` : "";
-  g += umbral(bands.suspHi, "var(--susp)", .5, fmt(bands.suspHi, dp));
-  g += umbral(bands.suspLo, "var(--susp)", .5, fmt(bands.suspLo, dp));
-  g += umbral(bands.actHi, "var(--act)", .42, fmt(bands.actHi, dp));
-  g += umbral(bands.actLo, "var(--act)", .42, fmt(bands.actLo, dp));
+  g += umbral(bands.suspHi, "var(--susp)", .5, fmt(bands.suspHi, dp, dpMin));
+  g += umbral(bands.suspLo, "var(--susp)", .5, fmt(bands.suspLo, dp, dpMin));
+  g += umbral(bands.actHi, "var(--act)", .42, fmt(bands.actHi, dp, dpMin));
+  g += umbral(bands.actLo, "var(--act)", .42, fmt(bands.actLo, dp, dpMin));
   if (dentro(bands.target)) g += `
     <line x1="${ML}" x2="${W - MR}" y1="${Y(bands.target)}" y2="${Y(bands.target)}"
           stroke="var(--chart-target)" stroke-width="1" stroke-dasharray="2 4" opacity=".38"/>
     <text x="${ML - 7}" y="${Y(bands.target) + 3.2}" text-anchor="end" font-size="9.5"
-          fill="var(--chart-text)" opacity=".9">${fmt(bands.target, dp)}</text>`;
+          fill="var(--chart-text)" opacity=".9">${fmt(bands.target, dp, dpMin)}</text>`;
 
   /* separadores de día, apenas perceptibles */
   let lastDate = null, lastLabel = -999;
@@ -1830,7 +1843,7 @@ function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
     const fuera = p.rejected || p.z === "susp" || p.z === "act";
     if (!fuera && !ult) return;
     const col = p.rejected || p.z === "susp" ? "var(--susp)" : p.z === "act" ? "var(--act)" : "var(--chart-line, #5b8dbf)";
-    const t = `<title>#${p.n} · ${esc(p.date)} · ticket ${esc(p.ticket || "—")} · ${fmt(p.v, dp)}${yUnit}${p.rejected ? " · RECHAZADO" : ""}</title>`;
+    const t = `<title>#${p.n} · ${esc(p.date)} · ticket ${esc(p.ticket || "—")} · ${fmt(p.v, dp, dpMin)}${yUnit}${p.rejected ? " · RECHAZADO" : ""}</title>`;
     if (p.rejected)
       g += `<g>${t}<path d="M${X(i) - 3.6},${Y(p.v) - 3.6} l7.2,7.2 M${X(i) + 3.6},${Y(p.v) - 3.6} l-7.2,7.2"
             stroke="var(--susp)" stroke-width="2.1" stroke-linecap="round"/></g>`;
@@ -1848,7 +1861,7 @@ function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
   /* valor actual, como la cotización de cierre */
   const u = pts[pts.length - 1];
   const uCol = u.rejected || u.z === "susp" ? "var(--susp)" : u.z === "act" ? "var(--act)" : "var(--chart-line, #5b8dbf)";
-  g += `<text x="${X(pts.length - 1) + 8}" y="${Y(u.v) + 4}" font-size="12" font-weight="700" fill="${uCol}">${fmt(u.v, dp)}</text>`;
+  g += `<text x="${X(pts.length - 1) + 8}" y="${Y(u.v) + 4}" font-size="12" font-weight="700" fill="${uCol}">${fmt(u.v, dp, dpMin)}</text>`;
 
   /* La capa de lectura va la última: tiene que quedar por encima de todo
      para recibir el cursor, y como es transparente no tapa nada. */
@@ -1860,7 +1873,7 @@ function svgChart({ pts, bands, dp, yUnit = "", pw = 13, h = 230 }) {
     g += pistaPunto({
       x: X(i) - PW / 2, y: MT, w: PW, alto: H - MT - MB,
       cx: X(i), cy: Y(p.v),
-      valor: fmt(p.v, dp) + yUnit,
+      valor: fmt(p.v, dp, dpMin) + yUnit,
       detalle: `#${p.n} · ${p.date} · ticket ${p.ticket || "—"}`,
       estado: est,
     });
@@ -1875,13 +1888,13 @@ function chartFor(def, rangeN) {
   const zfn = def.key === "slump" ? zoneSlump : def.key === "air" ? zoneAir : def.key === "uw" ? zoneUW : zoneTemp;
   const pts = slice.map((t) => ({ n: t.n, date: t.date, ticket: t.ticket, v: def.get(t), z: zfn(t), rejected: t.rejected }));
   /* Carta de rango largo: los límites del día del último punto (Q-40). */
-  return svgChart({ pts, bands: bandsFor(def.key, slice.length ? slice[slice.length - 1].date : null), dp: def.dp });
+  return svgChart({ pts, bands: bandsFor(def.key, slice.length ? slice[slice.length - 1].date : null), dp: def.dp, dpMin: def.dpMin });
 }
 function chartForDay(def, day, pw = 30) {
   const tests = testsOfDate(day).filter((t) => def.get(t) != null);
   const zfn = def.key === "slump" ? zoneSlump : def.key === "air" ? zoneAir : def.key === "uw" ? zoneUW : zoneTemp;
   const pts = tests.map((t) => ({ n: t.n, date: t.date, ticket: t.ticket, v: def.get(t), z: zfn(t), rejected: t.rejected }));
-  return svgChart({ pts, bands: bandsFor(def.key, day), dp: def.dp, pw });
+  return svgChart({ pts, bands: bandsFor(def.key, day), dp: def.dp, dpMin: def.dpMin, pw });
 }
 function chartCS5(sets, rangeN) {
   const p = planDe(sets.length ? sets[sets.length - 1].date : null).cs;
@@ -1922,7 +1935,7 @@ function panelLimites(editable) {
       ${editable ? `<button class="btn small" onclick="formPlan()">Editar</button>` : ""}</div>
     <div class="panel-body flush"><div class="table-wrap"><table class="data">
       <tr><th>Parámetro</th><th class="num">Objetivo</th><th class="num">Acción</th><th class="num">Suspensión</th></tr>
-      <tr><td>Slump (in)</td><td class="num mono">${p.slump.target}</td><td class="num mono">${p.slump.actLo} – ${p.slump.actHi}</td><td class="num mono">${p.slump.suspLo} – ${p.slump.suspHi}</td></tr>
+      <tr><td>Slump (in)</td><td class="num mono">${fmtSlump(p.slump.target)}</td><td class="num mono">${fmtSlump(p.slump.actLo)} – ${fmtSlump(p.slump.actHi)}</td><td class="num mono">${fmtSlump(p.slump.suspLo)} – ${fmtSlump(p.slump.suspHi)}</td></tr>
       <tr><td>Aire (%)</td><td class="num mono">${p.air.target}</td><td class="num mono">${p.air.actLo} – ${p.air.actHi}</td><td class="num mono">${p.air.suspLo} – ${p.air.suspHi}</td></tr>
       <tr><td>Unit Weight (pcf)</td><td class="num mono">${p.uw.target}</td><td class="num mono">± ${p.uw.act}</td><td class="num mono">± ${p.uw.susp}</td></tr>
       <tr><td>Temperatura (°F)</td><td class="num mono">—</td><td class="num mono">&gt; ${p.tempMax - 3}</td><td class="num mono">&gt; ${p.tempMax}</td></tr>
@@ -2051,7 +2064,7 @@ function reporteEscritoDelDia(day, quien) {
     </article>`;
   }
 
-  const cel = (t, k, dp) => num(t[k]) != null ? fmt(num(t[k]), dp) : "—";
+  const cel = (t, k, dp, dpMin = 0) => num(t[k]) != null ? fmt(num(t[k]), dp, dpMin) : "—";
 
   return `<article class="qc-reporte">
     <header class="qc-rep-cab">
@@ -2102,7 +2115,7 @@ function reporteEscritoDelDia(day, quien) {
         <td>${esc(t.truck || "—")}</td>
         <td>${esc(t.ident || "—")}</td>
         <td class="n">${cel(t, "vol", 1)}</td>
-        <td class="n">${cel(t, "slump", 2)}</td>
+        <td class="n">${cel(t, "slump", 2, 2)}</td>
         <td class="n">${cel(t, "air", 1)}</td>
         <td class="n">${cel(t, "uw", 1)}</td>
         <td class="n">${cel(t, "temp", 0)}</td>
@@ -2127,7 +2140,7 @@ function panelLimitesTexto() {
   const p = db.plan;
   return `<table class="qc-rep-tabla">
     <tr><th>Parámetro</th><th class="n">Objetivo</th><th class="n">Acción</th><th class="n">Suspensión</th></tr>
-    <tr><td>Slump (in)</td><td class="n">${p.slump.target}</td><td class="n">${p.slump.actLo} – ${p.slump.actHi}</td><td class="n">${p.slump.suspLo} – ${p.slump.suspHi}</td></tr>
+    <tr><td>Slump (in)</td><td class="n">${fmtSlump(p.slump.target)}</td><td class="n">${fmtSlump(p.slump.actLo)} – ${fmtSlump(p.slump.actHi)}</td><td class="n">${fmtSlump(p.slump.suspLo)} – ${fmtSlump(p.slump.suspHi)}</td></tr>
     <tr><td>Aire (%)</td><td class="n">${p.air.target}</td><td class="n">${p.air.actLo} – ${p.air.actHi}</td><td class="n">${p.air.suspLo} – ${p.air.suspHi}</td></tr>
     <tr><td>Unit Weight (pcf)</td><td class="n">${p.uw.target}</td><td class="n">± ${p.uw.act}</td><td class="n">± ${p.uw.susp}</td></tr>
     <tr><td>Temperatura (°F)</td><td class="n">—</td><td class="n">&gt; ${p.tempMax - 3}</td><td class="n">&gt; ${p.tempMax}</td></tr>
@@ -2198,7 +2211,7 @@ function notifyReject(n) {
   const p = db.plan;
   const uwT = t.uwTarget ?? p.uw.target;
   const reasons = [];
-  if (zoneSlump(t) === "susp") reasons.push(`Slump ${fmt(t.slump, 2)}" (susp. ${p.slump.suspLo}–${p.slump.suspHi}")`);
+  if (zoneSlump(t) === "susp") reasons.push(`Slump ${fmtSlump(t.slump)}" (susp. ${fmtSlump(p.slump.suspLo)}–${fmtSlump(p.slump.suspHi)}")`);
   if (zoneAir(t) === "susp") reasons.push(`Aire ${fmt(t.air, 1)}% (susp. ${p.air.suspLo}–${p.air.suspHi}%)`);
   if (zoneUW(t) === "susp") reasons.push(`UW ${fmt(t.uw, 2)} pcf (susp. ±${p.uw.susp} de ${uwT})`);
   if (zoneTemp(t) === "susp") reasons.push(`Temp ${fmt(t.temp, 0)} °F (máx ${p.tempMax})`);
@@ -2212,7 +2225,7 @@ function notifyReject(n) {
     `Losa / Identificación: ${t.ident || "—"}`,
     `Ticket: ${t.ticket || "—"}   Camión: ${t.truck || "—"}   Volumen: ${fmt(t.vol, 1)} CY   Planta: ${t.plant || "—"}`, ``,
     `RESULTADOS:`,
-    `  Slump: ${fmt(t.slump, 2)} in   (acción ${p.slump.actLo}–${p.slump.actHi} / susp ${p.slump.suspLo}–${p.slump.suspHi})`,
+    `  Slump: ${fmtSlump(t.slump)} in   (acción ${fmtSlump(p.slump.actLo)}–${fmtSlump(p.slump.actHi)} / susp ${fmtSlump(p.slump.suspLo)}–${fmtSlump(p.slump.suspHi)})`,
     `  UW: ${fmt(t.uw, 2)} pcf   (objetivo ${uwT} ±${p.uw.act} acción / ±${p.uw.susp} susp)`,
     `  Aire: ${fmt(t.air, 1)} %   (acción ${p.air.actLo}–${p.air.actHi} / susp ${p.air.suspLo}–${p.air.suspHi})`,
     `  Temp: ${fmt(t.temp, 0)} °F   (máx ${p.tempMax})`, ``,

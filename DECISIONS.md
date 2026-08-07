@@ -546,3 +546,28 @@ enseñe no sirve de nada — y `verificar.js` no la ve, porque su chequeo de
 código muerto mira funciones sin llamar, y ésta se llamaba. El aviso y la
 acción que lo resuelve van juntos o no van.
 
+## 26 · El slump siempre con dos decimales
+
+**Q-49 — 7 de agosto de 2026**
+
+`fmt()` recortaba los ceros de la derecha: un slump de 3" salía «3» y uno de
+3½" salía «3.5». En una medida de campo eso no vale. 3.00 y 3.50 dicen con qué
+precisión se midió, y en una columna leída a toda prisa en obra, «3» y «3.5»
+no se alinean ni se comparan de un vistazo.
+
+Vale para el valor medido **y para los límites del plan**: si el reporte dice
+que la zona de acción es 3.00–5.00", el camión que sale 3.00 se lee contra
+ella sin traducir nada.
+
+`fmt(n, dp, min)` acepta un mínimo de decimales, y `fmtSlump(n)` es la única
+puerta por la que sale un slump a pantalla o a papel — tabla, chip, celda en
+vivo, umbrales y pistas de las cartas, motivo de rechazo, reporte escrito,
+plan de control y la línea del contrato que se le publica a la concretera.
+
+**La exportación a CSV se queda en crudo**, a propósito: eso va a una hoja de
+cálculo, donde un número formateado como texto es un estorbo.
+
+**Para que no vuelva a pasar.** Un slump que se imprima con `fmt()` a pelo es
+un fallo. Se usa `fmtSlump()`; si hace falta pasarlo por un ayudante que toma
+`dp`, el ayudante toma también `dpMin`.
+

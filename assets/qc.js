@@ -97,7 +97,7 @@ function viewDashboard() {
             <tr><th>#</th><th>Losa / Ident.</th><th>Camión</th><th class="num">Slump</th><th class="num">UW</th><th class="num">Temp</th><th>Estado</th></tr>
             ${lastDayTests.slice(-8).map((t) => `<tr class="clickable ${t.rejected ? "rejected" : ""}" onclick="formTest(null,${t.n})">
               <td class="mono">${t.n}</td><td style="white-space:normal">${esc(shortIdent(t.ident))}</td><td class="mono">${esc(t.truck || "—")}</td>
-              <td${zClass(zoneSlump(t))}>${fmt(t.slump, 2)}</td>
+              <td${zClass(zoneSlump(t))}>${fmtSlump(t.slump)}</td>
               <td${zClass(zoneUW(t))}>${fmt(t.uw, 2)}</td>
               <td${zClass(zoneTemp(t))}>${fmt(t.temp, 0)}</td>
               <td>${estadoBadge(t)}</td></tr>`).join("")}
@@ -145,8 +145,8 @@ function viewLive() {
     const w = worstZone(last);
     const cls = last.rejected || w === "susp" ? "susp" : w === "act" ? "act" : "ok";
     const label = last.rejected ? "✕ RECHAZADO" : w === "susp" ? "✕ FUERA DE LÍMITE" : w === "act" ? "⚠ ACEPTADO — ACCIÓN" : "✓ ACEPTADO";
-    const cell = (k, v, z, u) => `<div class="live-cell ${z ? "lz-" + z : ""}">
-      <div class="k">${k}</div><div class="v mono">${v == null ? "—" : fmt(v, 2)}<span class="u">${u}</span></div></div>`;
+    const cell = (k, v, z, u, f) => `<div class="live-cell ${z ? "lz-" + z : ""}">
+      <div class="k">${k}</div><div class="v mono">${v == null ? "—" : (f || ((x) => fmt(x, 2)))(v)}<span class="u">${u}</span></div></div>`;
     verdictHtml = `
       <div class="live-verdict ${cls}">
         <div>
@@ -156,7 +156,7 @@ function viewLive() {
         <div class="lv-status">${label}</div>
       </div>
       <div class="live-grid">
-        ${cell("Slump (in)", last.slump, zoneSlump(last), '"')}
+        ${cell("Slump (in)", last.slump, zoneSlump(last), '"', fmtSlump)}
         ${cell("UW (pcf)", last.uw, zoneUW(last), "")}
         ${cell("Aire (%)", last.air, zoneAir(last), "%")}
         ${cell("Temp (°F)", last.temp, zoneTemp(last), "°")}
@@ -296,7 +296,7 @@ function viewDaily() {
             <td class="mono">${esc(t.testTime || "—")}</td>
             <td class="mono">${esc(t.end || "—")}</td>
             <td${zClass(zoneElapsed(t))}>${el != null ? el : "—"}</td>
-            <td${zClass(zoneSlump(t))}>${fmt(t.slump, 2)}</td>
+            <td${zClass(zoneSlump(t))}>${fmtSlump(t.slump)}</td>
             <td${zClass(zoneUW(t))}>${fmt(t.uw, 2)}</td>
             <td${zClass(zoneAir(t))}>${fmt(t.air, 1)}</td>
             <td${zClass(zoneTemp(t))}>${fmt(t.temp, 0)}</td>
@@ -348,7 +348,7 @@ function viewTests() {
           <td class="num mono">${fmt(t.vol, 1)}</td>
           <td class="mono">${esc(t.lot || "—")}</td>
           <td style="white-space:normal; min-width:170px; font-size:12px">${esc(shortIdent(t.ident))}</td>
-          <td${zClass(zoneSlump(t))}>${fmt(t.slump, 2)}</td>
+          <td${zClass(zoneSlump(t))}>${fmtSlump(t.slump)}</td>
           <td${zClass(zoneAir(t))}>${fmt(t.air, 1)}</td>
           <td${zClass(zoneUW(t))}>${fmt(t.uw, 2)}</td>
           <td${zClass(zoneTemp(t))}>${fmt(t.temp, 0)}</td>

@@ -132,7 +132,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=469640bc"></script>
+<script src="assets/core.js?v=0cfde417"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -166,8 +166,8 @@ function render() {
                 : "Todo en cumplimiento";
   const compMark = bad ? "✕" : act ? "▲" : "✓";
   const last = rows[rows.length - 1];
-  const chip = (label, v, z, dp, u) => v == null ? "" :
-    `<span class="badge ${z === "susp" ? "susp" : z === "act" ? "act" : "ok"}">${label} ${fmt(v, dp)}${u}</span>`;
+  const chip = (label, v, z, dp, u, dpMin = 0) => v == null ? "" :
+    `<span class="badge ${z === "susp" ? "susp" : z === "act" ? "act" : "ok"}">${label} ${fmt(v, dp, dpMin)}${u}</span>`;
 
   document.getElementById("content").innerHTML = `
     <div class="comp ${compCls}">
@@ -177,7 +177,7 @@ function render() {
         <div class="s">${p.evaluated} pruebas evaluadas hoy${p.compliancePct != null ? " · " + fmt(p.compliancePct, 0) + "% conformes" : ""}</div>
       </div>
       ${last ? `<div class="chips">
-        ${chip("Slump", num(last.slump), zoneSlump(last), 2, '"')}
+        ${chip("Slump", num(last.slump), zoneSlump(last), 2, '"', 2)}
         ${chip("UW", num(last.uw), zoneUW(last), 1, "")}
         ${chip("Temp", num(last.temp), zoneTemp(last), 0, "°")}
       </div>` : ""}

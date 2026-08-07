@@ -428,7 +428,7 @@ footer .spacer { flex: 1; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=469640bc"></script>
+<script src="assets/core.js?v=0cfde417"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -518,7 +518,7 @@ function proximity(key, vals, uwTarget) {
 }
 function limitText(key, uwTarget) {
   const p = db.plan;
-  if (key === "slump") return `${p.slump.actLo}–${p.slump.actHi}"  ·  susp ${p.slump.suspLo}–${p.slump.suspHi}`;
+  if (key === "slump") return `${fmtSlump(p.slump.actLo)}–${fmtSlump(p.slump.actHi)}"  ·  susp ${fmtSlump(p.slump.suspLo)}–${fmtSlump(p.slump.suspHi)}`;
   if (key === "air")   return `${p.air.actLo}–${p.air.actHi}%  ·  susp ${p.air.suspLo}–${p.air.suspHi}`;
   if (key === "uw")    { const t = uwTarget ?? p.uw.target; return `${fmt(t, 1)} ± ${p.uw.act}  ·  susp ± ${p.uw.susp}`; }
   if (key === "temp")  return `máx ${p.tempMax} °F`;

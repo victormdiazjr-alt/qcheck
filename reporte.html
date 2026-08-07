@@ -243,7 +243,7 @@ table.rep td.dif { font-weight: 700; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=469640bc"></script>
+<script src="assets/core.js?v=0cfde417"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -500,7 +500,7 @@ function renderAcumulado() {
     <h2 class="sec">Criterios de aceptación aplicados</h2>
     <table class="rep">
       <tr><th>Parámetro</th><th>Objetivo</th><th>Límites de acción</th><th>Límites de suspensión</th></tr>
-      <tr><td>Slump (in)</td><td class="n">${p.slump.target}</td><td class="n">${p.slump.actLo} – ${p.slump.actHi}</td><td class="n">${p.slump.suspLo} – ${p.slump.suspHi}</td></tr>
+      <tr><td>Slump (in)</td><td class="n">${fmtSlump(p.slump.target)}</td><td class="n">${fmtSlump(p.slump.actLo)} – ${fmtSlump(p.slump.actHi)}</td><td class="n">${fmtSlump(p.slump.suspLo)} – ${fmtSlump(p.slump.suspHi)}</td></tr>
       <tr><td>Contenido de aire (%)</td><td class="n">${p.air.target}</td><td class="n">${p.air.actLo} – ${p.air.actHi}</td><td class="n">${p.air.suspLo} – ${p.air.suspHi}</td></tr>
       <tr><td>Unit Weight (pcf)</td><td class="n">${p.uw.target}</td><td class="n">± ${p.uw.act}</td><td class="n">± ${p.uw.susp}</td></tr>
       <tr><td>Temperatura (°F)</td><td class="n">—</td><td class="n">&gt; ${p.tempMax - 3}</td><td class="n">&gt; ${p.tempMax}</td></tr>
@@ -527,7 +527,7 @@ function renderAcumulado() {
             <td class="n">${t.n}</td><td>${esc(t.date)}</td><td>${esc(t.ticket || "—")}</td><td>${esc(t.truck || "—")}</td>
             <td class="n">${fmt(num(t.vol), 1)}</td><td class="n">${esc(t.lot ?? "—")}</td>
             <td class="wrap">${esc(shortIdent(t.ident))}</td><td>${esc(t.testTime || "—")}</td>
-            <td${z(zoneSlump(t))}>${fmt(t.slump, 2)}</td>
+            <td${z(zoneSlump(t))}>${fmtSlump(t.slump)}</td>
             <td${z(zoneAir(t))}>${fmt(t.air, 1)}</td>
             <td${z(zoneUW(t))}>${fmt(t.uw, 2)}</td>
             <td${z(zoneTemp(t))}>${fmt(t.temp, 0)}</td>
@@ -620,7 +620,7 @@ function renderAcumulado() {
     return `<tr class="rej"><td class="n">${t.n}</td><td>${esc(t.date)}</td><td>${esc(t.ticket || "—")}</td>
       <td>${esc(t.truck || "—")}</td><td class="n">${fmt(num(t.vol), 1)}</td>
       <td class="wrap">${esc(shortIdent(t.ident))}</td>
-      <td class="n">${fmt(t.slump, 2)}</td><td class="n">${fmt(t.uw, 2)}</td><td class="n">${fmt(t.temp, 0)}</td>
+      <td class="n">${fmtSlump(t.slump)}</td><td class="n">${fmt(t.uw, 2)}</td><td class="n">${fmt(t.temp, 0)}</td>
       <td class="wrap">${esc(m.join("; ") || t.comments || "Rechazo en campo")}</td></tr>`;
   }).join("");
 
@@ -1028,7 +1028,7 @@ function renderDiario() {
             <td${z(zoneElapsed(t))}>${el != null ? el : "—"}</td>
             <td class="n">${fmt(num(t.vol), 1)}</td>
             <td class="wrap">${esc(shortIdent(t.ident))}</td>
-            <td${z(zoneSlump(t))}>${fmt(t.slump, 2)}</td>
+            <td${z(zoneSlump(t))}>${fmtSlump(t.slump)}</td>
             <td${z(zoneAir(t))}>${fmt(t.air, 1)}</td>
             <td${z(zoneUW(t))}>${fmt(t.uw, 2)}</td>
             <td${z(zoneTemp(t))}>${fmt(t.temp, 0)}</td>
@@ -1082,7 +1082,7 @@ function renderDiario() {
         return `<tr class="rej"><td class="n">${t.n}</td><td>${esc(t.ticket || "—")}</td>
           <td>${esc(t.truck || "—")}</td><td class="n">${fmt(num(t.vol), 1)}</td>
           <td class="wrap">${esc(shortIdent(t.ident))}</td><td>${esc(t.testTime || "—")}</td>
-          <td class="n">${fmt(t.slump, 2)}</td><td class="n">${fmt(t.uw, 2)}</td>
+          <td class="n">${fmtSlump(t.slump)}</td><td class="n">${fmt(t.uw, 2)}</td>
           <td class="n">${fmt(t.air, 1)}</td><td class="n">${fmt(t.temp, 0)}</td>
           <td class="wrap">${esc(m.join("; ") || t.comments || "Rechazo en campo")}</td></tr>`;
       }).join("")}
