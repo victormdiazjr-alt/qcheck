@@ -49,6 +49,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-08-07 | **Q-46 (cierre) — Programar un tiro ahora se nota en todas las pantallas.** Elegían el día con `testDates()`, que solo devuelve días con camiones: un tiro recién programado no tiene ninguno, así que todas seguían en el vaciado anterior | claude |
 | 2026-08-07 | **Q-46 — Dos usuarios veían cifras distintas del mismo tiro** (197/150 contra 157/150). La simulación sembraba en un día que ya tenía plan pero aún no tenía camiones, y su marca `source: "demo"` no viaja: los camiones inventados vivían en un solo aparato. De paso se destapó que el 31 jul hay un plan de la simulación en el expediente compartido, sin marca y por tanto indistinguible de uno real. Arreglado el sembrado y añadido `diasFantasma()`, que los canta en el Control Center | claude |
 | 2026-08-07 | **Q-45 — Estado del sistema sale de los mosaicos.** Pasa a la barra de arriba, junto al indicador de conexión, con icono de servidor. Gana estar disponible desde CUALQUIER pantalla: uno se pregunta si están conectados estando en Muestras, no en el Control Center. Sigue detrás de `config`, igual que antes | claude |
 | 2026-08-07 | **Q-44 — Cada tablero puede mirar cualquier tiro.** La Autoridad no tenía forma de entrar en un vaciado concreto: solo veía el acumulado. Ahora los tres eligen día, y hoy aparece en la lista desde que hay tiro programado, no desde el primer camión — que es justo cuando más se mira el tablero | claude |

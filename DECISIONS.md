@@ -444,3 +444,13 @@ simulación tal cual la sembró** (260 cy y 13 losas, sin camiones). Si hay cami
 el plan ya no es el suyo, le quita la marca en vez de borrarlo. Borrar de más habría sido
 peor que el fallo: se llevaría por delante el tiro que alguien acaba de programar y todavía
 no tiene camiones — la mañana de cualquier vaciado.
+
+**Y una tercera pieza, del mismo día.** Aunque el tiro ya viajaba, **ninguna pantalla
+saltaba a él**: todas elegían el día con `testDates()`, que solo devuelve días CON CAMIONES.
+Un tiro recién programado no tiene ninguno, así que el Control Center, Muestras, Recepción y
+el Field Display seguían enseñando el vaciado anterior — 157/150 y «camión 123 aceptado» del
+1 de agosto — mientras Rubén ya había programado el de hoy.
+
+**Un tiro programado ES el tiro de hoy desde que se programa**, con cero camiones o con
+veinte. Todo lo que elige día usa ahora `diasDelProyecto()`, que incluye hoy en cuanto hay
+plan.

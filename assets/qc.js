@@ -63,7 +63,7 @@ function permiteConfig() { return typeof qcVeConfig !== "function" || qcVeConfig
 function viewDashboard() {
   const tests = sortedTests();
   const totalCY = tests.reduce((a, t) => a + (num(t.vol) || 0), 0);
-  const days = testDates();
+  const days = diasDelProyecto();
   const rejected = tests.filter((t) => t.rejected).length;
   const sets = strengthSets();
   const lastMA = [...sets].reverse().find((s) => s._ma5 != null);
@@ -131,7 +131,7 @@ function viewDashboard() {
 
 /* ------------------------------------------------------------ En Vivo */
 function viewLive() {
-  const days = testDates();
+  const days = diasDelProyecto();
   const day = state.day && days.includes(state.day) ? state.day : days[0];
   state.day = day;
   const rows = testsOfDate(day);
@@ -240,7 +240,7 @@ function formHumidity() {
 
 /* ------------------------------------------------------------ Daily sheet */
 function viewDaily() {
-  const days = testDates();
+  const days = diasDelProyecto();
   if (!state.day || !days.includes(state.day)) state.day = days[0] || todayISO();
   const rows = testsOfDate(state.day);
   const meta = db.dayMeta[state.day] || {};
@@ -450,7 +450,7 @@ function viewCharts() {
    volumen no se reparte a ojo. Esas losas salen marcadas como compartidas y
    sus yardas se leen como un mínimo. */
 function viewLosas() {
-  const day = state.day && testDates().includes(state.day) ? state.day : testDates()[0];
+  const day = state.day && diasDelProyecto().includes(state.day) ? state.day : diasDelProyecto()[0];
   const L = losasDelDia(day);
   const p = dayProgress(day);
   const r = L.rango;
@@ -471,7 +471,7 @@ function viewLosas() {
       <h2>Losas del vaciado</h2>
       <div class="spacer"></div>
       <select onchange="state.day=this.value; render()">
-        ${testDates().map((d) => `<option value="${d}" ${d === day ? "selected" : ""}>${fmtDate(d)}</option>`).join("")}
+        ${diasDelProyecto().map((d) => `<option value="${d}" ${d === day ? "selected" : ""}>${fmtDate(d)}</option>`).join("")}
       </select>
     </div>
 

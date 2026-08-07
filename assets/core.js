@@ -362,7 +362,17 @@ const QCS_SEGMENTOS = 14;
    si no, el más reciente con ensayos. */
 function diaActivo() {
   if (typeof state !== "undefined" && state && state.day) return state.day;
-  const d = testDates(), hoy = todayISO();
+  /* `diasDelProyecto()` y no `testDates()` — Q-46, 7 ago 2026.
+
+     `testDates()` solo devuelve días CON CAMIONES. Con eso, programar un tiro
+     no hacía nada visible: el día nuevo no tiene camiones todavía, así que
+     ninguna pantalla saltaba a él y todas seguían enseñando el vaciado
+     anterior. Rubén programó el tiro de hoy y el iPad de Víctor seguía
+     diciendo 157/150 y «camión 123 aceptado», del 1 de agosto.
+
+     Un tiro programado ES el tiro de hoy desde que se programa, con cero
+     camiones o con veinte. */
+  const d = diasDelProyecto(), hoy = todayISO();
   return d.includes(hoy) ? hoy : (d[0] || hoy);
 }
 
