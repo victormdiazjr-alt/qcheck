@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-44 | **Cada tablero puede mirar cualquier tiro** — pasado o el de hoy. La Autoridad no tenía selector, y en los otros dos hoy no salía hasta el primer camión | claude | 2026-08-07 |
 
 ---
 
