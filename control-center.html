@@ -268,7 +268,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=d06f9f42"></script>
+<script src="assets/core.js?v=7dddde86"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script src="assets/clima.js?v=d5c4fb65"></script>
 <script src="assets/usuarios.js?v=d98325b9"></script>
@@ -432,9 +432,19 @@ function abrirTiro() {
         ? { n: "Reabrir tiro", r: `Cerrado a las ${cerrado}`,
             ic: ICONO_CERRAR, hacer: () => { if (reabrirTiro()) render(); } }
         : { n: "Cerrar tiro", ic: ICONO_CERRAR, hacer: () => { if (cerrarTiro()) render(); } },
+      /* Q-48: solo aparece cuando de verdad hace falta — un día planificado
+         que nunca recibió un camión. Con obra dentro no se ofrece, porque no
+         se puede hacer, y una opción que siempre falla no es una opción. */
+      ...(!testsOfDate(diaActivo()).length && (db.dayMeta[diaActivo()] || {}).cyPlan != null
+        ? [{ n: "Descartar tiro", r: "Sin camiones registrados",
+             ic: ICONO_DESCARTAR,
+             hacer: () => { if (descartarTiro(diaActivo())) render(); } }]
+        : []),
     ],
   });
 }
+/* Una papelera abierta: se saca de la vista, no se destruye. Q-48. */
+const ICONO_DESCARTAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V5.2A1.2 1.2 0 0 1 10.7 4h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="M6.5 7l.9 12.1A1.6 1.6 0 0 0 9 20.6h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7"/></svg>`;
 /* Sala de máquinas: aparatos enlazados y latiendo */
 const ICONO_ESTADO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="11" rx="2"/><path d="M8 18.5h8M12 14.5v4"/><path d="M6.5 9h2.2l1.4-2.6 1.8 5 1.4-2.4h4.2"/></svg>`;
 /* Una rueda dentada: es el icono que todo el mundo reconoce como ajustes,

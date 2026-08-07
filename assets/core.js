@@ -816,8 +816,9 @@ function sortedTests() { return vivos(db.tests).sort((a, b) => a.n - b.n); }
    todavía no haya nada que contar. */
 function diasDelProyecto() {
   const conPlan = Object.entries(db.dayMeta || {})
-    .filter(([, m]) => m && (m.cyPlan != null || m.losas || m.losasPlan != null ||
-                             m.horaInicio || m.cerradoA))
+    .filter(([, m]) => m && !m.borrado &&
+                       (m.cyPlan != null || m.losas || m.losasPlan != null ||
+                        m.horaInicio || m.cerradoA))
     .map(([d]) => d);
   return [...new Set([...testDates(), ...conPlan])].sort().reverse();
 }
@@ -2579,6 +2580,68 @@ function reabrirTiro(day) {
   return true;
 }
 
+function tiroDescartado(day) {
+  const m = (db.dayMeta || {})[day || todayISO()];
+  return !!(m && m.borrado);
+}
+
+/* DESCARTAR UN TIRO — Q-48, 7 de agosto de 2026.
+
+   Un vaciado puede acabar en el expediente sin haber existido: una prueba del
+   sistema que se sincronizó, un día que se abrió por error. Hasta ahora no
+   había forma de quitarlo, porque `retirarDia()` retira camiones y el problema
+   aquí es justo lo contrario — un plan sin un solo camión.
+
+   Se descarta, que NO es borrar. El día se queda en el archivo con la marca,
+   con quién lo descartó y por qué; lo que hace es dejar de contar y dejar de
+   aparecer. Mismo criterio que un ensayo retirado (`vivos()`): un expediente
+   del que se pueden hacer desaparecer renglones no vale nada, y además así el
+   descarte viaja a los demás aparatos como cualquier otro cambio.
+
+   Con camiones dentro no se descarta. Eso ya no es un día fantasma, es un día
+   de obra, y sacarlo del récord no es una limpieza — es otra cosa. */
+function descartarTiro(day, motivo) {
+  const d = day || todayISO();
+  if (typeof qcFirma === "function" && !qcFirma()) {
+    alert("Descartar un vaciado del expediente es cosa del ingeniero de récord.");
+    return false;
+  }
+  const camiones = testsOfDate(d).length;
+  if (camiones) {
+    alert(`El vaciado del ${fmtDate(d)} tiene ${camiones} camión${camiones === 1 ? "" : "es"} registrado${camiones === 1 ? "" : "s"}.\n\n` +
+          "Un día con camiones no se descarta: es un día de obra.");
+    return false;
+  }
+  const por = motivo != null ? motivo
+    : prompt(`Descartar el vaciado del ${fmtDate(d)} del expediente.\n\n` +
+             "No se borra: queda en el archivo marcado como descartado, con tu\n" +
+             "nombre y el motivo. Deja de contar y deja de aparecer.\n\n" +
+             "¿Por qué se descarta?", "Prueba del sistema, no fue un vaciado real");
+  if (por == null || !String(por).trim()) return false;
+
+  if (!db.dayMeta[d]) db.dayMeta[d] = {};
+  db.dayMeta[d].borrado = true;
+  db.dayMeta[d].borradoMotivo = String(por).trim();
+  const quien = qcCuenta();
+  db.dayMeta[d].borradoPor = (quien && (quien.nombre || quien.usr))
+    || sessionStorage.getItem("qc-user") || "?";
+  db.dayMeta[d].borradoA = new Date().toISOString();
+  saveDB();
+  return true;
+}
+
+function restaurarTiro(day) {
+  const d = day || todayISO();
+  if (typeof qcFirma === "function" && !qcFirma()) {
+    alert("Devolver un vaciado al expediente es cosa del ingeniero de récord.");
+    return false;
+  }
+  if (!db.dayMeta[d]) db.dayMeta[d] = {};
+  db.dayMeta[d].borrado = false;
+  saveDB();
+  return true;
+}
+
 /* El icono lo comparten las dos pantallas, como la función. */
 const ICONO_CERRAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-3.2-6.6"/><polyline points="8.6,12 11,14.4 16.4,8.2"/></svg>`;
 
@@ -2592,6 +2655,10 @@ function formDayMeta(day) {
 
      Para corregirlo hay que reabrirlo primero. Que quede constancia de que se
      reabrió es justamente el punto. */
+  if (tiroDescartado(day)) {
+    alert(`El vaciado del ${fmtDate(day)} está descartado del expediente.`);
+    return;
+  }
   if (tiroCerrado(day)) {
     const m = db.dayMeta[day] || {};
     alert(`El vaciado del ${fmtDate(day)} está cerrado` +

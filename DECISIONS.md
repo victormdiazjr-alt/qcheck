@@ -490,3 +490,41 @@ una sola:
 preguntas distintas y se contestan por separado. Cualquier pantalla nueva que
 necesite un día de arranque usa `diaPorDefecto()`, nunca `dias[0]`.
 
+## 25 · Un vaciado se descarta, no se borra
+
+**Q-48 — 7 de agosto de 2026**
+
+El 31 de julio de 2026 hay en el expediente compartido un vaciado de 260 CY y
+13 losas **sin un solo camión**. Nadie vació nada ese día: es la firma exacta
+de la simulación, que llegó al servidor por el fallo de Q-46 —la marca
+`source: "demo"` se perdía al guardar encima y el sincronizador lo tomó por
+obra real.
+
+No alteraba ninguna estadística, porque no tiene ensayos. Pero es un día de
+vaciado en el récord de la PR-52 que no ocurrió, y eso sale impreso.
+
+**No había manera de quitarlo.** `retirarDia()` retira camiones, y aquí el
+problema era el contrario: un plan sin camiones. Así que se añade lo que
+faltaba, con el mismo criterio que ya rige para un ensayo retirado (`vivos()`):
+
+  · **Se descarta, que no es borrar.** El día se queda en el archivo con
+    `borrado: true`, el motivo, quién lo descartó y cuándo. Deja de contar y
+    deja de aparecer, pero no desaparece. Un expediente del que se pueden
+    hacer desaparecer renglones no vale nada — y además así el descarte viaja
+    a los demás aparatos como cualquier otro cambio, cosa que un borrado de
+    verdad no tendría cómo hacer.
+  · **Solo el ingeniero de récord** (§22), igual que reabrir un tiro cerrado.
+  · **Con camiones dentro no se descarta.** Eso ya no es un día fantasma, es
+    un día de obra; sacarlo del récord no sería una limpieza sino otra cosa.
+    La opción ni siquiera se ofrece — una opción que siempre falla no es una
+    opción.
+  · **Tiene vuelta atrás.** Los descartados se listan en Settings → Descartados
+    con un botón para devolverlos. Un descarte irreversible sería un borrado
+    con otro nombre.
+  · **Un tiro descartado tampoco se edita**, como uno cerrado.
+
+**Para que no vuelva a pasar.** La causa raíz —la simulación colándose en el
+expediente— quedó cerrada en Q-46 y §23. Esto es lo otro que hacía falta: que
+cuando algo entre donde no debe, exista la manera de sacarlo sin mentirle al
+archivo.
+
