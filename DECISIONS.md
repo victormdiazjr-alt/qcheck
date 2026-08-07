@@ -623,3 +623,35 @@ fallaba con la ✕ desde antes; el botón de casa lo habría heredado. Ahora man
 la capacidad `casa:` de la cuenta, que es de donde sale siempre el papel de
 cada quien (AGENTS §3).
 
+## 29 · Los avisos, abajo del todo y en ningún otro sitio
+
+**Q-52 — 7 de agosto de 2026**
+
+Q-43 ya los había sacado de los informes y de Results. Faltaba el Control
+Center, donde estaban dos veces: en un panel a media pantalla y, peor, en el
+**estado del proyecto** de la cabecera, que se ponía ámbar y decía «3 avisos
+activos» en un día en el que no se rechazó un camión ni se salió de límite.
+
+Un aviso es una sospecha del sistema sobre una tendencia. Es útil para mirar
+de reojo y decidir si conviene ajustar la planta. No es un hecho de la obra, y
+no puede teñir la cabecera ni competir con los números que sí mandan.
+
+  · El estado del proyecto informa solo de **hechos**: camiones rechazados y
+    ensayos fuera de límite.
+  · Los avisos van en un panel **al final de la página**, apagados, con su
+    marco. Quien los busca, los encuentra; quien entra a ver cómo va el tiro,
+    no tropieza con ellos.
+  · La humedad de planta, que estaba metida dentro del panel de avisos, sale a
+    su propio recuadro: es del día en curso y se actúa sobre ella.
+
+**Y un fallo que salió por el camino.** Los paneles nuevos de Q-48 y Q-48b se
+escribieron con `<section class="card">` y **`.card` no existe en `qc.css`**.
+Salían sin marco, sin fondo y sin aire — y en una pantalla oscura eso no canta:
+parece una decisión de diseño. La clase de la casa es `.panel`, con
+`.panel-head` y `.panel-body`.
+
+**Para que no vuelva a pasar.** `verificar.js` tiene una comprobación nueva,
+«Armazón»: las clases que arman una caja —`card`, `panel`, `panel-head`,
+`panel-body`, `w`, `grid`, `data`, `btn`— tienen que estar definidas en
+`qc.css`, o falla. Probada reintroduciendo el fallo a propósito: lo caza.
+

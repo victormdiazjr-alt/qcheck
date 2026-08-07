@@ -104,6 +104,32 @@ const huerfanas = [...usadas].filter((c) => !definidas.has(c));
 if (huerfanas.length) mal(`usadas y sin definir en qc.css: ${huerfanas.join(", ")}`);
 else bien(`${usadas.size} clases de rejilla, todas definidas`);
 
+/* ---------- 4b. clases de armazón que no existen ----------
+
+   El 7 ago 2026 se colaron tres `<section class="card">` en pantallas que
+   comparten qc.css, donde `.card` no está definida en ninguna parte: los
+   paneles salían sin marco, sin fondo y sin aire, y en una pantalla oscura eso
+   no canta — parece una decisión de diseño. Se mira solo el puñado de clases
+   que arman una caja, que son las que dejan la pantalla rota sin avisar; el
+   resto puede ser dinámico y no se toca. Q-52. */
+titulo("Armazón");
+const ARMAZON = ["card", "panel", "panel-head", "panel-body", "w", "grid", "tbl", "data", "btn"];
+/* `table.data` va calificada por elemento, así que el punto puede venir
+   pegado a un nombre de etiqueta y no solo a un espacio o una coma. */
+const enCSS = (c) => new RegExp("(^|[,\\s])[\\w-]*\\." + c + "\\b", "m").test(css);
+const sinDefinir = new Set();
+for (const f of html.concat(["assets/qc.js", "assets/core.js"])) {
+  const src = leer(f);
+  /* Las páginas sueltas —acceso, conectar— llevan su propio <style>. */
+  const propio = src.includes("<style");
+  for (const m of src.matchAll(/class="([^"$]+)"/g))
+    for (const c of m[1].split(/\s+/))
+      if (ARMAZON.includes(c) && !enCSS(c) && !(propio && new RegExp("\\." + c + "\\b").test(src)))
+        sinDefinir.add(`${path.basename(f)}: .${c}`);
+}
+if (sinDefinir.size) mal(`clases de armazón usadas y sin definir: ${[...sinDefinir].join(", ")}`);
+else bien("las clases que arman las cajas están todas definidas");
+
 /* ---------- 5. ¿queda código muerto? ---------- */
 titulo("Código muerto");
 const fuente = html.concat(js.filter((f) => !f.endsWith("seed.js"))).map(leer).join("\n");

@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Contratista — QCheck PR-52</title>
-<link rel="stylesheet" href="assets/qc.css?v=c902a005">
+<link rel="stylesheet" href="assets/qc.css?v=74da26be">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0d12'/><text x='50' y='70' font-size='52' text-anchor='middle' fill='%2396c93d'>▲</text></svg>">
 <style>
 /* Contratista — se consulta en el teléfono, durante el tiro.
@@ -162,7 +162,7 @@ function render() {
   const act = rows.filter((t) => !t.rejected && worstZone(t) === "act").length;
   const compCls = bad ? "susp" : act ? "act" : "ok";
   const compTxt = bad ? `${bad} camión(es) fuera de cumplimiento`
-                : act ? "En cumplimiento — con avisos de vigilancia"
+                : act ? "En cumplimiento — camiones en zona de acción"
                 : "Todo en cumplimiento";
   const compMark = bad ? "✕" : act ? "▲" : "✓";
   const last = rows[rows.length - 1];

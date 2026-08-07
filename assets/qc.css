@@ -606,3 +606,10 @@ button.qcd-op { width: 100%; text-align: left; font-family: inherit; cursor: poi
   font-size: 11px; letter-spacing: .04em; color: var(--muted);
   padding-right: 2px; white-space: nowrap;
 }
+
+/* Los avisos, al fondo — Q-52. Apagados a propósito: son contexto, y compiten
+   con todo lo de arriba si se pintan con el mismo peso. */
+.avisos-fondo { margin-top: 16px; opacity: .82; }
+.avisos-fondo .alert-row:first-child { padding-top: 0; }
+.avisos-fondo:hover { opacity: 1; }
+.avisos-fondo .lbl { margin-bottom: 8px; }

@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Control Center — QCheck</title>
-<link rel="stylesheet" href="assets/qc.css?v=c902a005">
+<link rel="stylesheet" href="assets/qc.css?v=74da26be">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%2396c93d' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -453,9 +453,10 @@ function panelFantasmas(lista) {
   if (!lista || !lista.length) return "";
   const puede = typeof qcFirma !== "function" || qcFirma();
   return `
-    <section class="card aviso-fantasma" style="margin-bottom:16px">
-      <div class="lbl">${lista.length === 1 ? "Un vaciado sin camiones" : lista.length + " vaciados sin camiones"}</div>
-      <p class="muted" style="margin:6px 0 12px">
+    <section class="panel aviso-fantasma">
+      <div class="panel-head"><h2>${lista.length === 1 ? "Un vaciado sin camiones" : lista.length + " vaciados sin camiones"}</h2></div>
+      <div class="panel-body">
+      <p class="muted" style="margin:0 0 12px">
         ${lista.length === 1 ? "Este día está" : "Estos días están"} en el expediente con yardas
         planificadas y ni un camión registrado. ${puede
           ? "Si no fueron vaciados reales, descártalos: quedan en el archivo, dejan de contar."
@@ -469,8 +470,9 @@ function panelFantasmas(lista) {
               f.losasPlan ? " · " + fmt(f.losasPlan, 0) + " losas" : ""}</span>
             ${f.esSimulacion ? `<div class="muted" style="font-size:12px">Cuadra con la simulación del sistema</div>` : ""}
           </div>
-          ${puede ? `<button class="btn sm" onclick="if (descartarTiro('${esc(f.dia)}')) render()">Descartar</button>` : ""}
+          ${puede ? `<button class="btn small" onclick="if (descartarTiro('${esc(f.dia)}')) render()">Descartar</button>` : ""}
         </div>`).join("")}
+      </div>
     </section>`;
 }
 
@@ -549,14 +551,16 @@ function render() {
   const graves = alerts.filter((a) => a.level === "susp").length;
   const fueraSinMarcar = rows.filter((t) => !t.rejected && worstZone(t) === "susp").length;
   let est;
-  if (graves || fueraSinMarcar || prog.rejected) {
+  /* Q-52: el estado del proyecto informa de HECHOS de la obra —camiones
+     rechazados, ensayos fuera de límite—, nunca de avisos de tendencia. Un
+     aviso es una sospecha del sistema, útil para mirar de reojo, y no puede
+     teñir de ámbar la cabecera de un día en el que todo salió bien. Los
+     avisos viven abajo, en su panel, y en ningún otro sitio. */
+  if (fueraSinMarcar || prog.rejected) {
     est = { cls: "susp", mark: "✕", titulo: "Atención requerida",
       detalle: [prog.rejected ? `${prog.rejected} carga(s) rechazada(s) hoy` : null,
                 fueraSinMarcar ? `${fueraSinMarcar} ensayo(s) fuera de límite` : null,
-                graves ? `${graves} aviso(s) crítico(s)` : null].filter(Boolean).join(" · ") };
-  } else if (alerts.length) {
-    est = { cls: "act", mark: "▲", titulo: alerts.length === 1 ? "1 aviso activo" : `${alerts.length} avisos activos`,
-      detalle: alerts.map((a) => a.title).join(" · ") };
+               ].filter(Boolean).join(" · ") };
   } else {
     est = { cls: "ok", mark: "✓", titulo: "Todo en cumplimiento",
       detalle: `${prog.loads} camiones · ${fmt(prog.placed, 1)} CY · sin rechazos` };
@@ -639,23 +643,14 @@ function render() {
       </a>
     </div>
 
-    <!-- fila 3: avisos + último camión -->
+    <!-- fila 3: humedad + último camión. Los avisos se fueron abajo (Q-52);
+         la humedad se queda arriba porque es del día en curso y se actúa
+         sobre ella, no se contempla. -->
     <div class="grid cols-2">
-      <div class="w" style="cursor:default">
-        <div class="lbl" style="margin-bottom:6px">⚡ Avisos del sistema</div>
-        ${alerts.length ? alerts.map((a) => `
-          <div class="alert-row">
-            <span class="ic">${a.icon}</span>
-            <div>
-              <div class="t" style="color:var(--${a.level === "susp" ? "susp" : "act"})">${esc(a.title)}</div>
-              <div class="d">${esc(a.text)}</div>
-              <div class="a">▸ ${esc(a.action)}</div>
-            </div>
-          </div>`).join("")
-        : `<div style="padding:14px 0; color:var(--ok); font-weight:700">✓ Sin avisos — tendencias estables</div>`}
-        <div class="sub" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--line)">
-          Humedad de planta: ${h ? "última " + esc(h.time) : "<b style='color:var(--act)'>sin registro hoy</b>"}
-        </div>
+      <div class="w" style="cursor:default; align-content:start">
+        <div class="lbl">Humedad de planta</div>
+        <div class="num" style="font-size:22px">${h ? esc(h.time) : "—"}</div>
+        <div class="sub">${h ? "última lectura de hoy" : "<b style='color:var(--act)'>sin registro hoy</b>"}</div>
       </div>
 
       <a class="w lastruck ${lt.cls}" href="display.html" target="_blank" style="align-content:start">
@@ -669,7 +664,27 @@ function render() {
           <div class="sub">${lt.s}</div>
         </div>
       </a>
-    </div>`;
+    </div>
+
+    <!-- LOS AVISOS, AL FINAL Y EN NINGÚN OTRO SITIO — Q-52, 7 de agosto de
+         2026. Son tendencias que el sistema sospecha, no hechos de la obra:
+         se miran cuando se busca contexto, no cuando se entra a ver cómo va
+         el tiro. Arriba competían con los números que sí mandan. -->
+    <section class="panel avisos-fondo">
+      <div class="panel-head"><h2>⚡ Avisos del sistema</h2></div>
+      <div class="panel-body">
+      ${alerts.length ? alerts.map((a) => `
+        <div class="alert-row">
+          <span class="ic">${a.icon}</span>
+          <div>
+            <div class="t" style="color:var(--${a.level === "susp" ? "susp" : "act"})">${esc(a.title)}</div>
+            <div class="d">${esc(a.text)}</div>
+            <div class="a">▸ ${esc(a.action)}</div>
+          </div>
+        </div>`).join("")
+      : `<div style="color:var(--muted)">Sin avisos — tendencias estables.</div>`}
+      </div>
+    </section>`;
 
   // El tiempo en el sitio del tiro. Las coordenadas viven en el proyecto
   // (Plan & Datos) para que Rubén las corrija si el tramo se mueve.
