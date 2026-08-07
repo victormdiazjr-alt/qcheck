@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Control Center — QCheck</title>
-<link rel="stylesheet" href="assets/qc.css?v=783a2321">
+<link rel="stylesheet" href="assets/qc.css?v=561444d9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%2396c93d' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -268,7 +268,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=7dddde86"></script>
+<script src="assets/core.js?v=469640bc"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script src="assets/clima.js?v=d5c4fb65"></script>
 <script src="assets/usuarios.js?v=d98325b9"></script>
@@ -443,6 +443,40 @@ function abrirTiro() {
     ],
   });
 }
+/* EL AVISO DE TIRO FANTASMA — Q-46, con puerta desde Q-48.
+
+   `diasFantasma()` existía desde Q-46 y en el Control Center se calculaba…
+   y no se pintaba en ningún sitio. Es decir: el programa sabía que había un
+   vaciado que nunca ocurrió y no se lo decía a nadie, y no había forma de
+   llegar a él para quitarlo — las pantallas listan días, y un día fantasma
+   justamente no aparece en ninguna lista.
+
+   Aquí se dice y aquí se quita. Es el único sitio desde donde se alcanza. */
+function panelFantasmas(lista) {
+  if (!lista || !lista.length) return "";
+  const puede = typeof qcFirma !== "function" || qcFirma();
+  return `
+    <section class="card aviso-fantasma" style="margin-bottom:16px">
+      <div class="lbl">${lista.length === 1 ? "Un vaciado sin camiones" : lista.length + " vaciados sin camiones"}</div>
+      <p class="muted" style="margin:6px 0 12px">
+        ${lista.length === 1 ? "Este día está" : "Estos días están"} en el expediente con yardas
+        planificadas y ni un camión registrado. ${puede
+          ? "Si no fueron vaciados reales, descártalos: quedan en el archivo, dejan de contar."
+          : "Solo el ingeniero de récord puede descartarlos."}
+      </p>
+      ${lista.map((f) => `
+        <div class="fila-fantasma">
+          <div>
+            <b>${esc(fmtDate(f.dia))}</b>
+            <span class="muted"> · ${fmt(f.cyPlan, 0)} CY planificadas${
+              f.losasPlan ? " · " + fmt(f.losasPlan, 0) + " losas" : ""}</span>
+            ${f.esSimulacion ? `<div class="muted" style="font-size:12px">Cuadra con la simulación del sistema</div>` : ""}
+          </div>
+          ${puede ? `<button class="btn sm" onclick="if (descartarTiro('${esc(f.dia)}')) render()">Descartar</button>` : ""}
+        </div>`).join("")}
+    </section>`;
+}
+
 /* Una papelera abierta: se saca de la vista, no se destruye. Q-48. */
 const ICONO_DESCARTAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V5.2A1.2 1.2 0 0 1 10.7 4h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="M6.5 7l.9 12.1A1.6 1.6 0 0 0 9 20.6h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7"/></svg>`;
 /* Sala de máquinas: aparatos enlazados y latiendo */
@@ -566,6 +600,8 @@ function render() {
     </div>
 
     ${menu()}
+
+    ${panelFantasmas(fantasmas)}
 
     <!-- fila 1: lo del día -->
     <div class="grid cols-2" style="margin-bottom:16px">

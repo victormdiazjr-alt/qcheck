@@ -580,3 +580,12 @@ button.qcd-op { width: 100%; text-align: left; font-family: inherit; cursor: poi
   /* El botón que trajo hasta aquí no se imprime a sí mismo. */
   .qc-imprimir { display: none !important; }
 }
+
+/* Aviso de vaciado fantasma — Q-46/Q-48. Ámbar, no rojo: no es un fallo de
+   la obra, es una cuenta pendiente con el archivo. */
+.aviso-fantasma { border-left: 3px solid #d19a2a; }
+.fila-fantasma {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 10px 0; border-top: 1px solid rgba(255,255,255,.07);
+}
+.fila-fantasma:first-of-type { border-top: 0; }

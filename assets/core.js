@@ -833,7 +833,13 @@ function diasDelProyecto() {
      · si no, el día más reciente que YA HAYA PASADO
      · un tiro futuro se ve eligiéndolo, no solo. */
 function diaPorDefecto() {
-  const dias = diasDelProyecto(), hoy = todayISO();
+  const hoy = todayISO();
+  /* Un día que el propio programa señala como fantasma —plan, ni un camión, y
+     ya pasado— no puede ser la pantalla de arranque. Se ve en su aviso y se
+     alcanza eligiéndolo; presidir el Control Center con «0 / 260 CY» de un
+     vaciado que nunca ocurrió es justo lo contrario de lo que hace falta. */
+  const fantasma = new Set((typeof diasFantasma === "function" ? diasFantasma() : []).map((f) => f.dia));
+  const dias = diasDelProyecto().filter((d) => !fantasma.has(d));
   if (dias.includes(hoy)) return hoy;
   return dias.find((d) => d <= hoy) || dias[0] || hoy;
 }
@@ -1339,6 +1345,7 @@ function diasFantasma() {
   const fuera = [];
   for (const [dia, m] of Object.entries(db.dayMeta || {})) {
     if (!m || dia >= hoy) continue;                 // hoy con plan y sin camiones es normal
+    if (m.borrado) continue;                        // ya se descartó: el aviso está atendido
     const tienePlan = m.cyPlan != null || m.losasPlan != null || m.losas;
     if (!tienePlan) continue;
     if (testsOfDate(dia).length) continue;          // tiene camiones: es real

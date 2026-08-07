@@ -528,3 +528,21 @@ expediente— quedó cerrada en Q-46 y §23. Esto es lo otro que hacía falta: q
 cuando algo entre donde no debe, exista la manera de sacarlo sin mentirle al
 archivo.
 
+**Ampliación (Q-48b, mismo día).** El botón para descartar se puso primero en
+el menú de «Tiro», que actúa sobre el día activo — y un día fantasma nunca es
+el día activo, así que era inalcanzable. Peor: `diasFantasma()` existía desde
+Q-46, el Control Center lo calculaba, y **no lo pintaba en ningún sitio**. El
+programa sabía que había un vaciado que nunca ocurrió y no se lo decía a nadie.
+
+  · El aviso se pinta, con el botón dentro. Es el único sitio desde donde se
+    alcanza un día que por definición no sale en ninguna lista.
+  · `diaPorDefecto()` nunca elige un fantasma: presidir el Control Center con
+    «0 / 260 CY» de un vaciado que no ocurrió es lo contrario de lo que hace
+    falta.
+  · `diasFantasma()` salta los ya descartados, o el aviso no se apagaba nunca.
+
+**La lección.** Una función que detecta un problema y no tiene pantalla que la
+enseñe no sirve de nada — y `verificar.js` no la ve, porque su chequeo de
+código muerto mira funciones sin llamar, y ésta se llamaba. El aviso y la
+acción que lo resuelve van juntos o no van.
+
