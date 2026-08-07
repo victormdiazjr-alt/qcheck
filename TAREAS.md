@@ -11,7 +11,8 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-40 | **Los límites no se aplican hacia atrás** — un cambio en Settings rige del día en curso en adelante; lo ya vaciado se sigue juzgando con los límites que tenía, y las cartas los dibujan | claude | 2026-08-07 |
+| Q-41 | **Un tiro cerrado queda cerrado** — solo el ingeniero de récord puede reabrirlo o corregirlo | claude | 2026-08-07 |
 
 ---
 
