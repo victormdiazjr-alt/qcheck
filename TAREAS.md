@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
+| Q-46 | **Dos usuarios veían cifras distintas del mismo tiro** — la simulación puede escribir sobre un día real y su marca no viaja: queda un vaciado fantasma que ningún aparato puede distinguir de uno de verdad | claude | 2026-08-07 |
 
 ---
 
