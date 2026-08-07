@@ -1244,6 +1244,44 @@ function estadoTiro(day) {
   return { cls: "espera", icono: "reloj", txt: "Esperando camión" };
 }
 
+/* ------------------------------------------------------------ vaciados fantasma
+
+   Q-46, 7 ago 2026. Un día puede quedar en el expediente con su PLAN puesto y
+   sin un solo camión. Eso pasa por dos motivos, y uno es grave:
+
+     · alguien programó el tiro y todavía no ha llegado nadie  → normal, es hoy
+     · quedó el rastro de una simulación                       → basura firmada
+
+   El 31 de julio de 2026 el expediente compartido tenía un plan de 260 yardas
+   y 13 losas sin un solo camión detrás: son las cifras exactas de la
+   simulación. Su plan viajó a todos los aparatos; la marca que lo delataba
+   (`source: "demo"`) NO, porque la sincronización la excluye a propósito. Una
+   vez ahí, ningún aparato puede distinguirlo de un vaciado de verdad y la
+   limpieza automática no lo ve, porque solo borra lo que lleva la marca.
+
+   Esta función los saca a la luz. No borra nada —§«nada se borra»— pero deja
+   de ser invisible, que era lo único que hacía falta para que nadie lo notara
+   durante días. */
+function diasFantasma() {
+  const hoy = todayISO();
+  const fuera = [];
+  for (const [dia, m] of Object.entries(db.dayMeta || {})) {
+    if (!m || dia >= hoy) continue;                 // hoy con plan y sin camiones es normal
+    const tienePlan = m.cyPlan != null || m.losasPlan != null || m.losas;
+    if (!tienePlan) continue;
+    if (testsOfDate(dia).length) continue;          // tiene camiones: es real
+    fuera.push({
+      dia,
+      cyPlan: num(m.cyPlan),
+      losasPlan: num(m.losasPlan),
+      /* La simulación siempre planifica lo mismo. Si cuadra, se puede decir
+         de dónde salió en vez de dejar al que lo lea adivinando. */
+      esSimulacion: num(m.cyPlan) === 260 && num(m.losasPlan) === 13,
+    });
+  }
+  return fuera.sort((a, b) => a.dia.localeCompare(b.dia));
+}
+
 function dayProgress(day) {
   const meta = db.dayMeta[day] || {};
   const rows = testsOfDate(day);

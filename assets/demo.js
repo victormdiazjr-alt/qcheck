@@ -104,6 +104,24 @@ function sembrarTiroDemo(base) {
   const hoy = todayISO();
   if (demoYaHayTiro(base, hoy)) return false;
 
+  /* NO SE SIEMBRA SOBRE UN DÍA QUE YA EXISTE — Q-46, 7 ago 2026.
+
+     `demoYaHayTiro` solo miraba si había camiones. Pero un día puede existir
+     en el expediente compartido con su PLAN puesto y todavía sin camiones: es
+     exactamente la mañana de un vaciado, antes del primer viaje. Sembrar ahí
+     mete nueve camiones inventados dentro de un día de trabajo real.
+
+     Y lo que los distingue —`source: "demo"`— NO VIAJA: la sincronización lo
+     excluye a propósito. Así que esos camiones se quedan en un solo aparato,
+     el servidor no sabe de ellos, y dos personas mirando el mismo vaciado ven
+     cifras distintas sin que nada lo avise. Pasó: 197 contra 157.
+
+     Si el día ya tiene plan, ese día es de alguien. La simulación no entra. */
+  const yaHayPlan = base.dayMeta && base.dayMeta[hoy] &&
+    (base.dayMeta[hoy].cyPlan != null || base.dayMeta[hoy].losas ||
+     base.dayMeta[hoy].losasPlan != null || base.dayMeta[hoy].cerradoA);
+  if (yaHayPlan && base.dayMeta[hoy].source !== "demo") return false;
+
   const ahora = new Date();
   const finUltimo = demoMenos(ahora, DEMO_ULTIMO_HACE);
 

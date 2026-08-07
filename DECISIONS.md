@@ -385,3 +385,46 @@ en la lista local, como el resto.
 
 **Se avisa con el motivo**, no con un botón que no responde: *«El vaciado del 18 jul está
 cerrado por Rubén Segarra. Solo el ingeniero de récord puede corregirlo.»*
+
+---
+
+## 23. La simulación no puede escribir sobre un día de verdad, y lo que dejó se ve
+
+**Lo reportó Víctor el 7 ago 2026**: su Control Center decía 157/150 yardas y el de Rubén
+197/150. El mismo vaciado, dos cifras.
+
+**La raíz, en tres piezas que solas no hacen daño y juntas sí:**
+
+1. **La simulación sembraba mirando solo si había camiones.** Un día puede existir con su
+   PLAN puesto y sin un solo camión: es la mañana de un vaciado, antes del primer viaje.
+   Sembrar ahí mete nueve camiones inventados dentro de un día de trabajo real.
+
+2. **Lo que los distingue no viaja.** `source: "demo"` se excluye de la sincronización a
+   propósito, y con razón: la simulación de un aparato no debe ensuciar a los demás. Pero
+   eso significa que los camiones inventados **existen en un solo aparato**. El servidor no
+   sabe de ellos y ningún otro los ve.
+
+3. **Nada comparaba las dos cosas.** Dos personas mirando el mismo vaciado veían totales
+   distintos y el sistema no tenía forma de notarlo.
+
+**Y hay una cuarta pieza, peor, que la auditoría destapó de paso:** el 31 de julio de 2026
+el expediente compartido tiene un plan de **260 yardas y 13 losas sin un solo camión** — las
+cifras exactas de la simulación. Su plan viajó; la marca que lo delataba, no. Una vez ahí,
+**ningún aparato puede distinguirlo de un vaciado real**, y la limpieza automática no lo ve
+porque solo borra lo que lleva la marca. Es basura permanente dentro de un expediente que se
+certifica.
+
+**El arreglo, en dos partes:**
+
+- **La simulación no entra en un día que ya tiene plan.** Si el día es de alguien, no se
+  siembra. Antes bastaba con que no hubiera camiones todavía.
+
+- **`diasFantasma()` los saca a la luz.** Cualquier día PASADO con plan y cero camiones se
+  canta en el Control Center, y si sus cifras cuadran con las de la simulación se dice.
+  No borra nada —§«nada se borra» sigue en pie—, pero deja de ser invisible, que era lo
+  único que hacía falta para que nadie lo notara durante una semana.
+
+**La regla que queda:** un dato que no viaja tiene que ser *imposible* de confundir con uno
+que sí. Si la única diferencia es un campo que la sincronización descarta, entonces desde el
+otro lado no hay diferencia ninguna — y el expediente deja de ser una sola verdad, que es lo
+único que QCheck vende.
