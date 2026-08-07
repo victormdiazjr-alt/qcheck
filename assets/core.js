@@ -1850,7 +1850,7 @@ function formPlan(alGuardar) {
    reunión y lo que se archiva.
 
    NO CALCULA NADA. Todo sale de `dayProgress()`, `estadisticasDia()`,
-   `losasDelDia()` y `trendAlerts()`, los mismos que pintan la pantalla. Si
+   `losasDelDia()`, los mismos que pintan la pantalla. Si
    aquí sale un número distinto del que se ve, es un fallo, no un criterio
    nuevo. Y un día sin lecturas lo dice: no se rellena con ceros (§3).
 
@@ -1879,7 +1879,6 @@ function reporteEscritoDelDia(day, quien) {
   const p = dayProgress(day);
   const filas = testsOfDate(day);
   const est = estadisticasDia(day);
-  const avisos = trendAlerts(day);
   const abierto = day === todayISO() && !tiroCerrado(day);
   const ahora = new Date();
 
@@ -1933,13 +1932,6 @@ function reporteEscritoDelDia(day, quien) {
       <tr><th>Propiedad</th><th class="n">Lecturas</th><th class="n">Media</th><th class="n">Mín</th><th class="n">Máx</th><th class="n">Desv.</th><th class="n">Fuera de zona</th></tr>
       ${est.map((e) => qcFilaEstadistica(e)).join("")}
     </table>
-
-    ${avisos.length ? `<h2>Avisos del día</h2>
-    <ul class="qc-rep-avisos">
-      ${avisos.map((a) => `<li class="${a.level === "susp" ? "susp" : "act"}">
-        <b>${esc(a.title)}</b> — ${esc(a.text)}
-        <div class="qc-accion">Acción: ${esc(a.action)}</div></li>`).join("")}
-    </ul>` : `<h2>Avisos del día</h2><p class="qc-sin">Ninguno. Tendencias estables.</p>`}
 
     <h2>Camión por camión</h2>
     <table class="qc-rep-tabla qc-rep-camiones">

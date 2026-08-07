@@ -72,16 +72,9 @@ function viewDashboard() {
 
   const lastDay = days[0];
   const lastDayTests = lastDay ? testsOfDate(lastDay) : [];
-  const alerts = [];
-  if (lastMA && lastMA._ma5 < db.plan.cs.target)
-    alerts.push({ level: "susp", text: `Moving Average (${db.plan.maWindow}) de 5 días = ${fmt(lastMA._ma5, 0)} psi — POR DEBAJO del objetivo ${fmt(db.plan.cs.target, 0)} psi.` });
-  const recentSusp = tests.slice(-15).filter((t) => !t.rejected && worstZone(t) === "susp");
-  if (recentSusp.length)
-    alerts.push({ level: "susp", text: `${recentSusp.length} prueba(s) reciente(s) fuera de límite de suspensión sin marcar como rechazadas — revisar.` });
-  const recentAct = tests.slice(-15).filter((t) => worstZone(t) === "act");
-  if (recentAct.length >= 4)
-    alerts.push({ level: "act", text: `${recentAct.length} pruebas recientes en zona de acción — vigilar tendencia (ajuste de planta puede ser necesario).` });
-
+  /* Aquí había un segundo juego de avisos (Moving Average bajo, rachas en
+     zona de acción). Fuera por Q-43: los avisos viven solo en el Control
+     Center. */
   return `
     <div class="grid cols-6">
       <div class="stat"><div class="label">Pruebas</div><div class="value">${tests.length}</div><div class="sub">${days.length} días de vaciado</div></div>
@@ -94,7 +87,6 @@ function viewDashboard() {
         <div class="value">${last30.length ? Math.round(okCount / last30.length * 100) + "%" : "—"}</div><div class="sub">últimas ${last30.length} pruebas</div></div>
     </div>
 
-    ${alerts.map((a) => `<div class="notice ${a.level}" style="margin-top:14px">⚠ ${esc(a.text)}</div>`).join("")}
 
     <div class="grid cols-2" style="margin-top:16px">
       <div class="panel">
@@ -173,7 +165,6 @@ function viewLive() {
       ${last.rejected ? `<div style="margin-top:10px; text-align:right"><button class="btn danger" onclick="notifyReject(${last.n})">✉ Notificar rechazo a todas las partes</button></div>` : ""}`;
   }
 
-  const alerts = trendAlerts(day);
   const h = lastHumidity(day);
 
   return `
@@ -189,22 +180,13 @@ function viewLive() {
       <button class="btn primary" onclick="formTest(null)">＋ Camión</button>
     </div>
 
-    ${alerts.length ? `<div class="panel" style="border-left:4px solid var(--act)">
-      <div class="panel-head"><h2>⚡ Avisos del sistema</h2><div class="spacer"></div>
-        <span class="muted" style="font-size:12px">humedad: ${h ? "última " + esc(h.time) : "sin registro hoy"}</span>
-        <button class="btn small" onclick="formHumidity()">＋ Humedad</button></div>
-      <div class="panel-body flush">
-        ${alerts.map((a) => `<div style="display:flex; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line); align-items:flex-start">
-          <span style="font-size:22px; line-height:1">${a.icon}</span>
-          <div style="flex:1">
-            <div style="font-weight:800; color:var(--${a.level === "susp" ? "susp" : "act"}); font-size:14px">${esc(a.title)}</div>
-            <div style="font-size:13px; margin-top:2px">${esc(a.text)}</div>
-            <div style="font-size:12.5px; color:var(--ink-soft); margin-top:3px">▸ ${esc(a.action)}</div>
-          </div>
-        </div>`).join("")}
-      </div>
-    </div>` : `<div class="notice ok" style="background:var(--ok-bg); color:var(--ok)">✓ Sin avisos — tendencias estables${h ? " · última humedad " + esc(h.time) : ""}
-      <button class="btn small" style="margin-left:10px" onclick="formHumidity()">＋ Humedad</button></div>`}
+    <!-- Los avisos salieron de aquí — Q-43, 7 ago 2026. Viven solo en el
+         Control Center, que es donde está quien puede llamar a la planta.
+         El control de humedad se queda: eso es un dato que se entra, no una
+         deducción del sistema. -->
+    <div class="notice" style="background:var(--panel-2); color:var(--ink-soft)">
+      Humedad de agregados: ${h ? "última a las " + esc(h.time) : "sin registro hoy"}
+      <button class="btn small" style="margin-left:10px" onclick="formHumidity()">＋ Humedad</button></div>
 
     <div class="grid cols-3">
       <div class="stat"><div class="label">Yardas acumuladas</div><div class="value live-big">${fmt(cy, 1)}</div><div class="sub">CY · ${fmtDate(day)}</div></div>

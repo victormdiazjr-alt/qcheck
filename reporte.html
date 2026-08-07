@@ -243,7 +243,7 @@ table.rep td.dif { font-weight: 700; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=2ffde6be"></script>
+<script src="assets/core.js?v=591d4255"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -708,7 +708,6 @@ function renderDiario() {
   const prog = dayProgress(day);
   const st = dayStats(day);
   const { lista: losas, hechas, rango: tramo, fuera: losasFuera } = losasDelDia(day);
-  const avisos = trendAlerts(day);
   const rej = rows.filter((t) => t.rejected);
   const hums = (db.humidity || []).filter((h) => h.date === day)
     .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
@@ -992,17 +991,19 @@ function renderDiario() {
         camiones sería inventar el plan. La lista se declara en Plan &amp; Datos → Datos del vaciado.
         ${prog.losasDone ? `Los camiones registrados tocaron <b>${prog.losasDone}</b> losa${prog.losasDone === 1 ? "" : "s"} distinta${prog.losasDone === 1 ? "" : "s"}.` : ""}</p>`}
 
-    <h2 class="sec">Observaciones del sistema</h2>
-    ${avisos.length ? avisos.map((a) => `<div class="obs ${a.level === "susp" ? "susp" : "act"}">
-        <div class="ic">${a.icon}</div>
-        <div><div class="t">${esc(a.title)}</div><div class="d">${esc(a.text)}</div>
-          <div class="a">▸ ${esc(a.action)}</div></div>
-      </div>`).join("")
-    : `<p style="font-size:9.5pt; color:#5a6b7c">Sin avisos: las tendencias de Unit Weight y Slump se
-        mantuvieron estables durante el vaciado.</p>`}
-    <div class="tbl-note">Los avisos los deduce el sistema de las propias lecturas del día
-      (tendencia de Unit Weight contra Slump, acercamiento a límites, humedades de agregados vencidas
-      y rachas en zona de acción). No sustituyen el criterio del ingeniero de control de calidad.</div>
+    <!-- Los avisos del sistema NO salen en el reporte — Q-43, 7 ago 2026.
+
+         Son ayudas para actuar durante el vaciado: «el Unit Weight baja y el
+         slump sube, avisa a la planta». Sirven mientras el camión todavía
+         viene por la carretera.
+
+         En un informe que se firma y se archiva son otra cosa: una deducción
+         automática, sin firma de nadie, impresa junto a mediciones que sí la
+         tienen. Quien lo lea después no puede distinguir lo medido de lo
+         inferido, y eso es justo lo que un expediente no debe permitir.
+
+         Viven donde sirven: en el Control Center, delante de quien puede
+         llamar a la planta. -->
     ${sheetFoot(pg, total)}
   </div>`);
 

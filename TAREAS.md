@@ -11,7 +11,7 @@ Agentes que trabajan aquí: `claude` (Claude Code) · `codex` (OpenAI Codex) · 
 
 | id | tarea | agente | desde |
 |----|-------|--------|-------|
-| Q-43 | **Los avisos solo en el Control Center** — fuera de Results, del reporte impreso y del reporte de los tableros | claude | 2026-08-07 |
+_(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 
 ---
 
@@ -49,6 +49,7 @@ Versión vigente del contrato: **4**.
 
 | fecha | tarea | agente |
 |-------|-------|--------|
+| 2026-08-07 | **Q-43 — Los avisos solo en el Control Center.** Fuera de Results (dos juegos distintos), del reporte impreso y del reporte de los tableros. Son ayudas para actuar durante el vaciado, no material de archivo: en un informe firmado son una deducción automática sin firma junto a mediciones que sí la tienen. El control de humedad se conserva, que eso es un dato entrado y no una deducción | claude |
 | 2026-08-07 | **Q-42 — Salir deja de ocupar un mosaico.** Era del mismo tamaño que Recepción o Muestras dentro de la rejilla de puertas, y salir se hace una vez al día. Pasa a la cabecera, pequeño y apartado por una línea fina, en rojo solo al pasar por encima | claude |
 | 2026-08-07 | **Q-41 — Un vaciado cerrado queda cerrado.** Solo el ingeniero de récord (capacidad `firma`, nunca el nombre de usuario) puede reabrirlo o corregir un dato. Ni el administrador. Guardado en Muestras, en Recepción y al reabrir, siempre con el motivo a la vista | claude |
 | 2026-08-07 | **Q-40 — Los límites tienen fecha.** Cambiarlos rige de hoy en adelante; lo ya vaciado se sigue juzgando con los suyos y las cartas y reportes los dibujan. Al cerrar un tiro se le congela una copia encima. Antes, tocar un límite volvía a juzgar los 397 ensayos desde noviembre de 2025 — el récord cambiaba solo. Al actualizar no se altera ni un veredicto | claude |
