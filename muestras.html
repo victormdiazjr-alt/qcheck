@@ -349,7 +349,7 @@ footer .spacer { flex: 1; }
 .icon-btn.muted { opacity: .55; border-style: dashed; }
 .empty-state { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 2.4vh; line-height: 1.6; }
 </style>
-<script src="assets/usuarios.js?v=86dde610"></script>
+<script src="assets/usuarios.js?v=d98325b9"></script>
 <script src="assets/auth.js?v=de2a7e62"></script>
 </head>
 <body>
@@ -428,7 +428,7 @@ footer .spacer { flex: 1; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=58793b02"></script>
+<script src="assets/core.js?v=2ffde6be"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -870,6 +870,10 @@ function askSubmit() {
 function closeConfirm() { document.getElementById("confirm").classList.remove("show"); }
 
 function doSubmit(rejected) {
+  /* Q-41: un vaciado cerrado no acepta resultados nuevos salvo del ingeniero
+     de récord. Se avisa con el motivo, no con un botón que no responde. */
+  const _t = currentTest();
+  if (_t && typeof frenoDiaCerrado === "function" && frenoDiaCerrado(_t.date)) return;
   closeConfirm();
   const t = currentTest(); if (!t) return;
   t.slump = state.buf.slump; t.uw = state.buf.uw;

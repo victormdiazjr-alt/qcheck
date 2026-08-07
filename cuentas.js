@@ -127,7 +127,8 @@ async function main() {
     if (!d.usuarios.length) console.log("  (todavía no hay ninguna cuenta)");
     for (const u of d.usuarios) {
       const marcas = [u.rol, u.tablero ? "tablero" : null, u.config ? "Plan & Datos" : null,
-        u.limites ? "Settings" : null, u.casa ? "vive en " + u.casa : null,
+        u.limites ? "Settings" : null, u.firma ? "ingeniero de récord" : null,
+        u.casa ? "vive en " + u.casa : null,
                       u.activo ? null : "DE BAJA"].filter(Boolean).join(" · ");
       console.log(`  ${u.usr.padEnd(12)} ${String(u.nombre).padEnd(22)} ${marcas}`);
     }
@@ -207,6 +208,7 @@ async function main() {
          mal escrito dejaría a esa persona rebotando entre una pantalla que no
          está y el portal, sin poder entrar a nada. */
       cuerpo.limites = !!opcion(args, "limites");
+      cuerpo.firma = !!opcion(args, "firma");
       const casa = opcion(args, "casa");
       if (casa) {
         const CASAS = ["produccion.html", "contratista.html", "autoridad.html", "movil.html"];

@@ -102,7 +102,7 @@ function mismoSecreto(a, b) {
 
 const ficha = (u) => ({
   usr: u.usr, nombre: u.nombre, rol: u.rol, tablero: !!u.tablero, config: !!u.config,
-  limites: !!u.limites, casa: u.casa || null,
+  limites: !!u.limites, firma: !!u.firma, casa: u.casa || null,
 });
 
 /* Quién trae este pase. Estira el vencimiento con cada uso: la sincronización
@@ -285,7 +285,7 @@ export default {
       }
       if (req.method === "GET") {
         const { results } = await env.DB.prepare(
-          "SELECT usr, nombre, rol, tablero, config, limites, casa, activo, creado, visto FROM usuarios ORDER BY usr"
+          "SELECT usr, nombre, rol, tablero, config, limites, firma, casa, activo, creado, visto FROM usuarios ORDER BY usr"
         ).all();
         return json({ usuarios: results || [], exigir_sesion: exige });
       }
@@ -324,16 +324,17 @@ export default {
         await env.DB.prepare(
           /* `limites` y `casa` — Q-37. Ver la nota gemela en sync-servidor.js:
              los dos servidores tienen que dar la MISMA ficha. */
-          "INSERT INTO usuarios (usr, nombre, rol, tablero, config, limites, casa, sal, hash, vueltas, activo, creado) " +
-          "VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(usr) DO UPDATE SET " +
+          "INSERT INTO usuarios (usr, nombre, rol, tablero, config, limites, firma, casa, sal, hash, vueltas, activo, creado) " +
+          "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(usr) DO UPDATE SET " +
           "nombre = excluded.nombre, rol = excluded.rol, tablero = excluded.tablero, " +
-          "config = excluded.config, limites = excluded.limites, casa = excluded.casa, " +
+          "config = excluded.config, limites = excluded.limites, firma = excluded.firma, casa = excluded.casa, " +
           "sal = excluded.sal, hash = excluded.hash, " +
           "vueltas = excluded.vueltas, activo = excluded.activo"
         ).bind(usr, String(d.nombre || (antes && antes.nombre) || usr), rol,
                (d.tablero != null ? !!d.tablero : !!(antes && antes.tablero)) ? 1 : 0,
                (d.config != null ? !!d.config : !!(antes && antes.config)) ? 1 : 0,
                (d.limites != null ? !!d.limites : !!(antes && antes.limites)) ? 1 : 0,
+               (d.firma != null ? !!d.firma : !!(antes && antes.firma)) ? 1 : 0,
                d.casa !== undefined ? (d.casa || null) : ((antes && antes.casa) || null),
                sal, hash, d.clave ? VUELTAS : antes.vueltas,
                (d.activo != null ? !!d.activo : !(antes && !antes.activo)) ? 1 : 0,

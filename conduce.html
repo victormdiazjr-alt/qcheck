@@ -100,7 +100,7 @@ body { background: var(--bg); }
   border-radius: 8px; padding: 9px 13px; background: var(--panel-2);
 }
 </style>
-<script src="assets/usuarios.js?v=86dde610"></script>
+<script src="assets/usuarios.js?v=d98325b9"></script>
 <script src="assets/auth.js?v=de2a7e62"></script>
 </head>
 <body>
@@ -206,7 +206,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=58793b02"></script>
+<script src="assets/core.js?v=2ffde6be"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -409,6 +409,8 @@ const CAMPOS_CAMION = [
 ];
 
 function saveArrival() {
+  /* Q-41: no se reciben camiones en un día ya firmado. */
+  if (typeof frenoDiaCerrado === "function" && frenoDiaCerrado(diaActivo())) return;
   /* Se avisa del PRIMERO que falta y se lleva el cursor ahí. Enseñar los seis
      errores de golpe no ayuda a nadie con la mano sucia. */
   for (const [id, que, porque] of CAMPOS_CAMION) {
@@ -487,6 +489,9 @@ function saveArrival() {
 
 /* ---------- one-tap timestamps + results ---------- */
 function stamp(n, field) {
+  /* Q-41: tampoco se corrigen hitos de un vaciado cerrado. */
+  const _r = (db.tests || []).find((x) => x.n === n);
+  if (_r && typeof frenoDiaCerrado === "function" && frenoDiaCerrado(_r.date)) return;
   const t = db.tests.find((x) => x.n === n);
   if (!t || t[field]) return;
   t[field] = nowHM();

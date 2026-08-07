@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   config  INTEGER NOT NULL DEFAULT 0,  -- ¿ve «Plan & Datos» y «Estado del sistema»?
   limites INTEGER NOT NULL DEFAULT 0,  -- ¿ve «Settings»? (los límites del plan) — Q-37
   casa    TEXT,                        -- tablero único donde vive esta cuenta — Q-37
+  firma   INTEGER NOT NULL DEFAULT 0,  -- ¿ingeniero de récord? toca vaciados cerrados — Q-41
   sal     TEXT NOT NULL,           -- 16 bytes en hex, distinta para cada quien
   hash    TEXT NOT NULL,           -- PBKDF2-SHA256 de la clave con esa sal
   vueltas INTEGER NOT NULL,        -- iteraciones; se guarda para poder subirlas después

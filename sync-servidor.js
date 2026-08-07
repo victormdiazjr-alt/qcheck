@@ -210,7 +210,7 @@ function crearCuentas(dir) {
 
     listar: () => Object.values(usuarios).map((u) => ({
       usr: u.usr, nombre: u.nombre, rol: u.rol, tablero: !!u.tablero,
-      config: !!u.config, limites: !!u.limites, casa: u.casa || null,
+      config: !!u.config, limites: !!u.limites, firma: !!u.firma, casa: u.casa || null,
       activo: u.activo !== false, creado: u.creado, visto: u.visto || null,
     })),
 
@@ -230,6 +230,7 @@ function crearCuentas(dir) {
          nombre de usuario (AGENTS §3). */
         config: d.config != null ? !!d.config : !!antes.config,
         limites: d.limites != null ? !!d.limites : !!antes.limites,
+        firma: d.firma != null ? !!d.firma : !!antes.firma,
         casa: d.casa !== undefined ? (d.casa || null) : (antes.casa || null),
         activo: d.activo != null ? !!d.activo : antes.activo !== false,
         creado: antes.creado || new Date().toISOString(),
@@ -273,7 +274,7 @@ function crearCuentas(dir) {
 
     ficha: (u) => ({
       usr: u.usr, nombre: u.nombre, rol: u.rol, tablero: !!u.tablero, config: !!u.config,
-      limites: !!u.limites, casa: u.casa || null,
+      limites: !!u.limites, firma: !!u.firma, casa: u.casa || null,
     }),
 
     /* Quién es el que trae este token. Estira el vencimiento: una sesión en

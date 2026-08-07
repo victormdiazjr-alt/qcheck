@@ -199,7 +199,7 @@ table.rep td.dif { font-weight: 700; }
   @page { size: Letter portrait; margin: 0.35in; }
 }
 </style>
-<script src="assets/usuarios.js?v=86dde610"></script>
+<script src="assets/usuarios.js?v=d98325b9"></script>
 <script src="assets/auth.js?v=de2a7e62"></script>
 </head>
 <body>
@@ -243,7 +243,7 @@ table.rep td.dif { font-weight: 700; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=8e0c9b43"></script>
-<script src="assets/core.js?v=58793b02"></script>
+<script src="assets/core.js?v=2ffde6be"></script>
 <script src="assets/demo.js?v=4fdc15f7"></script>
 <script>
 "use strict";
@@ -342,7 +342,10 @@ function repChart(def, rows) {
       : def.key === "uw" ? zoneUW(t) : zoneTemp(t),
   }));
   const pw = pts.length > 90 ? 7 : pts.length > 45 ? 11 : 16;
-  return svgChart({ pts, bands: bandsFor(def.key), dp: def.dp, pw, h: 190 });
+  /* Los límites son los del día del último ensayo dibujado, no los de hoy
+     (Q-40). Un reporte de julio tiene que imprimir los límites de julio. */
+  const diaCarta = pts.length ? pts[pts.length - 1].date : null;
+  return svgChart({ pts, bands: bandsFor(def.key, diaCarta), dp: def.dp, pw, h: 190 });
 }
 
 /* `sub` es la segunda línea: el nombre del proyecto en el acumulado, la fecha
@@ -428,6 +431,9 @@ function render() {
 
 function renderAcumulado() {
   const rows = rangeTests();
+  /* Los límites que se imprimen son los del ÚLTIMO ensayo del rango, no los de
+     hoy (Q-40). Un acumulado que termina en julio imprime los de julio. */
+  const diaDeLosLimites = rows.length ? rows[rows.length - 1].date : null;
   document.getElementById("cnt").textContent = `${rows.length} ensayos en el reporte`;
 
   if (!rows.length) {
@@ -525,7 +531,7 @@ function renderAcumulado() {
             <td${z(zoneAir(t))}>${fmt(t.air, 1)}</td>
             <td${z(zoneUW(t))}>${fmt(t.uw, 2)}</td>
             <td${z(zoneTemp(t))}>${fmt(t.temp, 0)}</td>
-            <td class="n">${fmt(t.cs1, 0)}</td><td${z(zoneCS5(t.cs5))}>${fmt(t.cs5, 0)}</td><td class="n">${fmt(t.cs28, 0)}</td>
+            <td class="n">${fmt(t.cs1, 0)}</td><td${z(zoneCS5(t.cs5, t.date))}>${fmt(t.cs5, 0)}</td><td class="n">${fmt(t.cs28, 0)}</td>
             <td>${t.rejected ? "RECHAZADO" : (worstZone(t) === "susp" ? "Fuera" : worstZone(t) === "act" ? "Acción" : worstZone(t) ? "Conforme" : "—")}</td>
           </tr>`;
         }).join("")}
@@ -586,7 +592,7 @@ function renderAcumulado() {
       ${sheetHead("Control Charts")}
       ${pair.map((idx) => {
         const d = defs[idx];
-        const b = bandsFor(d.key);
+        const b = bandsFor(d.key, diaDeLosLimites);
         // fmt() evita que la aritmética de punto flotante imprima 147.79999999999998
         const lim = d.key === "temp"
           ? `Máximo ${p.tempMax} °F · zona de acción sobre ${p.tempMax - 3} °F`
@@ -643,6 +649,14 @@ function renderAcumulado() {
       aprobado para la mezcla <b>${esc(db.project.mixId || "—")}</b>. Los datos presentados provienen del
       registro digital de campo sin transcripción manual intermedia.
     </p>
+    ${(() => {
+      /* Q-40: si este vaciado se juzgó con límites distintos de los vigentes
+         hoy, el reporte lo dice. Quien compare dos documentos del proyecto y
+         vea umbrales distintos tiene que encontrar la explicación aquí, no
+         suponer que uno de los dos está mal. */
+      const nota = typeof notaDeLimites === "function" ? notaDeLimites(diaDeLosLimites) : "";
+      return nota ? `<p style="font-size:8.5pt; line-height:1.6; color:#4a5866">${esc(nota)}</p>` : "";
+    })()}
     <div class="signs">
       <div class="sign"><div class="r">Inspector / Técnico de campo</div></div>
       <div class="sign"><div class="r">Ingeniero de Control de Calidad</div></div>
@@ -1035,7 +1049,7 @@ function renderDiario() {
       ${sheetHead("Control Charts del vaciado" + (paresCartas.length > 1 ? ` (${i + 1}/${paresCartas.length})` : ""), fmtDate(day))}
       <h2 class="sec">Las lecturas de hormigón fresco, en orden de llegada</h2>
       ${par.map((d) => {
-        const b = bandsFor(d.key);
+        const b = bandsFor(d.key, day);
         const lim = d.key === "temp"
           ? `Máximo ${p.tempMax} °F · zona de acción sobre ${p.tempMax - 3} °F`
           : `Objetivo ${fmt(b.target, 2)} · acción ${fmt(b.actLo, 2)} – ${fmt(b.actHi, 2)} · suspensión ${fmt(b.suspLo, 2)} – ${fmt(b.suspHi, 2)}`;
@@ -1089,7 +1103,7 @@ function renderDiario() {
           <th class="n">28 días</th><th>Evaluación</th></tr>
       ${res.map((t) => `<tr><td class="n">${t.n}</td><td>${esc(t.ticket || "—")}</td>
         <td class="n">${fmt(t.cs1, 0)}</td>
-        <td class="n${zoneCS5(t.cs5) === "susp" ? " z-susp" : zoneCS5(t.cs5) === "act" ? " z-act" : ""}">${fmt(t.cs5, 0)}</td>
+        <td class="n${zoneCS5(t.cs5, t.date) === "susp" ? " z-susp" : zoneCS5(t.cs5, t.date) === "act" ? " z-act" : ""}">${fmt(t.cs5, 0)}</td>
         <td class="n">${fmt(t.cs28, 0)}</td>
         <td>${t.cs5 == null ? "—" : t.cs5 >= p.cs.target ? "Cumple" : t.cs5 >= p.cs.action ? "Bajo objetivo" : "No cumple"}</td>
       </tr>`).join("")}
@@ -1111,6 +1125,14 @@ function renderDiario() {
       Los datos provienen del registro digital de campo, entrado una sola vez y sin transcripción manual intermedia.
       ${enCurso ? "<b>Hoja emitida con el tiro todavía en curso.</b>" : ""}
     </p>
+      ${(() => {
+        /* Q-40: si este vaciado se juzgó con límites distintos de los vigentes
+           hoy, el reporte lo dice. Quien compare dos documentos del proyecto y
+           vea umbrales distintos tiene que encontrar la explicación aquí, no
+           suponer que uno de los dos está mal. */
+        const nota = typeof notaDeLimites === "function" ? notaDeLimites(day) : "";
+        return nota ? `<p style="font-size:8.5pt; line-height:1.6; color:#4a5866">${esc(nota)}</p>` : "";
+      })()}
     <div class="signs">
       <div class="sign"><div class="r">Inspector / Técnico de campo</div></div>
       <div class="sign"><div class="r">Ingeniero de Control de Calidad</div></div>

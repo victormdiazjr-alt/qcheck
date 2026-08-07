@@ -34,7 +34,7 @@
 
 const QC_CUENTAS = {
   admin:    { clave: "1234", rol: "qc",       nombre: "Administrador", tablero: true, config: true, limites: true },
-  ruben:    { clave: "1234", rol: "qc",       nombre: "Rubén Segarra", limites: true },
+  ruben:    { clave: "1234", rol: "qc",       nombre: "Rubén Segarra", limites: true, firma: true },
   invitado: { clave: "1234", rol: "consulta", nombre: "Invitado" },
 
   /* Las tres de fuera — Q-37, 6 ago 2026. Cada una entra y aparece en SU
@@ -137,4 +137,21 @@ function qcCasa() {
 function qcVeLimites() {
   const c = qcCuenta();
   return !!(c && c.limites);
+}
+
+/* ¿Es el ingeniero de récord? — Q-41, 7 ago 2026.
+
+   Un vaciado cerrado deja de aceptar cambios: el reporte ya se firmó y lo que
+   dice es lo que pasó. Reabrirlo o corregir un dato de un día cerrado solo lo
+   puede hacer quien responde por ese expediente ante la Autoridad.
+
+   Víctor lo decidió así, y tiene sentido más allá de esta obra: el que firma
+   el récord es el que puede tocarlo. Ni siquiera el administrador — el
+   administrador monta la herramienta, no certifica el hormigón.
+
+   Va como capacidad y NUNCA como `usuario === "ruben"` (AGENTS §3): el día que
+   entre otro ingeniero de récord se le pone `firma: true` y ya. */
+function qcFirma() {
+  const c = qcCuenta();
+  return !!(c && c.firma);
 }

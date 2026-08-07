@@ -335,3 +335,53 @@ el pase deja de valer, y que se puede volver a apagar. Las 14 en verde.
 
 **La regla:** una bandera que cambia el comportamiento del sistema no se deja sin probar
 esperando al día que se encienda. Ese día siempre es un día de obra.
+
+---
+
+## 21. Los límites tienen fecha. Lo ya juzgado no se vuelve a juzgar
+
+**Lo pidió Víctor el 7 ago 2026** al ver el riesgo antes que nadie.
+
+**La raíz.** Los límites eran uno solo: `db.plan`. Las cinco funciones de zona lo leían
+directo, así que cambiar el slump de acción en Settings **volvía a juzgar los 397 ensayos
+desde noviembre de 2025**. Un vaciado firmado como conforme podía aparecer rechazado meses
+después, sin que nadie tocara un dato, y el reporte que ya vio la Autoridad decía otra cosa
+que el mismo reporte reimpreso.
+
+En una herramienta cualquiera eso es un detalle de interfaz. En un expediente de control de
+calidad **es que el récord cambia solo**, y es exactamente lo que un expediente existe para
+impedir.
+
+**El arreglo.** `db.planes` guarda las versiones en orden, cada una con el día desde el que
+manda. `planDe(fecha)` devuelve la que regía ese día, y un ensayo se juzga siempre con la
+suya. `db.plan` sigue siendo el vigente, así que todo lo que hablaba del presente sigue
+igual. Las cartas y los reportes piden los límites del día que enseñan, no los de hoy.
+
+**Al actualizar no cambia nada.** La primera versión arranca en la fecha del ensayo más
+antiguo, de forma que toda la historia se sigue juzgando con lo que se juzgaba ayer.
+Comprobado: cero veredictos alterados sobre los 397.
+
+**Cuando un vaciado se cierra, se le congela una copia de los límites encima**
+(`dayMeta[dia].plan`), y esa copia manda sobre cualquier versión posterior. Es la garantía
+dura: lo firmado no se mueve ni aunque alguien enrede con las fechas.
+
+**Y se dice.** Si un día se juzgó con límites distintos de los vigentes, el reporte lo
+imprime bajo la certificación. Quien compare dos documentos del proyecto y vea umbrales
+distintos tiene que encontrar la explicación ahí, no suponer que uno está mal.
+
+## 22. El que firma el récord es el que puede tocarlo
+
+Un vaciado cerrado deja de aceptar cambios. Reabrirlo o corregir un dato de un día cerrado
+solo lo puede hacer **el ingeniero de récord** — quien responde por ese expediente ante la
+Autoridad.
+
+**Ni siquiera el administrador.** El administrador monta la herramienta; no certifica el
+hormigón. Es la misma lógica que hace que Rubén no vea «Plan & Datos» (§3 de AGENTS y la
+decisión del 1 ago): cada quien manda en lo suyo, y aquí lo suyo es la firma.
+
+Va como capacidad `firma` en la cuenta y **nunca** como `usuario === "ruben"`: el día que
+entre otro ingeniero de récord se le pone la capacidad y ya. Está en los dos servidores y
+en la lista local, como el resto.
+
+**Se avisa con el motivo**, no con un botón que no responde: *«El vaciado del 18 jul está
+cerrado por Rubén Segarra. Solo el ingeniero de récord puede corregirlo.»*

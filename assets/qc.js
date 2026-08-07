@@ -117,7 +117,7 @@ function viewDashboard() {
           <button class="btn small" onclick="switchTab('strength')">Ver todas</button></div>
         <div class="panel-body flush">
           ${sets.filter((s) => s.cs5 != null).slice(-10).reverse().map((s) => {
-            const z = zoneCS5(s.cs5);
+            const z = zoneCS5(s.cs5, s.date);
             return `<div style="display:flex; align-items:center; gap:10px; padding:7px 16px; border-bottom:1px solid var(--line); font-size:13px">
               <span class="mono muted" style="width:78px">${fmtDate(s.date)}</span>
               <span class="mono" style="width:60px">#${esc(s.ticket)}</span>
@@ -371,7 +371,7 @@ function viewTests() {
           <td${zClass(zoneUW(t))}>${fmt(t.uw, 2)}</td>
           <td${zClass(zoneTemp(t))}>${fmt(t.temp, 0)}</td>
           <td class="num mono">${fmt(t.cs1, 0)}</td>
-          <td${zClass(zoneCS5(t.cs5))}>${fmt(t.cs5, 0)}</td>
+          <td${zClass(zoneCS5(t.cs5, t.date))}>${fmt(t.cs5, 0)}</td>
           <td class="num mono">${fmt(t.cs28, 0)}</td>
           <td>${estadoBadge(t)}</td>
         </tr>`).join("")}
@@ -414,7 +414,7 @@ function viewStrength() {
             <td style="white-space:normal; min-width:160px; font-size:12px">${esc(shortIdent(s.ident))}</td>
             <td class="num mono">${fmt(s.cs1, 0)}</td>
             <td>${open}</td>
-            <td${zClass(zoneCS5(s.cs5))}><b>${fmt(s.cs5, 0)}</b></td>
+            <td${zClass(zoneCS5(s.cs5, s.date))}><b>${fmt(s.cs5, 0)}</b></td>
             <td class="num mono">${fmt(s.cs28, 0)}</td>
             <td${zClass(zma)}>${fmt(s._ma5, 0)}</td>
           </tr>`;

@@ -24,6 +24,9 @@ function loadDB() {
   migrateDB();
   sembrarDia();
   saveDB();
+  /* Los límites con fecha (Q-40). Al abrir una base vieja se crea la primera
+     versión desde el ensayo más antiguo: nada se vuelve a juzgar. */
+  migrarPlanes();
 }
 
 /* La simulación: si hoy no tiene ni un camión, se arranca con un tiro ya en
@@ -554,22 +557,114 @@ function zoneRange(v, actLo, actHi, suspLo, suspHi) {
   if (v < actLo || v > actHi) return "act";
   return "ok";
 }
-function zoneSlump(t) { const p = db.plan.slump; return zoneRange(num(t.slump), p.actLo, p.actHi, p.suspLo, p.suspHi); }
-function zoneAir(t)   { const p = db.plan.air;   return zoneRange(num(t.air),   p.actLo, p.actHi, p.suspLo, p.suspHi); }
+/* ------------------------------------------------------------ límites en el tiempo
+
+   Q-40, 7 ago 2026. Hasta hoy los límites eran UNO: `db.plan`. Las cinco
+   funciones de zona lo leían directo, así que cambiar el slump de acción en
+   Settings volvía a juzgar los 397 ensayos desde noviembre de 2025. Un tiro
+   que se firmó conforme podía aparecer rechazado meses después, sin que nadie
+   tocara un dato — y el reporte que ya vio la Autoridad decía otra cosa.
+
+   Para un expediente de control de calidad eso no es un detalle de interfaz:
+   es que el récord cambia solo.
+
+   AHORA LOS LÍMITES TIENEN FECHA. `db.planes` guarda las versiones en orden,
+   cada una con el día desde el que manda. Un ensayo se juzga SIEMPRE con los
+   límites que regían el día en que se midió.
+
+     db.planes = [
+       { desde: "2025-11-25", plan: {…}, autor: "importado" },
+       { desde: "2026-08-07", plan: {…}, autor: "ruben"     },
+     ]
+
+   Y UN TIRO CERRADO PESA MÁS QUE TODO ESO. Al cerrarlo se le congela una copia
+   del plan encima (`dayMeta[dia].plan`), y esa copia manda sobre cualquier
+   versión posterior. Es la garantía dura: lo firmado no se mueve ni aunque
+   alguien enrede con las fechas.
+
+   `db.plan` sigue existiendo y es el plan VIGENTE. Todo lo que ya lo leía para
+   hablar del presente —Settings, el contrato, la cabecera de las cartas del
+   día— sigue funcionando igual. */
+
+/* Al abrir una base vieja, la primera versión arranca en el ensayo más
+   antiguo. Así la actualización NO cambia ni un veredicto: toda la historia
+   se sigue juzgando exactamente con lo que se juzgaba ayer. */
+function migrarPlanes() {
+  if (Array.isArray(db.planes) && db.planes.length) return;
+  const fechas = (db.tests || []).map((t) => t.date).filter(Boolean).sort();
+  db.planes = [{
+    desde: fechas[0] || "1970-01-01",
+    plan: JSON.parse(JSON.stringify(db.plan)),
+    autor: "importado",
+    ts: new Date().toISOString(),
+  }];
+}
+
+/* Los límites que regían un día concreto.
+   Orden de mando: lo congelado al cerrar > la versión vigente ese día. */
+function planDe(dia) {
+  if (!dia) return db.plan;
+  const meta = (db.dayMeta || {})[dia];
+  if (meta && meta.plan) return meta.plan;          // tiro cerrado: intocable
+  const vs = db.planes;
+  if (!Array.isArray(vs) || !vs.length) return db.plan;
+  let elegido = vs[0].plan;
+  for (const v of vs) { if (v.desde <= dia) elegido = v.plan; else break; }
+  return elegido;
+}
+
+/* ¿Este día se juzga con límites distintos de los de hoy? Se avisa en pantalla
+   y en el reporte: si alguien compara dos documentos del mismo proyecto y ve
+   umbrales distintos, tiene que encontrar la explicación ahí y no suponer un
+   error. */
+function planDistintoDelVigente(dia) {
+  return JSON.stringify(planDe(dia)) !== JSON.stringify(db.plan);
+}
+
+/* La frase que lo explica, o cadena vacía si no hay nada que explicar. */
+function notaDeLimites(dia) {
+  if (!dia || !planDistintoDelVigente(dia)) return "";
+  const cerrado = (db.dayMeta || {})[dia] && (db.dayMeta || {})[dia].plan;
+  return cerrado
+    ? "Juzgado con los límites congelados al cerrar este vaciado."
+    : "Juzgado con los límites que regían este día, no con los vigentes hoy.";
+}
+
+/* Guardar límites nuevos. NUNCA se toca una versión anterior: se añade una que
+   rige desde hoy. Si ya hay una de hoy se sustituye —son correcciones del
+   mismo día, no historia— y así no se llena la lista de versiones a cada
+   tecleo. */
+function guardarPlan(nuevo, autor) {
+  migrarPlanes();
+  const hoy = todayISO();
+  const copia = JSON.parse(JSON.stringify(nuevo));
+  const ultima = db.planes[db.planes.length - 1];
+  if (ultima && ultima.desde === hoy) {
+    ultima.plan = copia; ultima.autor = autor || "?"; ultima.ts = new Date().toISOString();
+  } else {
+    db.planes.push({ desde: hoy, plan: copia, autor: autor || "?", ts: new Date().toISOString() });
+  }
+  db.plan = copia;          // el vigente
+  saveDB();
+}
+
+function zoneSlump(t) { const p = planDe(t && t.date).slump; return zoneRange(num(t.slump), p.actLo, p.actHi, p.suspLo, p.suspHi); }
+function zoneAir(t)   { const p = planDe(t && t.date).air;   return zoneRange(num(t.air),   p.actLo, p.actHi, p.suspLo, p.suspHi); }
 function zoneUW(t) {
-  const p = db.plan.uw;
+  const p = planDe(t && t.date).uw;
   const target = num(t.uwTarget) ?? p.target;
   return zoneRange(num(t.uw), target - p.act, target + p.act, target - p.susp, target + p.susp);
 }
 function zoneTemp(t) {
   const v = num(t.temp); if (v == null) return null;
-  if (v > db.plan.tempMax) return "susp";
-  if (v > db.plan.tempMax - 3) return "act";
+  const tope = planDe(t && t.date).tempMax;
+  if (v > tope) return "susp";
+  if (v > tope - 3) return "act";
   return "ok";
 }
-function zoneCS5(v) {
+function zoneCS5(v, dia) {
   if (v == null) return null;
-  const p = db.plan.cs;
+  const p = planDe(dia).cs;
   if (v < p.action) return "susp";
   if (v < p.target) return "act";
   return "ok";
@@ -1054,6 +1149,32 @@ function tiroCerrado(day) {
   return (m && m.cerradoA) || null;
 }
 
+/* ¿Se puede tocar este día? — Q-41.
+
+   Mientras el tiro está abierto, cualquiera que lleve el control de calidad
+   escribe. En cuanto se cierra, el día queda firmado: solo el ingeniero de
+   récord puede corregirlo o reabrirlo.
+
+   Devuelve `true` si se puede, o el motivo si no. Quien llama enseña el motivo
+   en vez de un «no se puede» pelado. */
+function puedeEditarDia(day) {
+  const d = day || todayISO();
+  if (!tiroCerrado(d)) return true;
+  if (typeof qcFirma === "function" && qcFirma()) return true;
+  const m = db.dayMeta[d] || {};
+  return "El vaciado del " + fmtDate(d) + " está cerrado" +
+    (m.cerradoPor ? " por " + m.cerradoPor : "") +
+    ". Solo el ingeniero de récord puede corregirlo.";
+}
+
+/* Aviso y freno de una sola línea, para usar antes de escribir. */
+function frenoDiaCerrado(day) {
+  const r = puedeEditarDia(day);
+  if (r === true) return false;
+  alert(r);
+  return true;
+}
+
 function estadoTiro(day) {
   const p = dayProgress(day);
   const completo = p.cyPlan != null && p.cyPlan > 0 && p.placed >= p.cyPlan;
@@ -1371,8 +1492,8 @@ const CHART_DEFS = [
   { key: "uw", label: "Unit Weight (pcf)", get: (t) => num(t.uw), dp: 1 },
   { key: "temp", label: "Temperatura (°F)", get: (t) => num(t.temp), dp: 0 },
 ];
-function bandsFor(key) {
-  const p = db.plan;
+function bandsFor(key, dia) {
+  const p = planDe(dia);
   if (key === "slump") return { target: p.slump.target, actLo: p.slump.actLo, actHi: p.slump.actHi, suspLo: p.slump.suspLo, suspHi: p.slump.suspHi };
   if (key === "air") return { target: p.air.target, actLo: p.air.actLo, actHi: p.air.actHi, suspLo: p.air.suspLo, suspHi: p.air.suspHi };
   if (key === "uw") return { target: p.uw.target, actLo: p.uw.target - p.uw.act, actHi: p.uw.target + p.uw.act, suspLo: p.uw.target - p.uw.susp, suspHi: p.uw.target + p.uw.susp };
@@ -1594,20 +1715,21 @@ function chartFor(def, rangeN) {
   const slice = rangeN === "all" ? tests : tests.slice(-rangeN);
   const zfn = def.key === "slump" ? zoneSlump : def.key === "air" ? zoneAir : def.key === "uw" ? zoneUW : zoneTemp;
   const pts = slice.map((t) => ({ n: t.n, date: t.date, ticket: t.ticket, v: def.get(t), z: zfn(t), rejected: t.rejected }));
-  return svgChart({ pts, bands: bandsFor(def.key), dp: def.dp });
+  /* Carta de rango largo: los límites del día del último punto (Q-40). */
+  return svgChart({ pts, bands: bandsFor(def.key, slice.length ? slice[slice.length - 1].date : null), dp: def.dp });
 }
 function chartForDay(def, day, pw = 30) {
   const tests = testsOfDate(day).filter((t) => def.get(t) != null);
   const zfn = def.key === "slump" ? zoneSlump : def.key === "air" ? zoneAir : def.key === "uw" ? zoneUW : zoneTemp;
   const pts = tests.map((t) => ({ n: t.n, date: t.date, ticket: t.ticket, v: def.get(t), z: zfn(t), rejected: t.rejected }));
-  return svgChart({ pts, bands: bandsFor(def.key), dp: def.dp, pw });
+  return svgChart({ pts, bands: bandsFor(def.key, day), dp: def.dp, pw });
 }
 function chartCS5(sets, rangeN) {
-  const p = db.plan.cs;
+  const p = planDe(sets.length ? sets[sets.length - 1].date : null).cs;
   const withCS = sets.filter((s) => s.cs5 != null);
   const slice = rangeN === "all" ? withCS : withCS.slice(-rangeN);
   if (!slice.length) return `<div class="empty">Sin resultados de resistencia.</div>`;
-  const pts = slice.map((s) => ({ n: s.n, date: s.date, ticket: s.ticket, v: s.cs5, z: zoneCS5(s.cs5), rejected: false, ma: s._ma5 }));
+  const pts = slice.map((s) => ({ n: s.n, date: s.date, ticket: s.ticket, v: s.cs5, z: zoneCS5(s.cs5, s.date), rejected: false, ma: s._ma5 }));
   const bands = { target: p.target, actLo: p.action, actHi: null, suspLo: p.openLow, suspHi: null };
   let svg = svgChart({ pts, bands, dp: 0, yUnit: " psi" });
   const PW = 13, ML = 52, MT = 10, MB = 26, H = 230;
@@ -1692,15 +1814,18 @@ function formPlan(alGuardar) {
       { key: "maW", label: "Ventana Moving Average", type: "number", step: "1" },
     ],
     onSave: (v) => {
-      db.plan = {
+      /* Q-40: se AÑADE una versión que rige desde hoy. Lo ya vaciado se sigue
+         juzgando con los límites que tenía el día en que se midió, y un tiro
+         cerrado ni se entera: lleva su propia copia congelada. */
+      const quien = typeof qcCuenta === "function" ? qcCuenta() : null;
+      guardarPlan({
         slump: { target: v.sT, actLo: v.sAL, actHi: v.sAH, suspLo: v.sSL, suspHi: v.sSH },
         air: { target: v.aT, actLo: v.aAL, actHi: v.aAH, suspLo: v.aSL, suspHi: v.aSH },
         uw: { target: v.uT, act: v.uA, susp: v.uS },
         tempMax: v.tMax, maxElapsedMin: v.elMax,
         cs: { target: v.cT, age: v.cAge, action: v.cA, openTarget: v.cOT, openLow: v.cOL },
         maWindow: v.maW,
-      };
-      saveDB();
+      }, (quien && (quien.nombre || quien.usr)) || sessionStorage.getItem("qc-user") || "?");
       /* Results repinta con `render()`; Settings con lo suyo. Se pasa qué
          hacer en vez de llamar a `render()` a ciegas, que solo existe en
          Results y dejaba la pantalla de Settings sin refrescar. */
@@ -2278,6 +2403,11 @@ function cerrarTiro(day) {
   if (!confirm(texto.join("\n"))) return false;
   if (!db.dayMeta[d]) db.dayMeta[d] = {};
   db.dayMeta[d].cerradoA = nowHM();
+  /* Q-40/Q-41: al cerrar se congela una COPIA de los límites sobre el día.
+     A partir de aquí, ese vaciado se juzga con esto y con nada más — da igual
+     cuántas veces se cambien los límites después, y da igual que alguien
+     enrede con las fechas de las versiones. Es lo que se firma. */
+  db.dayMeta[d].plan = JSON.parse(JSON.stringify(planDe(d)));
   /* Quién cerró el tiro sale de la sesión, no de lo que el navegador tenga
      apuntado: esto se imprime en el informe que se firma. Es el mismo criterio
      de Q-07, aplicado a un campo que viaja como valor y no como autor —el
@@ -2291,6 +2421,11 @@ function cerrarTiro(day) {
 }
 
 function reabrirTiro(day) {
+  /* Q-41: reabrir un vaciado firmado es cosa del ingeniero de récord. */
+  if (typeof qcFirma === "function" && !qcFirma()) {
+    alert("Este vaciado está cerrado y firmado.\n\nSolo el ingeniero de récord puede reabrirlo.");
+    return false;
+  }
   const d = day || todayISO();
   if (!confirm(`El vaciado del ${fmtDate(d)} está cerrado desde las ${tiroCerrado(d)}.\n\n` +
                "¿Reabrirlo para seguir recibiendo camiones?")) return false;
