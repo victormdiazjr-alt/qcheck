@@ -372,8 +372,7 @@ function diaActivo() {
 
      Un tiro programado ES el tiro de hoy desde que se programa, con cero
      camiones o con veinte. */
-  const d = diasDelProyecto(), hoy = todayISO();
-  return d.includes(hoy) ? hoy : (d[0] || hoy);
+  return diaPorDefecto();
 }
 
 function mountStatusBar(day, opciones) {
@@ -816,13 +815,28 @@ function sortedTests() { return vivos(db.tests).sort((a, b) => a.n - b.n); }
    está abierto—, para que aparezca en la lista desde el principio aunque
    todavía no haya nada que contar. */
 function diasDelProyecto() {
-  const dias = testDates();
-  const hoy = todayISO();
-  if (dias.includes(hoy)) return dias;
-  const meta = (db.dayMeta || {})[hoy];
-  const enMarcha = meta && (meta.cyPlan != null || meta.losas || meta.fase || meta.cerradoA);
-  return enMarcha ? [hoy, ...dias] : dias;
+  const conPlan = Object.entries(db.dayMeta || {})
+    .filter(([, m]) => m && (m.cyPlan != null || m.losas || m.losasPlan != null ||
+                             m.horaInicio || m.cerradoA))
+    .map(([d]) => d);
+  return [...new Set([...testDates(), ...conPlan])].sort().reverse();
 }
+
+/* El día que se enseña cuando nadie ha elegido — Q-47.
+
+   NO es simplemente el primero de la lista. Desde que se pueden programar
+   tiros para otro día, el primero puede ser el de la semana que viene, y un
+   tiro de mañana no debe secuestrar la pantalla de hoy: la obra trabaja hoy.
+
+     · si hoy tiene algo —plan o camiones—, hoy
+     · si no, el día más reciente que YA HAYA PASADO
+     · un tiro futuro se ve eligiéndolo, no solo. */
+function diaPorDefecto() {
+  const dias = diasDelProyecto(), hoy = todayISO();
+  if (dias.includes(hoy)) return hoy;
+  return dias.find((d) => d <= hoy) || dias[0] || hoy;
+}
+
 
 function testDates() { return [...new Set(vivos(db.tests).map((t) => t.date))].sort().reverse(); }
 
@@ -2569,11 +2583,32 @@ function reabrirTiro(day) {
 const ICONO_CERRAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-3.2-6.6"/><polyline points="8.6,12 11,14.4 16.4,8.2"/></svg>`;
 
 function formDayMeta(day) {
+  /* UN TIRO CERRADO NO SE EDITA — Q-41, ampliado el 7 ago 2026.
+
+     El guardián estaba en Muestras y en Recepción, pero no aquí: se podía
+     cambiar el plan de un vaciado ya firmado sin pasar por reabrirlo, y con
+     eso cambiaban las yardas planificadas, el tramo y el cumplimiento de un
+     día que ya tiene reporte emitido.
+
+     Para corregirlo hay que reabrirlo primero. Que quede constancia de que se
+     reabrió es justamente el punto. */
+  if (tiroCerrado(day)) {
+    const m = db.dayMeta[day] || {};
+    alert(`El vaciado del ${fmtDate(day)} está cerrado` +
+          (m.cerradoPor ? ` por ${m.cerradoPor}` : "") + ` a las ${tiroCerrado(day)}.\n\n` +
+          "Para corregirlo hay que reabrirlo primero.");
+    return;
+  }
   const meta = db.dayMeta[day] || {};
   openForm({
     title: `Datos del vaciado — ${fmtDate(day)}`,
-    initial: meta,
+    initial: { ...meta, fecha: day },
     fields: [
+      /* LA FECHA, Q-47. Hasta hoy el tiro siempre era el de hoy: no se podía
+         dejar programado el de mañana ni corregir el de ayer. Va la primera
+         porque es la que decide sobre qué día escribe todo lo demás. */
+      { key: "fecha", label: "Día del vaciado", type: "date", half: true, required: true,
+        hint: "Se puede dejar programado un tiro para otro día" },
       /* Obligatorios los tres que el sistema NECESITA. Sin la hora no hay plan
          contra lo real; sin las yardas la barra de estado no puede enseñar
          avance y dice «sin plan»; sin el tramo no hay losas ni se puede cantar

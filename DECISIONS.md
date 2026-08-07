@@ -454,3 +454,39 @@ el Field Display seguían enseñando el vaciado anterior — 157/150 y «camión
 **Un tiro programado ES el tiro de hoy desde que se programa**, con cero camiones o con
 veinte. Todo lo que elige día usa ahora `diasDelProyecto()`, que incluye hoy en cuanto hay
 plan.
+
+## 24 · Un tiro se programa; un tiro cerrado se reabre, no se edita
+
+**Q-47 — 7 de agosto de 2026**
+
+Dos reglas que hasta ahora el programa daba por supuestas y no eran ciertas.
+
+**El tiro se planificaba siempre para hoy.** El formulario del vaciado no tenía
+campo de fecha: escribía en `dayMeta[hoy]` y ya. Un vaciado se coordina días
+antes —la concretera, las losas, la hora de arranque—, y no había manera de
+dejarlo montado. Ahora el formulario abre con un campo **Día del vaciado**. Si
+se cambia, el plan se muda a ese día: se avisa antes de pisar un plan que ya
+exista, y el día viejo se borra solo si no tiene camiones. Un día con camiones
+nunca se borra — DECISIONS §3, nada se inventa y nada se pierde.
+
+**Un tiro cerrado se dejaba editar.** Cerrar era una etiqueta, no un candado:
+el formulario abría igual y guardaba encima. Cerrar un vaciado es un acto de
+récord —el expediente de ese día queda como quedó— así que ahora el formulario
+se niega a abrir y dice que hay que reabrirlo primero. Reabrir sigue siendo
+solo del ingeniero de récord (§22). La regla se aplica en los dos sitios donde
+se edita el plan: el Control Center y el tablero del contratista.
+
+**Y una trampa que salió de la primera regla.** Si se puede programar para
+mañana, la lista de días la encabeza un día futuro. La pantalla por defecto
+no puede ser esa: la obra trabaja hoy, y un tiro de la semana que viene no
+puede secuestrar los indicadores. Quedan separadas dos cosas que antes eran
+una sola:
+
+  · `diasDelProyecto()` — todo día con camiones **o con plan**, futuro incluido.
+  · `diaPorDefecto()` — hoy si hoy tiene algo; si no, el día más reciente
+    **que ya haya pasado**. Un tiro futuro se ve eligiéndolo, nunca solo.
+
+**Para que no vuelva a pasar.** La lista de días y el día que se enseña son
+preguntas distintas y se contestan por separado. Cualquier pantalla nueva que
+necesite un día de arranque usa `diaPorDefecto()`, nunca `dias[0]`.
+
