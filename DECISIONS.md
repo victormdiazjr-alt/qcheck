@@ -571,3 +571,29 @@ cálculo, donde un número formateado como texto es un estorbo.
 un fallo. Se usa `fmtSlump()`; si hace falta pasarlo por un ayudante que toma
 `dp`, el ayudante toma también `dpMin`.
 
+## 27 · Si lo que se enseña no es de hoy, hay que decirlo
+
+**Q-50 — 7 de agosto de 2026**
+
+Desde Q-47 el Control Center cae al último vaciado cuando hoy no hay tiro
+abierto, que es lo que se quiere: a las siete de la mañana lo útil es ver cómo
+acabó el último. Pero la pantalla lo rotulaba igual que si fuera la jornada en
+curso — la barra decía «Tiro · 190 / 150 cy · 100%» y el mosaico «Vaciado de
+hoy». Eso no es un dato incompleto, es un dato falso: se lee como la obra de
+ahora mismo.
+
+Ahora, cuando el día que se enseña no es hoy:
+
+  · la barra dice **«Último tiro»** con la fecha,
+  · el estado del vaciado dice **«Último tiro · 18 jul 2026»**,
+  · el mosaico dice **«Último vaciado · 18 jul 2026»**.
+
+**El detalle que importa.** En pantalla estrecha la barra escondía el rótulo
+«Tiro» para ganar sitio, y eso valía mientras el rótulo no dijera nada. Cuando
+dice «Último tiro» ya no es decoración, es la advertencia — así que en estrecho
+se sacrifican los segmentos de avance, que son adorno, y se queda el rótulo.
+
+**Para que no vuelva a pasar.** Cualquier etiqueta que diga «hoy» tiene que
+comprobar que el día que enseña es hoy. Una pantalla que cae a otro día por su
+cuenta está obligada a decir a cuál.
+

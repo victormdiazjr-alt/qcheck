@@ -452,10 +452,19 @@ function pintarConexion() {
   el.querySelector("span").textContent = texto;
 }
 
+/* La barra tiene que decir DE QUÉ TIRO habla — Q-50, 7 de agosto de 2026.
+
+   Decía «Tiro 190 / 150 cy · 100%» tanto si eso era lo de hoy como si era lo
+   del 18 de julio. Desde que la pantalla cae al último vaciado cuando hoy no
+   hay nada (Q-47), esa etiqueta miente por omisión: se lee como la obra de
+   ahora mismo. Con «Último tiro · 18 jul 2026» se sabe en un vistazo que lo
+   que hay delante es historia, no la jornada. */
 function pintarTiro(day) {
   const el = document.getElementById("qcs-tiro");
   if (!el) return;
-  const p = dayProgress(day || diaActivo());
+  const d = day || diaActivo();
+  const esHoy = d === todayISO();
+  const p = dayProgress(d);
   const hayPlan = p.cyPlan != null && p.cyPlan > 0;
   const pct = hayPlan ? p.pct : 0;
   // Sin plan de yardas no se inventa un total: se muestra lo vaciado y ya.
@@ -463,11 +472,14 @@ function pintarTiro(day) {
   let segs = "";
   for (let i = 0; i < QCS_SEGMENTOS; i++)
     segs += `<i class="${i < llenos ? "on" : ""}"></i>`;
-  el.className = "qcs-tiro" + (hayPlan ? "" : " sin-plan");
+  el.className = "qcs-tiro" + (hayPlan ? "" : " sin-plan") + (esHoy ? "" : " pasado");
   el.href = "results.html#daily";
-  el.title = hayPlan ? "Avance del tiro" : "Defina las yardas planificadas del día";
+  el.title = esHoy
+    ? (hayPlan ? "Avance del tiro" : "Defina las yardas planificadas del día")
+    : `Último vaciado — ${fmtDate(d)}. Hoy no hay tiro abierto.`;
   el.innerHTML = `
-    <span class="qcs-lb">Tiro</span>
+    <span class="qcs-lb">${esHoy ? "Tiro" : "Último tiro"}</span>
+    ${esHoy ? "" : `<span class="qcs-fecha">${esc(fmtDate(d))}</span>`}
     <span class="qcs-seg">${segs}</span>
     <span class="qcs-cy">${fmt(p.placed, 1)}${hayPlan ? ` / ${fmt(p.cyPlan, 0)}` : ""} <b>cy</b></span>
     <span class="qcs-pc">${hayPlan ? Math.round(pct) + "%" : "sin plan"}</span>`;
@@ -1315,10 +1327,14 @@ function estadoTiro(day) {
 
   /* Cerrado a mano manda sobre todo lo demás: si el técnico dijo que terminó,
      la pantalla no va a discutírselo porque falten yardas del plan. */
-  if (cerradoA) return { cls: "fin", icono: "check", txt: `Tiro cerrado · ${cerradoA}` };
-
+  /* Un día que no es hoy es, por definición, el último vaciado que hubo: la
+     pantalla llegó aquí porque hoy no hay tiro abierto. Se dice con todas las
+     letras y con su fecha — Q-50. */
   if (day !== todayISO())
-    return { cls: "fin", icono: "check", txt: completo || p.loads ? "Tiro cerrado" : "Sin actividad" };
+    return { cls: "fin", icono: "check",
+             txt: (completo || p.loads ? "Último tiro" : "Sin actividad") + ` · ${fmtDate(day)}` };
+
+  if (cerradoA) return { cls: "fin", icono: "check", txt: `Tiro cerrado · ${cerradoA}` };
   if (p.discharging.length) return { cls: "vaciando", icono: "flujo", txt: "Vaciando" };
   if (p.waiting.length)
     return { cls: "espera", icono: "camion",
