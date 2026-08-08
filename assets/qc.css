@@ -828,19 +828,31 @@ body.con-sim-bar { padding-top: 40px; }
 .panel-head .m934, .label .m934 { margin-left: 6px; }
 .stat.es934, .panel.es934 { border-color: rgba(74,99,216,.34); }
 
-/* EL BOTÓN DEL DINERO — Q-71. Grande y con el signo solo.
+/* EL BOTÓN DEL DINERO — Q-71, revisado en Q-73.
 
-   Es la única puerta al pago y tiene que encontrarse de un vistazo. Con texto
-   se convertía en un botón más de una fila de botones, que es de donde venía.
-   El nombre vive en `title` y `aria-label`: sin texto no es sin nombre. */
-.dinero { width: 54px; height: 54px; border-radius: 50%; flex: none;
+   La primera versión era un círculo verde relleno con el signo escrito como
+   texto. Grande sí, pero fuera del idioma de la casa: en QCheck **todo** es
+   panel oscuro, borde fino de `--line`, radio compartido e iconos SVG del
+   mismo grosor de trazo. Un glifo tipográfico dentro de un círculo de color
+   cantaba al lado de cualquier otra cosa de la pantalla.
+
+   Ahora es lo mismo que una tarjeta: fondo `--panel`, borde `--line`, radio
+   `--radius`. Grande —46 px— porque es la única puerta al pago y tiene que
+   encontrarse sin buscarla.
+
+   **Y el verde solo aparece al pasar por encima.** En QCheck el verde
+   significa «cumple»; gastarlo en un botón de navegación le quita significado
+   donde sí lo tiene. En reposo es tinta, como los demás iconos. */
+.dinero { width: 46px; height: 46px; flex: none; padding: 0; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
-  background: rgba(87,201,79,.12); border: 1.5px solid var(--ok); cursor: pointer;
-  transition: background .15s, transform .15s, box-shadow .15s; padding: 0; }
-.dinero span { font-size: 26px; font-weight: 800; color: var(--ok); line-height: 1; }
-.dinero:hover { background: rgba(87,201,79,.2); transform: translateY(-1px);
-                box-shadow: 0 4px 18px rgba(87,201,79,.22); }
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); color: var(--ink-soft);
+  transition: color .15s, border-color .15s, background .15s, transform .15s; }
+.dinero svg { width: 23px; height: 23px; }
+.dinero:hover { color: var(--ok); border-color: var(--ok);
+                background: rgba(87,201,79,.07); transform: translateY(-1px); }
 .dinero:active { transform: translateY(0); }
+.dinero:focus-visible { outline: 2px solid var(--ok); outline-offset: 2px; }
 .dinero-cab { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
   margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .dinero-cab h2 { margin: 0; font-size: 17px; }

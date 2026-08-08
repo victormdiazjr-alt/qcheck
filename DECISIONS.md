@@ -1389,3 +1389,24 @@ el estado que §23 prohíbe, y llegó por quitar la franja antes de comprobar qu
 lo que la sustituía se veía. La barra tiene ahora estilos propios en `qc.css`
 y no depende de nada que se inyecte desde fuera.
 
+## 49 · El botón del dinero, en el idioma de la casa
+
+**Q-73 — 8 de agosto de 2026**
+
+La primera versión era un círculo verde relleno con el signo escrito **como
+texto**. Grande sí, pero fuera del idioma de QCheck: aquí todo es panel oscuro,
+borde fino de `--line`, el radio compartido, e iconos SVG con el mismo grosor
+de trazo. Un glifo tipográfico dentro de un círculo de color cantaba al lado de
+cualquier otra cosa de la pantalla.
+
+Ahora es **lo mismo que una tarjeta** —fondo `--panel`, borde `--line`, radio
+`--radius`— con un dólar dibujado a trazo como el resto de los iconos.
+
+**Y el verde solo aparece al pasar por encima.** En QCheck el verde significa
+«cumple»: gastarlo en un botón de navegación le quita significado donde sí lo
+tiene. En reposo el icono es tinta, como todos los demás.
+
+La lección no es de este botón: **un elemento nuevo no se diseña solo, se
+diseña contra lo que ya existe.** Si hay que mirarlo dos veces para saber si
+pertenece a la misma aplicación, no pertenece.
+
