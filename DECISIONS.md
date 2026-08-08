@@ -801,3 +801,25 @@ donde va el de campo sería falsear el ensayo, así que el lector tiene orden
 expresa de no devolverlo. El slump lo mide el técnico con el cono y no lo trae
 ningún papel.
 
+**Ampliación (Q-55b, mismo día).** Al añadir `ordenadas` se rompieron dos
+campos que antes salían bien, y no se vio hasta contrastar la lectura con la
+anterior:
+
+  · **`company` pasó a devolver «Del Valle Group»**, que es el CONTRATISTA que
+    aparece en «Vendido a», no la concretera. La instrucción nueva nombraba a
+    Concre-Tech como ejemplo y eso bastó para desviar el campo. Ahora dice con
+    todas las letras que `company` es la del membrete, la que emite el conduce,
+    y que el de «Vendido a» es otra empresa.
+  · **`batch` bailaba entre tres horas del papel** —06:07, 06:12, 06:18— según
+    lo que entrara en la foto. Queda fijado en la del CONDUCE, la de la
+    cabecera junto a la fecha, que es la que se repite en «Salida de Planta».
+    Si en el encuadre entra además la pesada de planta, sus horas se ignoran a
+    propósito: el mismo camión no puede dar una hora distinta según lo que se
+    fotografíe.
+
+Comprobado con seis lecturas —tres de la página entera y tres del conduce
+solo— y las seis dan lo mismo. **Un cambio en el prompt del lector es un cambio
+de comportamiento y se verifica repitiendo lecturas, no una sola vez:** el
+mismo papel tiene que dar el mismo resultado, y tiene que darlo aunque cambie
+el encuadre.
+
