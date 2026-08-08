@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Portal SP-934 — QCheck</title>
-<link rel="stylesheet" href="assets/qc.css?v=13f2f6ff">
+<link rel="stylesheet" href="assets/qc.css?v=de3a92b4">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -45,7 +45,7 @@ main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
 .nota { margin-top: 16px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
 </style>
 <script src="assets/usuarios.js?v=03f894c7"></script>
-<script src="assets/auth.js?v=531ca0f9"></script>
+<script src="assets/auth.js?v=da3b0818"></script>
 </head>
 <body>
 
@@ -191,6 +191,32 @@ function tarjetaUsuario(u) {
 function render() {
   const hechas = CAPACIDADES.filter((c) => c.listo).length;
   document.getElementById("app").innerHTML = `
+    <section class="panel sim-entrada">
+      <div class="panel-head"><h2>Prototipo — un tiro 934 en marcha</h2>
+        <span class="badge act">Simulación</span></div>
+      <div class="panel-body">
+        <p>Un vaciado de <b>Concre-Tech</b> en la ampliación de la PR-22, con dos lotes
+        cerrados y el tercero <b>por la mitad</b>. Entra por la puerta de cada parte y
+        verás exactamente lo que esa persona vería.</p>
+        <div class="sim-puertas">
+          <a class="sim-puerta ruben" href="sim934.html?rol=ruben">
+            <span class="ico">✍</span><b>Rubén Segarra</b>
+            <span class="q">Ingeniero de récord</span></a>
+          <a class="sim-puerta autoridad" href="sim934.html?rol=autoridad">
+            <span class="ico">⚖</span><b>Carreteras</b>
+            <span class="q">Autoridad</span></a>
+          <a class="sim-puerta contratista" href="sim934.html?rol=contratista">
+            <span class="ico">🏗</span><b>Contratista</b>
+            <span class="q">Del Valle Group</span></a>
+          <a class="sim-puerta concretera" href="sim934.html?rol=concretera">
+            <span class="ico">🏭</span><b>Concretera</b>
+            <span class="q">Concre-Tech</span></a>
+        </div>
+        <p class="muted sim-nota">Datos inventados, en su propia memoria. No tocan el
+        expediente de ninguna obra ni salen de este aparato.</p>
+      </div>
+    </section>
+
     <section class="panel intro">
       <div class="panel-body">
         <p class="lead">La Special Provision 934 no acepta el hormigón camión a camión:

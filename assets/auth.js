@@ -25,7 +25,7 @@
      Va por `qcVeConfig()`, que hoy solo tiene la cuenta de Víctor. **El día
      que la 934 esté terminada, se saca de aquí y ya está** — es lo único que
      la separa de estar viva, y está en un solo sitio a propósito. */
-  var EN_OBRAS_934 = ["934.html", "lotes.html", "aceptacion.html"];
+  var EN_OBRAS_934 = ["934.html", "sim934.html", "lotes.html", "aceptacion.html"];
   if (EN_OBRAS_934.indexOf(aqui) >= 0 && !(typeof qcVeConfig === "function" && qcVeConfig())) {
     location.replace("control-center.html");
     return;

@@ -1172,3 +1172,51 @@ de la 934 sí pueden enlazarse entre ellas —viven todas tras la misma puerta,
 así que un enlace de una a otra no abre nada—. Lo que sigue prohibido, y
 comprobado en cada corrida, es que una pantalla **viva** enlace a una en obras.
 
+## 43 · La simulación de QCheck 934
+
+**Q-67 — 8 de agosto de 2026**
+
+Un prototipo funcional: un vaciado de Concre-Tech en la ampliación de la PR-22,
+con dos lotes cerrados y el tercero por la mitad. Cuatro puertas —Rubén,
+Carreteras, el contratista y la concretera— y **cuatro tableros distintos sobre
+los mismos datos**.
+
+Que sean distintos no es decoración: es la tesis del producto. Rubén opera y
+firma; Carreteras decide y no opera; el contratista ve su dinero mientras aún
+se puede hacer algo; la concretera ve su mezcla y **no ve los factores de
+pago**, que son entre el contratista y la Autoridad.
+
+**Lo que cada uno no ve está decidido con el mismo cuidado que lo que ve.**
+
+### Cómo se evita repetir julio
+
+El 31 de julio la simulación anterior se coló en el expediente compartido y
+dejó un vaciado de 260 CY que nunca ocurrió (§23, Q-46). El fallo no fue tener
+una simulación: fue que sus datos podían confundirse con los de verdad. Esta se
+construye al revés:
+
+  · **No usa `db`.** Ni lo lee ni lo escribe.
+  · **No sincroniza.** No hay ruta desde aquí al servidor.
+  · **Se anuncia** con una cinta fija que no se quita desde dentro.
+  · **Otra obra, otro kilometraje, otras fechas.** Nada se parece a la PR-52 lo
+    bastante como para confundirse en una captura de pantalla.
+
+### Dos cosas que enseñó construirla
+
+**El factor de pago de un lote en curso no existe, y decirlo vale más que
+esconderlo.** La 934 lo calcula con roturas a 28 días y el hormigón se está
+colocando hoy. En vez de enseñar guiones, la pantalla dice cuándo se sabrá y
+enseña las roturas a **7 días** como lo que son: una señal temprana que **no se
+convierte** a 28 —eso sería inventar un dato— pero que dice si la mezcla va por
+donde debe, que es lo que permite llamar a la planta a tiempo.
+
+**Promediar los camiones dentro de cada sub-lote aplana la dispersión.** El
+lote «malo» de la simulación hubo que empeorarlo dos veces: con media 3.760 psi
+y camiones muy dispares seguía pagando 1.05, porque la desviación que ve el PWL
+es la de los sub-lotes, no la de los camiones.
+
+Eso no es un detalle de la simulación: **es cómo funciona la 934 de verdad**.
+Un lote irregular camión a camión puede salir impecable en la estadística,
+porque la norma juzga sub-lotes. Conviene saberlo antes de prometerle a nadie
+que el PWL detecta variabilidad.
+

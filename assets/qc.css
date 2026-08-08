@@ -747,3 +747,37 @@ h2.seccion { font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
 .u-botones { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .panel.cierre { margin-top: 20px; }
 .panel.cierre p { margin: 0; font-size: 12.5px; }
+
+/* Las cuatro puertas de la simulación — Q-67. */
+.panel.sim-entrada { border: 1px solid var(--act); }
+.sim-puertas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0 10px; }
+.sim-puerta { display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 16px 10px; border-radius: var(--radius); text-decoration: none; color: inherit;
+  background: var(--panel); border: 1px solid var(--line); transition: border-color .15s, transform .15s; }
+.sim-puerta:hover { border-color: var(--ok); transform: translateY(-2px); }
+.sim-puerta .ico { font-size: 24px; line-height: 1; }
+.sim-puerta b { font-size: 13.5px; }
+.sim-puerta .q { font-size: 11px; color: var(--ink-soft); }
+.sim-nota { font-size: 11.5px; margin: 0; }
+@media (max-width: 700px) { .sim-puertas { grid-template-columns: repeat(2, 1fr); } }
+
+/* La marca de simulación. Va fija arriba y no se quita desde dentro: el fallo
+   de julio de 2026 fue que unos datos inventados pudieran confundirse con los
+   de una obra. Q-67. */
+.sim-cinta { position: sticky; top: 0; z-index: 50; display: flex; align-items: center;
+  justify-content: center; gap: 10px; padding: 6px 12px; font-size: 11px; font-weight: 800;
+  letter-spacing: .18em; text-transform: uppercase;
+  background: repeating-linear-gradient(135deg, #d19a2a 0 12px, #b8862180 12px 24px);
+  color: #1a1206; }
+.sim-cinta a { color: #1a1206; text-decoration: underline; letter-spacing: 0;
+  text-transform: none; font-weight: 700; }
+
+/* La cabecera de rol de la simulación — Q-67. */
+.rol-cab { display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.rol-ico { font-size: 26px; line-height: 1; }
+.rol-cab b { font-size: 16px; }
+.rol-cab .muted { font-size: 12px; }
+.rol-puertas { display: flex; gap: 6px; flex-wrap: wrap; }
+.tareas { margin: 0; padding-left: 18px; }
+.tareas li { margin: 5px 0; font-size: 13px; }

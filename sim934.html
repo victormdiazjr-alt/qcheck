@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Aplicación en la pantalla de inicio (iOS y Android). Sin estas etiquetas
+     y sin el manifest, el icono guardado abre como un MARCADOR de Safari, con
+     una franja arriba enseñando el dominio en vez de la aplicación limpia. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QCheck">
+<link rel="apple-touch-icon" href="assets/icono-180.png">
+<meta name="theme-color" content="#0a0d12">
+<title>QCheck 934 — Simulación</title>
+<link rel="stylesheet" href="assets/qc.css?v=de3a92b4">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
+<style>
+/* ============================================================
+   SETTINGS — la pantalla de Rubén.
+
+   Q-37, 6 ago 2026. Hasta hoy los límites del plan de control vivían
+   dentro de «Plan & Datos», que es de admin, junto a la dirección del
+   servidor, la llave del proyecto y el panel de la simulación. Rubén
+   no entraba ahí a propósito —se decidió el 1 de agosto: quien usa la
+   herramienta no ve cómo está montada— y eso dejaba un hueco raro:
+   cuando el proyecto cambia un límite, el que lo sabe es él.
+
+   Así que los límites salen de allí y se le dan en su propia pantalla,
+   sin nada más al lado que se pueda tocar sin querer. Víctor lo pidió
+   así hoy: «una pantalla que se llame Settings y ahí solo un tab de
+   límites, pero luego pondremos más settings».
+
+   POR ESO HAY PESTAÑAS CON UNA SOLA PESTAÑA. No es un descuido: la
+   siguiente que entre se añade a `TABS` y ya. Si acaba habiendo una
+   sola para siempre, quítalas.
+
+   Lo que se cambie aquí queda firmado en el expediente como cualquier
+   otro cambio —quién y cuándo—, así que un límite mal puesto se ve en
+   el registro y se deshace. Eso es lo que hace que esto no sea el
+   riesgo que era en agosto.
+   ============================================================ */
+main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
+.nota { margin-top: 16px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+</style>
+<script src="assets/usuarios.js?v=03f894c7"></script>
+<script src="assets/auth.js?v=da3b0818"></script>
+</head>
+<body>
+
+<header class="qc-header">
+  <div class="brand">
+    <a href="control-center.html" style="text-decoration:none"><svg class="mark" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
+      <defs>
+        <mask id="qcm-q1"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
+        <mask id="qcm-c1"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
+      </defs>
+      <path fill="var(--logo-blue,#0f46b5)" fill-rule="evenodd" mask="url(#qcm-q1)" d="M 509 63 A 337 337 0 1 1 508.9 63 Z M 509 174 A 226 226 0 1 0 509.1 174 Z"/>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+      <g mask="url(#qcm-c1)">
+        <path fill="var(--logo-green,#39a935)" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+        <path fill="var(--logo-g1,#68727f)" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+        <path fill="var(--logo-g2,#4f5a66)" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+      </g>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
+    </svg></a>
+    <div>
+      <div class="title" id="t-titulo">QCheck 934</div>
+      <div class="subtitle" id="t-sub">Ampliación PR-22 · Km 8.4 a 12.1</div>
+    </div>
+  </div>
+  </header>
+
+<div class="sim-cinta">Simulación · datos inventados <a href="934.html">volver al portal</a></div>
+
+<main><div id="app"></div></main>
+<div id="modal-root"></div>
+<div id="toast"></div>
+
+<script src="assets/core.js?v=98267cde"></script>
+<script src="assets/sp934.js?v=265feda9"></script>
+<script src="assets/sim934.js?v=51059094"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   QCheck 934 — la simulación, una pantalla por parte. Q-67, 8 ago 2026.
+
+   Cuatro roles, cuatro tableros distintos sobre los MISMOS datos. Que sean
+   distintos no es decoración: es la tesis del producto.
+
+     · **Rubén** opera y firma. Ve el trabajo de ahora y la responsabilidad.
+     · **Carreteras** decide. Ve el resultado y de dónde sale, y nada de operar.
+     · **El contratista** cobra. Ve hacia dónde va el dinero mientras aún se
+       puede hacer algo.
+     · **La concretera** produce. Ve cómo rinde su mezcla — y NO ve los factores
+       de pago, que son entre el contratista y la Autoridad.
+
+   Lo que cada uno **no** ve está decidido con el mismo cuidado que lo que ve.
+
+   No usa `db` en ningún momento: todo sale de `simDatos()`. Ver la nota de
+   arriba de `sim934.js` sobre por qué eso no se negocia.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const SIM_ROLES = {
+  ruben:       { n: "Rubén Segarra", q: "Ingeniero de récord", ico: "✍" },
+  autoridad:   { n: "Autoridad de Carreteras", q: "Aceptación", ico: "⚖" },
+  contratista: { n: "Del Valle Group", q: "Contratista", ico: "🏗" },
+  concretera:  { n: "Concre-Tech", q: "Concretera", ico: "🏭" },
+};
+
+const simRol = (new URLSearchParams(location.search).get("rol") || "ruben");
+const S = simDatos();
+const HOY = S.hoy;
+
+/* Los límites de la 934 para este proyecto. Sin permeabilidad: la PR-22 no la
+   inspecciona, así que el compuesto usa 0.90/0.10. */
+function simLimites() {
+  const c = SP934_CCS[S.project.clase];
+  const u = sp934LimitesCUW(S.project.uwTarget);
+  return {
+    ccs: { campo: "cs28", lsl: c.lsl, usl: c.usl, n: "Resistencia", u: "psi a 28 días", clase: S.project.clase },
+    cuw: { campo: "uw", lsl: u.lsl, usl: u.usl, n: "Peso unitario", u: "pcf" },
+  };
+}
+
+const simVivos = () => S.tests.filter((t) => !t.rejected);
+const simDelDia = (d) => S.tests.filter((t) => t.date === d);
+const simLotes = () => sp934Lotes(simVivos());
+
+/* ─────────────────────────────────────────────────────── piezas comunes ── */
+function simStat(label, valor, sub, clase) {
+  return `<div class="stat"><div class="label">${esc(label)}</div>
+    <div class="value ${esc(clase || "")}">${valor}</div>
+    <div class="sub">${sub || ""}</div></div>`;
+}
+
+function simZonaSlump(v) {
+  const p = S.plan.slump;
+  if (v == null) return null;
+  if (v < p.suspLo || v > p.suspHi) return "susp";
+  if (v < p.actLo || v > p.actHi) return "act";
+  return "ok";
+}
+function simZonaUW(v) {
+  const p = S.plan.uw;
+  if (v == null) return null;
+  const d = Math.abs(v - p.target);
+  return d > p.susp ? "susp" : d > p.act ? "act" : "ok";
+}
+
+function simVeredictoDe(t) {
+  if (t.rejected) return { z: "susp", txt: "Rechazado" };
+  const zs = [simZonaSlump(t.slump), simZonaUW(t.uw)].filter(Boolean);
+  if (!zs.length) return { z: null, txt: "Sin ensayar" };
+  if (zs.includes("susp")) return { z: "susp", txt: "Fuera de límite" };
+  if (zs.includes("act")) return { z: "act", txt: "Aceptado · zona de acción" };
+  return { z: "ok", txt: "Aceptado" };
+}
+
+function simTablaCamiones(lista, cols) {
+  const c = cols || {};
+  return `<div class="tabla-ancha"><table class="data"><thead><tr>
+    <th class="n">#</th><th>Ticket</th><th>Camión</th>
+    ${c.losa ? "<th>Losa</th>" : ""}
+    <th class="n">CY</th><th class="n">Slump</th><th class="n">U.W.</th>
+    ${c.aire ? '<th class="n">Aire</th><th class="n">Temp</th>' : ""}
+    <th>Estado</th></tr></thead><tbody>
+    ${lista.map((t) => {
+      const v = simVeredictoDe(t);
+      return `<tr class="${t.rejected ? "rechazado" : ""}">
+        <td class="n mono">${t.n}</td><td class="mono">${esc(t.ticket)}</td>
+        <td class="mono">${esc(t.truck)}</td>
+        ${c.losa ? `<td>${esc(t.ident)}</td>` : ""}
+        <td class="n mono">${fmt(t.vol, 1)}</td>
+        <td class="n mono ${simZonaSlump(t.slump) ? "z-" + simZonaSlump(t.slump) : ""}">${t.slump != null ? fmtSlump(t.slump) : "—"}</td>
+        <td class="n mono ${simZonaUW(t.uw) ? "z-" + simZonaUW(t.uw) : ""}">${t.uw != null ? fmt(t.uw, 1) : "—"}</td>
+        ${c.aire ? `<td class="n mono">${t.air != null ? fmt(t.air, 1) : "—"}</td>
+                    <td class="n mono">${t.temp != null ? fmt(t.temp, 0) : "—"}</td>` : ""}
+        <td>${v.z ? `<span class="badge ${v.z}">${esc(v.txt)}</span>` : `<span class="muted">${esc(v.txt)}</span>`}</td>
+      </tr>`;
+    }).join("")}
+  </tbody></table></div>`;
+}
+
+/* LO QUE SE SABE ANTES DE LOS 28 DÍAS.
+
+   Un lote que se está vaciando hoy **no tiene** roturas a 28 días: es física,
+   no una carencia del programa. Así que el factor de pago no existe todavía y
+   enseñarlo en guiones no dice nada.
+
+   Lo que sí hay son las roturas a 7 días, que el laboratorio ya devolvió. **No
+   se convierten a 28** —eso sería inventar un dato— pero dicen si la mezcla va
+   por donde debe, que es lo que permite llamar a la planta a tiempo.
+
+   Se enseña como lo que es: una señal temprana, no una aceptación. Q-67. */
+function indicador7() {
+  const ls = simLotes(), enCurso = ls[ls.length - 1];
+  const v = enCurso.ensayos.map((t) => t.cs7).filter((x) => x != null);
+  if (!v.length) return { n: 0, media: null, sobre: null };
+  const media = v.reduce((a, b) => a + b, 0) / v.length;
+  /* Contra la resistencia de diseño, no contra un límite de la 934: a 7 días
+     la norma no juzga nada. */
+  return { n: v.length, media, sobre: media / S.plan.cs.target };
+}
+
+/* ───────────────────────────────────────────────────────────── RUBÉN ───── */
+/* Opera y firma. Lo primero que necesita saber: qué falta ahora mismo. */
+function simPanelRuben() {
+  const ls = simLotes(), enCurso = ls[ls.length - 1];
+  const cfgs = simLimites();
+  const proy = proyeccionDeLote(enCurso, cfgs);
+  const hoyTests = simDelDia(HOY);
+  const cy = hoyTests.filter((t) => !t.rejected).reduce((a, t) => a + t.vol, 0);
+  const plan = S.dayMeta[HOY].cyPlan;
+
+  const sorteo = sortearMuestreo({ proyecto: S.project.name, lote: enCurso.n,
+    cuando: "2026-08-08T05:40:00Z", quien: "Rubén Segarra" });
+  const asign = muestrasDelSorteo(enCurso, sorteo);
+  const porMuestrear = asign.filter((a) => a.estado !== "asignado");
+
+  const cils = cilindrosDelLote(enCurso, { plan: { edades: S.project.edades } });
+  const esperando = hoyTests.filter((t) => !t.rejected && !t.end).length;
+
+  return `
+    ${simCabeceraRol()}
+    <div class="grid cols-3" style="margin-bottom:14px">
+      ${simStat("Vaciado de hoy", `${fmt(cy, 0)} <span style="font-size:14px">/ ${fmt(plan, 0)} CY</span>`,
+             `${hoyTests.length} camiones · ${esperando} en obra`)}
+      ${simStat("Lote " + enCurso.n, `${enCurso.sublotes.length} <span style="font-size:14px">/ 10</span>`,
+             `sub-lotes · ${fmtVolumen(enCurso.m3)}`)}
+      ${proy.cpaf.ahora != null
+        ? simStat("Factor proyectado", fmt(proy.cpaf.ahora, 3),
+                  `techo ${fmt(proy.cpaf.techo, 3)}`, proy.cpaf.ahora >= 1 ? "z-ok" : "z-act")
+        : simStat("Factor del lote", "en 28 días",
+                  `${indicador7().n} roturas a 7 días ya están`)}
+    </div>
+
+    <section class="panel"><div class="panel-head"><h2>Qué falta ahora</h2></div>
+      <div class="panel-body">
+        <ul class="tareas">
+          <li><b>${porMuestrear.length}</b> sub-lote(s) del lote ${enCurso.n} sin muestra asignada todavía.</li>
+          <li><b>${cils.filter((c) => c.tipo === "ccs").length}</b> juegos de cilindros de este lote — 6 cada uno, a ${S.project.edades.join(" y ")} días.</li>
+          <li>Coordinación con el laboratorio de la Autoridad: <b>hecha</b> el 6 de agosto (la 934 pide 48 h).</li>
+          <li>Lotes ${ls.filter((l) => !l.parcial).map((l) => l.n).join(" y ")} cerrados y listos para que la Autoridad decida.</li>
+        </ul>
+      </div>
+    </section>
+
+    ${(() => { const i = indicador7(); return !i.n ? "" : `
+    <section class="panel"><div class="panel-head"><h2>Señal temprana — roturas a 7 días</h2>
+      <div class="spacer"></div><span class="muted">no es aceptación</span></div>
+      <div class="panel-body">
+        <div class="grid cols-3">
+          ${simStat("Media a 7 días", fmt(i.media, 0) + ' <span style="font-size:14px">psi</span>',
+                 `${i.n} juegos rotos de ${enCurso.sublotes.length} sub-lotes`)}
+          ${simStat("Sobre el diseño", fmt(i.sobre * 100, 0) + " %",
+                 `diseño ${fmt(S.plan.cs.target, 0)} psi a 28 días`,
+                 i.sobre >= 0.7 ? "z-ok" : "z-act")}
+          ${simStat("Aceptación", "a 28 días", "la 934 no juzga a 7")}
+        </div>
+        <p class="muted" style="margin:12px 0 0">Estas roturas <b>no se convierten</b> a 28 días:
+        eso sería inventar un dato. Dicen si la mezcla va por donde debe, que es lo que permite
+        llamar a la planta mientras todavía se puede hacer algo.</p>
+      </div>
+    </section>`; })()}
+
+    <section class="panel"><div class="panel-head"><h2>Muestreo aleatorio del lote ${enCurso.n}</h2>
+      <div class="spacer"></div><span class="muted">ASTM D3665</span></div>
+      <div class="panel-body">
+        <p class="muted">Sorteado el 8 ago a las 05:40, antes del primer camión. Semilla
+        <code>${esc(sorteo.semilla)}</code> — se puede rehacer y da lo mismo.</p>
+        <div class="tabla-ancha"><table class="data"><thead><tr>
+          <th class="n">Sub-lote</th><th class="n">Punto</th><th>Camión que toca</th><th>Estado</th>
+        </tr></thead><tbody>
+          ${asign.map((a) => `<tr>
+            <td class="n mono">${a.sublote}</td>
+            <td class="n mono">${fmt(a.fraccion * 100, 0)} %</td>
+            <td>${a.ensayo ? `#${a.ensayo.n} · ticket ${esc(a.ensayo.ticket)}` : "—"}</td>
+            <td>${a.estado === "asignado" ? `<span class="badge ok">muestreado</span>`
+                 : `<span class="muted">por llegar</span>`}</td></tr>`).join("")}
+        </tbody></table></div>
+      </div>
+    </section>
+
+    <section class="panel"><div class="panel-head"><h2>Camiones de hoy</h2></div>
+      <div class="panel-body">${simTablaCamiones(hoyTests.slice().reverse(), { losa: true, aire: true })}</div>
+    </section>`;
+}
+
+/* ────────────────────────────────────────────────────────── CARRETERAS ── */
+/* Decide. No opera. Ve el resultado y de dónde sale. */
+function simPanelAutoridad() {
+  const cfgs = simLimites();
+  const ls = simLotes();
+  const cerrados = ls.filter((l) => !l.parcial);
+  const enCurso = ls.filter((l) => l.parcial);
+
+  const fila = (l) => {
+    const ev = sp934EvaluarLote(l, cfgs);
+    return `<section class="panel"><div class="panel-head">
+        <h2>Lote ${l.n}</h2><span class="badge ${ev.rechazado ? "susp" : "ok"}">${ev.rechazado ? "Rechaza" : "Cumple"}</span>
+        <div class="spacer"></div><span class="muted">${esc(fmtDate(l.desde))}</span></div>
+      <div class="panel-body">
+        <div class="acepta-cifras">
+          <div><div class="label">Hormigón</div><div class="value">${fmtVolumen(l.m3)}</div></div>
+          <div><div class="label">Sub-lotes</div><div class="value">${l.sublotes.length} / 10</div></div>
+          <div><div class="label">Factor compuesto</div>
+            <div class="value ${ev.cpaf >= 1 ? "z-ok" : ev.cpaf >= 0.9 ? "z-act" : "z-susp"}">${fmt(ev.cpaf, 3)}</div></div>
+        </div>
+        <div class="tabla-ancha" style="margin-top:12px"><table class="data"><thead><tr>
+          <th>Característica</th><th class="n">n</th><th class="n">Media</th><th class="n">s</th>
+          <th class="n">PWL</th><th class="n">Factor</th></tr></thead><tbody>
+          ${Object.entries(ev.aqc).map(([k, r]) => `<tr>
+            <td>${esc(cfgs[k].n)}</td><td class="n mono">${r.n}</td>
+            <td class="n mono">${fmt(r.media, 1)}</td><td class="n mono">${fmt(r.s, 2)}</td>
+            <td class="n"><b class="z-${r.pwl >= 90 ? "ok" : r.pwl >= 60 ? "act" : "susp"}">${fmt(r.pwl, 1)} %</b></td>
+            <td class="n mono">${fmt(r.paf, 3)}</td></tr>`).join("")}
+        </tbody></table></div>
+        <div class="acepta-botones">
+          <button class="btn small" onclick="alert('En la aplicación real esto imprime el reporte de lote con el cálculo entero: media, desviación, índices de calidad y porcentajes parciales. Nadie firma un número que no puede reconstruir.')">Ver el cálculo completo</button>
+          <button class="btn small ok" onclick="decidirSim(${l.n}, 'aceptado')">Aceptar lote</button>
+          <button class="btn small danger" onclick="decidirSim(${l.n}, 'rechazado')">Rechazar</button>
+        </div>
+        <div id="dec-${l.n}"></div>
+      </div></section>`;
+  };
+
+  return `
+    ${simCabeceraRol()}
+    <div class="grid cols-3" style="margin-bottom:14px">
+      ${simStat("Lotes cerrados", cerrados.length, "esperan decisión")}
+      ${simStat("En curso", enCurso.length, "no se deciden hasta cerrar")}
+      ${simStat("Hormigón del contrato", fmt(ls.reduce((a, l) => a + l.m3, 0), 0) + ' <span style="font-size:14px">m³</span>',
+             fmt(ls.reduce((a, l) => a + l.cy, 0), 0) + " CY")}
+    </div>
+    <p class="muted" style="margin:0 0 12px">Un lote a medias no se acepta ni se rechaza: se espera.
+    Con menos sub-lotes de los que pide la norma, el resultado cambiaría con cada camión.</p>
+    ${cerrados.map(fila).join("")}`;
+}
+
+function decidirSim(n, v) {
+  const caja = document.getElementById("dec-" + n);
+  if (!caja) return;
+  if (v === "rechazado" && !prompt("Motivo del rechazo. Queda en el expediente.")) return;
+  caja.innerHTML = `<div class="acepta-decision"><b>${v === "aceptado" ? "Aceptado" : "Rechazado"}</b>
+    por Autoridad de Carreteras · ahora mismo.
+    <div class="muted">En la aplicación real esto queda firmado en el expediente, con autor y hora, y no se borra.</div></div>`;
+  toast(`Lote ${n} ${v}`);
+}
+
+/* ───────────────────────────────────────────────────────── CONTRATISTA ── */
+/* Cobra. Lo que necesita es ver el dinero mientras aún se puede hacer algo. */
+function simPanelContratista() {
+  const cfgs = simLimites();
+  const ls = simLotes();
+  const enCurso = ls[ls.length - 1];
+  const proy = proyeccionDeLote(enCurso, cfgs);
+  const cerrados = ls.filter((l) => !l.parcial).map((l) => ({ l, ev: sp934EvaluarLote(l, cfgs) }));
+  const hoyT = simDelDia(HOY);
+  const cy = hoyT.filter((t) => !t.rejected).reduce((a, t) => a + t.vol, 0);
+
+  return `
+    ${simCabeceraRol()}
+    <div class="grid cols-3" style="margin-bottom:14px">
+      ${simStat("Vaciado de hoy", `${fmt(cy, 0)} <span style="font-size:14px">/ ${fmt(S.dayMeta[HOY].cyPlan, 0)} CY</span>`,
+             `${hoyT.length} camiones recibidos`)}
+      ${simStat("Lotes pagados a precio", cerrados.filter((c) => c.ev.cpaf >= 1).length + " de " + cerrados.length,
+             "factor ≥ 1.000")}
+      ${simStat("Camiones rechazados", S.tests.filter((t) => t.rejected).length, "en todo el contrato",
+             S.tests.some((t) => t.rejected) ? "z-susp" : "")}
+    </div>
+
+    <section class="panel"><div class="panel-head"><h2>Lote ${enCurso.n} — hacia dónde va</h2>
+      <div class="spacer"></div><span class="muted">${enCurso.sublotes.length} de 10 sub-lotes</span></div>
+      <div class="panel-body">
+        ${proy.cpaf.ahora != null ? `
+          <div class="proy-cifras">
+            <div class="proy-c suelo"><div class="lbl2">Suelo</div><div class="v">${fmt(proy.cpaf.suelo, 3)}</div></div>
+            <div class="proy-c ahora"><div class="lbl2">Con lo que hay</div><div class="v">${fmt(proy.cpaf.ahora, 3)}</div></div>
+            <div class="proy-c techo"><div class="lbl2">Techo</div><div class="v">${fmt(proy.cpaf.techo, 3)}</div></div>
+          </div>
+          <p class="muted proy-pie"><b>Techo</b> es lo máximo que puede pagar este lote si todo lo que
+          falta sale clavado. No son predicciones: son los dos extremos entre los que va a caer.</p>
+          ${proy.aviso ? `<p class="proy-aviso ${proy.aviso.grave ? "grave" : ""}">${esc(proy.aviso.texto)}</p>`
+            : `<p class="muted proy-pie">Este lote todavía puede pagarse entero.</p>`}
+        ` : (() => { const i = indicador7(); return `
+          <p>El factor de pago de este lote <b>no existe todavía</b>, y no es una carencia del
+          programa: la 934 lo calcula con las roturas a <b>28 días</b>, y este hormigón se está
+          colocando hoy.</p>
+          <div class="grid cols-3" style="margin-top:12px">
+            ${simStat("Se sabrá el", "5 sep 2026", "28 días desde el primer sub-lote")}
+            ${simStat("Señal a 7 días", i.media != null ? fmt(i.media, 0) + ' <span style="font-size:14px">psi</span>' : "—",
+                   `${i.n} juegos rotos · ${i.sobre != null ? fmt(i.sobre * 100, 0) + " % del diseño" : ""}`,
+                   i.sobre >= 0.7 ? "z-ok" : "z-act")}
+            ${simStat("Sub-lotes por venir", proy.faltan, "para cerrar el lote")}
+          </div>
+          <p class="muted proy-pie">Las roturas a 7 días <b>no se convierten</b> a 28 — eso sería
+          inventar un dato. Dicen si la mezcla va por donde debe, y eso todavía se puede corregir.
+          En cuanto rompan las primeras a 28 días, aquí aparece el techo del lote.</p>`; })()}
+      </div>
+    </section>
+
+    <section class="panel"><div class="panel-head"><h2>Lotes cerrados</h2></div>
+      <div class="panel-body"><div class="tabla-ancha"><table class="data"><thead><tr>
+        <th class="n">Lote</th><th>Período</th><th class="n">Hormigón</th>
+        <th class="n">PWL resistencia</th><th class="n">Factor</th><th>Efecto</th>
+      </tr></thead><tbody>
+        ${cerrados.map(({ l, ev }) => `<tr>
+          <td class="n mono">${l.n}</td><td>${esc(fmtDate(l.desde))}</td>
+          <td class="n mono">${fmt(l.m3, 1)} m³</td>
+          <td class="n mono">${fmt(ev.aqc.ccs.pwl, 1)} %</td>
+          <td class="n mono"><b class="${ev.cpaf >= 1 ? "z-ok" : "z-act"}">${fmt(ev.cpaf, 3)}</b></td>
+          <td>${ev.cpaf > 1 ? `<span class="badge ok">bonificación</span>`
+               : ev.cpaf === 1 ? `<span class="muted">a precio</span>`
+               : `<span class="badge act">descuento</span>`}</td></tr>`).join("")}
+      </tbody></table></div>
+      <p class="muted" style="margin:10px 0 0">El factor multiplica el precio unitario por el
+      tamaño del lote. Un 0.94 en 250 m³ no es un matiz: es dinero.</p>
+      </div>
+    </section>`;
+}
+
+/* ────────────────────────────────────────────────────────── CONCRETERA ── */
+/* Produce. Ve cómo rinde su mezcla — y NO ve los factores de pago. */
+function simPanelConcretera() {
+  const hoyT = simDelDia(HOY);
+  const conEnsayo = hoyT.filter((t) => t.slump != null);
+  const media = (c) => { const v = conEnsayo.map((t) => t[c]).filter((x) => x != null);
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const rech = S.tests.filter((t) => t.rejected);
+  const todos = S.tests.filter((t) => t.slump != null);
+  const fuera = todos.filter((t) => ["act", "susp"].includes(simZonaSlump(t.slump))).length;
+
+  return `
+    ${simCabeceraRol()}
+    <div class="grid cols-3" style="margin-bottom:14px">
+      ${simStat("Despachado hoy", fmt(hoyT.reduce((a, t) => a + t.vol, 0), 0) + ' <span style="font-size:14px">CY</span>',
+             `${hoyT.length} camiones`)}
+      ${simStat("Slump medio de hoy", media("slump") != null ? fmtSlump(media("slump")) + '"' : "—",
+             `objetivo ${fmtSlump(S.plan.slump.target)}"`)}
+      ${simStat("Unit weight medio", media("uw") != null ? fmt(media("uw"), 1) : "—",
+             `objetivo ${fmt(S.project.uwTarget, 1)} pcf`)}
+    </div>
+
+    <section class="panel"><div class="panel-head"><h2>Cómo va su mezcla ${esc(S.project.mixId)}</h2></div>
+      <div class="panel-body">
+        <div class="grid cols-3">
+          ${simStat("Camiones fuera de zona", `${fuera} <span style="font-size:14px">de ${todos.length}</span>`,
+                 "slump en acción o suspensión", fuera > todos.length * 0.15 ? "z-act" : "z-ok")}
+          ${simStat("Rechazados", rech.length, rech.length ? "devueltos a planta" : "ninguno",
+                 rech.length ? "z-susp" : "z-ok")}
+          ${simStat("Tiempo medio a obra", `${Math.round(conEnsayo.reduce((a, t) =>
+              a + minutesBetween(t.batch, t.arrive), 0) / Math.max(1, conEnsayo.length))} <span style="font-size:14px">min</span>`,
+              "de batch a llegada")}
+        </div>
+        <p class="muted" style="margin:12px 0 0">Aquí no se ven factores de pago: eso es entre el
+        contratista y la Autoridad. Lo que la planta puede corregir es la mezcla, y eso es lo que
+        se enseña.</p>
+      </div>
+    </section>
+
+    ${rech.length ? `<section class="panel"><div class="panel-head"><h2>Lo que hubo que devolver</h2></div>
+      <div class="panel-body">${simTablaCamiones(rech, { losa: true })}
+      <p class="muted" style="margin:10px 0 0">${esc(rech[0].comments || "")}</p></div></section>` : ""}
+
+    <section class="panel"><div class="panel-head"><h2>Sus camiones de hoy</h2></div>
+      <div class="panel-body">${simTablaCamiones(hoyT.slice().reverse(), { aire: true })}</div>
+    </section>`;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+function simCabeceraRol() {
+  const r = SIM_ROLES[simRol];
+  return `<div class="rol-cab">
+    <span class="rol-ico">${r.ico}</span>
+    <div><b>${esc(r.n)}</b><div class="muted">${esc(r.q)} · ${esc(S.project.name)}</div></div>
+    <div class="spacer"></div>
+    <div class="rol-puertas">
+      ${Object.entries(SIM_ROLES).map(([k, v]) => k === simRol ? ""
+        : `<a class="btn small" href="sim934.html?rol=${k}">${v.ico} ${esc(v.q === "Aceptación" ? "Carreteras" : v.q)}</a>`).join("")}
+    </div>
+  </div>`;
+}
+
+function simRender() {
+  document.getElementById("t-titulo").textContent = "QCheck 934";
+  document.getElementById("t-sub").textContent = S.project.name;
+  document.getElementById("app").innerHTML =
+    simRol === "autoridad" ? simPanelAutoridad()
+    : simRol === "contratista" ? simPanelContratista()
+    : simRol === "concretera" ? simPanelConcretera()
+    : simPanelRuben();
+}
+
+initTheme();
+mountThemeToggle();
+simRender();
+</script>
+</body>
+</html>
