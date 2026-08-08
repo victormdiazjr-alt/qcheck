@@ -244,6 +244,16 @@ pase.
 **Un conduce cuya obra no case con la credencial se rechaza y se registra.**
 No se acepta «por si acaso», y no se descarta en silencio.
 
+**Y QTicket se comprometió a lo suyo:** la obra de un conduce la resuelve del
+récord del proyecto, **no del PDF de la planta**. Si el despacho teclea mal un
+número de proyecto y QTicket lo firma tal cual, mandaría una pertenencia falsa
+con firma válida — la comprobación de aquí la cazaría, pero el fallo habría
+sido de allí. Los campos 2, 3 y 4 salen de lo que puso el contratista al abrir
+el proyecto.
+
+Las dos cosas juntas son lo correcto: **la comprobación de este lado es una
+red, no la única defensa.**
+
 ### 9.4 · La vuelta también va firmada — añadido de QCheck
 
 El §5 manda el veredicto de QCheck a QTicket. **Esa dirección se firma igual**,
