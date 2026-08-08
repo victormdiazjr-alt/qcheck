@@ -993,3 +993,36 @@ hacer y un aviso sin remedio solo enseña a ignorar los avisos.
 El estado de un juego de cilindros no dice si existe el registro: dice **qué
 falta y desde cuándo** — sin hacer, en obra, esperando, vencido o completo.
 
+## 38 · El reporte de lote: nadie firma un número que no puede reconstruir
+
+**Q-62 — 8 de agosto de 2026**
+
+Es el documento que mira la Autoridad y el que se firma. Todo lo demás de la
+934 existe para poder emitirlo.
+
+**No basta con dar el PWL y el factor de pago.** Van también la media, la
+desviación, los índices de calidad QU y QL, y los porcentajes parciales PU y
+PL — que son los pasos 1 a 10 del artículo 934-7.05. Quien reciba el reporte
+tiene que poder rehacer la cuenta con una calculadora y llegar a lo mismo. Un
+número que solo se puede creer no sirve para acompañar un pago.
+
+Y va también la lista de valores de sub-lote, para que el cálculo se pueda
+rehacer desde el principio y no desde donde a nosotros nos convenga.
+
+**El sorteo del muestreo va dentro, con su semilla.** Es lo que convierte «se
+eligió al azar» en algo comprobable en vez de una promesa. Con la semilla
+delante, cualquiera puede repetir el sorteo y ver que sale lo mismo.
+
+**Se declara el método.** El reporte dice que el PWL sale por integración de
+la distribución beta según 934-7.05, y que el cálculo reproduce la Tabla 934-6
+que publica la propia especificación, en 32 puntos con muestras de tres a diez
+sub-lotes. Eso último es un hecho comprobable, no una afirmación de marketing:
+está en `pruebas/sp934.mjs`.
+
+**En blanco y negro y sin adornos.** Esto se firma y se archiva; no es una
+pantalla.
+
+**Y el sorteo se guarda en el expediente, no en la pantalla.** Se hace una vez
+por lote y no se rehace nunca: rehacerlo sería volver a tirar los dados hasta
+que salga el camión que conviene, que es exactamente lo que la 934 impide.
+

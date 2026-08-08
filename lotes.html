@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Lotes SP-934 — QCheck</title>
-<link rel="stylesheet" href="assets/qc.css?v=9f1bcc03">
+<link rel="stylesheet" href="assets/qc.css?v=d1866fec">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -80,7 +80,7 @@ main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
 <script src="assets/sync.js?v=426ef405"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/core.js?v=599c1133"></script>
-<script src="assets/sp934.js?v=f519a5fa"></script>
+<script src="assets/sp934.js?v=9ff10311"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════════
    LOTES — M1 de la SP-934. Q-59, 8 de agosto de 2026.
@@ -190,6 +190,11 @@ function panelLote(l, cfgs) {
 
       ${l.motivo && l.n > 1 ? `<p class="muted" style="margin:12px 0 0">Lote nuevo por: ${esc(l.motivo)}.</p>` : ""}
 
+      <div class="lote-acciones">
+        <button class="btn small" onclick="imprimirLote(${l.n})">Reporte de lote</button>
+        <button class="btn small" onclick="verSorteo(${l.n})">Muestreo</button>
+      </div>
+
       <div class="tabla-ancha" style="margin-top:14px">
         <table class="data">
           <thead><tr>
@@ -208,6 +213,94 @@ function panelLote(l, cfgs) {
       </p>
     </div>
   </section>`;
+}
+
+/* El sorteo de muestreo vive en el expediente, no en la pantalla: tiene que
+   sobrevivir a un cierre de sesión y viajar a los demás aparatos. Se hace UNA
+   vez por lote y no se rehace — rehacerlo sería volver a tirar los dados hasta
+   que salga el camión que conviene, que es exactamente lo que la 934 impide. */
+function sorteoDelLote(n) {
+  db.sp934 = db.sp934 || {};
+  db.sp934.sorteos = db.sp934.sorteos || {};
+  if (db.sp934.sorteos[n]) return db.sp934.sorteos[n];
+  const quien = qcCuenta();
+  const s = sortearMuestreo({
+    proyecto: db.project.name, lote: n,
+    cuando: new Date().toISOString(),
+    quien: (quien && (quien.nombre || quien.usr)) || null,
+  });
+  db.sp934.sorteos[n] = s;
+  saveDB();
+  return s;
+}
+
+function imprimirLote(n) {
+  const lotes = sp934Lotes(sortedTests().filter((t) => !t.rejected));
+  const l = lotes.find((x) => x.n === n);
+  if (!l) return;
+  const caja = document.createElement("div");
+  caja.id = "qc-impreso";
+  caja.innerHTML = reporteDeLote(l, {
+    limites: limitesDelProyecto(),
+    sorteo: (db.sp934 && db.sp934.sorteos && db.sp934.sorteos[n]) || null,
+    proyecto: db.project.name, contratista: db.project.contractor,
+    qcFirm: db.project.qcFirm, esc, fmtDate,
+  });
+  document.body.appendChild(caja);
+  document.body.classList.add("qc-imprimiendo");
+  const quitar = () => {
+    document.body.classList.remove("qc-imprimiendo");
+    if (caja.parentNode) caja.parentNode.removeChild(caja);
+  };
+  addEventListener("afterprint", quitar, { once: true });
+  setTimeout(quitar, 60000);
+  print();
+}
+
+function verSorteo(n) {
+  const lotes = sp934Lotes(sortedTests().filter((t) => !t.rejected));
+  const l = lotes.find((x) => x.n === n);
+  if (!l) return;
+  const s = sorteoDelLote(n);
+  const asignadas = muestrasDelSorteo(l, s);
+  abrirFicha(`Muestreo del lote ${n}`, `
+      <p class="muted">Sorteado el ${esc(s.cuando.slice(0, 16).replace("T", " "))}${s.quien ? " por " + esc(s.quien) : ""}.
+      Semilla: <code>${esc(s.semilla)}</code>. Se puede rehacer y da lo mismo.</p>
+      <div class="tabla-ancha"><table class="data"><thead><tr>
+        <th class="n">Sub-lote</th><th class="n">Fracción</th><th>Camión</th><th>Estado</th>
+      </tr></thead><tbody>
+      ${asignadas.map((a) => `<tr>
+        <td class="n mono">${a.sublote}</td>
+        <td class="n mono">${fmt(a.fraccion * 100, 1)} %</td>
+        <td>${a.ensayo ? "#" + a.ensayo.n + " · ticket " + esc(a.ensayo.ticket || "—") : "—"}</td>
+        <td>${a.estado === "asignado" ? "asignado"
+             : a.estado === "sin-hormigon" ? "sin hormigón todavía" : esc(a.estado)}</td>
+      </tr>`).join("")}
+      </tbody></table></div>`);
+}
+
+/* Una ficha de lectura, con las clases del diálogo de la casa para que no
+   estrene un lenguaje visual propio. `abrirEleccion` no sirve aquí: aquello es
+   para elegir entre opciones y esto es para leer. */
+function abrirFicha(titulo, cuerpo) {
+  if (document.getElementById("qcd")) return;
+  const ov = document.createElement("div");
+  ov.id = "qcd";
+  ov.className = "qcd";
+  ov.innerHTML = `<div class="qcd-caja qcd-ancha" role="dialog" aria-modal="true" aria-label="${esc(titulo)}">
+      <div class="qcd-cab">
+        <div><div class="qcd-k">${esc(titulo)}</div></div>
+        <button class="qcd-x" type="button" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="qcd-cuerpo">${cuerpo}</div>
+    </div>`;
+  const cerrar = () => ov.remove();
+  ov.querySelector(".qcd-x").onclick = cerrar;
+  ov.onclick = (e) => { if (e.target === ov) cerrar(); };
+  addEventListener("keydown", function esc2(e) {
+    if (e.key === "Escape") { cerrar(); removeEventListener("keydown", esc2); }
+  });
+  document.getElementById("modal-root").appendChild(ov);
 }
 
 function render() {

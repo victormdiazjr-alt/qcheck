@@ -658,3 +658,36 @@ table.descartados td:nth-child(2) { min-width: 0; }
 .lote-tira i.medio { background: var(--act); opacity: .55; }
 .lote-tira i.on { background: var(--ok); }
 .panel.lote .panel-head h2 { margin-right: 4px; }
+
+/* Botones del lote y ficha de lectura — Q-62. */
+.lote-acciones { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.qcd-caja.qcd-ancha { max-width: 720px; width: 92vw; }
+.qcd-cuerpo { padding: 14px 16px; max-height: 70vh; overflow-y: auto; }
+.qcd-cuerpo code { font-size: 11.5px; color: var(--ink-soft); word-break: break-all; }
+
+/* El reporte de lote. Solo se ve en papel: en pantalla vive dentro de
+   #qc-impreso, que la clase qc-imprimiendo saca. Blanco y negro a propósito —
+   esto lo firma alguien y se archiva. */
+.rep934 { color: #000; background: #fff; font-size: 12px; line-height: 1.5; }
+.rep934 h1 { font-size: 19px; margin: 0 0 2px; }
+.rep934 .sub { margin: 0 0 14px; font-size: 11px; color: #444; }
+.rep934 h3 { font-size: 12.5px; margin: 16px 0 6px; border-bottom: 1px solid #000; padding-bottom: 3px; }
+.rep934 h3 span { font-weight: 400; color: #555; }
+.rep934 table { width: 100%; border-collapse: collapse; }
+.rep934 .ficha td { padding: 3px 6px; border-bottom: 1px solid #ddd; }
+.rep934 .ficha .k { width: 34%; color: #444; }
+.rep934 .calculo td { padding: 3px 6px; border-bottom: 1px solid #eee; }
+.rep934 .calculo .k { color: #444; width: 26%; }
+.rep934 .calculo tr.destacada td { border-top: 1.5px solid #000; border-bottom: 0; padding-top: 6px; }
+.rep934 .valores { font-size: 11px; color: #333; margin: 5px 0 0; }
+.rep934 .rechazo { font-weight: 700; margin: 5px 0 0; }
+.rep934 .nota { font-size: 11px; color: #555; margin: 5px 0 0; }
+.rep934 .veredicto { border: 2px solid #000; padding: 10px 12px; margin: 14px 0; text-align: center; }
+.rep934 .veredicto .etiqueta { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+.rep934 .veredicto .cifra { font-size: 34px; font-weight: 300; line-height: 1.1; }
+.rep934 .veredicto .formula { font-size: 11px; color: #444; }
+.rep934 .veredicto .aviso { margin-top: 6px; font-weight: 700; letter-spacing: .1em; }
+.rep934 .metodo p { margin: 4px 0; font-size: 11px; color: #333; }
+.rep934 .firmas { display: flex; gap: 40px; margin-top: 34px; font-size: 11px; }
+.rep934 .firmas > div { flex: 1; }
+.rep934 .firmas .linea { border-top: 1px solid #000; margin-bottom: 4px; height: 34px; }

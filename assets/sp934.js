@@ -559,3 +559,125 @@ function avisoLaboratorio(diaDelVaciado, ahora, yaCoordinado) {
       : `Quedan ${Math.round(horas)} h para el vaciado y no consta coordinación con el laboratorio (la SP-934 pide 48).`,
   };
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   EL REPORTE DE LOTE — M4. Q-62, 8 de agosto de 2026.
+
+   Es el documento que mira la Autoridad y el que se firma. Todo lo demás de
+   este archivo existe para poder emitirlo.
+
+   **La regla que lo gobierna: nadie firma un número que no puede
+   reconstruir.** Por eso no basta con dar el PWL y el factor de pago — van
+   también la media, la desviación, los índices de calidad y los porcentajes
+   parciales, que son los pasos 1 a 10 del artículo 934-7.05. Quien reciba el
+   reporte tiene que poder rehacer la cuenta con una calculadora y llegar a lo
+   mismo.
+
+   Y el sorteo del muestreo va dentro **con su semilla**, que es lo que
+   convierte «se eligió al azar» en algo comprobable en vez de una promesa.
+
+   Este archivo devuelve HTML, no pinta. Quien lo llama decide si lo enseña o
+   lo manda a la impresora — igual que `reporteEscritoDelDia` en `core.js`.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function reporteDeLote(lote, opciones) {
+  const o = opciones || {};
+  const ev = sp934EvaluarLote(lote, o.limites || {});
+  const esc = o.esc || ((s) => String(s == null ? "" : s));
+  const fecha = o.fmtDate || ((d) => d);
+  const n = (x, d = 2) => (x == null ? "—" : Number(x).toFixed(d));
+
+  const cab = (k, v) => `<tr><td class="k">${esc(k)}</td><td>${esc(v)}</td></tr>`;
+
+  /* El detalle del cálculo, característica por característica. Es la parte
+     que nadie más publica y la que hace el reporte defendible. */
+  const detalle = Object.entries(ev.aqc).map(([clave, r]) => {
+    const cfg = (o.limites || {})[clave] || {};
+    return `
+    <section class="aqc">
+      <h3>${esc(cfg.n || clave.toUpperCase())} <span>${esc(cfg.u || "")}</span></h3>
+      <table class="calculo">
+        <tr><td class="k">Límite inferior (LSL)</td><td>${cfg.lsl == null ? "no aplica" : n(cfg.lsl, 1)}</td>
+            <td class="k">Límite superior (USL)</td><td>${cfg.usl == null ? "no aplica" : n(cfg.usl, 1)}</td></tr>
+        <tr><td class="k">Sub-lotes (n)</td><td>${r.n || 0}</td>
+            <td class="k">Media</td><td>${n(r.media, 4)}</td></tr>
+        <tr><td class="k">Desviación (s)</td><td>${n(r.s, 4)}</td>
+            <td class="k">—</td><td></td></tr>
+        <tr><td class="k">Índice superior (QU)</td><td>${n(r.qu, 4)}</td>
+            <td class="k">Índice inferior (QL)</td><td>${n(r.ql, 4)}</td></tr>
+        <tr><td class="k">% bajo el USL (PU)</td><td>${n(r.pu, 3)}</td>
+            <td class="k">% sobre el LSL (PL)</td><td>${n(r.pl, 3)}</td></tr>
+        <tr class="destacada">
+          <td class="k">PWL = (PU + PL) − 100</td><td><b>${r.pwl == null ? "—" : n(r.pwl, 3) + " %"}</b></td>
+          <td class="k">Factor de pago</td><td><b>${n(r.paf, 3)}</b></td></tr>
+      </table>
+      ${r.valores && r.valores.length
+        ? `<p class="valores">Valores de sub-lote: ${r.valores.map((v) => n(v, 1)).join(" · ")}</p>` : ""}
+      ${r.rechazado ? `<p class="rechazo">Esta característica RECHAZA el lote.</p>` : ""}
+      ${r.pwl == null ? `<p class="nota">${esc(r.motivo || "")} — con menos de tres sub-lotes la norma no usa PWL sino la Tabla 934-11.</p>` : ""}
+    </section>`;
+  }).join("");
+
+  /* El sorteo, con su semilla. Sin esto el muestreo es una promesa. */
+  const sorteo = o.sorteo ? `
+    <section class="sorteo">
+      <h3>Muestreo aleatorio — ASTM D3665</h3>
+      <table class="ficha">
+        ${cab("Sorteado el", o.sorteo.cuando)}
+        ${cab("Por", o.sorteo.quien || "—")}
+        ${cab("Método", o.sorteo.metodo)}
+        ${cab("Semilla", o.sorteo.semilla)}
+      </table>
+      <p class="nota">El sorteo se hizo antes de recibir el hormigón y se puede
+      rehacer desde su semilla: el mismo lote y el mismo instante dan el mismo
+      resultado.</p>
+    </section>` : "";
+
+  return `
+  <article class="rep934">
+    <header>
+      <h1>Reporte de lote ${lote.n}</h1>
+      <p class="sub">SP-934 · Aceptación estadística — Autoridad de Carreteras de Puerto Rico</p>
+    </header>
+
+    <table class="ficha">
+      ${cab("Proyecto", o.proyecto || "—")}
+      ${cab("Contratista", o.contratista || "—")}
+      ${cab("Firma de control de calidad", o.qcFirm || "—")}
+      ${cab("Clase de hormigón", (o.limites && o.limites.ccs && o.limites.ccs.clase) || "—")}
+      ${cab("Diseño de mezcla", lote.mezcla || "—")}
+      ${cab("Período", fecha(lote.desde) + (lote.hasta !== lote.desde ? " – " + fecha(lote.hasta) : ""))}
+      ${cab("Hormigón colocado", n(lote.m3, 1) + " m³  (" + n(lote.cy, 1) + " CY)")}
+      ${cab("Sub-lotes", lote.sublotes.length + " de 10" + (lote.parcial ? " — lote parcial" : ""))}
+      ${cab("Camiones", lote.ensayos.length)}
+    </table>
+
+    <section class="veredicto ${ev.rechazado ? "malo" : ev.cpaf != null && ev.cpaf < 1 ? "medio" : "bueno"}">
+      <div class="etiqueta">Factor compuesto de pago</div>
+      <div class="cifra">${ev.cpaf == null ? "—" : n(ev.cpaf, 3)}</div>
+      <div class="formula">${(o.limites || {}).cp
+        ? "0.45 · CCS + 0.45 · CP + 0.10 · CUW"
+        : "0.90 · CCS + 0.10 · CUW — el proyecto no inspecciona permeabilidad"}</div>
+      ${ev.rechazado ? `<div class="aviso">LOTE RECHAZADO</div>` : ""}
+    </section>
+
+    ${detalle}
+    ${sorteo}
+
+    <section class="metodo">
+      <h3>Cómo se calculó</h3>
+      <p>El porcentaje dentro de límites (PWL) se obtiene por integración de la
+      distribución beta, según el artículo 934-7.05, pasos 1 a 10. El cálculo de
+      esta plataforma reproduce la Tabla 934-6 que publica la propia
+      especificación para verificación manual, en 32 puntos con muestras de
+      tres a diez sub-lotes.</p>
+      <p>Un lote se rechaza cuando su PWL cae por debajo de 60 %. El nivel de
+      calidad aceptable (AQL) es 90 %; por debajo se aplica ajuste de pago.</p>
+    </section>
+
+    <section class="firmas">
+      <div><div class="linea"></div>Ingeniero de récord</div>
+      <div><div class="linea"></div>Autoridad de Carreteras</div>
+    </section>
+  </article>`;
+}
