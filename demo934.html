@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>QCheck 934 — Demostración</title>
-<link rel="stylesheet" href="assets/qc.css?v=fab27c2e">
+<link rel="stylesheet" href="assets/qc.css?v=9c6e5317">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -105,27 +105,35 @@ const PARTES = [
     q: "Ve cómo se está comportando su mezcla en la obra, camión a camión." },
 ];
 
+/* Con el vocabulario de la casa —`panel`, `panel-head`, `panel-body`,
+   `grid cols-2`— y no con clases propias. Una pantalla que estrena su propio
+   lenguaje visual deja de parecer el mismo producto, y aquí lo que se está
+   enseñando es precisamente que es el mismo producto. Q-70. */
 document.getElementById("app").innerHTML = `
-  <section class="demo-portada">
-    <h1>Un vaciado bajo la SP-934, en marcha</h1>
-    <p>La Special Provision 934 acepta el hormigón por <b>lotes de 250 m³</b>, con
-    evaluación estadística, y de ahí sale cuánto se paga. Cada parte de la obra
-    necesita ver una cosa distinta.</p>
-    <p class="muted">Ampliación PR-22 · Km 8.4 a 12.1 — dos lotes cerrados y el tercero
-    a media colocación. Entre por la puerta que quiera.</p>
+  <section class="panel">
+    <div class="panel-head"><h2>Un vaciado bajo la SP-934, en marcha</h2></div>
+    <div class="panel-body">
+      <p class="lead">La Special Provision 934 acepta el hormigón por <b>lotes de 250 m³</b>,
+      con evaluación estadística, y de ahí sale cuánto se paga. Cada parte de la obra
+      necesita ver una cosa distinta.</p>
+      <p class="muted">Ampliación PR-22 · Km 8.4 a 12.1 — dos lotes cerrados y el tercero
+      a media colocación. Entre por la puerta que quiera.</p>
+    </div>
   </section>
 
-  <div class="demo-puertas">
+  <div class="grid cols-2" style="margin-top:14px">
     ${PARTES.map((p) => `
-      <a class="demo-puerta" href="sim934.html?rol=${p.k}">
-        <span class="ico">${p.ico}</span>
-        <b>${esc(p.n)}</b>
-        <span class="q">${esc(p.q)}</span>
-        <span class="entrar">Entrar →</span>
+      <a class="panel demo-puerta" href="sim934.html?rol=${p.k}">
+        <div class="panel-body">
+          <div class="dp-ico">${p.ico}</div>
+          <div class="dp-n">${esc(p.n)}</div>
+          <div class="muted dp-q">${esc(p.q)}</div>
+          <div class="dp-entrar">Entrar →</div>
+        </div>
       </a>`).join("")}
   </div>
 
-  <p class="demo-pie muted">Los datos de esta demostración son inventados y no
+  <p class="muted demo-pie">Los datos de esta demostración son inventados y no
   corresponden a ninguna obra.</p>`;
 
 initTheme();

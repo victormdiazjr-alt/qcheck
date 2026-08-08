@@ -262,12 +262,29 @@ else bien("ningún dato tecleado entra al HTML sin escapar");
 
 /* ---------- 8. ¿el idioma es el acordado? ---------- */
 titulo("Idioma");
+/* ANTES SE SALTABA LO QUE VA DENTRO DE `<script>`, y ahí es donde vive casi
+   todo el texto que ve el usuario: las pantallas modernas de QCheck arman su
+   HTML en JavaScript. La comprobación pasaba en verde sobre archivos que no
+   miraba. Se quitan los COMENTARIOS —donde sí se escribe en castellano a
+   propósito— y se mira el resto. Q-70, 8 ago 2026. */
 const enIngles = [];
-for (const f of html) {
-  const s = leer(f).replace(/<script[\s\S]*?<\/script>/g, "").replace(/<!--[\s\S]*?-->/g, "");
-  for (const t of ["Moving Average", "Unit Weight", "Slump", "Control Chart"])
-    if (s.includes(t)) { /* correcto: son los términos que van en inglés */ }
-  for (const t of ["media móvil", "peso unitario", "revenimiento", "carta de control"])
+for (const f of html.concat(["assets/qc.js", "assets/core.js", "assets/sp934.js", "assets/sim934.js"])) {
+  if (!fs.existsSync(path.join(raiz, f))) continue;
+  const s = leer(f)
+    .replace(/\/\*[\s\S]*?\*\//g, "")      // comentarios de bloque
+    .replace(/^\s*\/\/.*$/gm, "")           // comentarios de línea
+    .replace(/<!--[\s\S]*?-->/g, "");
+  /* Los términos de la SP-934 también se dicen en inglés en obra y en el
+     papeleo de la Autoridad: nadie dice «porcentaje dentro de límites», dicen
+     PWL. Traducirlos aleja el programa del idioma del oficio. Q-70. */
+  /* «Resistencia a compresión» NO está en esta lista, y estuvo un rato. La
+     casa lleva años diciéndolo así en `reporte.html`, que es un documento que
+     se firma y se archiva. Cambiar el texto de un papel firmado por un
+     criterio recién inventado es exactamente lo que no se hace: la regla se
+     escribió después que el documento, así que manda el documento. */
+  for (const t of ["media móvil", "peso unitario", "revenimiento", "carta de control",
+                   "porcentaje dentro de límites", "factor de ajuste de precio",
+                   "peso volumétrico"])
     if (s.toLowerCase().includes(t)) enIngles.push(`${f}: "${t}" debería ir en inglés`);
 }
 if (enIngles.length) enIngles.forEach(ojo);

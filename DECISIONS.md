@@ -1293,3 +1293,43 @@ exactamente su trabajo y era la llamada la que estaba mal. La marca pasa a ser
 su propio parámetro — lo que es texto se escapa, y lo que es HTML de la casa
 entra por otra puerta.
 
+## 46 · Los términos del oficio, y el mismo GUI
+
+**Q-70 — 8 de agosto de 2026**
+
+### El candado de idioma no miraba donde había que mirar
+
+Quitaba los bloques `<script>` antes de buscar — y ahí es donde vive **casi
+todo el texto que ve el usuario**, porque las pantallas modernas de QCheck
+arman su HTML en JavaScript. La comprobación salía en verde sobre archivos que
+no leía.
+
+Ahora quita los **comentarios** —donde sí se escribe en castellano a propósito—
+y mira el resto, incluidos `assets/*.js`. Al encenderlo saltaron tres «peso
+unitario» en las pantallas nuevas de la 934. Corregidos a **Unit Weight**.
+
+Y se añaden los términos de la norma, que en obra y en el papeleo de la
+Autoridad también se dicen en inglés: nadie dice «porcentaje dentro de
+límites», dicen **PWL**.
+
+### Una regla que se pasó de ancha, y volvió atrás
+
+Metí «resistencia a compresión» en la lista y el verificador señaló
+`reporte.html` — que es **producción y se imprime firmado**. La casa lleva años
+diciéndolo así ahí.
+
+**La regla se escribió después que el documento, así que manda el documento.**
+Cambiar el texto de un papel que alguien firma por un criterio recién inventado
+es exactamente lo que no se hace. Fuera de la lista, y escrito por qué para que
+no vuelva a entrar.
+
+### El GUI
+
+El portal de demostración estrenaba clases propias. Pasa al vocabulario de la
+casa —`panel`, `panel-head`, `panel-body`, `grid cols-2`— y solo conserva lo
+que `.panel` no puede dar: que la tarjeta entera sea un enlace.
+
+**Una pantalla que estrena su propio lenguaje visual deja de parecer el mismo
+producto** — y lo que se está enseñando ahí es precisamente que es el mismo
+producto.
+

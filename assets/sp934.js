@@ -711,7 +711,7 @@ function reporteDeLote(lote, opciones) {
 
     <section class="metodo">
       <h3>Cómo se calculó</h3>
-      <p>El porcentaje dentro de límites (PWL) se obtiene por integración de la
+      <p>El PWL —percent within limits— se obtiene por integración de la
       distribución beta, según el artículo 934-7.05, pasos 1 a 10. El cálculo de
       esta plataforma reproduce la Tabla 934-6 que publica la propia
       especificación para verificación manual, en 32 puntos con muestras de
