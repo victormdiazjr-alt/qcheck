@@ -366,14 +366,26 @@ function sortearMuestreo(opciones) {
 
   const puntos = [];
   for (let i = 0; i < nSublotes; i++) {
-    /* Uniforme dentro del sub-lote, en metros cúbicos desde su comienzo.
-       Se redondea a dos decimales: más precisión sería falsa, porque nadie
-       mide el hormigón colocado al centímetro cúbico. */
-    const dentro = red(azar() * subM3, 2);
+    /* SE SORTEA UNA FRACCIÓN, NO UN METRO CÚBICO — y esto importa.
+
+       El primer intento sorteaba una posición absoluta dentro de los 25 m³
+       nominales. La prueba lo tumbó: los camiones no vienen de 25 m³ —vienen
+       de 7,65— así que un sub-lote acaba con lo que acaba, y dos de cada diez
+       terminaban antes del punto sorteado. Esos sub-lotes se quedaban sin
+       muestrear, que es justo lo que la 934 no permite.
+
+       Sorteando una fracción de 0 a 1 el punto siempre cae dentro, porque se
+       aplica a lo que el sub-lote de verdad tuvo. Y no se pierde nada de lo
+       que hace defendible el sorteo: la fracción se sortea y se firma ANTES,
+       igual que antes; lo único que espera es la regla con la que se mide.
+
+       `m3Estimado` va solo para que el técnico sepa por dónde andará. No
+       decide nada. */
+    const fraccion = red(azar(), 6);
     puntos.push({
       sublote: i + 1,
-      m3DelSublote: dentro,
-      m3DelLote: red(i * subM3 + dentro, 2),
+      fraccion,
+      m3Estimado: red(fraccion * subM3, 2),
     });
   }
 
@@ -399,16 +411,23 @@ function muestrasDelSorteo(lote, sorteo) {
   const salida = [];
   for (const p of sorteo.puntos) {
     const sub = (lote.sublotes || []).find((s) => s.n === p.sublote);
-    if (!sub) { salida.push({ ...p, estado: "sin-hormigon", ensayo: null }); continue; }
+    if (!sub || !sub.ensayos.length) {
+      salida.push({ ...p, estado: "sin-hormigon", ensayo: null, m3: null });
+      continue;
+    }
+    /* La fracción se mide contra lo que ese sub-lote tuvo de verdad. */
+    const total = sub.ensayos.reduce((a, t) => a + m3DeCY(t.vol), 0);
+    const marca = p.fraccion * total;
     let acum = 0, elegido = null;
     for (const t of sub.ensayos) {
       const antes = acum;
       acum += m3DeCY(t.vol);
-      if (antes <= p.m3DelSublote && acum > p.m3DelSublote) { elegido = t; break; }
+      if (antes <= marca && acum > marca) { elegido = t; break; }
     }
-    salida.push(elegido
-      ? { ...p, estado: "asignado", ensayo: elegido }
-      : { ...p, estado: acum >= p.m3DelSublote ? "sin-asignar" : "por-llegar", ensayo: null });
+    /* Con la fracción entre 0 y 1 y el total mayor que cero, siempre hay uno.
+       El último camión cubre el borde por si la coma flotante lo empuja. */
+    if (!elegido) elegido = sub.ensayos[sub.ensayos.length - 1];
+    salida.push({ ...p, estado: "asignado", ensayo: elegido, m3: red(marca, 2) });
   }
   return salida;
 }
@@ -419,6 +438,5 @@ function verificarSorteo(sorteo) {
   if (!sorteo || !sorteo.semilla) return false;
   const rehecho = generadorConSemilla(semillaDeLote(
     sorteo.proyecto, sorteo.lote, sorteo.cuando).valor);
-  const subM3 = SP934_SUBLOTE_M3;
-  return sorteo.puntos.every((p, i) => red(rehecho() * subM3, 2) === p.m3DelSublote);
+  return sorteo.puntos.every((p) => red(rehecho(), 6) === p.fraccion);
 }

@@ -907,3 +907,40 @@ Víctor ve once.
 Cuando la 934 esté entera, quitar esa puerta es una línea — y es lo único que
 separa el módulo de estar vivo.
 
+## 36 · El muestreo se sortea, y el sorteo se puede rehacer
+
+**Q-60 — 8 de agosto de 2026**
+
+La 934 lo exige con todas las letras: *«The above-described sampling tests and
+field procedures shall be performed on a random basis (ASTM D3665)»*.
+
+Hoy decide el técnico a qué camión le saca muestra. Bajo la 934 eso es un
+flanco: cualquiera puede alegar que se muestreó el camión que convenía, y con
+eso no se impugna la muestra — **se impugna el lote entero**.
+
+Que lo elija el programa no basta. Tiene que **demostrarse**, y por eso el
+sorteo cumple tres cosas:
+
+  1. Se hace **antes** de que llegue el hormigón.
+  2. Queda escrito con quién lo pidió y cuándo.
+  3. Es **reproducible**: se guarda la semilla y cualquiera puede rehacerlo.
+
+La tercera es la que convence a un auditor. **`Math.random()` no sirve aquí**:
+no se puede rehacer, así que hay que creerse el resultado. Se usa un generador
+con semilla y la semilla se publica — se enseña el método, se enseña la
+semilla, y quien dude que lo recalcule.
+
+**El fallo que encontró la prueba, y que cambió el diseño.** La primera versión
+sorteaba una posición absoluta dentro de los 25 m³ nominales del sub-lote. La
+prueba la tumbó: los camiones no vienen de 25 m³ —vienen de 7,65— así que un
+sub-lote acaba con lo que acaba, y **dos de cada diez terminaban antes del
+punto sorteado**. Esos se quedaban sin muestrear.
+
+Ahora se sortea una **fracción de 0 a 1** y se aplica a lo que el sub-lote de
+verdad tuvo. El punto siempre cae dentro, y no se pierde nada de lo que hace
+defendible el sorteo: la fracción se sortea y se firma antes igual que antes;
+lo único que espera es la regla con la que se mide.
+
+**Un sorteo sin hora no se hace.** Sin sello de tiempo no demuestra que se
+decidió antes, y entonces no demuestra nada.
+

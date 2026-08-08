@@ -13,7 +13,8 @@ const src = readFileSync(new URL("../assets/sp934.js", import.meta.url), "utf8")
 const mod = {};
 new Function(src + `
   Object.assign(this, { porcentajeDeQ, pwlDeLote, pafCCS, pafCP, pafCUW, cpaf,
-    sp934Lotes, sp934EvaluarLote, sp934LimitesCUW, SP934_CCS, m3DeCY, loteRechazado });
+    sp934Lotes, sp934EvaluarLote, sp934LimitesCUW, SP934_CCS, m3DeCY, loteRechazado,
+    sortearMuestreo, muestrasDelSorteo, verificarSorteo, generadorConSemilla });
 `).call(mod);
 
 let bien = 0, mal = 0;
@@ -115,6 +116,66 @@ ok(l3.length === 2, "56 días o más sin producción abren lote nuevo");
 t("PESO UNITARIO — Tabla 934-5");
 const lim = mod.sp934LimitesCUW(150.1);
 ok(lim.lsl === 147.2 && lim.usl === 153, `objetivo 150.1 → ${lim.lsl} a ${lim.usl} (±2.9)`);
+
+/* ═══ 8 · Muestreo aleatorio (M2) ═══
+   Lo que se comprueba aquí no es que los números salgan «aleatorios»: es que
+   el sorteo se pueda REHACER. Esa es la propiedad que lo hace defendible ante
+   la Autoridad, y la que se pierde en cuanto alguien mete un Math.random(). */
+t("MUESTREO ALEATORIO — ASTM D3665");
+const S1 = mod.sortearMuestreo({ proyecto: "PR-52", lote: 1, cuando: "2026-09-01T10:00:00Z", quien: "Rubén" });
+ok(S1 !== null && S1.puntos.length === 10, `sortea ${S1 ? S1.puntos.length : 0} puntos, uno por sub-lote`);
+ok(S1.puntos.every((p) => p.fraccion >= 0 && p.fraccion < 1),
+   "cada punto es una fracción entre 0 y 1 del sub-lote");
+ok(S1.puntos.every((p) => p.m3Estimado >= 0 && p.m3Estimado < 25),
+   "la estimación en m³ cae dentro del sub-lote nominal");
+
+/* Lo mismo dos veces da lo mismo. */
+const S2 = mod.sortearMuestreo({ proyecto: "PR-52", lote: 1, cuando: "2026-09-01T10:00:00Z" });
+ok(JSON.stringify(S1.puntos) === JSON.stringify(S2.puntos),
+   "el mismo lote y el mismo instante dan EXACTAMENTE el mismo sorteo");
+ok(mod.verificarSorteo(S1), "el sorteo se rehace desde su semilla y coincide");
+
+/* Y cosas distintas dan cosas distintas: si no, no habría sorteo. */
+const S3 = mod.sortearMuestreo({ proyecto: "PR-52", lote: 2, cuando: "2026-09-01T10:00:00Z" });
+const S4 = mod.sortearMuestreo({ proyecto: "PR-52", lote: 1, cuando: "2026-09-01T10:00:01Z" });
+ok(JSON.stringify(S1.puntos) !== JSON.stringify(S3.puntos), "otro lote, otro sorteo");
+ok(JSON.stringify(S1.puntos) !== JSON.stringify(S4.puntos), "otro instante, otro sorteo");
+
+/* Sin sello de tiempo no hay prueba, así que no hay sorteo. */
+ok(mod.sortearMuestreo({ proyecto: "PR-52", lote: 1 }) === null,
+   "sin cuándo no se sortea: un sorteo sin hora no demuestra nada");
+
+/* Reparto: con 10.000 puntos, ¿se llenan todos los tramos del sub-lote? */
+const azar = mod.generadorConSemilla(12345);
+const cubos = new Array(10).fill(0);
+for (let i = 0; i < 10000; i++) cubos[Math.floor(azar() * 10)]++;
+const min = Math.min(...cubos), max = Math.max(...cubos);
+ok(min > 850 && max < 1150, `reparto parejo en diez tramos (${min}–${max} de 1000 esperados)`);
+
+/* A qué camión le toca. */
+t("A QUÉ CAMIÓN LE TOCA");
+let seq2 = 0;
+const camiones = Array.from({ length: 40 }, () => ({ n: ++seq2, date: "2026-09-01", vol: 10, mix: "A" }));
+const loteM = mod.sp934Lotes(camiones)[0];
+const asignadas = mod.muestrasDelSorteo(loteM, S1);
+ok(asignadas.length === 10, `una decisión por sub-lote (${asignadas.length})`);
+const conCamion = asignadas.filter((a) => a.estado === "asignado");
+ok(conCamion.length === 10, `los diez tienen camión asignado (${conCamion.length})`);
+ok(conCamion.every((a) => a.ensayo && a.ensayo.n), "cada uno apunta a un camión concreto");
+/* Un lote a medias: los sub-lotes vacíos se dicen, no se rellenan con el más cercano. */
+const loteMedio = mod.sp934Lotes(camiones.slice(0, 12))[0];
+const aMedias = mod.muestrasDelSorteo(loteMedio, S1);
+ok(aMedias.some((a) => a.estado === "sin-hormigon"),
+   "los sub-lotes que aún no existen se dicen, no se inventan");
+/* Sub-lotes de tamaños dispares: la fracción tiene que aguantarlos todos.
+   Es el caso que tumbó el primer diseño. */
+let seq3 = 0;
+const dispares = [3, 11, 7, 25, 4].flatMap((n) =>
+  Array.from({ length: n }, () => ({ n: ++seq3, date: "2026-09-02", vol: 10, mix: "B" })));
+const loteD = mod.sp934Lotes(dispares)[0];
+const asigD = mod.muestrasDelSorteo(loteD, S1).filter((a) => a.estado !== "sin-hormigon");
+ok(asigD.length > 0 && asigD.every((a) => a.ensayo),
+   `con sub-lotes de tamaños dispares, los ${asigD.length} con hormigón tienen camión`);
 
 console.log(`\n  ${bien} bien · ${mal} mal\n`);
 process.exit(mal ? 1 : 0);
