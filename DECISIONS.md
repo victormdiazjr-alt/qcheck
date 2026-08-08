@@ -745,3 +745,27 @@ expediente de la obra abierto a quien adivine el URL de un sitio público. La
 llave en el enlace es lo único que separa un aparato de la obra de cualquiera
 con un navegador.
 
+## 32 · El lector de conduces, encendido
+
+**Q-32 — 8 de agosto de 2026**
+
+El lector estaba construido desde Q-01 y desplegado, pero contestaba
+`501 sin-lector`: faltaba el secreto `QC_ANTHROPIC` en Cloudflare. Ya está
+puesto y **probado con un conduce**, no solo con un ping:
+
+    ticket 55418 · camión 127 · 9.5 CY · batch 07:42 · sin ilegibles
+
+El papel traía «7:42 AM» y el lector lo guardó en 24 horas, que es como lo
+quiere el expediente. Tarda unos 8 segundos: la foto se adjunta al instante y
+los campos se rellenan después, así que el técnico no espera mirando.
+
+**Coste medido:** 3.476 tokens de entrada y 84 de salida por conduce, unos dos
+centavos. Con $20 de crédito salen cerca de mil camiones.
+
+**Lo que se aprendió por las malas.** Al preparar el comando le copié a Víctor
+el comando al portapapeles, y ahí es donde él tenía la llave recién creada —
+que solo se enseña una vez. La perdió y hubo que hacer otra. **El portapapeles
+de quien está trabajando no se toca**: es un sitio con estado, y pisarlo borra
+algo que a lo mejor no se puede recuperar. Si hace falta darle un comando
+largo, se le da como texto para copiar, y él decide cuándo.
+
