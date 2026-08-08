@@ -1333,3 +1333,30 @@ que `.panel` no puede dar: que la tarjeta entera sea un enlace.
 producto** — y lo que se está enseñando ahí es precisamente que es el mismo
 producto.
 
+## 47 · El botón del dinero, y fuera los saltos entre pantallas
+
+**Q-71 — 8 de agosto de 2026**
+
+**El `$` va grande y con el signo solo.** Es la única puerta al pago y tiene
+que encontrarse de un vistazo; con texto se convertía en un botón más de una
+fila de botones, que es exactamente de donde venía en Q-69.
+
+Sin texto **no es sin nombre**: va en `title` y en `aria-label`, así que quien
+pasa por encima lo lee y quien usa lector de pantalla lo oye.
+
+**Y fuera los enlaces a las otras pantallas de rol.** Es el mismo criterio de
+Q-51 con QCheck: **una lista de destinos no es navegación**. Para ver otra
+parte se vuelve al portal, que es donde se elige — y la cinta ya lleva esa
+puerta.
+
+### Dos incoherencias que salieron al mirarlo
+
+**La concretera tenía el botón del dinero** y justo debajo un párrafo
+explicando que ella no ve factores de pago. Ahora **el botón no existe** para
+ese rol: no se le esconde el contenido, se le quita la puerta. Un botón que hay
+que explicar por qué no lleva a ninguna parte es peor que no tenerlo.
+
+**Y `.spacer` está definido solo dentro de `.panel-head`**, así que en la
+cabecera de rol no empujaba nada y el botón se pegaba al nombre. Se ve en la
+pantalla en un segundo y en el código no se ve nunca.
+

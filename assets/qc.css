@@ -776,9 +776,11 @@ h2.seccion { font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
 .rol-cab { display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
   padding-bottom: 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .rol-ico { font-size: 26px; line-height: 1; }
+/* `.spacer` está definido solo dentro de `.panel-head`, así que aquí no
+   empujaba nada y el botón se pegaba al nombre. Q-71. */
+.rol-cab .spacer { flex: 1; }
 .rol-cab b { font-size: 16px; }
 .rol-cab .muted { font-size: 12px; }
-.rol-puertas { display: flex; gap: 6px; flex-wrap: wrap; }
 .tareas { margin: 0; padding-left: 18px; }
 .tareas li { margin: 5px 0; font-size: 13px; }
 
@@ -811,9 +813,19 @@ h2.seccion { font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
 .panel-head .m934, .label .m934 { margin-left: 6px; }
 .stat.es934, .panel.es934 { border-color: rgba(74,99,216,.34); }
 
-/* El botón del dinero. Uno solo, y todo lo de pago detrás. */
-.btn-dinero { display: inline-flex; align-items: center; gap: 6px; }
-.btn-dinero .sig { font-size: 15px; font-weight: 800; color: var(--ok); }
+/* EL BOTÓN DEL DINERO — Q-71. Grande y con el signo solo.
+
+   Es la única puerta al pago y tiene que encontrarse de un vistazo. Con texto
+   se convertía en un botón más de una fila de botones, que es de donde venía.
+   El nombre vive en `title` y `aria-label`: sin texto no es sin nombre. */
+.dinero { width: 54px; height: 54px; border-radius: 50%; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(87,201,79,.12); border: 1.5px solid var(--ok); cursor: pointer;
+  transition: background .15s, transform .15s, box-shadow .15s; padding: 0; }
+.dinero span { font-size: 26px; font-weight: 800; color: var(--ok); line-height: 1; }
+.dinero:hover { background: rgba(87,201,79,.2); transform: translateY(-1px);
+                box-shadow: 0 4px 18px rgba(87,201,79,.22); }
+.dinero:active { transform: translateY(0); }
 .dinero-cab { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
   margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .dinero-cab h2 { margin: 0; font-size: 17px; }

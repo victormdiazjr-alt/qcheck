@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>QCheck 934 — Simulación</title>
-<link rel="stylesheet" href="assets/qc.css?v=9c6e5317">
+<link rel="stylesheet" href="assets/qc.css?v=cdc4be59">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -267,11 +267,6 @@ function simPanelRuben() {
          paneles y eso obliga a leer factores de pago mientras se dirige un
          vaciado. Son dos cabezas distintas: aquí se decide qué camión muestrear
          y ahí dentro se mira cuánto va a cobrar el lote. -->
-    <div class="lote-acciones" style="margin-bottom:14px">
-      <button class="btn small btn-dinero" onclick="verDinero()">
-        <span class="sig">$</span> Pago del contrato ${m934()}</button>
-    </div>
-
     <section class="panel"><div class="panel-head"><h2>Qué falta ahora</h2></div>
       <div class="panel-body">
         <ul class="tareas">
@@ -459,11 +454,6 @@ function simPanelContratista() {
              S.tests.some((t) => t.rejected) ? "z-susp" : "")}
     </div>
 
-    <div class="lote-acciones" style="margin-bottom:14px">
-      <button class="btn small btn-dinero" onclick="verDinero()">
-        <span class="sig">$</span> Pago del contrato ${m934()}</button>
-    </div>
-
     <section class="panel"><div class="panel-head"><h2>Cómo va la obra</h2></div>
       <div class="panel-body">
         <div class="grid cols-3">
@@ -529,16 +519,32 @@ function simPanelConcretera() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────── */
+/* EL BOTÓN DEL DINERO — Q-71, 8 ago 2026.
+
+   Grande y con el signo solo. Es la única puerta al pago y se busca de un
+   vistazo; ponerle texto lo convierte en un botón más de una fila de botones,
+   que es justo de donde venía.
+
+   El nombre va en `title` y en `aria-label`: quien pase por encima lo lee y
+   quien use lector de pantalla lo oye. Sin texto no quiere decir sin nombre. */
+function botonDinero() {
+  /* La concretera NO tiene esta puerta. No es que se le esconda el contenido:
+     es que el botón no existe. Los factores de pago son entre el contratista y
+     la Autoridad, y un botón que hay que explicar por qué no lleva a ninguna
+     parte es peor que no tenerlo. Q-71. */
+  if (simRol === "concretera") return "";
+  return `<button class="dinero" onclick="verDinero()"
+    title="Pago del contrato — SP-934" aria-label="Pago del contrato">
+    <span>$</span></button>`;
+}
+
 function simCabeceraRol() {
   const r = SIM_ROLES[simRol];
   return `<div class="rol-cab">
     <span class="rol-ico">${r.ico}</span>
     <div><b>${esc(r.n)}</b><div class="muted">${esc(r.q)} · ${esc(S.project.name)}</div></div>
     <div class="spacer"></div>
-    <div class="rol-puertas">
-      ${Object.entries(SIM_ROLES).map(([k, v]) => k === simRol ? ""
-        : `<a class="btn small" href="sim934.html?rol=${k}">${v.ico} ${esc(v.q === "Aceptación" ? "Carreteras" : v.q)}</a>`).join("")}
-    </div>
+    ${botonDinero()}
   </div>`;
 }
 
