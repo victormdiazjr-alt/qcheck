@@ -2874,12 +2874,21 @@ function formDayMeta(day) {
          porque es la que decide sobre qué día escribe todo lo demás. */
       /* Q-57: un tiro suelto puede regirse por otra norma que el proyecto —una
          obra mixta, un elemento que entra en otro contrato—. En blanco manda la
-         del proyecto, que es lo normal. */
-      { key: "spec", label: "Especificación de este tiro", type: "select", half: true,
-        options: [
-          { value: "", label: `Como el proyecto (${QC_SPECS[specDelProyecto()] ? QC_SPECS[specDelProyecto()].n : "control de proceso"})` },
-          { value: "934", label: "SP-934 · Structural Concrete" },
-        ] },
+         del proyecto, que es lo normal.
+
+         **NO SE ENSEÑA TODAVÍA** — Víctor, 8 ago 2026. La 934 se está
+         construyendo y hasta que esté entera no puede aparecer delante de
+         Rubén ni del técnico: media función a la vista es una función rota, y
+         en obra la gente la toca. Va detrás de `qcVeConfig()`, que hoy solo
+         tiene la cuenta de Víctor. El día que se termine, se quita esta línea
+         y ya está — es lo único que la separa de estar viva. */
+      ...(typeof qcVeConfig === "function" && qcVeConfig()
+        ? [{ key: "spec", label: "Especificación de este tiro", type: "select", half: true,
+             options: [
+               { value: "", label: `Como el proyecto (${QC_SPECS[specDelProyecto()] ? QC_SPECS[specDelProyecto()].n : "control de proceso"})` },
+               { value: "934", label: "SP-934 · Structural Concrete" },
+             ] }]
+        : []),
       { key: "fecha", label: "Día del vaciado", type: "date", half: true, required: true,
         hint: "Se puede dejar programado un tiro para otro día" },
       /* Obligatorios los tres que el sistema NECESITA. Sin la hora no hay plan

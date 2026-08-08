@@ -888,3 +888,22 @@ Control Center rinde exactamente el mismo contenido antes y después del cambio
 —1.403 caracteres las dos veces—. Cualquier módulo nuevo tiene que pasar esa
 prueba: encender la norma cambia la pantalla, apagarla la deja como estaba.
 
+**Ampliación (Q-57b, mismo día).** Nada de la 934 se enseña a Rubén ni al
+técnico hasta que esté terminada (Víctor, 8 ago 2026). **Media función a la
+vista es una función rota, y en obra la gente la toca.**
+
+Auditado uno por uno lo que ya estaba expuesto:
+
+  · `assets/sp934.js` — no lo carga ninguna pantalla. Invisible.
+  · La especificación del proyecto vive en «Plan & Datos», detrás de
+    `qcVeConfig()`, que hoy solo tiene la cuenta de Víctor. Ya estaba tapada.
+  · **La especificación del tiro, en el formulario del vaciado, NO tenía
+    puerta.** La veían Rubén y el técnico. Esa era la fuga.
+
+Ahora va detrás de `qcVeConfig()` también. Comprobado entrando como cada uno:
+Rubén y el técnico ven diez campos y ninguna mención a la norma; la cuenta de
+Víctor ve once.
+
+Cuando la 934 esté entera, quitar esa puerta es una línea — y es lo único que
+separa el módulo de estar vivo.
+
