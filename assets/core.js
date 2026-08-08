@@ -954,6 +954,32 @@ function retirarDia(day) {
   return n;
 }
 function testsOfDate(d) { return sortedTests().filter((t) => t.date === d); }
+
+/* EL CONDUCE CONTRA EL TIRO PROGRAMADO — Q-55, 8 de agosto de 2026.
+
+   El vaciado lo coordina el ingeniero en QCheck: pone las yardas del día antes
+   de que llegue el primer camión. El conduce trae impreso, en la columna
+   «Ordenadas», lo que la concretera cree que va a despachar ese día.
+
+   Si esos dos números no coinciden, alguien está pidiendo o entregando otra
+   cosa: se cambió el pedido por teléfono y no se apuntó, se despachó contra
+   otra orden, o el plan se tecleó mal. Cualquiera de las tres se arregla con
+   una llamada — pero solo si se ve con el PRIMER camión y no al cerrar el día,
+   cuando ya hay hormigón puesto.
+
+   Se compara con margen de media yarda: los conduces redondean. */
+function discrepanciaDeOrden(day) {
+  const d = day || diaActivo();
+  const plan = num((db.dayMeta[d] || {}).cyPlan);
+  if (plan == null) return null;
+  const dichas = new Set();
+  for (const t of testsOfDate(d)) {
+    const o = num(t.ordenadas);
+    if (o != null && Math.abs(o - plan) > 0.5) dichas.add(o);
+  }
+  if (!dichas.size) return null;
+  return { plan, conduces: [...dichas].sort((a, b) => a - b), dia: d };
+}
 function nextTestN() { return db.tests.length ? Math.max(...db.tests.map((t) => t.n)) + 1 : 1; }
 function shortIdent(s) {
   if (!s) return "—";

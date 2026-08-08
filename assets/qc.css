@@ -632,3 +632,11 @@ table.descartados td:nth-child(2) { min-width: 0; }
   table.descartados td { display: block; border: 0; padding: 2px 0; }
   table.descartados td:last-child { padding-top: 8px; }
 }
+
+/* El conduce contra el tiro — Q-55. Rojo, no ámbar: no es una tendencia que
+   vigilar, son dos papeles que se contradicen y hay hormigón en camino. */
+.aviso-orden { border-left: 3px solid var(--susp, #ff5a52); margin-bottom: 16px; }
+.orden-par { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.orden-par .num { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+.orden-par .num span { font-size: 13px; font-weight: 600; color: var(--muted); }
+.orden-vs { font-size: 22px; color: var(--susp, #ff5a52); font-weight: 700; }

@@ -317,9 +317,12 @@ const QC_ESQUEMA_CONDUCE = {
     ticket: QC_NULO("string"), truck: QC_NULO("string"), vol: QC_NULO("number"),
     batch: QC_NULO("string"), plant: QC_NULO("string"),
     company: QC_NULO("string"), mix: QC_NULO("string"),
+    /* Las yardas ORDENADAS del día, no las de este camión. Ver la nota gemela
+       en sync-worker.js: los dos servidores tienen que dar la MISMA ficha. */
+    ordenadas: QC_NULO("number"),
     ilegible: { type: "array", items: { type: "string" } },
   },
-  required: ["ticket", "truck", "vol", "batch", "plant", "company", "mix", "ilegible"],
+  required: ["ticket", "truck", "vol", "batch", "plant", "company", "mix", "ordenadas", "ilegible"],
   additionalProperties: false,
 };
 const QC_INSTRUCCIONES_CONDUCE = [
@@ -336,6 +339,11 @@ const QC_INSTRUCCIONES_CONDUCE = [
   "- `batch` en formato de 24 horas, HH:MM. Es la hora que trae impresa el conduce,",
   "  no la de ahora. Si el papel la trae en 12 horas, conviértela.",
   "- `ticket` y `truck` tal cual, incluidos ceros a la izquierda si los hay.",
+  "- `ordenadas` son las yardas ORDENADAS para el día entero, no las de este camión.",
+  "  En los conduces de Concre-Tech va en la columna «Ordenadas», al lado de «Servidas».",
+  "  `vol` es lo que trae ESTE camión («Servidas» o «Cantidad»). No los confundas:",
+  "  un camión trae 10 y el día puede tener 150 ordenadas.",
+  "- El `Slump` impreso es el TEÓRICO de diseño, no el medido en obra. No lo devuelvas.",
 ].join("\n");
 
 async function leerConduce(llave, imagen, tipo) {

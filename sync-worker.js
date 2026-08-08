@@ -426,9 +426,15 @@ export default {
           plant:   oNulo("string"),
           company: oNulo("string"),
           mix:     oNulo("string"),
+          /* Las yardas ORDENADAS del día que trae impreso el conduce — no las
+             de este camión, que van en `vol`. Sirven para una sola cosa y es
+             importante: contrastarlas con el tiro que programó el ingeniero.
+             Si no cuadran, alguien está pidiendo o entregando otra cosa, y eso
+             se sabe con el primer camión y no al cerrar el día. Q-55. */
+          ordenadas: oNulo("number"),
           ilegible: { type: "array", items: { type: "string" } },
         },
-        required: ["ticket", "truck", "vol", "batch", "plant", "company", "mix", "ilegible"],
+        required: ["ticket", "truck", "vol", "batch", "plant", "company", "mix", "ordenadas", "ilegible"],
         additionalProperties: false,
       };
 
@@ -446,6 +452,11 @@ export default {
         "- `batch` en formato de 24 horas, HH:MM. Es la hora que trae impresa el conduce,",
         "  no la de ahora. Si el papel la trae en 12 horas, conviértela.",
         "- `ticket` y `truck` tal cual, incluidos ceros a la izquierda si los hay.",
+        "- `ordenadas` son las yardas ORDENADAS para el día entero, no las de este camión.",
+        "  En los conduces de Concre-Tech va en la columna «Ordenadas», al lado de «Servidas».",
+        "  `vol` es lo que trae ESTE camión («Servidas» o «Cantidad»). No los confundas:",
+        "  un camión trae 10 y el día puede tener 150 ordenadas.",
+        "- El `Slump` impreso es el TEÓRICO de diseño, no el medido en obra. No lo devuelvas.",
       ].join("\n");
 
       let r;

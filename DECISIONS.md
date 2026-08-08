@@ -769,3 +769,35 @@ de quien está trabajando no se toca**: es un sitio con estado, y pisarlo borra
 algo que a lo mejor no se puede recuperar. Si hace falta darle un comando
 largo, se le da como texto para copiar, y él decide cuándo.
 
+## 33 · El conduce contra el tiro programado
+
+**Q-55 — 8 de agosto de 2026**
+
+El vaciado lo coordina el ingeniero en QCheck: pone las yardas del día antes de
+que llegue el primer camión. El conduce trae impreso, en la columna
+«Ordenadas», lo que la concretera cree que va a despachar ese día. Son dos
+números que deberían decir lo mismo y nadie los estaba comparando.
+
+Cuando no cuadran, alguien está pidiendo o entregando otra cosa: se cambió el
+pedido por teléfono y no se apuntó, se despachó contra otra orden, o el plan se
+tecleó mal. Las tres se arreglan con una llamada — **pero solo si se ve con el
+primer camión y no al cerrar el día**, cuando ya hay hormigón puesto.
+
+  · El lector saca `ordenadas` del conduce, y viaja con el camión al
+    expediente. No tiene campo en pantalla: el técnico no las teclea, no son
+    suyas.
+  · **En Recepción**, al registrar, si no cuadra se avisa y se puede parar. La
+    pregunta no es retórica: puede que el conduce esté bien y el plan mal, y
+    entonces lo que toca es hablar con el ingeniero, no seguir metiendo
+    camiones contra una orden que nadie ha confirmado.
+  · **En el Control Center**, un panel rojo arriba, no abajo con los avisos de
+    tendencia. Esto no es una sospecha del sistema: son dos papeles que se
+    contradicen y hay hormigón en camino.
+  · Margen de media yarda, porque los conduces redondean.
+
+**Y el slump impreso NO se lee.** El conduce trae un slump —3.00 en el de
+Concre-Tech— que es el **teórico de diseño**, no el medido en obra. Meterlo
+donde va el de campo sería falsear el ensayo, así que el lector tiene orden
+expresa de no devolverlo. El slump lo mide el técnico con el cono y no lo trae
+ningún papel.
+

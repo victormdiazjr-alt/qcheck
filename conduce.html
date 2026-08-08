@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Conduce — QC PR-52</title>
-<link rel="stylesheet" href="assets/qc.css?v=f2190f11">
+<link rel="stylesheet" href="assets/qc.css?v=99423b6b">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0d12'/><text x='50' y='70' font-size='52' text-anchor='middle' fill='white'>▤</text></svg>">
 <style>
 /* Conduce entry — field data-entry person. Mobile-first, glove-friendly. */
@@ -203,7 +203,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=426ef405"></script>
-<script src="assets/core.js?v=d46f675c"></script>
+<script src="assets/core.js?v=253b2d85"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -335,6 +335,11 @@ const CAMPOS_LEIDOS = [
   ["ticket", "f-ticket"], ["truck", "f-truck"], ["vol", "f-vol"], ["batch", "f-batch"],
 ];
 
+/* Las yardas ORDENADAS que traía impreso el último conduce leído. No tiene
+   campo en pantalla —el técnico no las teclea, no son suyas— pero viajan con
+   el camión al expediente para poder contrastarlas con el tiro (Q-55). */
+let ordenadasLeidas = null;
+
 /* El lector PROPONE. Nunca guarda.
 
    Lo que entra queda marcado como sugerido —resplandor ámbar, que es la zona de
@@ -374,6 +379,7 @@ async function leerDeLaFoto(dataUrl) {
   }
 
   const c = d.campos || {};
+  ordenadasLeidas = (c.ordenadas != null && c.ordenadas !== "") ? Number(c.ordenadas) : null;
   let puestos = 0;
   for (const [clave, id] of CAMPOS_LEIDOS) {
     const el = document.getElementById(id);
@@ -470,12 +476,32 @@ function saveArrival() {
     arrive: document.getElementById("f-arrive").value || nowHM(),
     ident: document.getElementById("f-ident").value.trim() || null,
     uwTarget: db.plan.uw.target,
+    ordenadas: ordenadasLeidas,
     rejected: false,
   };
   if (pendingPhoto) t.photo = pendingPhoto;
+
+  /* EL AVISO, EN EL ACTO — Q-55. Se da ANTES de guardar y se puede parar:
+     puede que el conduce esté bien y el que esté mal sea el plan, y en ese
+     caso lo que hay que hacer es hablar con el ingeniero, no seguir metiendo
+     camiones contra una orden que nadie ha confirmado. */
+  const planDelDia = num((db.dayMeta[t.date] || {}).cyPlan);
+  if (ordenadasLeidas != null && planDelDia != null &&
+      Math.abs(ordenadasLeidas - planDelDia) > 0.5) {
+    const seguir = confirm(
+      `⚠ El conduce no cuadra con el tiro programado.\n\n` +
+      `El conduce dice ${fmt(ordenadasLeidas, 0)} CY ordenadas.\n` +
+      `El tiro de hoy está programado a ${fmt(planDelDia, 0)} CY.\n\n` +
+      `Avísale al ingeniero antes de seguir: o cambió el pedido y no se apuntó,\n` +
+      `o este camión viene contra otra orden.\n\n` +
+      `¿Registrar el camión igual?`);
+    if (!seguir) return;
+  }
+
   db.tests.push(t);
   saveDB();
   pendingPhoto = null;
+  ordenadasLeidas = null;
   document.getElementById("photo-slot").innerHTML = "";
   ["f-ticket", "f-truck", "f-ident", "f-batch", "f-arrive"].forEach((id) => document.getElementById(id).value = "");
   pistaReparto();   // el camión siguiente empieza sin la pista del anterior
