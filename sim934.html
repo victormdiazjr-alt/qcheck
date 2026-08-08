@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>QCheck 934 — Simulación</title>
-<link rel="stylesheet" href="assets/qc.css?v=26441205">
+<link rel="stylesheet" href="assets/qc.css?v=fab27c2e">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -119,6 +119,18 @@ const simRol = (new URLSearchParams(location.search).get("rol") || "ruben");
    Lo que NO se esconde nunca, sea quien sea: la cinta de simulación y el aviso
    de que los datos son inventados. Eso no es diseño interno — es no engañar. */
 const interno = typeof qcVeConfig === "function" && qcVeConfig();
+
+/* LA MARCA DE LA 934 — Q-69, 8 ago 2026.
+
+   QCheck lleva años juzgando camión a camión. La 934 añade encima otro
+   criterio —por lotes, estadístico— y mezclarlos sin avisar es la manera más
+   rápida de que alguien lea un número con la vara equivocada: un camión
+   «aceptado» en control de proceso puede estar dentro de un lote que la 934
+   descuenta, y las dos cosas son ciertas a la vez.
+
+   Todo lo que **solo existe bajo la 934** lo dice. Siempre, y de la misma
+   forma. */
+const m934 = () => `<span class="m934" title="Solo aplica bajo la SP-934">934</span>`;
 const siInterno = (html) => (interno ? html : "");
 const S = simDatos();
 const HOY = S.hoy;
@@ -139,8 +151,13 @@ const simDelDia = (d) => S.tests.filter((t) => t.date === d);
 const simLotes = () => sp934Lotes(simVivos());
 
 /* ─────────────────────────────────────────────────────── piezas comunes ── */
-function simStat(label, valor, sub, clase) {
-  return `<div class="stat"><div class="label">${esc(label)}</div>
+/* `label` se escapa —es texto y puede venir de un dato— y la marca de la 934
+   va por su propio parámetro, que sí es HTML de la casa. Meter la etiqueta
+   dentro del texto la enseñaba en crudo: `esc()` estaba haciendo bien su
+   trabajo y era la llamada la que estaba mal. Q-69. */
+function simStat(label, valor, sub, clase, marca) {
+  return `<div class="stat ${marca ? "es934" : ""}">
+    <div class="label">${esc(label)}${marca ? m934() : ""}</div>
     <div class="value ${esc(clase || "")}">${valor}</div>
     <div class="sub">${sub || ""}</div></div>`;
 }
@@ -219,64 +236,55 @@ function indicador7() {
 function simPanelRuben() {
   const ls = simLotes(), enCurso = ls[ls.length - 1];
   const cfgs = simLimites();
-  const proy = proyeccionDeLote(enCurso, cfgs);
   const hoyTests = simDelDia(HOY);
   const cy = hoyTests.filter((t) => !t.rejected).reduce((a, t) => a + t.vol, 0);
   const plan = S.dayMeta[HOY].cyPlan;
+  const esperando = hoyTests.filter((t) => !t.rejected && !t.end).length;
+  const ultimo = hoyTests[hoyTests.length - 1];
 
   const sorteo = sortearMuestreo({ proyecto: S.project.name, lote: enCurso.n,
     cuando: "2026-08-08T05:40:00Z", quien: "Rubén Segarra" });
   const asign = muestrasDelSorteo(enCurso, sorteo);
   const porMuestrear = asign.filter((a) => a.estado !== "asignado");
-
   const cils = cilindrosDelLote(enCurso, { plan: { edades: S.project.edades } });
-  const esperando = hoyTests.filter((t) => !t.rejected && !t.end).length;
 
   return `
     ${simCabeceraRol()}
+
+    <!-- LO DE SIEMPRE. Un proyecto 934 sigue siendo una obra: el vaciado del
+         día, los camiones y el último veredicto mandan igual que sin la norma.
+         Si esto se degrada, no hemos ganado nada. -->
     <div class="grid cols-3" style="margin-bottom:14px">
       ${simStat("Vaciado de hoy", `${fmt(cy, 0)} <span style="font-size:14px">/ ${fmt(plan, 0)} CY</span>`,
              `${hoyTests.length} camiones · ${esperando} en obra`)}
-      ${simStat("Lote " + enCurso.n, `${enCurso.sublotes.length} <span style="font-size:14px">/ 10</span>`,
-             `sub-lotes · ${fmtVolumen(enCurso.m3)}`)}
-      ${proy.cpaf.ahora != null
-        ? simStat("Factor proyectado", fmt(proy.cpaf.ahora, 3),
-                  `techo ${fmt(proy.cpaf.techo, 3)}`, proy.cpaf.ahora >= 1 ? "z-ok" : "z-act")
-        : simStat("Factor del lote", "en 28 días",
-                  `${indicador7().n} roturas a 7 días ya están`)}
+      ${simStat("Último camión", ultimo ? `#${ultimo.n}` : "—",
+             ultimo ? `ticket ${ultimo.ticket} · ${simVeredictoDe(ultimo).txt}` : "")}
+      ${simStat(`Lote ${enCurso.n}`, `${enCurso.sublotes.length} <span style="font-size:14px">/ 10</span>`,
+             `sub-lotes · ${fmtVolumen(enCurso.m3)}`, "", true)}
+    </div>
+
+    <!-- EL DINERO, DETRÁS DE UNA SOLA PUERTA. Antes estaba repartido por tres
+         paneles y eso obliga a leer factores de pago mientras se dirige un
+         vaciado. Son dos cabezas distintas: aquí se decide qué camión muestrear
+         y ahí dentro se mira cuánto va a cobrar el lote. -->
+    <div class="lote-acciones" style="margin-bottom:14px">
+      <button class="btn small btn-dinero" onclick="verDinero()">
+        <span class="sig">$</span> Pago del contrato ${m934()}</button>
     </div>
 
     <section class="panel"><div class="panel-head"><h2>Qué falta ahora</h2></div>
       <div class="panel-body">
         <ul class="tareas">
-          <li><b>${porMuestrear.length}</b> sub-lote(s) del lote ${enCurso.n} sin muestra asignada todavía.</li>
-          <li><b>${cils.filter((c) => c.tipo === "ccs").length}</b> juegos de cilindros de este lote — 6 cada uno, a ${S.project.edades.join(" y ")} días.</li>
-          <li>Coordinación con el laboratorio de la Autoridad: <b>hecha</b> el 6 de agosto (la 934 pide 48 h).</li>
-          <li>Lotes ${ls.filter((l) => !l.parcial).map((l) => l.n).join(" y ")} cerrados y listos para que la Autoridad decida.</li>
+          <li><b>${porMuestrear.length}</b> sub-lote(s) del lote ${enCurso.n} sin muestra asignada. ${m934()}</li>
+          <li><b>${cils.filter((c) => c.tipo === "ccs").length}</b> juegos de cilindros — 6 cada uno, a ${S.project.edades.join(" y ")} días. ${m934()}</li>
+          <li>Coordinación con el laboratorio de la Autoridad: <b>hecha</b> el 6 de agosto. ${m934()}</li>
+          <li><b>${esperando}</b> camión(es) todavía en obra sin terminar de descargar.</li>
         </ul>
       </div>
     </section>
 
-    ${(() => { const i = indicador7(); return !i.n ? "" : `
-    <section class="panel"><div class="panel-head"><h2>Señal temprana — roturas a 7 días</h2>
-      <div class="spacer"></div><span class="muted">no es aceptación</span></div>
-      <div class="panel-body">
-        <div class="grid cols-3">
-          ${simStat("Media a 7 días", fmt(i.media, 0) + ' <span style="font-size:14px">psi</span>',
-                 `${i.n} juegos rotos de ${enCurso.sublotes.length} sub-lotes`)}
-          ${simStat("Sobre el diseño", fmt(i.sobre * 100, 0) + " %",
-                 `diseño ${fmt(S.plan.cs.target, 0)} psi a 28 días`,
-                 i.sobre >= 0.7 ? "z-ok" : "z-act")}
-          ${simStat("Aceptación", "a 28 días", "la 934 no juzga a 7")}
-        </div>
-        <p class="muted" style="margin:12px 0 0">A 7 días la norma no juzga nada: estas roturas
-        dicen si la mezcla va por donde debe, que es lo que permite llamar a la planta mientras
-        todavía se puede hacer algo.</p>
-      </div>
-    </section>`; })()}
-
-    <section class="panel"><div class="panel-head"><h2>Muestreo aleatorio del lote ${enCurso.n}</h2>
-      <div class="spacer"></div><span class="muted">ASTM D3665</span></div>
+    <section class="panel es934"><div class="panel-head"><h2>Muestreo aleatorio del lote ${enCurso.n}</h2>
+      ${m934()}<div class="spacer"></div><span class="muted">ASTM D3665</span></div>
       <div class="panel-body">
         <p class="muted">Sorteado el 8 ago a las 05:40, antes del primer camión. Semilla
         <code>${esc(sorteo.semilla)}</code> — se puede rehacer y da lo mismo.</p>
@@ -296,6 +304,76 @@ function simPanelRuben() {
     <section class="panel"><div class="panel-head"><h2>Camiones de hoy</h2></div>
       <div class="panel-body">${simTablaCamiones(hoyTests.slice().reverse(), { losa: true, aire: true })}</div>
     </section>`;
+}
+
+/* TODO EL DINERO, EN UN SITIO — Q-69.
+
+   Lotes, PWL, factores individuales y compuesto, proyección y lo que falta
+   para cerrar. Una sola puerta, y con la marca de la 934 encima: nada de esto
+   existe en un proyecto que no se acepte bajo la norma. */
+function verDinero() {
+  const cfgs = simLimites();
+  const ls = simLotes();
+  const enCurso = ls[ls.length - 1];
+  const proy = proyeccionDeLote(enCurso, cfgs);
+  const cerrados = ls.filter((l) => !l.parcial).map((l) => ({ l, ev: sp934EvaluarLote(l, cfgs) }));
+  const i = indicador7();
+
+  const cuerpo = `
+    <div class="dinero-cab">
+      <h2>Pago del contrato</h2>${m934()}
+      <div class="spacer"></div>
+      <span class="muted">${esc(S.project.name)}</span>
+    </div>
+
+    <h3 style="font-size:13px;margin:0 0 8px">Lote ${enCurso.n} — en curso</h3>
+    ${proy.cpaf.ahora != null ? `
+      <div class="proy-cifras">
+        <div class="proy-c suelo"><div class="lbl2">Suelo</div><div class="v">${fmt(proy.cpaf.suelo, 3)}</div></div>
+        <div class="proy-c ahora"><div class="lbl2">Con lo que hay</div><div class="v">${fmt(proy.cpaf.ahora, 3)}</div></div>
+        <div class="proy-c techo"><div class="lbl2">Techo</div><div class="v">${fmt(proy.cpaf.techo, 3)}</div></div>
+      </div>`
+    : `<p>El factor de este lote <b>no existe todavía</b>: la 934 lo calcula con las roturas
+       a <b>28 días</b> y este hormigón se está colocando hoy. Se sabrá el <b>5 sep 2026</b>.</p>
+       <p class="muted dinero-nota">Señal a 7 días: <b>${i.media != null ? fmt(i.media, 0) : "—"} psi</b>
+       en ${i.n} juegos rotos, el ${i.sobre != null ? fmt(i.sobre * 100, 0) : "—"} % del diseño.
+       A 7 días la norma no juzga; solo dice si la mezcla va por donde debe.</p>`}
+
+    <h3 style="font-size:13px;margin:20px 0 8px">Lotes cerrados</h3>
+    <div class="tabla-ancha"><table class="data"><thead><tr>
+      <th class="n">Lote</th><th>Período</th><th class="n">Hormigón</th>
+      <th class="n">PWL</th><th class="n">Factor</th><th>Efecto</th>
+    </tr></thead><tbody>
+      ${cerrados.map(({ l, ev }) => `<tr>
+        <td class="n mono">${l.n}</td><td>${esc(fmtDate(l.desde))}</td>
+        <td class="n mono">${fmt(l.m3, 1)} m³</td>
+        <td class="n mono">${fmt(ev.aqc.ccs.pwl, 1)} %</td>
+        <td class="n mono"><b class="${ev.cpaf >= 1 ? "z-ok" : "z-act"}">${fmt(ev.cpaf, 3)}</b></td>
+        <td>${ev.cpaf > 1 ? `<span class="badge ok">bonificación</span>`
+             : ev.cpaf === 1 ? `<span class="muted">a precio</span>`
+             : `<span class="badge act">descuento</span>`}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="muted dinero-nota">El factor multiplica el precio unitario por el tamaño del lote.
+    ${cerrados.some(({ ev }) => ev.cpaf < 1)
+      ? `El lote ${cerrados.find(({ ev }) => ev.cpaf < 1).l.n} paga
+         ${fmt((1 - cerrados.find(({ ev }) => ev.cpaf < 1).ev.cpaf) * 100, 1)} % menos: en 250 m³ eso no es un matiz.`
+      : ""}</p>`;
+
+  simFicha("Pago del contrato", cuerpo);
+}
+
+function simFicha(titulo, cuerpo) {
+  if (document.getElementById("qcd")) return;
+  const ov = document.createElement("div");
+  ov.id = "qcd"; ov.className = "qcd";
+  ov.innerHTML = `<div class="qcd-caja qcd-ancha" role="dialog" aria-modal="true" aria-label="${esc(titulo)}">
+      <div class="qcd-cab"><div><div class="qcd-k">${esc(titulo)}</div></div>
+        <button class="qcd-x" type="button" aria-label="Cerrar">✕</button></div>
+      <div class="qcd-cuerpo">${cuerpo}</div></div>`;
+  const cerrar = () => ov.remove();
+  ov.querySelector(".qcd-x").onclick = cerrar;
+  ov.onclick = (e) => { if (e.target === ov) cerrar(); };
+  document.getElementById("modal-root").appendChild(ov);
 }
 
 /* ────────────────────────────────────────────────────────── CARRETERAS ── */
@@ -362,72 +440,43 @@ function decidirSim(n, v) {
 /* ───────────────────────────────────────────────────────── CONTRATISTA ── */
 /* Cobra. Lo que necesita es ver el dinero mientras aún se puede hacer algo. */
 function simPanelContratista() {
-  const cfgs = simLimites();
   const ls = simLotes();
-  const enCurso = ls[ls.length - 1];
-  const proy = proyeccionDeLote(enCurso, cfgs);
-  const cerrados = ls.filter((l) => !l.parcial).map((l) => ({ l, ev: sp934EvaluarLote(l, cfgs) }));
   const hoyT = simDelDia(HOY);
   const cy = hoyT.filter((t) => !t.rejected).reduce((a, t) => a + t.vol, 0);
+  const ultimo = hoyT[hoyT.length - 1];
 
   return `
     ${simCabeceraRol()}
+
+    <!-- Lo de siempre primero: al contratista le importa su obra antes que
+         ninguna estadística. El dinero está a un botón, no en la cara. -->
     <div class="grid cols-3" style="margin-bottom:14px">
       ${simStat("Vaciado de hoy", `${fmt(cy, 0)} <span style="font-size:14px">/ ${fmt(S.dayMeta[HOY].cyPlan, 0)} CY</span>`,
              `${hoyT.length} camiones recibidos`)}
-      ${simStat("Lotes pagados a precio", cerrados.filter((c) => c.ev.cpaf >= 1).length + " de " + cerrados.length,
-             "factor ≥ 1.000")}
+      ${simStat("Último camión", ultimo ? `#${ultimo.n}` : "—",
+             ultimo ? `ticket ${ultimo.ticket} · ${simVeredictoDe(ultimo).txt}` : "")}
       ${simStat("Camiones rechazados", S.tests.filter((t) => t.rejected).length, "en todo el contrato",
              S.tests.some((t) => t.rejected) ? "z-susp" : "")}
     </div>
 
-    <section class="panel"><div class="panel-head"><h2>Lote ${enCurso.n} — hacia dónde va</h2>
-      <div class="spacer"></div><span class="muted">${enCurso.sublotes.length} de 10 sub-lotes</span></div>
+    <div class="lote-acciones" style="margin-bottom:14px">
+      <button class="btn small btn-dinero" onclick="verDinero()">
+        <span class="sig">$</span> Pago del contrato ${m934()}</button>
+    </div>
+
+    <section class="panel"><div class="panel-head"><h2>Cómo va la obra</h2></div>
       <div class="panel-body">
-        ${proy.cpaf.ahora != null ? `
-          <div class="proy-cifras">
-            <div class="proy-c suelo"><div class="lbl2">Suelo</div><div class="v">${fmt(proy.cpaf.suelo, 3)}</div></div>
-            <div class="proy-c ahora"><div class="lbl2">Con lo que hay</div><div class="v">${fmt(proy.cpaf.ahora, 3)}</div></div>
-            <div class="proy-c techo"><div class="lbl2">Techo</div><div class="v">${fmt(proy.cpaf.techo, 3)}</div></div>
-          </div>
-          <p class="muted proy-pie"><b>Techo</b> es lo máximo que puede pagar este lote si todo lo que
-          falta sale clavado. No son predicciones: son los dos extremos entre los que va a caer.</p>
-          ${proy.aviso ? `<p class="proy-aviso ${proy.aviso.grave ? "grave" : ""}">${esc(proy.aviso.texto)}</p>`
-            : `<p class="muted proy-pie">Este lote todavía puede pagarse entero.</p>`}
-        ` : (() => { const i = indicador7(); return `
-          <p>El factor de pago de este lote <b>no existe todavía</b>, y no es una carencia del
-          programa: la 934 lo calcula con las roturas a <b>28 días</b>, y este hormigón se está
-          colocando hoy.</p>
-          <div class="grid cols-3" style="margin-top:12px">
-            ${simStat("Se sabrá el", "5 sep 2026", "28 días desde el primer sub-lote")}
-            ${simStat("Señal a 7 días", i.media != null ? fmt(i.media, 0) + ' <span style="font-size:14px">psi</span>' : "—",
-                   `${i.n} juegos rotos · ${i.sobre != null ? fmt(i.sobre * 100, 0) + " % del diseño" : ""}`,
-                   i.sobre >= 0.7 ? "z-ok" : "z-act")}
-            ${simStat("Sub-lotes por venir", proy.faltan, "para cerrar el lote")}
-          </div>
-          <p class="muted proy-pie">A 7 días la norma no juzga: estas roturas dicen si la mezcla va
-          por donde debe, y eso todavía se puede corregir. En cuanto rompan las primeras a 28 días,
-          aquí aparece el techo del lote.</p>`; })()}
+        <div class="grid cols-3">
+          ${simStat("Hormigón colocado", fmt(ls.reduce((a, l) => a + l.m3, 0), 0) + ' <span style="font-size:14px">m³</span>',
+                 fmt(ls.reduce((a, l) => a + l.cy, 0), 0) + " CY en el contrato")}
+          ${simStat("Lotes cerrados", ls.filter((l) => !l.parcial).length, "evaluados", "", true)}
+          ${simStat("Días de vaciado", new Set(S.tests.map((t) => t.date)).size, "hasta hoy")}
+        </div>
       </div>
     </section>
 
-    <section class="panel"><div class="panel-head"><h2>Lotes cerrados</h2></div>
-      <div class="panel-body"><div class="tabla-ancha"><table class="data"><thead><tr>
-        <th class="n">Lote</th><th>Período</th><th class="n">Hormigón</th>
-        <th class="n">PWL resistencia</th><th class="n">Factor</th><th>Efecto</th>
-      </tr></thead><tbody>
-        ${cerrados.map(({ l, ev }) => `<tr>
-          <td class="n mono">${l.n}</td><td>${esc(fmtDate(l.desde))}</td>
-          <td class="n mono">${fmt(l.m3, 1)} m³</td>
-          <td class="n mono">${fmt(ev.aqc.ccs.pwl, 1)} %</td>
-          <td class="n mono"><b class="${ev.cpaf >= 1 ? "z-ok" : "z-act"}">${fmt(ev.cpaf, 3)}</b></td>
-          <td>${ev.cpaf > 1 ? `<span class="badge ok">bonificación</span>`
-               : ev.cpaf === 1 ? `<span class="muted">a precio</span>`
-               : `<span class="badge act">descuento</span>`}</td></tr>`).join("")}
-      </tbody></table></div>
-      <p class="muted" style="margin:10px 0 0">El factor multiplica el precio unitario por el
-      tamaño del lote. Un 0.94 en 250 m³ no es un matiz: es dinero.</p>
-      </div>
+    <section class="panel"><div class="panel-head"><h2>Camiones de hoy</h2></div>
+      <div class="panel-body">${simTablaCamiones(hoyT.slice().reverse(), { losa: true })}</div>
     </section>`;
 }
 

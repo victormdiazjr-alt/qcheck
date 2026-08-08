@@ -1259,3 +1259,37 @@ un candado de este archivo se equivoca por buscar un trozo de palabra: pasó con
 referencia a un archivo**, con el borde delante. Comprobado que sigue cazando
 un enlace de verdad.
 
+## 45 · El dinero en un botón, y lo de la 934 identificado
+
+**Q-69 — 8 de agosto de 2026**
+
+Corrección de arquitectura de Víctor, y tenía razón: yo había repartido los
+factores de pago por tres paneles de la pantalla principal. **Todo lo de pago
+va detrás de un solo botón `$`** en el control center.
+
+**Son dos cabezas distintas.** En el control center se decide qué camión
+muestrear y si el vaciado va al ritmo; dentro del botón se mira cuánto va a
+cobrar el lote. Mezclarlas obliga a leer factores de pago mientras se dirige
+una obra, y eso ni ayuda a lo primero ni se hace bien lo segundo.
+
+**Y la 934 se integra en lo normal, no lo sustituye.** Un proyecto 934 sigue
+siendo una obra: el vaciado del día, los camiones y el último veredicto mandan
+igual. Van delante, como siempre. Lo de la norma se añade encima.
+
+### Todo lo específico de la 934 lleva marca
+
+QCheck lleva años juzgando camión a camión. La 934 añade otro criterio —por
+lotes, estadístico— y **mezclarlos sin avisar es la manera más rápida de que
+alguien lea un número con la vara equivocada**: un camión «aceptado» en control
+de proceso puede estar dentro de un lote que la 934 descuenta, y las dos cosas
+son ciertas a la vez.
+
+Cada indicador, panel o pantalla que solo existe bajo la norma lleva una marca
+`934`. Pequeña y constante: no compite con el dato, pero está siempre.
+
+**Y un fallo que salió mirando la pantalla.** Metí la marca dentro del texto de
+la etiqueta de un mosaico y salió el HTML en crudo: `esc()` estaba haciendo
+exactamente su trabajo y era la llamada la que estaba mal. La marca pasa a ser
+su propio parámetro — lo que es texto se escapa, y lo que es HTML de la casa
+entra por otra puerta.
+
