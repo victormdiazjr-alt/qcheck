@@ -423,7 +423,15 @@ export default {
           truck:   oNulo("string"),   // número de camión
           vol:     oNulo("number"),   // yardas (CY)
           batch:   oNulo("string"),   // hora de batch, HH:MM en 24 horas
-          plant:   oNulo("string"),
+          /* `plant` NO se pide — Q-56, 8 ago 2026. El conduce de Concre-Tech no
+             imprime la planta hoy, así que el lector la devolvía en `ilegible`
+             en TODOS los camiones: el técnico leía «1 campo no se leyó» cada
+             vez, por algo que no está en el papel y que no tiene casilla donde
+             escribirlo. Una lista de avisos que siempre trae lo mismo se deja
+             de leer, y entonces el día que avise de verdad tampoco se lee.
+             QCheck sigue guardando la planta, fija, como venía haciendo.
+             Víctor dice que el conduce la traerá pronto: ese día se devuelve
+             esta línea y ya está. */
           company: oNulo("string"),
           mix:     oNulo("string"),
           /* Las yardas ORDENADAS del día que trae impreso el conduce — no las
@@ -434,7 +442,7 @@ export default {
           ordenadas: oNulo("number"),
           ilegible: { type: "array", items: { type: "string" } },
         },
-        required: ["ticket", "truck", "vol", "batch", "plant", "company", "mix", "ordenadas", "ilegible"],
+        required: ["ticket", "truck", "vol", "batch", "company", "mix", "ordenadas", "ilegible"],
         additionalProperties: false,
       };
 
@@ -443,7 +451,9 @@ export default {
         "Saca solo los campos del esquema, tal como están impresos en el papel.",
         "",
         "REGLA QUE MANDA SOBRE TODO: si un campo no se lee con seguridad, devuélvelo como null",
-        "y pon su nombre en `ilegible`. No adivines, no completes, no deduzcas de otro campo,",
+        "y pon su nombre en `ilegible`. `ilegible` es para lo que ESTÁ en el papel y no se",
+        "deja leer —borroso, cortado, tapado—. Si el conduce sencillamente no trae ese dato",
+        "impreso, devuélvelo null y NO lo pongas en `ilegible`: no hay nada que revisar. No adivines, no completes, no deduzcas de otro campo,",
         "no arregles un dígito que se ve a medias. Este dato entra en un expediente de calidad",
         "que firma la Autoridad de Carreteras: un número equivocado que parece bueno hace más",
         "daño que un hueco, porque nadie lo va a mirar dos veces.",

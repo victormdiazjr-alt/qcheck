@@ -823,3 +823,31 @@ de comportamiento y se verifica repitiendo lecturas, no una sola vez:** el
 mismo papel tiene que dar el mismo resultado, y tiene que darlo aunque cambie
 el encuadre.
 
+## 34 · Un aviso que sale siempre deja de ser un aviso
+
+**Q-56 — 8 de agosto de 2026**
+
+El conduce de Concre-Tech no imprime hoy la planta. El lector la pedía igual,
+así que la devolvía en `ilegible` en **todos** los camiones y el técnico leía
+«1 campo no se leyó» cada vez — por un dato que no está en el papel y que
+tampoco tiene casilla donde escribirlo.
+
+Eso no es un aviso, es ruido. Y el ruido educa: una lista que siempre trae lo
+mismo se deja de mirar, y el día que avise de algo real tampoco se mira. Se
+quita `plant` del esquema del lector. QCheck sigue guardando la planta fija,
+como venía haciendo desde el principio.
+
+**Y una distinción que faltaba en las instrucciones.** `ilegible` es para lo
+que **está** en el papel y no se deja leer —borroso, cortado, tapado—. Si el
+conduce sencillamente no trae ese dato impreso, va `null` y **no** va a
+`ilegible`: no hay nada que revisar. Son dos cosas distintas y confundirlas
+llena la lista de huecos que nadie puede rellenar.
+
+Víctor dice que el conduce traerá la planta pronto. Ese día se devuelve la
+línea al esquema y ya está.
+
+**Nota de método.** La primera comprobación tras desplegar dio `plant` todavía
+presente y llevó a buscar el fallo en el código, que estaba bien: era el
+despliegue a medio propagar. Tras un despliegue del Worker conviene esperar y
+repetir antes de concluir que algo no funcionó — si no, se persigue un fantasma.
+

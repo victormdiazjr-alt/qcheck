@@ -315,14 +315,15 @@ const QC_ESQUEMA_CONDUCE = {
   type: "object",
   properties: {
     ticket: QC_NULO("string"), truck: QC_NULO("string"), vol: QC_NULO("number"),
-    batch: QC_NULO("string"), plant: QC_NULO("string"),
+    batch: QC_NULO("string"),
+    /* `plant` no se pide — ver la nota gemela en sync-worker.js (Q-56). */
     company: QC_NULO("string"), mix: QC_NULO("string"),
     /* Las yardas ORDENADAS del día, no las de este camión. Ver la nota gemela
        en sync-worker.js: los dos servidores tienen que dar la MISMA ficha. */
     ordenadas: QC_NULO("number"),
     ilegible: { type: "array", items: { type: "string" } },
   },
-  required: ["ticket", "truck", "vol", "batch", "plant", "company", "mix", "ordenadas", "ilegible"],
+  required: ["ticket", "truck", "vol", "batch", "company", "mix", "ordenadas", "ilegible"],
   additionalProperties: false,
 };
 const QC_INSTRUCCIONES_CONDUCE = [
@@ -330,7 +331,9 @@ const QC_INSTRUCCIONES_CONDUCE = [
   "Saca solo los campos del esquema, tal como están impresos en el papel.",
   "",
   "REGLA QUE MANDA SOBRE TODO: si un campo no se lee con seguridad, devuélvelo como null",
-  "y pon su nombre en `ilegible`. No adivines, no completes, no deduzcas de otro campo,",
+  "y pon su nombre en `ilegible`. `ilegible` es para lo que ESTÁ en el papel y no se",
+  "deja leer —borroso, cortado, tapado—. Si el conduce sencillamente no trae ese dato",
+  "impreso, devuélvelo null y NO lo pongas en `ilegible`: no hay nada que revisar. No adivines, no completes, no deduzcas de otro campo,",
   "no arregles un dígito que se ve a medias. Este dato entra en un expediente de calidad",
   "que firma la Autoridad de Carreteras: un número equivocado que parece bueno hace más",
   "daño que un hueco, porque nadie lo va a mirar dos veces.",
