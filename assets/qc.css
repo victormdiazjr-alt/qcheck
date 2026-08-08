@@ -706,3 +706,15 @@ table.descartados td:nth-child(2) { min-width: 0; }
 .proy-pie { font-size: 11.5px; margin: 8px 0 0; }
 .proy-aviso { margin: 8px 0 0; font-size: 12.5px; color: var(--act); font-weight: 600; }
 .proy-aviso.grave { color: var(--susp); }
+
+/* Aceptación — Q-65. Pantalla de decidir, no de operar. */
+.acepta-cifras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.acepta-cifras .label { font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase;
+                        color: var(--ink-soft); font-weight: 800; }
+.acepta-cifras .value { font-size: 20px; font-weight: 300; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.acepta-pie { font-size: 11.5px; margin: 10px 0 0; }
+.acepta-pie code { font-size: 10.5px; word-break: break-all; }
+.acepta-botones { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.acepta-decision { margin-top: 14px; padding: 10px 12px; border-radius: 8px;
+                   background: rgba(238,242,246,.05); font-size: 13px; }
+@media (max-width: 640px) { .acepta-cifras { grid-template-columns: 1fr; gap: 10px; } }

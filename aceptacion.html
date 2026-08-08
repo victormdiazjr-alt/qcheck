@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Aplicación en la pantalla de inicio (iOS y Android). Sin estas etiquetas
+     y sin el manifest, el icono guardado abre como un MARCADOR de Safari, con
+     una franja arriba enseñando el dominio en vez de la aplicación limpia. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QCheck">
+<link rel="apple-touch-icon" href="assets/icono-180.png">
+<meta name="theme-color" content="#0a0d12">
+<title>Aceptación SP-934 — QCheck</title>
+<link rel="stylesheet" href="assets/qc.css?v=4e6fc43b">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
+<style>
+/* ============================================================
+   SETTINGS — la pantalla de Rubén.
+
+   Q-37, 6 ago 2026. Hasta hoy los límites del plan de control vivían
+   dentro de «Plan & Datos», que es de admin, junto a la dirección del
+   servidor, la llave del proyecto y el panel de la simulación. Rubén
+   no entraba ahí a propósito —se decidió el 1 de agosto: quien usa la
+   herramienta no ve cómo está montada— y eso dejaba un hueco raro:
+   cuando el proyecto cambia un límite, el que lo sabe es él.
+
+   Así que los límites salen de allí y se le dan en su propia pantalla,
+   sin nada más al lado que se pueda tocar sin querer. Víctor lo pidió
+   así hoy: «una pantalla que se llame Settings y ahí solo un tab de
+   límites, pero luego pondremos más settings».
+
+   POR ESO HAY PESTAÑAS CON UNA SOLA PESTAÑA. No es un descuido: la
+   siguiente que entre se añade a `TABS` y ya. Si acaba habiendo una
+   sola para siempre, quítalas.
+
+   Lo que se cambie aquí queda firmado en el expediente como cualquier
+   otro cambio —quién y cuándo—, así que un límite mal puesto se ve en
+   el registro y se deshace. Eso es lo que hace que esto no sea el
+   riesgo que era en agosto.
+   ============================================================ */
+main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
+.nota { margin-top: 16px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+</style>
+<script src="assets/usuarios.js?v=03f894c7"></script>
+<script src="assets/auth.js?v=a178a61b"></script>
+</head>
+<body>
+
+<header class="qc-header">
+  <div class="brand">
+    <a href="control-center.html" style="text-decoration:none"><svg class="mark" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
+      <defs>
+        <mask id="qcm-q1"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
+        <mask id="qcm-c1"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
+      </defs>
+      <path fill="var(--logo-blue,#0f46b5)" fill-rule="evenodd" mask="url(#qcm-q1)" d="M 509 63 A 337 337 0 1 1 508.9 63 Z M 509 174 A 226 226 0 1 0 509.1 174 Z"/>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+      <g mask="url(#qcm-c1)">
+        <path fill="var(--logo-green,#39a935)" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+        <path fill="var(--logo-g1,#68727f)" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+        <path fill="var(--logo-g2,#4f5a66)" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+      </g>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
+    </svg></a>
+    <div>
+      <div class="title">Aceptación de lotes</div>
+      <div class="subtitle">Autoridad de Carreteras · SP-934</div>
+    </div>
+  </div>
+  </header>
+
+<main><div id="app"></div></main>
+
+<div id="modal-root"></div>
+<div id="toast"></div>
+
+<script src="assets/sync.js?v=426ef405"></script>
+<script src="assets/seed.js?v=acf41aba"></script>
+<script src="assets/core.js?v=98267cde"></script>
+<script src="assets/sp934.js?v=265feda9"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   ACEPTACIÓN — la pantalla de la Autoridad. Q-65, 8 de agosto de 2026.
+
+   Es una pantalla de **decidir**, no de operar. Quien entra aquí no muestrea,
+   no programa vaciados y no corrige datos: mira un lote, ve de dónde sale cada
+   número, y lo acepta o lo rechaza.
+
+   Por eso no se parece a la de lotes aunque enseñe lo mismo. Allí el ingeniero
+   vigila cómo va llenándose; aquí se cierra un expediente y se firma. Meter
+   botones de operación en esta pantalla sería invitar a la Autoridad a hacer
+   trabajo que no es suyo, y a asumir una responsabilidad que tampoco.
+
+   Solo se enseñan lotes **completos**: uno a medias no se acepta ni se
+   rechaza, se espera.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function limitesDelProyecto() {
+  const clase = (db.project || {}).claseHormigon || "III";
+  const ccs = SP934_CCS[clase] || SP934_CCS.III;
+  const edad = Number(((db.plan || {}).cs || {}).age);
+  const campo = edad === 1 ? "cs1" : edad === 5 ? "cs5" : edad === 56 ? "cs56" : "cs28";
+  const cuw = sp934LimitesCUW((db.plan && db.plan.uw && db.plan.uw.target) || null);
+  const nivel = (db.project || {}).nivelPermeabilidad;
+  const s = {
+    ccs: { campo, lsl: ccs.lsl, usl: ccs.usl, n: "Resistencia", u: `psi a ${edad || 28} días`, clase },
+    cuw: { campo: "uw", lsl: cuw.lsl, usl: cuw.usl, n: "Peso unitario", u: "pcf" },
+  };
+  if (nivel && SP934_CP_USL[String(nivel)] != null)
+    s.cp = { campo: "cp", lsl: null, usl: SP934_CP_USL[String(nivel)], n: "Permeabilidad", u: "coulombs" };
+  return s;
+}
+
+/* La decisión vive en el expediente y lleva quién y cuándo, como todo lo que
+   se firma en QCheck. No se borra: si se cambia de opinión, se registra la
+   nueva decisión encima y las dos quedan en el registro de cambios. */
+function decidir(nLote, veredicto) {
+  const quien = qcCuenta();
+  const motivo = veredicto === "rechazado"
+    ? prompt("Motivo del rechazo. Queda en el expediente y se le enseña al contratista.")
+    : (prompt("Nota de la aceptación (opcional).") || null);
+  if (veredicto === "rechazado" && (motivo == null || !String(motivo).trim())) return;
+
+  db.sp934 = db.sp934 || {};
+  db.sp934.decisiones = db.sp934.decisiones || {};
+  db.sp934.decisiones[nLote] = {
+    veredicto, motivo: motivo ? String(motivo).trim() : null,
+    cuando: new Date().toISOString(),
+    quien: (quien && (quien.nombre || quien.usr)) || "?",
+  };
+  saveDB();
+  render();
+  toast(veredicto === "rechazado" ? `Lote ${nLote} rechazado` : `Lote ${nLote} aceptado`);
+}
+
+function panelAceptacion(l, cfgs) {
+  const ev = sp934EvaluarLote(l, cfgs);
+  const d = ((db.sp934 || {}).decisiones || {})[l.n];
+  const s = ((db.sp934 || {}).sorteos || {})[l.n];
+
+  const fila = (k, r) => {
+    const cfg = cfgs[k] || {};
+    return `<tr>
+      <td>${esc(cfg.n || k)}</td>
+      <td class="n mono">${r.n || 0}</td>
+      <td class="n mono">${r.media != null ? fmt(r.media, 1) : "—"}</td>
+      <td class="n">${r.pwl == null ? `<span class="muted">${esc(r.motivo || "—")}</span>`
+        : `<b class="z-${r.pwl >= 90 ? "ok" : r.pwl >= 60 ? "act" : "susp"}">${fmt(r.pwl, 1)} %</b>`}</td>
+      <td class="n mono">${r.paf != null ? fmt(r.paf, 3) : "—"}</td>
+    </tr>`;
+  };
+
+  return `<section class="panel acepta">
+    <div class="panel-head">
+      <h2>Lote ${l.n}</h2>
+      ${d ? `<span class="badge ${d.veredicto === "aceptado" ? "ok" : "susp"}">${d.veredicto === "aceptado" ? "Aceptado" : "Rechazado"}</span>` : ""}
+      <div class="spacer"></div>
+      <span class="muted">${esc(fmtDate(l.desde))}${l.hasta !== l.desde ? " – " + esc(fmtDate(l.hasta)) : ""}</span>
+    </div>
+    <div class="panel-body">
+      <div class="acepta-cifras">
+        <div><div class="label">Hormigón</div><div class="value">${fmtVolumen(l.m3)}</div></div>
+        <div><div class="label">Sub-lotes</div><div class="value">${l.sublotes.length} / 10</div></div>
+        <div><div class="label">Factor compuesto</div>
+             <div class="value ${ev.cpaf == null ? "" : ev.cpaf >= 1 ? "z-ok" : ev.cpaf >= 0.9 ? "z-act" : "z-susp"}">${ev.cpaf != null ? fmt(ev.cpaf, 3) : "—"}</div></div>
+      </div>
+
+      <div class="tabla-ancha" style="margin-top:12px">
+        <table class="data"><thead><tr>
+          <th>Característica</th><th class="n">n</th><th class="n">Media</th>
+          <th class="n">PWL</th><th class="n">Factor</th>
+        </tr></thead><tbody>
+          ${Object.keys(cfgs).map((k) => fila(k, ev.aqc[k] || { n: 0 })).join("")}
+        </tbody></table>
+      </div>
+
+      <p class="muted acepta-pie">
+        ${s ? `Muestreo sorteado el ${esc(s.cuando.slice(0, 10))}, semilla <code>${esc(s.semilla)}</code>. Reproducible.`
+            : "Sin constancia de sorteo de muestreo."}
+      </p>
+
+      ${d ? `<div class="acepta-decision">
+          <b>${d.veredicto === "aceptado" ? "Aceptado" : "Rechazado"}</b> por ${esc(d.quien)}
+          el ${esc(d.cuando.slice(0, 10))}.
+          ${d.motivo ? `<div class="muted">${esc(d.motivo)}</div>` : ""}
+        </div>`
+        : `<div class="acepta-botones">
+             <button class="btn small" onclick="verReporte(${l.n})">Ver el cálculo completo</button>
+             <button class="btn small ok" onclick="decidir(${l.n}, 'aceptado')">Aceptar lote</button>
+             <button class="btn small danger" onclick="decidir(${l.n}, 'rechazado')">Rechazar</button>
+           </div>`}
+    </div>
+  </section>`;
+}
+
+function verReporte(n) {
+  const l = sp934Lotes(sortedTests().filter((t) => !t.rejected)).find((x) => x.n === n);
+  if (!l) return;
+  const caja = document.createElement("div");
+  caja.id = "qc-impreso";
+  caja.innerHTML = reporteDeLote(l, {
+    limites: limitesDelProyecto(),
+    sorteo: ((db.sp934 || {}).sorteos || {})[n] || null,
+    proyecto: db.project.name, contratista: db.project.contractor,
+    qcFirm: db.project.qcFirm, esc, fmtDate,
+  });
+  document.body.appendChild(caja);
+  document.body.classList.add("qc-imprimiendo");
+  const quitar = () => {
+    document.body.classList.remove("qc-imprimiendo");
+    if (caja.parentNode) caja.parentNode.removeChild(caja);
+  };
+  addEventListener("afterprint", quitar, { once: true });
+  setTimeout(quitar, 60000);
+  print();
+}
+
+function render() {
+  const app = document.getElementById("app");
+  if (!es934()) {
+    app.innerHTML = `<section class="panel"><div class="panel-body">
+      <p class="muted">Este proyecto no se acepta bajo la SP-934.</p></div></section>`;
+    return;
+  }
+  const cfgs = limitesDelProyecto();
+  /* Solo lotes completos: uno a medias no se acepta ni se rechaza, se espera. */
+  const lotes = sp934Lotes(sortedTests().filter((t) => !t.rejected)).filter((l) => !l.parcial);
+  const abiertos = sp934Lotes(sortedTests().filter((t) => !t.rejected)).filter((l) => l.parcial).length;
+
+  if (!lotes.length) {
+    app.innerHTML = `<section class="panel"><div class="panel-body">
+      <p class="muted">No hay ningún lote completo todavía.${abiertos ? ` Hay ${abiertos} en curso.` : ""}</p>
+      <p class="muted">Un lote se evalúa cuando se cierra: con menos sub-lotes de los que pide la norma, el resultado cambiaría con cada camión.</p>
+    </div></section>`;
+    return;
+  }
+
+  const dec = (db.sp934 || {}).decisiones || {};
+  const pend = lotes.filter((l) => !dec[l.n]).length;
+  app.innerHTML = `
+    <div class="grid cols-3" style="margin-bottom:16px">
+      <div class="stat"><div class="label">Lotes completos</div><div class="value">${lotes.length}</div>
+        <div class="sub">${abiertos} en curso</div></div>
+      <div class="stat"><div class="label">Sin decidir</div><div class="value">${pend}</div>
+        <div class="sub">esperan aceptación</div></div>
+      <div class="stat"><div class="label">Rechazados</div>
+        <div class="value">${Object.values(dec).filter((d) => d.veredicto === "rechazado").length}</div>
+        <div class="sub">de ${Object.keys(dec).length} decididos</div></div>
+    </div>
+    ${lotes.map((l) => panelAceptacion(l, cfgs)).join("")}`;
+}
+
+loadDB();
+initTheme();
+mountThemeToggle();
+mountStatusBar();
+enableLiveSync(() => render());
+render();
+</script>
+</body>
+</html>

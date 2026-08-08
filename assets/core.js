@@ -3008,6 +3008,18 @@ function formTest(_ignored, n, opts = {}) {
       { key: "cs1", label: "1 día", type: "number", step: "10" },
       { key: "cs5", label: "5 días", type: "number", step: "10" },
       { key: "cs28", label: "28 días", type: "number", step: "10" },
+      /* PERMEABILIDAD — Q-65, 8 ago 2026. Solo aparece si el proyecto se
+         acepta bajo la SP-934 **y** la inspecciona: la PR-52 no la lleva, y un
+         campo vacío que nadie va a llenar solo estorba al técnico.
+
+         Va aquí y no en Muestras porque no es una prueba de campo: es un
+         resultado que devuelve el laboratorio, como las resistencias. Dos
+         cilindros por sub-lote, AASHTO T 277. */
+      ...(typeof es934 === "function" && es934() && (db.project || {}).nivelPermeabilidad
+        ? [{ key: "cs56", label: "56 días", type: "number", step: "10" },
+            { type: "label", label: "Permeabilidad (AASHTO T 277)" },
+            { key: "cp", label: "Carga que pasa (coulombs)", type: "number", step: "1" }]
+        : []),
       { key: "comments", label: "Comentarios", type: "textarea", full: true },
     ],
     onSave: (v) => {

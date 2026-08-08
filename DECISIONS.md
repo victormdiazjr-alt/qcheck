@@ -1101,3 +1101,43 @@ Y una prueba que **barre todas las puertas de entrada** con los tres huecos, en
 vez de confiar en que alguien se acuerde. Ese bloque existe precisamente porque
 acordarse no funcionó.
 
+## 41 · Permeabilidad, y la pantalla de la Autoridad
+
+**Q-65 — 8 de agosto de 2026**
+
+### La permeabilidad
+
+Va en el formulario del laboratorio, junto a las resistencias, **y no en
+Muestras**: no es una prueba de campo, es un resultado que devuelve el
+laboratorio. Dos cilindros por sub-lote, AASHTO T 277.
+
+Y **solo aparece si el proyecto se acepta bajo la 934 y además la
+inspecciona**. La PR-52 no la lleva, y un campo vacío que nadie va a llenar
+solo estorba al técnico — el mismo criterio de Q-56.
+
+### La pantalla de aceptación
+
+Es una pantalla de **decidir**, no de operar. Quien entra no muestrea, no
+programa vaciados y no corrige datos: mira un lote, ve de dónde sale cada
+número, y lo acepta o lo rechaza.
+
+Por eso no se parece a la de lotes aunque enseñe lo mismo. Allí el ingeniero
+vigila cómo se llena; aquí se cierra un expediente y se firma. **Meter botones
+de operación aquí sería invitar a la Autoridad a hacer trabajo que no es suyo,
+y a cargar con una responsabilidad que tampoco.**
+
+  · **Solo lotes completos.** Uno a medias no se acepta ni se rechaza: se
+    espera. Con menos sub-lotes de los que pide la norma, el resultado
+    cambiaría con cada camión.
+  · **Rechazar exige motivo.** Sin él no se guarda. Un rechazo sin razón no se
+    le puede enseñar a un contratista.
+  · **La decisión lleva quién y cuándo**, y no se borra: si se cambia de
+    opinión, la nueva queda encima y las dos viven en el registro de cambios.
+  · **El sorteo del muestreo va a la vista**, con su semilla. Quien acepta un
+    lote puede comprobar que las muestras no se eligieron a dedo — que es
+    justo lo que tiene derecho a verificar.
+
+Probado: Rubén y el técnico acaban en el Control Center, la Autoridad en su
+tablero de siempre, y solo la cuenta de Víctor entra. Las dos pantallas de la
+934 están en `EN_OBRAS_934` y el verificador lo comprueba.
+
