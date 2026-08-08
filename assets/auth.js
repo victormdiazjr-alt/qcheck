@@ -17,6 +17,20 @@
     location.replace("movil.html");
   }
 
+  /* LAS PANTALLAS DE LA SP-934 ESTÁN EN OBRAS — Q-57b, 8 ago 2026.
+
+     Se construyen a la vista de nadie hasta que estén enteras: media función
+     delante de un técnico es una función rota, y en obra la gente la toca.
+
+     Va por `qcVeConfig()`, que hoy solo tiene la cuenta de Víctor. **El día
+     que la 934 esté terminada, se saca de aquí y ya está** — es lo único que
+     la separa de estar viva, y está en un solo sitio a propósito. */
+  var EN_OBRAS_934 = ["lotes.html"];
+  if (EN_OBRAS_934.indexOf(aqui) >= 0 && !(typeof qcVeConfig === "function" && qcVeConfig())) {
+    location.replace("control-center.html");
+    return;
+  }
+
   /* Settings es de quien lleva el control de calidad, no de quien mira — Q-37. */
   if (aqui === "settings.html" && !(typeof qcVeLimites === "function" && qcVeLimites())) {
     location.replace("control-center.html");

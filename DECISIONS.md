@@ -944,3 +944,24 @@ lo único que espera es la regla con la que se mide.
 **Un sorteo sin hora no se hace.** Sin sello de tiempo no demuestra que se
 decidió antes, y entonces no demuestra nada.
 
+**Ampliación (Q-57c, 8 ago 2026).** «QCheck debe seguir funcionando igual para
+Rubén y el técnico» dejó de ser una promesa que hay que recordar.
+
+**Había un hueco de verdad:** `lotes.html` cargaba `auth.js` pero no estaba en
+ninguna de sus listas, así que cualquiera que escribiera la dirección entraba —
+Rubén incluido. Ahora hay una lista `EN_OBRAS_934` en `auth.js`, detrás de
+`qcVeConfig()`.
+
+Y `verificar.js` gana la comprobación **«SP-934 en obras»**, que exige dos
+cosas: que toda pantalla que cargue `sp934.js` esté en esa lista, y que
+**ninguna pantalla enlace a ellas**. Lo segundo importa igual que lo primero:
+un enlace es una puerta aunque al otro lado eche a quien no toca.
+
+Probado de las dos maneras. Rompiendo a propósito: se enlaza `lotes.html` desde
+el Control Center → lo caza; se saca de la lista → lo caza. Y entrando como
+cada uno: **Rubén y el técnico acaban en el Control Center, el contratista en
+su tablero, y solo la cuenta de Víctor entra.**
+
+**El día que la 934 esté terminada, se saca de `EN_OBRAS_934` y ya está.** Está
+en un solo sitio a propósito.
+

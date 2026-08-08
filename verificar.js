@@ -130,6 +130,31 @@ for (const f of html.concat(["assets/qc.js", "assets/core.js"])) {
 if (sinDefinir.size) mal(`clases de armazón usadas y sin definir: ${[...sinDefinir].join(", ")}`);
 else bien("las clases que arman las cajas están todas definidas");
 
+/* ---------- 4c. la SP-934 no se le enseña a nadie todavía ----------
+
+   Víctor, 8 ago 2026: «qcheck debe seguir funcionando igual para Rubén y el
+   técnico». Eso deja de ser una promesa que hay que recordar y pasa a ser algo
+   que falla solo si se rompe.
+
+   Dos cosas: que toda pantalla que cargue `sp934.js` esté en la lista de obras
+   de `auth.js`, y que **ninguna pantalla enlace a ellas**. Un enlace es una
+   puerta aunque la pantalla del otro lado eche a quien no toca. */
+titulo("SP-934 en obras");
+const authSrc = leer("assets/auth.js");
+const enObras = (authSrc.match(/EN_OBRAS_934 = \[([^\]]*)\]/) || [, ""])[1]
+  .split(",").map((s) => s.trim().replace(/["']/g, "")).filter(Boolean);
+const pantallas934 = html.filter((f) => leer(f).includes("sp934.js"));
+const problemas = [];
+for (const f of pantallas934)
+  if (!enObras.includes(path.basename(f))) problemas.push(`${f} usa sp934.js y no está en EN_OBRAS_934`);
+for (const f of html) {
+  const src = leer(f);
+  for (const p of enObras)
+    if (path.basename(f) !== p && src.includes(p)) problemas.push(`${f} enlaza a ${p}`);
+}
+if (problemas.length) problemas.forEach((s) => mal(s));
+else bien(`${pantallas934.length} pantalla(s) de la 934, todas tras qcVeConfig() y sin enlazar`);
+
 /* ---------- 5. ¿queda código muerto? ---------- */
 titulo("Código muerto");
 const fuente = html.concat(js.filter((f) => !f.endsWith("seed.js"))).map(leer).join("\n");
