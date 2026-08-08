@@ -37,6 +37,15 @@ const QC_CUENTAS = {
   ruben:    { clave: "1234", rol: "qc",       nombre: "Rubén Segarra", limites: true, firma: true },
   invitado: { clave: "1234", rol: "consulta", nombre: "Invitado" },
 
+  /* El técnico de campo de Rubén — 8 ago 2026. Ve lo mismo que Rubén (Víctor
+     lo pidió así), o sea Recepción, Muestras, Results, Reportes y Settings.
+
+     Lo que NO lleva es `firma`: reabrir un tiro cerrado y descartar un vaciado
+     del expediente son actos del ingeniero de récord, y eso es Rubén en
+     persona, no su puesto (DECISIONS §22). Tampoco `config`, que es la sala de
+     máquinas. */
+  tecnico:  { clave: "1234", rol: "qc",       nombre: "Técnico de campo", limites: true },
+
   /* Las tres de fuera — Q-37, 6 ago 2026. Cada una entra y aparece en SU
      tablero, sin portal y sin navegación: no vienen a recorrer QCheck, vienen
      a mirar su número. Lo que ven ya era público para ellas —el contrato le
