@@ -14,7 +14,9 @@ const mod = {};
 new Function(src + `
   Object.assign(this, { porcentajeDeQ, pwlDeLote, pafCCS, pafCP, pafCUW, cpaf,
     sp934Lotes, sp934EvaluarLote, sp934LimitesCUW, SP934_CCS, m3DeCY, loteRechazado,
-    sortearMuestreo, muestrasDelSorteo, verificarSorteo, generadorConSemilla });
+    sortearMuestreo, muestrasDelSorteo, verificarSorteo, generadorConSemilla,
+    cilindrosDelLote, edadesDeRotura, vencimientosDeCilindro, estadoDeCilindros,
+    avisoLaboratorio, SP934_CILINDROS });
 `).call(mod);
 
 let bien = 0, mal = 0;
@@ -176,6 +178,62 @@ const loteD = mod.sp934Lotes(dispares)[0];
 const asigD = mod.muestrasDelSorteo(loteD, S1).filter((a) => a.estado !== "sin-hormigon");
 ok(asigD.length > 0 && asigD.every((a) => a.ensayo),
    `con sub-lotes de tamaños dispares, los ${asigD.length} con hormigón tienen camión`);
+
+/* ═══ 9 · Cilindros y custodia (M3) ═══ */
+t("CILINDROS — SP-934-6.01");
+let seq4 = 0;
+const camsC = Array.from({ length: 40 }, () => ({ n: ++seq4, date: "2026-09-01", vol: 10, mix: "A" }));
+const loteC = mod.sp934Lotes(camsC)[0];
+
+const sinCP = mod.cilindrosDelLote(loteC, { plan: {}, permeabilidad: false });
+const ccs = sinCP.filter((f) => f.tipo === "ccs");
+ok(ccs.length === 10, `un juego de resistencia por sub-lote (${ccs.length})`);
+ok(ccs.every((f) => f.cuantos === 6), "seis cilindros cada uno");
+ok(ccs.every((f) => JSON.stringify(f.edades) === JSON.stringify([7, 28])), "a 7 y 28 días por defecto");
+ok(sinCP.filter((f) => f.tipo === "cp").length === 0, "sin permeabilidad, no se piden cilindros de permeabilidad");
+ok(sinCP.filter((f) => f.tipo === "tension").length === 1, "la tensión indirecta va por LOTE, no por sub-lote");
+ok(sinCP.find((f) => f.tipo === "tension").informativo === true, "y va marcada como informativa");
+
+const conCP = mod.cilindrosDelLote(loteC, { plan: {}, permeabilidad: true });
+ok(conCP.filter((f) => f.tipo === "cp").length === 10, "con permeabilidad, dos por sub-lote");
+ok(conCP.filter((f) => f.tipo === "cp").every((f) => f.cuantos === 2), "dos cilindros cada uno");
+
+ok(JSON.stringify(mod.edadesDeRotura({ tablero: true })) === JSON.stringify([7, 56]),
+   "en tablero de puente, 7 y 56 días");
+ok(JSON.stringify(mod.edadesDeRotura({ edades: [7, 14, 28] })) === JSON.stringify([7, 14, 28]),
+   "y el plan manda sobre todo");
+
+/* Un sub-lote sin hormigón no debe cilindros: pedirlos seria inventar trabajo. */
+const loteVacio = mod.sp934Lotes(camsC.slice(0, 5))[0];
+ok(mod.cilindrosDelLote(loteVacio, { plan: {} }).filter((f) => f.tipo === "ccs").length ===
+   loteVacio.sublotes.length,
+   "solo se piden cilindros de los sub-lotes que ya tienen hormigón");
+
+t("VENCIMIENTOS Y ESTADO");
+const v = mod.vencimientosDeCilindro("2026-09-01", [7, 28]);
+ok(v[0].vence === "2026-09-08" && v[1].vence === "2026-09-29", `7 y 28 días → ${v[0].vence} y ${v[1].vence}`);
+
+ok(mod.estadoDeCilindros(null).estado === "pendiente", "sin hacer → pendiente");
+ok(mod.estadoDeCilindros({ hecho: "2026-09-01" }).estado === "en-obra", "hecho y sin entregar → en obra");
+ok(mod.estadoDeCilindros({ hecho: "2026-09-01", entregado: "2026-09-02",
+     roturas: [{ vence: "2026-09-08", resultado: 4100 }, { vence: "2026-09-29", resultado: null }] },
+     "2026-09-10").estado === "esperando", "una rotura hecha y otra por venir → esperando");
+ok(mod.estadoDeCilindros({ hecho: "2026-09-01", entregado: "2026-09-02",
+     roturas: [{ vence: "2026-09-08", resultado: null }] }, "2026-09-15").estado === "vencido",
+   "rotura pasada sin resultado → vencida");
+ok(mod.estadoDeCilindros({ hecho: "2026-09-01", entregado: "2026-09-02",
+     roturas: [{ vence: "2026-09-08", resultado: 4100 }] }, "2026-09-15").estado === "completo",
+   "todas con resultado → completo");
+
+t("AVISO DEL LABORATORIO — 48 h");
+ok(mod.avisoLaboratorio("2026-09-10", "2026-09-01T08:00:00Z") === null,
+   "con nueve días por delante no se avisa");
+const a48 = mod.avisoLaboratorio("2026-09-10", "2026-09-09T08:00:00Z");
+ok(a48 !== null && a48.horas <= 48, `a menos de 48 h sí avisa (${a48 ? a48.horas : "?"} h)`);
+ok(mod.avisoLaboratorio("2026-09-10", "2026-09-09T08:00:00Z", true) === null,
+   "si ya se coordinó, no se avisa");
+ok(mod.avisoLaboratorio("2026-09-01", "2026-09-09T08:00:00Z") === null,
+   "de un vaciado que ya pasó no se avisa: no tiene arreglo");
 
 console.log(`\n  ${bien} bien · ${mal} mal\n`);
 process.exit(mal ? 1 : 0);

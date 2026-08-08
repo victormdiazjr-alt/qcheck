@@ -440,3 +440,122 @@ function verificarSorteo(sorteo) {
     sorteo.proyecto, sorteo.lote, sorteo.cuando).valor);
   return sorteo.puntos.every((p) => red(rehecho(), 6) === p.fraccion);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CILINDROS Y CADENA DE CUSTODIA — M3. Q-61, 8 de agosto de 2026.
+
+   La 934 pide, por sub-lote:
+
+     · **6 cilindros** de resistencia, a dos edades (934-6.01-b-1)
+     · **2 cilindros** de permeabilidad, AASHTO T 277 — solo si el proyecto la
+       inspecciona
+     · **2 por LOTE** de tensión indirecta, «for information purposes»
+
+   Las edades salen del plan y no del código: 7 y 28 días normalmente, 7 y 56
+   en tablero de puente. Ya se aprendió por las malas en Q-59, clavando 28 en
+   un proyecto de 5 días — la pantalla rendía perfecta con números falsos.
+
+   Y una fecha que el programa puede vigilar y una persona olvida: la 934 exige
+   **coordinar con el laboratorio de la Autoridad 48 horas antes del vaciado**
+   (934-6.01-f). Eso no es un dato, es un aviso.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const SP934_CILINDROS = {
+  ccs: 6,          // resistencia, por sub-lote
+  cp: 2,           // permeabilidad, por sub-lote
+  tension: 2,      // tensión indirecta, por LOTE — solo informativo
+};
+const SP934_AVISO_LAB_HORAS = 48;
+
+/* Las edades a las que se rompe. `tablero` cambia la segunda de 28 a 56. */
+function edadesDeRotura(plan) {
+  const p = plan || {};
+  if (Array.isArray(p.edades) && p.edades.length) return p.edades.slice();
+  return p.tablero ? [7, 56] : [7, 28];
+}
+
+/* Qué cilindros hacen falta para un lote, sub-lote por sub-lote.
+
+   Se calcula sobre los sub-lotes QUE EXISTEN. Un sub-lote que aún no ha
+   recibido hormigón no debe cilindros: pedirlos sería inventar trabajo, y el
+   técnico aprendería a ignorar la lista. */
+function cilindrosDelLote(lote, opciones) {
+  const o = opciones || {};
+  const edades = edadesDeRotura(o.plan);
+  const conCP = !!o.permeabilidad;
+  const filas = [];
+
+  for (const s of lote.sublotes || []) {
+    if (!s.ensayos || !s.ensayos.length) continue;
+    filas.push({
+      lote: lote.n, sublote: s.n, tipo: "ccs",
+      cuantos: SP934_CILINDROS.ccs, edades,
+      norma: "AASHTO T 22",
+      etiqueta: `L${lote.n}-S${s.n}-CCS`,
+    });
+    if (conCP) filas.push({
+      lote: lote.n, sublote: s.n, tipo: "cp",
+      cuantos: SP934_CILINDROS.cp, edades: null,
+      norma: "AASHTO T 277 / PRHTA T934-10",
+      etiqueta: `L${lote.n}-S${s.n}-CP`,
+    });
+  }
+
+  /* La tensión indirecta va por lote, no por sub-lote, y solo informa: no
+     entra en ningún factor de pago. Se dice, para que nadie la cuente. */
+  if (filas.length) filas.push({
+    lote: lote.n, sublote: null, tipo: "tension",
+    cuantos: SP934_CILINDROS.tension, edades: [28],
+    norma: "AASHTO T 198", informativo: true,
+    etiqueta: `L${lote.n}-TENSION`,
+  });
+
+  return filas;
+}
+
+/* Cuándo vence cada rotura. Sale de la fecha en que se hizo el cilindro, no
+   de la del lote: dos sub-lotes del mismo lote pueden ser de días distintos. */
+function vencimientosDeCilindro(fechaHecho, edades) {
+  if (!fechaHecho) return [];
+  return (edades || []).map((d) => {
+    const f = new Date(fechaHecho + "T00:00:00Z");
+    f.setUTCDate(f.getUTCDate() + d);
+    return { edad: d, vence: f.toISOString().slice(0, 10) };
+  });
+}
+
+/* El estado de un juego de cilindros. Lo que importa no es que exista el
+   registro, sino **qué falta y desde cuándo**. */
+function estadoDeCilindros(juego, hoy) {
+  const h = hoy || null;
+  if (!juego || !juego.hecho) return { estado: "pendiente", texto: "Sin hacer" };
+  if (!juego.entregado) return { estado: "en-obra", texto: "Hecho, sin entregar al laboratorio" };
+  const vencidos = (juego.roturas || []).filter((r) => r.resultado == null && h && r.vence < h);
+  if (vencidos.length) return {
+    estado: "vencido",
+    texto: `${vencidos.length} rotura(s) vencida(s) sin resultado`,
+    dias: vencidos.map((r) => diasEntre(r.vence, h)),
+  };
+  const faltan = (juego.roturas || []).filter((r) => r.resultado == null);
+  if (faltan.length) return { estado: "esperando", texto: `Esperando ${faltan.length} rotura(s)` };
+  return { estado: "completo", texto: "Completo" };
+}
+
+/* El aviso de las 48 horas. La 934 obliga a coordinar con el laboratorio de
+   la Autoridad antes del vaciado; el programa lo sabe y la persona no siempre.
+
+   Devuelve `null` cuando no hay nada que decir — un aviso que sale siempre
+   deja de ser un aviso (Q-56). */
+function avisoLaboratorio(diaDelVaciado, ahora, yaCoordinado) {
+  if (!diaDelVaciado || !ahora || yaCoordinado) return null;
+  const vaciado = new Date(diaDelVaciado + "T06:00:00Z");
+  const horas = (vaciado - new Date(ahora)) / 3600000;
+  if (horas < 0) return null;                       // ya pasó: no se avisa de lo que no tiene arreglo
+  if (horas >= SP934_AVISO_LAB_HORAS) return null;  // todavía hay margen
+  return {
+    horas: Math.round(horas),
+    texto: horas <= 0
+      ? "El vaciado es hoy y no consta coordinación con el laboratorio."
+      : `Quedan ${Math.round(horas)} h para el vaciado y no consta coordinación con el laboratorio (la SP-934 pide 48).`,
+  };
+}

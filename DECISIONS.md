@@ -965,3 +965,31 @@ su tablero, y solo la cuenta de Víctor entra.**
 **El día que la 934 esté terminada, se saca de `EN_OBRAS_934` y ya está.** Está
 en un solo sitio a propósito.
 
+## 37 · Cilindros: lo que importa no es el registro, es qué falta
+
+**Q-61 — 8 de agosto de 2026**
+
+La 934 pide por sub-lote **seis cilindros** de resistencia a dos edades, **dos**
+de permeabilidad si el proyecto la lleva, y **dos por lote** de tensión
+indirecta que son solo informativos. Las edades salen del plan —7 y 28, o 7 y
+56 en tablero de puente— y **nunca del código**: eso ya se aprendió por las
+malas en Q-59, clavando 28 días en un proyecto de 5 y obteniendo una pantalla
+impecable con números falsos.
+
+**Un sub-lote sin hormigón no debe cilindros.** Pedirlos sería inventar
+trabajo, y el técnico aprendería a ignorar la lista — que es exactamente el
+fallo de Q-56 con otro disfraz.
+
+**La tensión indirecta va marcada como informativa**, porque no entra en ningún
+factor de pago. Si no se dice, alguien la va a contar.
+
+**Y el aviso de las 48 horas.** La 934 obliga a coordinar con el laboratorio de
+la Autoridad antes del vaciado (934-6.01-f). Eso no es un dato que guardar: es
+un plazo que el programa puede vigilar y una persona olvida. Con las reglas de
+siempre — no se avisa si todavía hay margen, no se avisa si ya se coordinó, y
+**no se avisa de un vaciado que ya pasó**, porque de eso no queda nada que
+hacer y un aviso sin remedio solo enseña a ignorar los avisos.
+
+El estado de un juego de cilindros no dice si existe el registro: dice **qué
+falta y desde cuándo** — sin hacer, en obra, esperando, vencido o completo.
+
