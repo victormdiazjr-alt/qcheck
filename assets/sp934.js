@@ -272,7 +272,24 @@ function sp934Lotes(ensayos, opciones) {
    evalúa sub-lotes, no camiones. Con varios ensayos dentro se promedia, que
    es lo que hace el laboratorio con un juego de cilindros. */
 function valorDeSublote(sublote, campo) {
-  const v = (sublote.ensayos || []).map((t) => Number(t[campo])).filter(Number.isFinite);
+  /* `Number(null)` es **0**, no NaN — y `Number.isFinite(0)` es cierto.
+
+     Con el filtro anterior, un ensayo sin resistencia todavía (`cs28: null`,
+     que es lo normal hasta que el laboratorio rompe los cilindros) entraba
+     como un cero y arrastraba la media del sub-lote al suelo. En pantalla se
+     veía «n 3 · media 0 · PWL 0 %» y el lote salía rechazado por no tener
+     todavía los resultados que aún no podían existir.
+
+     Es el fallo más caro que puede tener este archivo: un hueco convertido en
+     dato, que es justo lo que DECISIONS §3 prohíbe. Se vio mirando la
+     pantalla, no leyendo el código. Q-63, 8 ago 2026. */
+  const v = [];
+  for (const t of sublote.ensayos || []) {
+    const x = t[campo];
+    if (x === null || x === undefined || x === "") continue;
+    const n = Number(x);
+    if (Number.isFinite(n)) v.push(n);
+  }
   return v.length ? red(v.reduce((a, b) => a + b, 0) / v.length, 4) : null;
 }
 
@@ -680,4 +697,96 @@ function reporteDeLote(lote, opciones) {
       <div><div class="linea"></div>Autoridad de Carreteras</div>
     </section>
   </article>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   HACIA DÓNDE VA EL LOTE — M7. Q-63, 8 de agosto de 2026.
+
+   Hoy el factor de pago se sabe a los 28 días, cuando el cheque viene corto y
+   ya hay hormigón puesto y curado. Con cinco sub-lotes de diez se puede saber
+   antes — y antes todavía se puede ajustar la planta.
+
+   **Pero proyectar es adivinar, y aquí no se adivina** (DECISIONS §3). Así que
+   esto no dice «el lote va a acabar en 0.94». Dice tres cosas, y las tres son
+   hechos:
+
+     · **Lo que hay** — el PWL de los sub-lotes que ya existen. No es una
+       predicción: es el lote a día de hoy.
+     · **El techo** — a cuánto puede llegar como máximo si todo lo que falta
+       sale clavado en el objetivo. Si el techo ya está por debajo de 1.000,
+       el dinero está perdido y no hay nada que esperar.
+     · **El suelo** — a cuánto cae si lo que falta sale en el límite.
+
+   El techo es el número que cambia decisiones. Un contratista que ve que su
+   techo bajó de 1.000 en el sub-lote cuatro tiene seis sub-lotes para hablar
+   con la planta; el mismo contratista enterándose a los 28 días no tiene nada.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Rellena los sub-lotes que faltan con un valor y recalcula. No se guarda
+   nada: es una cuenta de «qué pasaría si», y se dice así. */
+function _conRelleno(valores, faltan, valor, lsl, usl) {
+  const v = valores.concat(new Array(Math.max(0, faltan)).fill(valor));
+  return pwlDeLote(v, lsl, usl);
+}
+
+function proyeccionDeLote(lote, limites, opciones) {
+  const o = opciones || {};
+  const porLote = o.sublotesPorLote || Math.ceil(SP934_LOTE_M3 / SP934_SUBLOTE_M3);
+  const hechos = (lote.sublotes || []).length;
+  const faltan = Math.max(0, porLote - hechos);
+
+  const salida = { sublotes: hechos, faltan, cerrado: faltan === 0, aqc: {} };
+
+  for (const [clave, cfg] of Object.entries(limites || {})) {
+    if (!cfg) continue;
+    const vals = (lote.sublotes || [])
+      .map((s) => valorDeSublote(s, cfg.campo)).filter((x) => x != null);
+    if (!vals.length) continue;
+
+    const paf = clave === "ccs" ? pafCCS : clave === "cp" ? pafCP : pafCUW;
+    const ahora = pwlDeLote(vals, cfg.lsl, cfg.usl);
+
+    /* El techo: lo que falta sale en el centro de los límites, que es lo mejor
+       que puede pasar. Con un solo límite, en el punto más alejado de él. */
+    const centro = cfg.lsl != null && cfg.usl != null ? (cfg.lsl + cfg.usl) / 2
+      : cfg.usl != null ? cfg.usl * 0.5 : cfg.lsl * 1.5;
+    const techo = faltan ? _conRelleno(vals, faltan, centro, cfg.lsl, cfg.usl) : ahora;
+
+    /* El suelo: lo que falta sale justo en el límite. */
+    const borde = cfg.lsl != null ? cfg.lsl : cfg.usl;
+    const suelo = faltan ? _conRelleno(vals, faltan, borde, cfg.lsl, cfg.usl) : ahora;
+
+    salida.aqc[clave] = {
+      n: vals.length,
+      ahora: { pwl: ahora.pwl, paf: paf(ahora.pwl) },
+      techo: { pwl: techo.pwl, paf: paf(techo.pwl) },
+      suelo: { pwl: suelo.pwl, paf: paf(suelo.pwl) },
+    };
+  }
+
+  const comp = (cual) => cpaf({
+    ccs: salida.aqc.ccs ? salida.aqc.ccs[cual].paf : null,
+    cp: salida.aqc.cp ? salida.aqc.cp[cual].paf : null,
+    cuw: salida.aqc.cuw ? salida.aqc.cuw[cual].paf : null,
+  });
+  salida.cpaf = { ahora: comp("ahora"), techo: comp("techo"), suelo: comp("suelo") };
+
+  /* La única frase que importa: ¿queda algo que salvar?
+
+     Se dice cuando el techo cae por debajo de 1.000 —el lote ya no puede
+     pagarse entero, haga lo que haga la planta— y cuando cae por debajo de
+     0.90, que es el umbral de aceptación. Con el lote cerrado no se avisa: ya
+     no es un aviso, es el resultado. */
+  salida.aviso = null;
+  if (!salida.cerrado && salida.cpaf.techo != null) {
+    if (salida.cpaf.techo < 0.9) salida.aviso = {
+      grave: true,
+      texto: `Aunque lo que falta salga perfecto, este lote no puede pasar de ${salida.cpaf.techo.toFixed(3)}.`,
+    };
+    else if (salida.cpaf.techo < 1) salida.aviso = {
+      grave: false,
+      texto: `El techo de este lote ya bajó de 1.000: como mucho puede pagar ${salida.cpaf.techo.toFixed(3)}.`,
+    };
+  }
+  return salida;
 }

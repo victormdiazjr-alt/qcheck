@@ -691,3 +691,18 @@ table.descartados td:nth-child(2) { min-width: 0; }
 .rep934 .firmas { display: flex; gap: 40px; margin-top: 34px; font-size: 11px; }
 .rep934 .firmas > div { flex: 1; }
 .rep934 .firmas .linea { border-top: 1px solid #000; margin-bottom: 4px; height: 34px; }
+
+/* Hacia dónde va el lote — Q-63. Los tres números en línea y del mismo
+   tamaño: el techo y el suelo no son adornos del de en medio, son los
+   límites entre los que va a caer. */
+.proyeccion { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.proy-cifras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
+.proy-c { padding: 8px 6px; border-radius: 8px; background: rgba(238,242,246,.04); }
+.proy-c .lbl2 { font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+                color: var(--ink-soft); font-weight: 800; }
+.proy-c .v { font-size: 22px; font-weight: 300; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.proy-c.ahora { background: rgba(238,242,246,.09); }
+.proy-c.ahora .v { font-weight: 400; }
+.proy-pie { font-size: 11.5px; margin: 8px 0 0; }
+.proy-aviso { margin: 8px 0 0; font-size: 12.5px; color: var(--act); font-weight: 600; }
+.proy-aviso.grave { color: var(--susp); }

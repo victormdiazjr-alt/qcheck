@@ -16,7 +16,7 @@ new Function(src + `
     sp934Lotes, sp934EvaluarLote, sp934LimitesCUW, SP934_CCS, m3DeCY, loteRechazado,
     sortearMuestreo, muestrasDelSorteo, verificarSorteo, generadorConSemilla,
     cilindrosDelLote, edadesDeRotura, vencimientosDeCilindro, estadoDeCilindros,
-    avisoLaboratorio, SP934_CILINDROS });
+    avisoLaboratorio, SP934_CILINDROS, proyeccionDeLote, valorDeSublote });
 `).call(mod);
 
 let bien = 0, mal = 0;
@@ -234,6 +234,68 @@ ok(mod.avisoLaboratorio("2026-09-10", "2026-09-09T08:00:00Z", true) === null,
    "si ya se coordinó, no se avisa");
 ok(mod.avisoLaboratorio("2026-09-01", "2026-09-09T08:00:00Z") === null,
    "de un vaciado que ya pasó no se avisa: no tiene arreglo");
+
+/* ═══ 10 · Hacia dónde va el lote (M7) ═══
+   Lo que se comprueba es que NO adivina: que el techo es un techo de verdad y
+   que lo de «ahora» es el lote a día de hoy, no una predicción. */
+t("HACIA DÓNDE VA EL LOTE");
+const LIM = { ccs: { campo: "cs28", lsl: 3000, usl: 5625 },
+              cuw: { campo: "uw", lsl: 147.2, usl: 153 } };
+const hacerSub = (vals) => ({
+  n: 1, sublotes: vals.map((v, i) => ({ n: i + 1, ensayos: [{ n: i + 1, cs28: v, uw: 150 }] })),
+});
+
+/* Cinco sub-lotes buenos: el techo tiene que poder llegar a 1.05. */
+const buenos = hacerSub([4200, 4300, 4250, 4180, 4220]);
+const pBuenos = mod.proyeccionDeLote(buenos, LIM);
+ok(pBuenos.sublotes === 5 && pBuenos.faltan === 5, `cinco hechos, ${pBuenos.faltan} por venir`);
+ok(pBuenos.cpaf.techo >= pBuenos.cpaf.ahora, "el techo nunca está por debajo de lo que hay");
+ok(pBuenos.cpaf.suelo <= pBuenos.cpaf.ahora, "y el suelo nunca por encima");
+ok(pBuenos.aviso === null, "con el lote bien encaminado no se avisa de nada");
+
+/* Cinco sub-lotes malos: el techo tiene que haber caído, y hay que decirlo. */
+const malos = hacerSub([2900, 3050, 2980, 3100, 2950]);
+const pMalos = mod.proyeccionDeLote(malos, LIM);
+ok(pMalos.cpaf.techo < 1, `con cinco sub-lotes flojos el techo ya bajó de 1.000 (${pMalos.cpaf.techo})`);
+ok(pMalos.aviso !== null, "y se avisa");
+ok(pMalos.aviso.texto.includes(String(pMalos.cpaf.techo.toFixed(3))),
+   "el aviso dice el número, no una vaguedad");
+
+/* Lote cerrado: no hay nada que proyectar, y no se avisa. */
+const cerrado = hacerSub([2900, 3050, 2980, 3100, 2950, 3000, 2900, 3050, 2980, 3100]);
+const pCerrado = mod.proyeccionDeLote(cerrado, LIM);
+ok(pCerrado.cerrado === true, "diez de diez: el lote está cerrado");
+ok(pCerrado.aviso === null, "de un lote cerrado no se avisa: ya no es aviso, es resultado");
+ok(pCerrado.cpaf.ahora === pCerrado.cpaf.techo && pCerrado.cpaf.ahora === pCerrado.cpaf.suelo,
+   "y las tres cifras coinciden, porque no falta nada");
+
+/* Lo de «ahora» tiene que ser exactamente la evaluación real, no una versión
+   suavizada: si difiere, estaríamos enseñando dos verdades. */
+const evReal = mod.sp934EvaluarLote(buenos, LIM);
+ok(evReal.cpaf === pBuenos.cpaf.ahora,
+   `«ahora» coincide con la evaluación del lote (${evReal.cpaf} = ${pBuenos.cpaf.ahora})`);
+
+/* ═══ 11 · Un hueco no es un cero ═══
+   El fallo más caro que puede tener este archivo, y estuvo dentro. */
+t("UN HUECO NO ES UN CERO");
+const sinResultado = { n: 1, ensayos: [{ n: 1, cs28: null }, { n: 2, cs28: null }] };
+ok(mod.valorDeSublote(sinResultado, "cs28") === null,
+   "un sub-lote sin resultados todavía vale null, no 0");
+const aMedio = { n: 1, ensayos: [{ n: 1, cs28: 4000 }, { n: 2, cs28: null }, { n: 3 }] };
+ok(mod.valorDeSublote(aMedio, "cs28") === 4000,
+   `con un resultado de tres, la media es ese (${mod.valorDeSublote(aMedio, "cs28")})`);
+ok(mod.valorDeSublote({ n: 1, ensayos: [{ cs28: 0 }] }, "cs28") === 0,
+   "pero un CERO de verdad sí cuenta: es un dato, no un hueco");
+ok(mod.valorDeSublote({ n: 1, ensayos: [{ cs28: "" }] }, "cs28") === null,
+   "y una cadena vacía es un hueco");
+
+/* De punta a punta: un lote sin resultados no puede salir rechazado. */
+const sinRotos = { n: 1, sublotes: [1,2,3].map((i) => ({ n: i, ensayos: [{ n: i, cs28: null, uw: 150 }] })) };
+const evSin = mod.sp934EvaluarLote(sinRotos, LIM);
+ok(evSin.aqc.ccs.n === 0, "sin resultados de resistencia, n = 0");
+ok(evSin.aqc.ccs.pwl === null, "y no hay PWL que dar");
+ok(evSin.aqc.ccs.rechazado === false,
+   "un lote sin resultados NO se rechaza: no hay nada que juzgar todavía");
 
 console.log(`\n  ${bien} bien · ${mal} mal\n`);
 process.exit(mal ? 1 : 0);

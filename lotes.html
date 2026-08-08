@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Lotes SP-934 — QCheck</title>
-<link rel="stylesheet" href="assets/qc.css?v=d1866fec">
+<link rel="stylesheet" href="assets/qc.css?v=be50beef">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -80,7 +80,7 @@ main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
 <script src="assets/sync.js?v=426ef405"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/core.js?v=599c1133"></script>
-<script src="assets/sp934.js?v=9ff10311"></script>
+<script src="assets/sp934.js?v=d8bf8505"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════════
    LOTES — M1 de la SP-934. Q-59, 8 de agosto de 2026.
@@ -156,6 +156,30 @@ function filaAQC(clave, cfg, r) {
   </tr>`;
 }
 
+/* Hacia dónde va el lote — M7. Solo se enseña mientras quede algo por venir:
+   en un lote cerrado las tres cifras son la misma y repetirla tres veces no
+   informa, confunde. */
+function panelProyeccion(l, cfgs) {
+  const p = proyeccionDeLote(l, cfgs);
+  if (p.cerrado || p.cpaf.ahora == null) return "";
+  const cifra = (v, cl) => `<div class="proy-c ${cl}"><div class="lbl2">${cl === "ahora" ? "Con lo que hay"
+    : cl === "techo" ? "Techo" : "Suelo"}</div><div class="v">${v == null ? "—" : fmt(v, 3)}</div></div>`;
+  return `
+    <div class="proyeccion">
+      <div class="proy-cifras">
+        ${cifra(p.cpaf.suelo, "suelo")}
+        ${cifra(p.cpaf.ahora, "ahora")}
+        ${cifra(p.cpaf.techo, "techo")}
+      </div>
+      <p class="muted proy-pie">
+        ${p.sublotes} de ${p.sublotes + p.faltan} sub-lotes.
+        <b>Techo</b> es lo máximo que puede pagar este lote si todo lo que falta sale clavado;
+        <b>suelo</b>, si sale justo en el límite. No son predicciones: son los dos extremos.
+      </p>
+      ${p.aviso ? `<p class="proy-aviso ${p.aviso.grave ? "grave" : ""}">${esc(p.aviso.texto)}</p>` : ""}
+    </div>`;
+}
+
 function panelLote(l, cfgs) {
   const ev = sp934EvaluarLote(l, cfgs);
   const est = estadoDeLote(l, ev);
@@ -188,6 +212,7 @@ function panelLote(l, cfgs) {
              <div class="muted">${cfgs.cp ? "0.45 / 0.45 / 0.10" : "0.90 / 0.10 · sin permeabilidad"}</div></div>
       </div>
 
+      ${panelProyeccion(l, cfgs)}
       ${l.motivo && l.n > 1 ? `<p class="muted" style="margin:12px 0 0">Lote nuevo por: ${esc(l.motivo)}.</p>` : ""}
 
       <div class="lote-acciones">

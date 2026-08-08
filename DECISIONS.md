@@ -1026,3 +1026,48 @@ pantalla.
 por lote y no se rehace nunca: rehacerlo sería volver a tirar los dados hasta
 que salga el camión que conviene, que es exactamente lo que la 934 impide.
 
+## 39 · Hacia dónde va el lote, sin adivinar
+
+**Q-63 — 8 de agosto de 2026**
+
+Hoy el factor de pago se sabe a los 28 días, cuando el cheque viene corto y ya
+hay hormigón puesto y curado. Con cinco sub-lotes de diez se puede saber antes,
+y antes todavía se puede hablar con la planta.
+
+**Pero proyectar es adivinar, y aquí no se adivina** (§3). Así que no se dice
+«este lote va a acabar en 0.94». Se dicen tres cosas y las tres son hechos:
+
+  · **Con lo que hay** — el lote a día de hoy. No es una predicción.
+  · **El techo** — el máximo al que puede llegar si todo lo que falta sale
+    clavado en el centro de los límites.
+  · **El suelo** — a cuánto cae si sale justo en el límite.
+
+**El techo es el número que cambia decisiones.** Un contratista que ve que su
+techo bajó de 1.000 en el sub-lote cuatro tiene seis sub-lotes para hacer algo;
+el mismo contratista enterándose a los 28 días no tiene nada. Por eso el aviso
+salta ahí y dice el número, no una vaguedad.
+
+De un lote **cerrado** no se proyecta: las tres cifras serían la misma y
+repetirla tres veces no informa, confunde.
+
+---
+
+### El fallo que salió mirando la pantalla
+
+**`Number(null)` es `0`, no `NaN` — y `Number.isFinite(0)` es cierto.**
+
+Un ensayo sin resistencia todavía —`cs28: null`, que es lo normal hasta que el
+laboratorio rompe los cilindros— entraba en la media como un cero y la
+arrastraba al suelo. En pantalla salía **«n 3 · media 0 · PWL 0 % · rechaza»**:
+un lote perfectamente sano rechazado por no tener aún unos resultados que
+todavía no podían existir.
+
+Es el fallo más caro que puede tener ese archivo, porque **convierte un hueco
+en un dato** — justo lo que §3 prohíbe — y lo hace produciendo un número
+plausible. Las pruebas no lo vieron: se vio en la pantalla, leyendo una tabla
+que decía «media 0».
+
+Ahora un `null`, un `undefined` y una cadena vacía son huecos, y **un cero de
+verdad sigue siendo un dato**. Con prueba de las cuatro cosas y de que un lote
+sin resultados no se rechaza: no hay nada que juzgar todavía.
+
