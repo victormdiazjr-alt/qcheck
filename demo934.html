@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="QCheck">
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
-<title>Settings — QCheck</title>
+<title>QCheck 934 — Demostración</title>
 <link rel="stylesheet" href="assets/qc.css?v=26441205">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
 <style>
@@ -66,85 +66,70 @@ main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
       <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
     </svg></a>
     <div>
-      <div class="title">Settings</div>
-      <div class="subtitle" id="sub">Los límites con los que QCheck juzga cada camión</div>
+      <div class="title">QCheck 934</div>
+      <div class="subtitle">Control de calidad del hormigón · Special Provision 934</div>
     </div>
   </div>
   </header>
 
-<nav class="tabs" id="tabs-settings"></nav>
-
 <main><div id="app"></div></main>
+<div id="modal-root"></div><div id="toast"></div>
 
-<div id="modal-root"></div>
-
-<script src="assets/sync.js?v=426ef405"></script>
-<script src="assets/seed.js?v=acf41aba"></script>
+<script src="assets/usuarios.js?v=03f894c7"></script>
 <script src="assets/core.js?v=98267cde"></script>
+<script src="assets/sim934.js?v=51059094"></script>
 <script>
-/* La nota va con el panel que explica, no con la pantalla: colgada del
-   <main> se colaba debajo de todas las pestañas y le decía al lector de
-   «Descartados» cómo se juzga un camión. Q-48. */
-const NOTA_LIMITES = `
-  <p class="nota">
-    Estos números son con los que QCheck decide si un camión está en zona de acción o de
-    suspensión, y son los mismos que salen en los reportes y los que el contrato le publica a
-    la concretera. Cambiar uno cambia cómo se juzga <b>desde el próximo camión</b>: lo ya
-    juzgado no se vuelve a juzgar. Cada cambio queda firmado con su autor y su hora.
-  </p>`;
-/* Las pestañas de Settings. Hoy dos; se añaden aquí. */
-/* Los vaciados descartados viven aquí y en ningún otro sitio — Q-48.
+/* ══════════════════════════════════════════════════════════════════════════
+   PORTAL DE DEMOSTRACIÓN — Q-68, 8 de agosto de 2026.
 
-   Es la pantalla del ingeniero de récord, que es quien los descarta y el
-   único que puede devolverlos. Y tiene que existir una puerta de vuelta:
-   un descarte sin marcha atrás sería un borrado con otro nombre. */
-function panelDescartados() {
-  const filas = Object.entries(db.dayMeta || {})
-    .filter(([, m]) => m && m.borrado)
-    .sort((a, b) => (a[0] < b[0] ? 1 : -1));
+   Para enseñar QCheck 934 a alguien: se abre, se elige una parte y se entra en
+   su pantalla con un vaciado corriendo.
 
-  if (!filas.length) {
-    return `<section class="panel"><div class="panel-head"><h2>Vaciados descartados</h2></div><div class="panel-body">
-      <p class="muted">Ninguno. Todo lo que hay en el expediente cuenta.</p></div></section>`;
-  }
+   **Aquí no va nada de cómo está hecho.** Ni qué falta por construir, ni por
+   qué se decidió una cosa y no otra, ni el estado de los módulos. Eso vive en el portal
+   de construcción, que solo ve la cuenta de Víctor.
 
-  return `<section class="panel"><div class="panel-head"><h2>Vaciados descartados</h2></div><div class="panel-body">
-    <p class="muted">Siguen en el archivo y no cuentan en ningún reporte.
-    Devolverlos los hace contar otra vez.</p>
-    <div class="tabla-ancha"><table class="data descartados"><thead><tr>
-      <th>Día</th><th>Motivo</th><th>Descartado por</th><th></th>
-    </tr></thead><tbody>
-    ${filas.map(([d, m]) => `<tr>
-      <td>${esc(fmtDate(d))}</td>
-      <td>${esc(m.borradoMotivo || "—")}</td>
-      <td>${esc(m.borradoPor || "—")}${m.borradoA ? ` · ${esc(fmtDate(String(m.borradoA).slice(0, 10)))}` : ""}</td>
-      <td><button class="btn sm" onclick="if (restaurarTiro('${esc(d)}')) render()">Devolver</button></td>
-    </tr>`).join("")}
-    </tbody></table></div></div></section>`;
-}
+   La razón no es esconder: es que quien mira una demostración necesita ver el
+   producto, no el andamio. Un portal que enseña las dos cosas a la vez no
+   consigue ninguna.
+   ══════════════════════════════════════════════════════════════════════════ */
 
-const TABS = [
-  { id: "limites", n: "Límites", pinta: () => panelLimites(true) + NOTA_LIMITES },
-  { id: "descartados", n: "Descartados", pinta: () => panelDescartados() },
+const PARTES = [
+  { k: "ruben", ico: "✍", n: "Ingeniero de récord",
+    q: "Programa el vaciado, dirige el muestreo, cierra los lotes y firma." },
+  { k: "autoridad", ico: "⚖", n: "Autoridad de Carreteras",
+    q: "Revisa cada lote cerrado y decide si se acepta, con el cálculo delante." },
+  { k: "contratista", ico: "🏗", n: "Contratista",
+    q: "Ve el avance de su obra y cómo va quedando el pago de cada lote." },
+  { k: "concretera", ico: "🏭", n: "Concretera",
+    q: "Ve cómo se está comportando su mezcla en la obra, camión a camión." },
 ];
-let cual = TABS[0].id;
 
-/* Se llama `render` a propósito y no `pintar`: es el nombre que busca
-   `formPlan()` en core.js para repintar después de guardar, el mismo que usa
-   Results. Cambiarlo deja el editor guardando sin que se vea el cambio. */
-function render() {
-  const t = TABS.find((x) => x.id === cual) || TABS[0];
-  document.getElementById("app").innerHTML = t.pinta();
-  document.getElementById("tabs-settings").innerHTML =
-    TABS.map((x) => `<button class="${x.id === cual ? "active" : ""}" onclick="cual='${x.id}'; render()">${x.n}</button>`).join("");
-}
+document.getElementById("app").innerHTML = `
+  <section class="demo-portada">
+    <h1>Un vaciado bajo la SP-934, en marcha</h1>
+    <p>La Special Provision 934 acepta el hormigón por <b>lotes de 250 m³</b>, con
+    evaluación estadística, y de ahí sale cuánto se paga. Cada parte de la obra
+    necesita ver una cosa distinta.</p>
+    <p class="muted">Ampliación PR-22 · Km 8.4 a 12.1 — dos lotes cerrados y el tercero
+    a media colocación. Entre por la puerta que quiera.</p>
+  </section>
 
-loadDB();
+  <div class="demo-puertas">
+    ${PARTES.map((p) => `
+      <a class="demo-puerta" href="sim934.html?rol=${p.k}">
+        <span class="ico">${p.ico}</span>
+        <b>${esc(p.n)}</b>
+        <span class="q">${esc(p.q)}</span>
+        <span class="entrar">Entrar →</span>
+      </a>`).join("")}
+  </div>
+
+  <p class="demo-pie muted">Los datos de esta demostración son inventados y no
+  corresponden a ninguna obra.</p>`;
+
 initTheme();
 mountThemeToggle();
-enableLiveSync(() => render());
-render();
-mountStatusBar();
 </script>
 </body>
 </html>

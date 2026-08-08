@@ -143,18 +143,42 @@ titulo("SP-934 en obras");
 const authSrc = leer("assets/auth.js");
 const enObras = (authSrc.match(/EN_OBRAS_934 = \[([^\]]*)\]/) || [, ""])[1]
   .split(",").map((s) => s.trim().replace(/["']/g, "")).filter(Boolean);
+/* Una pantalla que usa la aritmética de la 934 tiene que estar en una de dos
+   situaciones, y no hay una tercera:
+
+     · **en obras**, si trabaja sobre el expediente real, o
+     · **de demostración**, si carga `sim934.js` — que es la prueba de que sus
+       datos son inventados y de que no toca `db`.
+
+   La segunda puede verla cualquiera: no hay nada que proteger en unos datos
+   que no existen. Q-68. */
 const pantallas934 = html.filter((f) => leer(f).includes("sp934.js"));
 const problemas = [];
-for (const f of pantallas934)
-  if (!enObras.includes(path.basename(f))) problemas.push(`${f} usa sp934.js y no está en EN_OBRAS_934`);
+for (const f of pantallas934) {
+  const b = path.basename(f);
+  const esDemo = leer(f).includes("sim934.js");
+  if (!enObras.includes(b) && !esDemo)
+    problemas.push(`${f} usa sp934.js sobre datos reales y no está en EN_OBRAS_934`);
+  if (enObras.includes(b) && esDemo)
+    problemas.push(`${f} es de demostración y está en EN_OBRAS_934 — sobra la puerta`);
+}
 for (const f of html) {
   /* Entre pantallas de la 934 sí se enlazan: viven todas tras la misma puerta,
      así que un enlace de una a otra no abre nada. Lo que no puede pasar es que
      una pantalla VIVA enlace a una en obras. */
   if (enObras.includes(path.basename(f))) continue;
   const src = leer(f);
-  for (const p of enObras)
-    if (src.includes(p)) problemas.push(`${f} enlaza a ${p}`);
+  /* Con `includes` a secas, «934.html» casaba dentro de «sim934.html» y de
+     «demo934.html». Es la tercera vez que un candado de este archivo se
+     equivoca por buscar un trozo de palabra en vez de la palabra: pasó con
+     `lot` dentro de `lotes` (Q-59) y con `plant` (Q-56).
+
+     **Aquí ya no se busca texto: se busca una referencia a un archivo**, con
+     el borde delante. Q-68. */
+  for (const p of enObras) {
+    const ref = new RegExp("(^|[^a-zA-Z0-9_.-])" + p.replace(".", "\\."));
+    if (ref.test(src)) problemas.push(`${f} enlaza a ${p}, que no puede abrir`);
+  }
 }
 if (problemas.length) problemas.forEach((s) => mal(s));
 else bien(`${pantallas934.length} pantalla(s) de la 934, todas tras qcVeConfig() y sin enlazar`);

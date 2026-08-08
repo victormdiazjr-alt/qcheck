@@ -1220,3 +1220,42 @@ Un lote irregular camión a camión puede salir impecable en la estadística,
 porque la norma juzga sub-lotes. Conviene saberlo antes de prometerle a nadie
 que el PWL detecta variabilidad.
 
+## 44 · El portal de demostración, y lo interno por cuenta
+
+**Q-68 — 8 de agosto de 2026**
+
+`demo934.html`: se abre, se elige una parte y se entra en su pantalla con el
+vaciado corriendo. **Cuatro botones y nada más.**
+
+**Nada de cómo está hecho.** Ni qué falta por construir, ni por qué se decidió
+una cosa y no otra, ni el estado de los módulos. Eso vive en `934.html`, que
+sigue siendo solo de Víctor.
+
+La razón no es esconder: **quien mira una demostración necesita ver el
+producto, no el andamio.** Un portal que enseña las dos cosas a la vez no
+consigue ninguna.
+
+**Lo interno se decide por cuenta, no por pantalla** (`qcVeConfig()`), así que
+la misma pantalla enseña o calla según quién entre — y no hay dos versiones que
+mantener.
+
+**Lo que no se esconde jamás, sea quien sea:** la cinta de simulación y el
+aviso de que los datos son inventados. Eso no es diseño interno, es no engañar.
+
+**Y la demo la abre cualquiera que entre a QCheck.** Sus datos no existen, así
+que no hay nada que proteger — y una herramienta de enseñar que necesita que
+estés tú delante no sirve para enseñar.
+
+### El candado, afinado por tercera vez
+
+La regla pasa a ser: una pantalla que usa la aritmética de la 934 está **en
+obras** —trabaja sobre el expediente real— o es **de demostración** —carga
+`sim934.js`, que es la prueba de que sus datos son inventados—. No hay tercera.
+
+Y `934.html` casaba **dentro** de `sim934.html` y `demo934.html`, así que el
+verificador creía que la demo enlazaba al portal interno. Es la tercera vez que
+un candado de este archivo se equivoca por buscar un trozo de palabra: pasó con
+`lot` dentro de `lotes` y con `plant`. **Ahora no busca texto, busca una
+referencia a un archivo**, con el borde delante. Comprobado que sigue cazando
+un enlace de verdad.
+

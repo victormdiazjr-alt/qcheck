@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>QCheck 934 — Simulación</title>
-<link rel="stylesheet" href="assets/qc.css?v=de3a92b4">
+<link rel="stylesheet" href="assets/qc.css?v=26441205">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -45,7 +45,7 @@ main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
 .nota { margin-top: 16px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
 </style>
 <script src="assets/usuarios.js?v=03f894c7"></script>
-<script src="assets/auth.js?v=da3b0818"></script>
+<script src="assets/auth.js?v=2d46b564"></script>
 </head>
 <body>
 
@@ -72,7 +72,7 @@ main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
   </div>
   </header>
 
-<div class="sim-cinta">Simulación · datos inventados <a href="934.html">volver al portal</a></div>
+<div class="sim-cinta">Simulación · datos inventados <a href="demo934.html">volver al portal</a></div>
 
 <main><div id="app"></div></main>
 <div id="modal-root"></div>
@@ -109,6 +109,17 @@ const SIM_ROLES = {
 };
 
 const simRol = (new URLSearchParams(location.search).get("rol") || "ruben");
+
+/* LO INTERNO SE VE POR CUENTA, NO POR PANTALLA — Q-68, 8 ago 2026.
+
+   Las notas de por qué se decidió una cosa y no otra son valiosas para quien
+   construye y ruido para quien mira una demostración. Van detrás de
+   `qcVeConfig()`, que hoy solo tiene la cuenta de Víctor.
+
+   Lo que NO se esconde nunca, sea quien sea: la cinta de simulación y el aviso
+   de que los datos son inventados. Eso no es diseño interno — es no engañar. */
+const interno = typeof qcVeConfig === "function" && qcVeConfig();
+const siInterno = (html) => (interno ? html : "");
 const S = simDatos();
 const HOY = S.hoy;
 
@@ -258,9 +269,9 @@ function simPanelRuben() {
                  i.sobre >= 0.7 ? "z-ok" : "z-act")}
           ${simStat("Aceptación", "a 28 días", "la 934 no juzga a 7")}
         </div>
-        <p class="muted" style="margin:12px 0 0">Estas roturas <b>no se convierten</b> a 28 días:
-        eso sería inventar un dato. Dicen si la mezcla va por donde debe, que es lo que permite
-        llamar a la planta mientras todavía se puede hacer algo.</p>
+        <p class="muted" style="margin:12px 0 0">A 7 días la norma no juzga nada: estas roturas
+        dicen si la mezcla va por donde debe, que es lo que permite llamar a la planta mientras
+        todavía se puede hacer algo.</p>
       </div>
     </section>`; })()}
 
@@ -317,7 +328,7 @@ function simPanelAutoridad() {
             <td class="n mono">${fmt(r.paf, 3)}</td></tr>`).join("")}
         </tbody></table></div>
         <div class="acepta-botones">
-          <button class="btn small" onclick="alert('En la aplicación real esto imprime el reporte de lote con el cálculo entero: media, desviación, índices de calidad y porcentajes parciales. Nadie firma un número que no puede reconstruir.')">Ver el cálculo completo</button>
+          <button class="btn small" onclick="alert('El reporte de lote sale con el cálculo entero: media, desviación, índices de calidad y porcentajes parciales, para que quien firme pueda rehacerlo.')">Ver el cálculo completo</button>
           <button class="btn small ok" onclick="decidirSim(${l.n}, 'aceptado')">Aceptar lote</button>
           <button class="btn small danger" onclick="decidirSim(${l.n}, 'rechazado')">Rechazar</button>
         </div>
@@ -344,7 +355,7 @@ function decidirSim(n, v) {
   if (v === "rechazado" && !prompt("Motivo del rechazo. Queda en el expediente.")) return;
   caja.innerHTML = `<div class="acepta-decision"><b>${v === "aceptado" ? "Aceptado" : "Rechazado"}</b>
     por Autoridad de Carreteras · ahora mismo.
-    <div class="muted">En la aplicación real esto queda firmado en el expediente, con autor y hora, y no se borra.</div></div>`;
+    <div class="muted">Queda firmado en el expediente, con autor y hora, y no se borra.</div></div>`;
   toast(`Lote ${n} ${v}`);
 }
 
@@ -394,9 +405,9 @@ function simPanelContratista() {
                    i.sobre >= 0.7 ? "z-ok" : "z-act")}
             ${simStat("Sub-lotes por venir", proy.faltan, "para cerrar el lote")}
           </div>
-          <p class="muted proy-pie">Las roturas a 7 días <b>no se convierten</b> a 28 — eso sería
-          inventar un dato. Dicen si la mezcla va por donde debe, y eso todavía se puede corregir.
-          En cuanto rompan las primeras a 28 días, aquí aparece el techo del lote.</p>`; })()}
+          <p class="muted proy-pie">A 7 días la norma no juzga: estas roturas dicen si la mezcla va
+          por donde debe, y eso todavía se puede corregir. En cuanto rompan las primeras a 28 días,
+          aquí aparece el techo del lote.</p>`; })()}
       </div>
     </section>
 
@@ -453,9 +464,9 @@ function simPanelConcretera() {
               a + minutesBetween(t.batch, t.arrive), 0) / Math.max(1, conEnsayo.length))} <span style="font-size:14px">min</span>`,
               "de batch a llegada")}
         </div>
-        <p class="muted" style="margin:12px 0 0">Aquí no se ven factores de pago: eso es entre el
-        contratista y la Autoridad. Lo que la planta puede corregir es la mezcla, y eso es lo que
-        se enseña.</p>
+        ${siInterno(`<p class="muted" style="margin:12px 0 0">Aquí no se ven factores de pago: eso es
+        entre el contratista y la Autoridad. Lo que la planta puede corregir es la mezcla, y eso es
+        lo que se enseña.</p>`)}
       </div>
     </section>
 

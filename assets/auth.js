@@ -25,7 +25,15 @@
      Va por `qcVeConfig()`, que hoy solo tiene la cuenta de Víctor. **El día
      que la 934 esté terminada, se saca de aquí y ya está** — es lo único que
      la separa de estar viva, y está en un solo sitio a propósito. */
-  var EN_OBRAS_934 = ["934.html", "sim934.html", "lotes.html", "aceptacion.html"];
+  var EN_OBRAS_934 = ["934.html", "lotes.html", "aceptacion.html"];
+
+  /* La DEMOSTRACIÓN sí la ve cualquiera que entre — Q-68. Sus datos son
+     inventados y lleva la cinta que lo dice, así que no hay nada que proteger.
+     Y hace falta que Rubén pueda abrirla sin pedirle permiso a nadie: una
+     herramienta de enseñar que depende de que estés tú delante no sirve.
+
+     Lo que sigue siendo solo de Víctor es el portal de construcción —qué falta,
+     por qué se decidió cada cosa— y las pantallas de la 934 sobre datos reales. */
   if (EN_OBRAS_934.indexOf(aqui) >= 0 && !(typeof qcVeConfig === "function" && qcVeConfig())) {
     location.replace("control-center.html");
     return;
