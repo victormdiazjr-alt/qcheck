@@ -296,3 +296,129 @@ function sp934EvaluarLote(lote, limites) {
   salida.rechazado = Object.values(a).some((x) => x.rechazado);
   return salida;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MUESTREO ALEATORIO — M2. Q-60, 8 de agosto de 2026.
+
+   La 934 lo exige con todas las letras: «The above-described sampling tests
+   and field procedures shall be performed on a random basis (ASTM D3665)».
+
+   Hoy decide el técnico a qué camión le saca muestra. Bajo la 934 eso es un
+   flanco: cualquiera puede alegar que se muestreó el camión que convenía, y
+   con eso se impugna el lote entero — no la muestra, **el lote**.
+
+   Que lo elija el programa no basta. Tiene que poder **demostrarse**, y para
+   eso el sorteo cumple tres condiciones:
+
+     1. Se hace ANTES de que llegue el hormigón, no sobre la marcha.
+     2. Queda escrito con quién lo pidió y cuándo.
+     3. Es **reproducible**: se guarda la semilla y cualquiera puede rehacer
+        el sorteo y obtener lo mismo.
+
+   La tercera es la que convence a un auditor. `Math.random()` no vale para
+   esto —no se puede rehacer, así que hay que creerse el resultado— y por eso
+   aquí hay un generador con semilla: se publica la semilla, se publica el
+   algoritmo, y quien dude que lo recalcule.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* mulberry32: pequeño, determinista y suficiente para repartir puntos de
+   muestreo. No es criptográfico y no hace falta que lo sea — aquí no se
+   protege un secreto, se demuestra que nadie eligió a dedo. */
+function generadorConSemilla(semilla) {
+  let a = semilla >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* Una semilla legible, que es parte de la prueba: quien la vea sabe de qué
+   lote y de qué momento salió, y puede repetir el sorteo. */
+function semillaDeLote(proyecto, lote, cuando) {
+  const txt = `${proyecto || "?"}|lote-${lote}|${cuando}`;
+  let h = 2166136261 >>> 0;                      // FNV-1a
+  for (let i = 0; i < txt.length; i++) {
+    h ^= txt.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return { texto: txt, valor: h >>> 0 };
+}
+
+/* Sortea un punto dentro de cada sub-lote.
+
+   El punto NO es «el camión número 3»: es **el metro cúbico** dentro del
+   sub-lote donde toca muestrear. Se dice así porque en el momento del sorteo
+   todavía no se sabe cuántos camiones van a hacer falta ni de qué tamaño
+   vendrán, y porque la 934 divide por volumen y no por camiones.
+
+   Al llegar el hormigón, le toca al camión que **cruza** esa marca. */
+function sortearMuestreo(opciones) {
+  const o = opciones || {};
+  const nSublotes = o.sublotes || Math.ceil(SP934_LOTE_M3 / SP934_SUBLOTE_M3);
+  const subM3 = o.subloteM3 || SP934_SUBLOTE_M3;
+  const cuando = o.cuando;                        // ISO, lo pone quien llama
+  if (!cuando) return null;                       // sin sello de tiempo no hay prueba
+
+  const semilla = semillaDeLote(o.proyecto, o.lote, cuando);
+  const azar = generadorConSemilla(semilla.valor);
+
+  const puntos = [];
+  for (let i = 0; i < nSublotes; i++) {
+    /* Uniforme dentro del sub-lote, en metros cúbicos desde su comienzo.
+       Se redondea a dos decimales: más precisión sería falsa, porque nadie
+       mide el hormigón colocado al centímetro cúbico. */
+    const dentro = red(azar() * subM3, 2);
+    puntos.push({
+      sublote: i + 1,
+      m3DelSublote: dentro,
+      m3DelLote: red(i * subM3 + dentro, 2),
+    });
+  }
+
+  return {
+    lote: o.lote,
+    proyecto: o.proyecto || null,
+    cuando,
+    quien: o.quien || null,
+    semilla: semilla.texto,
+    metodo: "ASTM D3665 · mulberry32 con semilla FNV-1a",
+    puntos,
+  };
+}
+
+/* A qué camión le toca. Se resuelve con el hormigón ya colocado, pero la
+   decisión estaba tomada antes: aquí solo se mira qué camión cruzó la marca.
+
+   Devuelve, por sub-lote, el ensayo que cruza el punto sorteado. Si el
+   sub-lote todavía no ha llegado a esa marca, el camión está por venir y se
+   dice así — no se elige el más cercano, que sería volver a decidir a mano. */
+function muestrasDelSorteo(lote, sorteo) {
+  if (!lote || !sorteo) return [];
+  const salida = [];
+  for (const p of sorteo.puntos) {
+    const sub = (lote.sublotes || []).find((s) => s.n === p.sublote);
+    if (!sub) { salida.push({ ...p, estado: "sin-hormigon", ensayo: null }); continue; }
+    let acum = 0, elegido = null;
+    for (const t of sub.ensayos) {
+      const antes = acum;
+      acum += m3DeCY(t.vol);
+      if (antes <= p.m3DelSublote && acum > p.m3DelSublote) { elegido = t; break; }
+    }
+    salida.push(elegido
+      ? { ...p, estado: "asignado", ensayo: elegido }
+      : { ...p, estado: acum >= p.m3DelSublote ? "sin-asignar" : "por-llegar", ensayo: null });
+  }
+  return salida;
+}
+
+/* Rehacer el sorteo desde su semilla y comprobar que da lo mismo. Es lo que
+   se le enseña a quien lo discuta, y lo que corre la prueba automática. */
+function verificarSorteo(sorteo) {
+  if (!sorteo || !sorteo.semilla) return false;
+  const rehecho = generadorConSemilla(semillaDeLote(
+    sorteo.proyecto, sorteo.lote, sorteo.cuando).valor);
+  const subM3 = SP934_SUBLOTE_M3;
+  return sorteo.puntos.every((p, i) => red(rehecho() * subM3, 2) === p.m3DelSublote);
+}

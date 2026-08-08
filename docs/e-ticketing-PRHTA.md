@@ -96,8 +96,8 @@ portal no cubre.**
 se vende por peso. El ready-mix se vende por **volumen** —yardas cúbicas— y un
 conduce de hormigón no trae peso bruto ni tara. La pesada sí trae pesos por
 material, pero no es lo mismo que «peso neto del material» sobre una báscula de
-camión. **Es una pregunta que hay que hacerle a la Autoridad antes de
-programar nada**, y hacerla es en sí una señal de que sabemos de qué va esto.
+camión. **Es la incógnita número uno**, y hasta que se resuelva esos campos van
+en `null`: no se inventa un peso que nadie pesó.
 
 **c. El consejo de Alabama y Kentucky es el nuestro.** *«Capture existing paper
 processes digitally first.»* Es literalmente lo que hace QCheck con las
@@ -112,7 +112,15 @@ y no es nuestro, es de un DOT que ya lo hizo.
 que toma el técnico. Solo salen del sistema de la planta, que es exactamente lo
 que QTicket va a leer.
 
-## 7 · Lo que hay que preguntarle a la Autoridad
+## 7 · Lo que no sabemos
+
+Preguntas abiertas del proyecto. **No son un plan de contacto ni un borrador
+de nada dirigido a la Autoridad** — Víctor, 8 de agosto de 2026: no puede haber
+ninguna conexión de nosotros hacia nadie de Carreteras. Si alguna de estas se
+pregunta alguna vez, y a quién, lo decide él.
+
+Mientras no haya respuesta, **no se supone ninguna.** Lo que no se sabe se
+queda en `null` o marcado como desconocido, igual que los pesos.
 
 1. **Peso contra volumen en ready-mix**: ¿cómo esperan los campos 15 a 19 en un
    conduce de hormigón?
@@ -122,6 +130,6 @@ que QTicket va a leer.
    highly encouraged as long as been coordinated with the Authority and has all
    the above items.»* Verificado contra el texto. **Es un estímulo con
    condiciones, no un mandato** — conviene citarlo así y no como una exigencia,
-   porque en un correo a la Autoridad la diferencia se nota. (Lo hizo mirar la
+   porque citar de más una especificación se paga caro. (Lo hizo mirar la
    sesión de QTicket, y la comprobación valió la pena.)
 4. **SS 161 y SS 611**: hacen falta las dos especificaciones completas.
