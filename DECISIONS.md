@@ -714,3 +714,34 @@ adelante, que es lo que corresponde a un tablero de una sola pantalla.
 Lo que **no** se toca: «Conectar este aparato» en Estado del sistema y «Print
 report» en el tablero del contratista. Son acciones, no navegación.
 
+## 31 · El enlace de conexión tiene que sobrevivir a WhatsApp
+
+**Q-54 — 7 de agosto de 2026**
+
+El enlace llevaba dos parámetros —`?api=…&llave=…`— y ese **`&`** es justo lo
+que parten WhatsApp y Mensajes cuando el texto se corta, se cita o se reenvía.
+Llegaba un enlace sin llave y la pantalla salía pidiendo datos que quien lo
+recibió no tiene. Víctor: «no me funciona ese link».
+
+**El servidor del proyecto no cambia**, así que no tiene por qué viajar en el
+enlace. Va de fábrica en `conectar.html`, y el enlace queda con **un solo
+parámetro y ningún `&` que partir**:
+
+    …/conectar.html?k=<llave>
+
+`llave` sigue valiendo, y el campo del servidor se puede escribir a mano: el
+día que haya un segundo proyecto, no hay nada que deshacer.
+
+**Y una tarjeta.** Al pegar el enlace, WhatsApp, Mensajes y el correo enseñaban
+un rectángulo gris con un URL. Ahora enseñan la tarjeta de QCheck —logo, «Smart
+Quality Control», el proyecto y «Conectar este aparato»— con `og:`
+y `twitter:`. La imagen va **absoluta**, porque los previsualizadores no
+resuelven rutas relativas, y en JPEG de 73 KB: un PNG de 667 KB WhatsApp lo
+descarta y vuelve a enseñar el rectángulo gris.
+
+**Lo que NO se hizo, y por qué.** Sería más cómodo un enlace sin llave —
+`…/entrar.html` a secas— con la llave dentro de la página. No: eso deja el
+expediente de la obra abierto a quien adivine el URL de un sitio público. La
+llave en el enlace es lo único que separa un aparato de la obra de cualquiera
+con un navegador.
+
