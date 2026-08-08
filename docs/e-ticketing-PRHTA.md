@@ -118,6 +118,10 @@ que QTicket va a leer.
    conduce de hormigón?
 2. **El Electronic Ticketing Portal**: ¿existe ya? ¿Hay documentación de la
    API? ¿Es de ellos o de un proveedor?
-3. **Coordinación**, que la propia SP-934-4.04(h) exige para admitir el conduce
-   electrónico.
+3. **Coordinación.** La SP-934-4.04(h) dice, literal: *«Use of e-ticketing is
+   highly encouraged as long as been coordinated with the Authority and has all
+   the above items.»* Verificado contra el texto. **Es un estímulo con
+   condiciones, no un mandato** — conviene citarlo así y no como una exigencia,
+   porque en un correo a la Autoridad la diferencia se nota. (Lo hizo mirar la
+   sesión de QTicket, y la comprobación valió la pena.)
 4. **SS 161 y SS 611**: hacen falta las dos especificaciones completas.
