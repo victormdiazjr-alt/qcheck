@@ -181,12 +181,97 @@ obligación **separada**, no como escala. Tres razones, y las tres pesan:
 
 Un origen, dos destinos.
 
-## 9 · Lo que sigue sin decidir
+## 9 · Autenticación entre servidores
 
-**Autenticación entre servidores.** La llave de proyecto de QCheck es por obra
-y va en el navegador; para máquina a máquina hace falta otra cosa.
+Diseñada por la sesión de QTicket el 8 de agosto de 2026 y aceptada aquí, con
+dos añadidos de este lado. Se escribe entera para que ninguno de los dos tenga
+que reconstruirla de memoria.
 
-> **Aviso a quien lo mire: `sello.js` NO sirve para esto.** Es el sellador de
-> versiones — calcula el hash del contenido de cada asset y lo pega al `?v=`
-> para romper la caché del navegador. No firma nada ni autentica a nadie. Si
-> se construye autenticación creyendo que ahí hay algo, se pierde el tiempo.
+### 9.1 · Dos saltos, no uno
+
+**El vigilante de la planta no habla nunca con QCheck.** Habla solo con el
+servidor de QTicket, y solo ese servidor habla con el de QCheck.
+
+La razón es la PC de despacho: es una máquina compartida de una empresa que no
+es nuestra, con gente entrando y saliendo. **Una credencial que abre la API de
+QCheck no puede vivir ahí.** Con dos saltos, el secreto vive en un servidor y
+lo que hay en la planta solo puede hablar con QTicket.
+
+Tiene un segundo beneficio que no se buscaba: la firma lleva marca de tiempo, y
+el reloj de una PC de despacho puede estar desviado. Entre servidores, con NTP,
+eso deja de ser un problema.
+
+### 9.2 · El mecanismo
+
+- **Una credencial por pareja concretera ↔ obra**, emitida por QCheck. **No es
+  la llave de proyecto**: esa vive en el navegador, y lo que se filtra en un
+  navegador no puede ser lo que autoriza a un servidor.
+- **Firma HMAC-SHA256** sobre `timestamp + nonce + cuerpo`. Cabeceras
+  `keyId`, `timestamp`, `nonce`, `signature`. Se rechaza lo que llegue con más
+  de **5 minutos** de desfase, y se guardan los nonce de esa ventana para que
+  un reenvío no cuele dos veces.
+- **Firma y no token al portador**, porque un token viaja entero en cada
+  petición y acaba en los registros de cualquier proxy del camino: el día que
+  alguien lea un log, tiene la llave. Una firma no pone el secreto en el cable
+  y además **ata la firma al cuerpo**, así que nadie en el medio puede cambiar
+  un peso sin romperla. En un expediente que certifica obra pública eso pesa
+  más que la comodidad.
+- **Ni OAuth ni mTLS.** OAuth pide un servidor de autorización que ninguno de
+  los dos tiene; mTLS, repartir y renovar certificados por cliente. Para un
+  puñado de concreteras es más máquina de la que hace falta. Si la Autoridad
+  acaba exigiendo una de las dos, se cambia — pero que lo exija alguien.
+- **Rotación con dos llaves vivas**, la actual y la anterior. Con una sola,
+  rotar obliga a que los dos desplieguen en el mismo minuto, y eso no sale bien
+  nunca a la primera.
+- **Idempotencia por `eticketId`.** Reenviarlo actualiza, nunca duplica.
+  Reintento con espera creciente; lo que se pierda del todo lo recupera la
+  lectura por día del §8.
+
+### 9.3 · Autenticar no es autorizar — añadido de QCheck
+
+La firma dice **quién llama**. No dice **sobre qué puede escribir**.
+
+La credencial es por pareja concretera ↔ obra, así que `keyId` identifica la
+pareja. **QCheck comprueba además que el conduce pertenece a esa obra**: que el
+proyecto del cuerpo case con el de la credencial. Sin esa comprobación, una
+credencial legítima de la obra A podría meter camiones en el expediente de la
+obra B — con firma válida y todo.
+
+No es un caso rebuscado: es el fallo que aparece solo cuando una concretera
+sirve a dos obras nuestras a la vez, que es exactamente lo que queremos que
+pase.
+
+**Un conduce cuya obra no case con la credencial se rechaza y se registra.**
+No se acepta «por si acaso», y no se descarta en silencio.
+
+### 9.4 · La vuelta también va firmada — añadido de QCheck
+
+El §5 manda el veredicto de QCheck a QTicket. **Esa dirección se firma igual**,
+con la credencial de QTicket y el mismo esquema. Un veredicto de aceptación es
+tan sensible como el conduce: dice que un camión entró en la obra.
+
+### 9.5 · Los dos servidores de QCheck, otra vez
+
+QCheck tiene dos servidores gemelos que **tienen que contestar igual**:
+`sync-servidor.js` (Node) y `sync-worker.js` (Cloudflare). Esto se implementa
+en los dos o en ninguno. `pruebas/servidores-iguales.mjs` lo caza, y ha cazado
+divergencias antes.
+
+Los dos tienen HMAC-SHA256 disponible —`crypto` en Node, `crypto.subtle` en el
+Worker—. En Cloudflare los nonce viven en D1 y hay que barrer los caducados;
+una tabla de nonce que solo crece es una fuga lenta.
+
+### 9.6 · Lo que decide Víctor, no nosotros
+
+**Cómo se le entrega la credencial a una concretera la primera vez.** Quién se
+la da a quién y con qué prueba de que la concretera es quien dice ser, es un
+procedimiento de negocio.
+
+Y una advertencia ganada a golpes: el 8 de agosto de 2026 se perdió una llave
+de API por copiarle un comando encima del portapapeles. **Una credencial no se
+manda por el mismo canal que las instrucciones para usarla**, y quien la reciba
+tiene que poder verla una sola vez sin que nadie se la pise.
+
+## 10 · Lo que sigue sin decidir
+
+Nada bloqueante. Cuando aparezca algo, va aquí.
