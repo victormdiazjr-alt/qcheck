@@ -761,16 +761,31 @@ h2.seccion { font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
 .sim-nota { font-size: 11.5px; margin: 0; }
 @media (max-width: 700px) { .sim-puertas { grid-template-columns: repeat(2, 1fr); } }
 
-/* La marca de simulación. Va fija arriba y no se quita desde dentro: el fallo
-   de julio de 2026 fue que unos datos inventados pudieran confundirse con los
-   de una obra. Q-67. */
-.sim-cinta { position: sticky; top: 0; z-index: 50; display: flex; align-items: center;
-  justify-content: center; gap: 10px; padding: 6px 12px; font-size: 11px; font-weight: 800;
-  letter-spacing: .18em; text-transform: uppercase;
-  background: repeating-linear-gradient(135deg, #d19a2a 0 12px, #b8862180 12px 24px);
-  color: #1a1206; }
-.sim-cinta a { color: #1a1206; text-decoration: underline; letter-spacing: 0;
-  text-transform: none; font-weight: 700; }
+/* EL AVISO DE SIMULACIÓN, EN LA BARRA — Q-72.
+
+   Va donde QCheck pone el estado de conexión, y en ámbar: no es un error —no
+   hay nada roto— pero tampoco es lo normal, que es exactamente lo que dice el
+   ámbar en el resto del programa.
+
+   **No se quita nunca desde dentro.** Que los datos sean inventados tiene que
+   verse desde cualquier pantalla y sin buscarlo. */
+.sim-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 330;
+  display: flex; align-items: center; gap: 10px; height: 40px;
+  padding: 0 14px; background: rgba(8,11,16,.9);
+  border-bottom: 1px solid rgba(255,255,255,.09);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.sim-bar-vuelta { display: flex; align-items: baseline; gap: 8px; text-decoration: none;
+  color: var(--ink); font-size: 12px; }
+.sim-bar-vuelta b { font-size: 12.5px; }
+.sim-bar-vuelta span { color: var(--ink-soft); font-size: 11.5px; }
+.sim-bar-vuelta:hover b { color: var(--ok); }
+.sim-bar-marca { margin-left: auto; display: flex; align-items: center; gap: 7px;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  color: #e0b64a; }
+.sim-bar-marca i { width: 7px; height: 7px; border-radius: 50%; background: #e0b64a;
+  box-shadow: 0 0 0 3px rgba(224,182,74,.18); }
+body.con-sim-bar { padding-top: 40px; }
+@media (max-width: 560px) { .sim-bar-vuelta span { display: none; } }
 
 /* La cabecera de rol de la simulación — Q-67. */
 .rol-cab { display: flex; align-items: center; gap: 12px; margin-bottom: 16px;

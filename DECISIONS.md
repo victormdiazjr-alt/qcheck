@@ -1360,3 +1360,32 @@ que explicar por qué no lleva a ninguna parte es peor que no tenerlo.
 cabecera de rol no empujaba nada y el botón se pegaba al nombre. Se ve en la
 pantalla en un segundo y en el código no se ve nunca.
 
+## 48 · El aviso de simulación se muda a la barra
+
+**Q-72 — 8 de agosto de 2026**
+
+Era una franja a rayas cruzando la pantalla. Ocupaba sitio y no se parecía a
+nada de QCheck. Ahora va **donde QCheck pone el estado** —la barra de arriba,
+el mismo sitio donde la aplicación de verdad dice si está en línea— en ámbar,
+que es lo que el programa usa para «no es un error, pero tampoco es lo normal».
+
+**El aviso no se quita, se muda.** Que los datos sean inventados tiene que
+verse siempre y desde cualquier pantalla. Lo que cambia es que ahora se lee
+como parte del programa y no como una cinta pegada encima.
+
+**Y la pantalla del ingeniero pasa a decir «Segarra Engineering»**, no un
+nombre de persona: quien la usa hoy es Rubén y mañana puede ser otro técnico
+suyo, y el expediente lo firma la firma.
+
+### El fallo, y por qué importa más de lo que parece
+
+La barra se montó con las clases `.qcs` de QCheck… y **sus estilos los inyecta
+`mountStatusBar()`**, que aquí no se llama porque lee el expediente real para
+pintar el avance del tiro. Sin la inyección, `.qcs` no es más que un div
+suelto: la barra acabó al final de la página, sin verse.
+
+Durante ese rato **el aviso de simulación era invisible**. Ese es exactamente
+el estado que §23 prohíbe, y llegó por quitar la franja antes de comprobar que
+lo que la sustituía se veía. La barra tiene ahora estilos propios en `qc.css`
+y no depende de nada que se inyecte desde fuera.
+
