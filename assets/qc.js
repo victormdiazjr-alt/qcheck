@@ -683,6 +683,14 @@ function formProject() {
     initial: db.project,
     fields: [
       { key: "name", label: "Proyecto", full: true, required: true },
+      /* La norma bajo la que se acepta el hormigón — Q-57. En blanco, QCheck
+         se comporta como siempre. Ver `docs/SP-934.md`. */
+      { key: "spec", label: "Especificación de aceptación", type: "select", full: true,
+        options: [
+          { value: "", label: "Control de proceso (como hasta ahora)" },
+          { value: "934", label: "SP-934 · Structural Concrete — Autoridad de Carreteras" },
+        ],
+        hint: "La SP-934 acepta por lotes de 250 m³ con evaluación estadística. Enciende pantallas y cálculos aparte; lo demás sigue igual." },
       { key: "mixId", label: "Mezcla / Mix ID", full: true },
       { key: "contractor", label: "Contratista" },
       { key: "qcFirm", label: "Firma QC" },

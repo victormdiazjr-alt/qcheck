@@ -955,6 +955,50 @@ function retirarDia(day) {
 }
 function testsOfDate(d) { return sortedTests().filter((t) => t.date === d); }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   LA ESPECIFICACIÓN QUE GOBIERNA — Q-57, 8 de agosto de 2026
+
+   El próximo proyecto corre bajo la SP-934 de la Autoridad, que acepta el
+   hormigón de una manera distinta a la de hoy: por lotes de 250 m³, con
+   estadística (PWL), y de ahí sale cuánto se cobra. Ver `docs/SP-934.md`.
+
+   **QCheck tiene que seguir funcionando igual** (Víctor, 8 ago 2026). La PR-52
+   está corriendo con este programa ahora mismo y no se toca. Así que la 934 no
+   sustituye nada: se enciende.
+
+   Va en dos niveles, y el del día manda sobre el del proyecto:
+
+     · `db.project.spec` — la especificación del proyecto entero
+     · `db.dayMeta[dia].spec` — la de un vaciado suelto, para el caso de una
+       obra mixta o de un tiro que se rige por otra cosa
+
+   Ausente o vacío significa **como siempre**. No hay valor por defecto que
+   encienda nada: un proyecto en marcha no puede cambiar de criterio de
+   aceptación porque alguien despliegue una versión nueva.
+   ══════════════════════════════════════════════════════════════════════════ */
+const QC_SPECS = {
+  "": { n: "Control de proceso", corta: "—" },
+  "934": { n: "SP-934 · Structural Concrete", corta: "934" },
+};
+
+function specDelProyecto() { return String((db.project || {}).spec || ""); }
+
+function specDelDia(dia) {
+  const d = dia || diaActivo();
+  const propia = (db.dayMeta || {})[d] || {};
+  if (propia.spec != null && propia.spec !== "") return String(propia.spec);
+  /* Un vaciado CERRADO conserva la especificación con la que se juzgó, igual
+     que conserva sus límites (Q-40/Q-41). Cambiar de norma no puede volver a
+     juzgar lo que ya se firmó. */
+  if (propia.specCerrada) return String(propia.specCerrada);
+  return specDelProyecto();
+}
+
+/* La puerta única. Todo lo de la 934 pregunta por aquí y por ningún otro
+   sitio: el día que haya una SP-935 se añade arriba y no hay que ir a buscar
+   condiciones sueltas por las pantallas. */
+function es934(dia) { return specDelDia(dia) === "934"; }
+
 /* EL CONDUCE CONTRA EL TIRO PROGRAMADO — Q-55, 8 de agosto de 2026.
 
    El vaciado lo coordina el ingeniero en QCheck: pone las yardas del día antes
@@ -2703,6 +2747,9 @@ function cerrarTiro(day) {
      cuántas veces se cambien los límites después, y da igual que alguien
      enrede con las fechas de las versiones. Es lo que se firma. */
   db.dayMeta[d].plan = JSON.parse(JSON.stringify(planDe(d)));
+  /* Q-57: con los límites se congela la NORMA. Un vaciado se juzga con la que
+     regía el día que se firmó, y con ninguna otra. */
+  db.dayMeta[d].specCerrada = specDelDia(d);
   /* Quién cerró el tiro sale de la sesión, no de lo que el navegador tenga
      apuntado: esto se imprime en el informe que se firma. Es el mismo criterio
      de Q-07, aplicado a un campo que viaja como valor y no como autor —el
@@ -2825,6 +2872,14 @@ function formDayMeta(day) {
       /* LA FECHA, Q-47. Hasta hoy el tiro siempre era el de hoy: no se podía
          dejar programado el de mañana ni corregir el de ayer. Va la primera
          porque es la que decide sobre qué día escribe todo lo demás. */
+      /* Q-57: un tiro suelto puede regirse por otra norma que el proyecto —una
+         obra mixta, un elemento que entra en otro contrato—. En blanco manda la
+         del proyecto, que es lo normal. */
+      { key: "spec", label: "Especificación de este tiro", type: "select", half: true,
+        options: [
+          { value: "", label: `Como el proyecto (${QC_SPECS[specDelProyecto()] ? QC_SPECS[specDelProyecto()].n : "control de proceso"})` },
+          { value: "934", label: "SP-934 · Structural Concrete" },
+        ] },
       { key: "fecha", label: "Día del vaciado", type: "date", half: true, required: true,
         hint: "Se puede dejar programado un tiro para otro día" },
       /* Obligatorios los tres que el sistema NECESITA. Sin la hora no hay plan

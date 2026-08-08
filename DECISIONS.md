@@ -851,3 +851,40 @@ presente y llevó a buscar el fallo en el código, que estaba bien: era el
 despliegue a medio propagar. Tras un despliegue del Worker conviene esperar y
 repetir antes de concluir que algo no funcionó — si no, se persigue un fantasma.
 
+## 35 · La SP-934 se enciende, no sustituye
+
+**Q-57 — 8 de agosto de 2026**
+
+El próximo proyecto corre bajo la SP-934, que acepta el hormigón de otra
+manera: por lotes de 250 m³, con estadística, y de ahí sale cuánto se cobra
+(el análisis completo está en `docs/SP-934.md`). Es un modelo distinto del que
+usa QCheck hoy, no una capa encima.
+
+**QCheck tiene que seguir funcionando igual** — Víctor, 8 ago 2026. La PR-52
+está corriendo con este programa ahora mismo. Así que la 934 **se enciende**, y
+mientras esté apagada no existe.
+
+Dos niveles, y el del día manda sobre el del proyecto:
+
+  · `db.project.spec` — la norma del proyecto entero, en «Plan & Datos»
+  · `db.dayMeta[dia].spec` — la de un tiro suelto, en el formulario del vaciado
+
+Vacío significa **como siempre**, y no hay valor por defecto que encienda nada:
+un proyecto en marcha no puede cambiar de criterio de aceptación porque alguien
+despliegue una versión nueva.
+
+**Al cerrar un tiro se congela la norma**, junto con los límites (Q-40/Q-41).
+Un vaciado se juzga con la que regía el día que se firmó y con ninguna otra —
+si el proyecto cambia de especificación después, lo ya firmado no se vuelve a
+juzgar. Comprobado: se cierra un día bajo 934, se apaga la 934 del proyecto, y
+ese día sigue siendo 934 mientras hoy no lo es.
+
+**Una sola puerta.** Todo lo de la 934 pregunta por `es934(dia)` y por ningún
+otro sitio. El día que haya una SP-935 se añade a `QC_SPECS` y no hay que ir a
+buscar condiciones sueltas por diez pantallas.
+
+**Cómo se comprueba que «sigue igual» es verdad.** Con la 934 apagada, el
+Control Center rinde exactamente el mismo contenido antes y después del cambio
+—1.403 caracteres las dos veces—. Cualquier módulo nuevo tiene que pasar esa
+prueba: encender la norma cambia la pantalla, apagarla la deja como estaba.
+
