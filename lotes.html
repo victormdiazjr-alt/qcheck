@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Aplicación en la pantalla de inicio (iOS y Android). Sin estas etiquetas
+     y sin el manifest, el icono guardado abre como un MARCADOR de Safari, con
+     una franja arriba enseñando el dominio en vez de la aplicación limpia. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QCheck">
+<link rel="apple-touch-icon" href="assets/icono-180.png">
+<meta name="theme-color" content="#0a0d12">
+<title>Lotes SP-934 — QCheck</title>
+<link rel="stylesheet" href="assets/qc.css?v=9f1bcc03">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
+<style>
+/* ============================================================
+   SETTINGS — la pantalla de Rubén.
+
+   Q-37, 6 ago 2026. Hasta hoy los límites del plan de control vivían
+   dentro de «Plan & Datos», que es de admin, junto a la dirección del
+   servidor, la llave del proyecto y el panel de la simulación. Rubén
+   no entraba ahí a propósito —se decidió el 1 de agosto: quien usa la
+   herramienta no ve cómo está montada— y eso dejaba un hueco raro:
+   cuando el proyecto cambia un límite, el que lo sabe es él.
+
+   Así que los límites salen de allí y se le dan en su propia pantalla,
+   sin nada más al lado que se pueda tocar sin querer. Víctor lo pidió
+   así hoy: «una pantalla que se llame Settings y ahí solo un tab de
+   límites, pero luego pondremos más settings».
+
+   POR ESO HAY PESTAÑAS CON UNA SOLA PESTAÑA. No es un descuido: la
+   siguiente que entre se añade a `TABS` y ya. Si acaba habiendo una
+   sola para siempre, quítalas.
+
+   Lo que se cambie aquí queda firmado en el expediente como cualquier
+   otro cambio —quién y cuándo—, así que un límite mal puesto se ve en
+   el registro y se deshace. Eso es lo que hace que esto no sea el
+   riesgo que era en agosto.
+   ============================================================ */
+main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
+.nota { margin-top: 16px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+</style>
+<script src="assets/usuarios.js?v=03f894c7"></script>
+<script src="assets/auth.js?v=de2a7e62"></script>
+</head>
+<body>
+
+<header class="qc-header">
+  <div class="brand">
+    <a href="control-center.html" style="text-decoration:none"><svg class="mark" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
+      <defs>
+        <mask id="qcm-q1"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
+        <mask id="qcm-c1"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
+      </defs>
+      <path fill="var(--logo-blue,#0f46b5)" fill-rule="evenodd" mask="url(#qcm-q1)" d="M 509 63 A 337 337 0 1 1 508.9 63 Z M 509 174 A 226 226 0 1 0 509.1 174 Z"/>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+      <g mask="url(#qcm-c1)">
+        <path fill="var(--logo-green,#39a935)" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+        <path fill="var(--logo-g1,#68727f)" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+        <path fill="var(--logo-g2,#4f5a66)" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+      </g>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
+    </svg></a>
+    <div>
+      <div class="title">Lotes · SP-934</div>
+      <div class="subtitle">Aceptación estadística por lote — Autoridad de Carreteras</div>
+    </div>
+  </div>
+  </header>
+
+<main><div id="app"></div></main>
+
+<div id="modal-root"></div>
+<div id="toast"></div>
+
+<script src="assets/sync.js?v=426ef405"></script>
+<script src="assets/seed.js?v=acf41aba"></script>
+<script src="assets/core.js?v=599c1133"></script>
+<script src="assets/sp934.js?v=54115377"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   LOTES — M1 de la SP-934. Q-59, 8 de agosto de 2026.
+
+   QCheck piensa en DÍAS: un tiro es una jornada de obra y así se trabaja. La
+   934 piensa en LOTES de 250 m³, y un lote puede abarcar varios tiros o un
+   tiro partirse entre dos. Esta pantalla es donde se ve esa correspondencia,
+   que es justo lo que hoy no se puede representar.
+
+   Detrás de `es934()` y, mientras se construye, detrás de `qcVeConfig()`
+   (Q-57b): ni Rubén ni el técnico ven nada de esto todavía.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const LOTE_ABIERTO = "abierto";
+
+/* Las tres características de aceptación, con su campo en el ensayo y de
+   dónde salen sus límites. La permeabilidad solo entra si el proyecto la
+   inspecciona — la PR-52 no (Víctor, 8 ago 2026). */
+/* La edad a la que se juzga la resistencia sale del PLAN, no del código.
+
+   La PR-52 es «3000 PSI @ 5 días» y por eso su dato vive en `cs5`. La 934
+   juzga a 28 días —o a 56 en tablero de puente— y ese es otro campo. Clavar
+   `cs28` daba una pantalla que rendía perfectamente y evaluaba el lote con
+   los cuatro ensayos que casualmente tenían 28 días: números impecables y
+   completamente falsos. Q-59. */
+function campoDeResistencia() {
+  const edad = Number(((db.plan || {}).cs || {}).age);
+  if (edad === 1) return { campo: "cs1", edad: 1 };
+  if (edad === 5) return { campo: "cs5", edad: 5 };
+  if (edad === 56) return { campo: "cs56", edad: 56 };
+  return { campo: "cs28", edad: 28 };
+}
+
+function limitesDelProyecto() {
+  const clase = (db.project || {}).claseHormigon || "III";
+  const ccs = SP934_CCS[clase] || SP934_CCS.III;
+  const res = campoDeResistencia();
+  const cuw = sp934LimitesCUW((db.plan && db.plan.uw && db.plan.uw.target) || null);
+  const nivelCP = (db.project || {}).nivelPermeabilidad;
+  const salida = {
+    ccs: { campo: res.campo, lsl: ccs.lsl, usl: ccs.usl, n: "Resistencia", u: `psi a ${res.edad} días`, clase },
+    cuw: { campo: "uw", lsl: cuw.lsl, usl: cuw.usl, n: "Peso unitario", u: "pcf" },
+  };
+  if (nivelCP && SP934_CP_USL[String(nivelCP)] != null)
+    salida.cp = { campo: "cp", lsl: null, usl: SP934_CP_USL[String(nivelCP)], n: "Permeabilidad", u: "coulombs" };
+  return salida;
+}
+
+function estadoDeLote(l, ev) {
+  if (l.parcial && !l.cerrado) return { k: LOTE_ABIERTO, t: "Abierto", c: "act" };
+  if (ev && ev.rechazado) return { k: "rechazado", t: "Rechazado", c: "susp" };
+  if (ev && ev.cpaf != null) return { k: "evaluado", t: "Evaluado", c: "ok" };
+  return { k: "completo", t: "Completo — sin evaluar", c: "act" };
+}
+
+function pintaPWL(r) {
+  if (r.pwl == null) return `<span class="muted">${esc(r.motivo || "sin datos")}</span>`;
+  const c = r.pwl >= 90 ? "ok" : r.pwl >= 60 ? "act" : "susp";
+  return `<b class="z-${c}">${fmt(r.pwl, 1)} %</b>`;
+}
+
+function filaAQC(clave, cfg, r) {
+  const lim = [cfg.lsl != null ? fmt(cfg.lsl, 1) : "—", cfg.usl != null ? fmt(cfg.usl, 1) : "—"].join(" – ");
+  return `<tr>
+    <td>${esc(cfg.n)}<div class="muted" style="font-size:11px">${esc(cfg.u)}${cfg.clase ? " · clase " + esc(cfg.clase) : ""}</div></td>
+    <td class="n mono">${lim}</td>
+    <td class="n mono">${r.n || 0}</td>
+    <td class="n mono">${r.media != null ? fmt(r.media, 1) : "—"}</td>
+    <td class="n mono">${r.s != null ? fmt(r.s, 2) : "—"}</td>
+    <td class="n">${pintaPWL(r)}</td>
+    <td class="n mono">${r.paf != null ? fmt(r.paf, 3) : "—"}</td>
+    <td>${r.rechazado ? `<span class="badge susp">rechaza</span>` : ""}</td>
+  </tr>`;
+}
+
+function panelLote(l, cfgs) {
+  const ev = sp934EvaluarLote(l, cfgs);
+  const est = estadoDeLote(l, ev);
+  const porSub = Math.ceil(SP934_LOTE_M3 / SP934_SUBLOTE_M3);
+
+  /* La tira de sub-lotes. Es el dato que más se mira: cuánto falta para
+     cerrar el lote y por tanto para saber el factor de pago. */
+  let tira = "";
+  for (let i = 0; i < porSub; i++) {
+    const s = l.sublotes[i];
+    const lleno = s && s.m3 >= SP934_SUBLOTE_M3 * 0.98;
+    tira += `<i class="${s ? (lleno ? "on" : "medio") : ""}" title="Sub-lote ${i + 1}${s ? ` · ${fmt(s.m3, 1)} m³ · ${s.ensayos.length} camión(es)` : " · vacío"}"></i>`;
+  }
+
+  return `<section class="panel lote">
+    <div class="panel-head">
+      <h2>Lote ${l.n}</h2>
+      <span class="badge ${est.c}">${esc(est.t)}</span>
+      <div class="spacer"></div>
+      <span class="muted">${esc(fmtDate(l.desde))}${l.hasta !== l.desde ? " – " + esc(fmtDate(l.hasta)) : ""}</span>
+    </div>
+    <div class="panel-body">
+      <div class="lote-cifras">
+        <div><div class="label">Colocado</div><div class="value">${fmt(l.m3, 1)} <span>m³</span></div>
+             <div class="muted">${fmt(l.cy, 1)} CY · ${l.ensayos.length} camiones</div></div>
+        <div><div class="label">Sub-lotes</div><div class="value">${l.sublotes.length} <span>/ ${porSub}</span></div>
+             <div class="lote-tira">${tira}</div></div>
+        <div><div class="label">Factor compuesto</div>
+             <div class="value ${ev.cpaf == null ? "muted" : ev.cpaf >= 1 ? "z-ok" : ev.cpaf >= 0.9 ? "z-act" : "z-susp"}">${ev.cpaf != null ? fmt(ev.cpaf, 3) : "—"}</div>
+             <div class="muted">${cfgs.cp ? "0.45 / 0.45 / 0.10" : "0.90 / 0.10 · sin permeabilidad"}</div></div>
+      </div>
+
+      ${l.motivo && l.n > 1 ? `<p class="muted" style="margin:12px 0 0">Lote nuevo por: ${esc(l.motivo)}.</p>` : ""}
+
+      <div class="tabla-ancha" style="margin-top:14px">
+        <table class="data">
+          <thead><tr>
+            <th>Característica</th><th class="n">Límites</th><th class="n">n</th>
+            <th class="n">Media</th><th class="n">s</th><th class="n">PWL</th>
+            <th class="n">Factor</th><th></th>
+          </tr></thead>
+          <tbody>
+            ${Object.entries(cfgs).map(([k, cfg]) => filaAQC(k, cfg, ev.aqc[k] || { n: 0 })).join("")}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted" style="margin:10px 0 0; font-size:12px">
+        PWL por integración de la distribución beta (SP-934-7.05). Con menos de
+        tres sub-lotes la norma no usa PWL sino la Tabla 934-11.
+      </p>
+    </div>
+  </section>`;
+}
+
+function render() {
+  const app = document.getElementById("app");
+
+  if (!es934()) {
+    app.innerHTML = `<section class="panel"><div class="panel-body">
+      <p class="muted">Este proyecto no se acepta bajo la SP-934, así que no hay lotes que evaluar.</p>
+      <p class="muted">Se enciende en <b>Plan &amp; Datos → Especificación de aceptación</b>.</p>
+    </div></section>`;
+    return;
+  }
+
+  const cfgs = limitesDelProyecto();
+  const lotes = sp934Lotes(sortedTests().filter((t) => !t.rejected));
+
+  if (!lotes.length) {
+    app.innerHTML = `<section class="panel"><div class="panel-body">
+      <p class="muted">Todavía no hay hormigón colocado bajo esta especificación.</p>
+    </div></section>`;
+    return;
+  }
+
+  const evaluados = lotes.map((l) => sp934EvaluarLote(l, cfgs));
+  const conFactor = evaluados.filter((e) => e.cpaf != null);
+  const medio = conFactor.length
+    ? conFactor.reduce((a, e) => a + e.cpaf, 0) / conFactor.length : null;
+
+  app.innerHTML = `
+    <div class="grid cols-3" style="margin-bottom:16px">
+      <div class="stat"><div class="label">Lotes</div>
+        <div class="value">${lotes.length}</div>
+        <div class="sub">${lotes.filter((l) => l.parcial).length} sin completar</div></div>
+      <div class="stat"><div class="label">Hormigón evaluado</div>
+        <div class="value">${fmt(lotes.reduce((a, l) => a + l.m3, 0), 0)} <span style="font-size:14px">m³</span></div>
+        <div class="sub">${fmt(lotes.reduce((a, l) => a + l.cy, 0), 0)} CY</div></div>
+      <div class="stat"><div class="label">Factor compuesto medio</div>
+        <div class="value ${medio == null ? "" : medio >= 1 ? "z-ok" : medio >= 0.9 ? "z-act" : "z-susp"}">${medio != null ? fmt(medio, 3) : "—"}</div>
+        <div class="sub">${evaluados.filter((e) => e.rechazado).length} lote(s) rechazado(s)</div></div>
+    </div>
+    ${lotes.map((l) => panelLote(l, cfgs)).join("")}`;
+}
+
+loadDB();
+initTheme();
+mountThemeToggle();
+mountStatusBar();
+enableLiveSync(() => render());
+render();
+</script>
+</body>
+</html>

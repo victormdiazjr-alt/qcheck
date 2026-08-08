@@ -357,8 +357,8 @@ function logoDeParte(parte) {
 function marcaHTML(parte, nombre, clase) {
   const src = logoDeParte(parte);
   const n = esc(nombre || "");
-  if (src) return `<img class="marca-parte ${clase || ""}" src="${esc(src)}" alt="${n}" title="${n}">`;
-  return `<span class="marca-parte mono ${clase || ""}" title="${n}">${esc(inicialesDe(nombre))}</span>`;
+  if (src) return `<img class="marca-parte ${esc(clase || "")}" src="${esc(src)}" alt="${n}" title="${n}">`;
+  return `<span class="marca-parte mono ${esc(clase || "")}" title="${n}">${esc(inicialesDe(nombre))}</span>`;
 }
 
 /* ------------------------------------------------------------ ¿es un teléfono?

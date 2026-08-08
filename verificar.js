@@ -182,7 +182,13 @@ if (fallos === fallosAntes) bien(`seis pantallas de QC protegidas · ${CUENTAS.l
    de que no vuelva. Si añades un campo que escribe una persona, métele
    `esc()` o añádelo a la lista. */
 titulo("Escapado");
-const CAMPOS_DE_PERSONA = /(truck|ticket|ident|comments|plant|lot|company|mixId|nombre|contractor|qcFirm|notifyEmails|\.name\b|\.dev\b|\.usr\b)/;
+/* Los nombres van con frontera de palabra: sin ella, `lot` casaba dentro de
+   «lotes» y «sublotes» y la comprobación gritaba por números que no puede
+   escribir nadie. Un candado que da falsos positivos se acaba desactivando,
+   y entonces deja de proteger. Q-59. */
+const CAMPOS_DE_PERSONA = /\b(truck|ticket|ident|comments|plant|lot|company|mixId|nombre|contractor|qcFirm|notifyEmails|name|dev|usr|mix|mezcla|clase|motivo)\b/;
+/* `.length` y `.size` son números y no pueden llevar HTML jamás. */
+const NUMERO_SEGURO = /\.(length|size)\s*$/;
 const YA_SEGURO = /\b(esc|fmt|num|Number|Math\.|encodeURI|encodeURIComponent|JSON\.stringify)\s*\(/;
 const sinEscapar = [];
 for (const f of [...html, "assets/core.js", "assets/qc.js", "assets/clima.js", "assets/sync.js"]) {
@@ -192,7 +198,7 @@ for (const f of [...html, "assets/core.js", "assets/qc.js", "assets/clima.js", "
     if (!(linea.includes("<") && linea.includes(">"))) return;   // solo donde se arma HTML
     for (const m of linea.matchAll(/\$\{([^{}]+)\}/g)) {
       const e = m[1].trim();
-      if (YA_SEGURO.test(e) || !CAMPOS_DE_PERSONA.test(e)) continue;
+      if (YA_SEGURO.test(e) || NUMERO_SEGURO.test(e) || !CAMPOS_DE_PERSONA.test(e)) continue;
       if (/^[^?]*\?\s*"[^"]*"\s*:\s*"[^"]*"$/.test(e)) continue;  // ternario de literales
       sinEscapar.push(`${f}:${i + 1} → \${${e.slice(0, 50)}}`);
     }

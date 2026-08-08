@@ -640,3 +640,21 @@ table.descartados td:nth-child(2) { min-width: 0; }
 .orden-par .num { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
 .orden-par .num span { font-size: 13px; font-weight: 600; color: var(--muted); }
 .orden-vs { font-size: 22px; color: var(--susp, #ff5a52); font-weight: 700; }
+
+/* Lotes de la SP-934 — Q-59. Las tres cifras del lote van en línea: se leen
+   juntas o no se leen —cuánto va, cuánto falta, y en cuánto queda el pago. */
+.lote-cifras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start; }
+.lote-cifras .label { font-size: 10.5px; color: var(--ink-soft); text-transform: uppercase;
+                      letter-spacing: .18em; font-weight: 800; }
+.lote-cifras .value { font-size: 27px; font-weight: 300; margin-top: 2px;
+                      font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.lote-cifras .value span { font-size: 13px; color: var(--ink-soft); }
+@media (max-width: 720px) { .lote-cifras { grid-template-columns: 1fr; gap: 12px; } }
+
+/* La tira de sub-lotes: diez casillas que se van llenando. Es lo que dice de
+   un vistazo cuánto falta para saber el factor de pago. */
+.lote-tira { display: flex; gap: 3px; margin-top: 8px; }
+.lote-tira i { width: 14px; height: 8px; border-radius: 2px; background: rgba(238,242,246,.12); }
+.lote-tira i.medio { background: var(--act); opacity: .55; }
+.lote-tira i.on { background: var(--ok); }
+.panel.lote .panel-head h2 { margin-right: 4px; }
