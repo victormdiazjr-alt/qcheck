@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Aplicación en la pantalla de inicio (iOS y Android). Sin estas etiquetas
+     y sin el manifest, el icono guardado abre como un MARCADOR de Safari, con
+     una franja arriba enseñando el dominio en vez de la aplicación limpia. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QCheck">
+<link rel="apple-touch-icon" href="assets/icono-180.png">
+<meta name="theme-color" content="#0a0d12">
+<title>Portal SP-934 — QCheck</title>
+<link rel="stylesheet" href="assets/qc.css?v=13f2f6ff">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
+<style>
+/* ============================================================
+   SETTINGS — la pantalla de Rubén.
+
+   Q-37, 6 ago 2026. Hasta hoy los límites del plan de control vivían
+   dentro de «Plan & Datos», que es de admin, junto a la dirección del
+   servidor, la llave del proyecto y el panel de la simulación. Rubén
+   no entraba ahí a propósito —se decidió el 1 de agosto: quien usa la
+   herramienta no ve cómo está montada— y eso dejaba un hueco raro:
+   cuando el proyecto cambia un límite, el que lo sabe es él.
+
+   Así que los límites salen de allí y se le dan en su propia pantalla,
+   sin nada más al lado que se pueda tocar sin querer. Víctor lo pidió
+   así hoy: «una pantalla que se llame Settings y ahí solo un tab de
+   límites, pero luego pondremos más settings».
+
+   POR ESO HAY PESTAÑAS CON UNA SOLA PESTAÑA. No es un descuido: la
+   siguiente que entre se añade a `TABS` y ya. Si acaba habiendo una
+   sola para siempre, quítalas.
+
+   Lo que se cambie aquí queda firmado en el expediente como cualquier
+   otro cambio —quién y cuándo—, así que un límite mal puesto se ve en
+   el registro y se deshace. Eso es lo que hace que esto no sea el
+   riesgo que era en agosto.
+   ============================================================ */
+main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
+.nota { margin-top: 16px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+</style>
+<script src="assets/usuarios.js?v=03f894c7"></script>
+<script src="assets/auth.js?v=531ca0f9"></script>
+</head>
+<body>
+
+<header class="qc-header">
+  <div class="brand">
+    <a href="control-center.html" style="text-decoration:none"><svg class="mark" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
+      <defs>
+        <mask id="qcm-q1"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
+        <mask id="qcm-c1"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
+      </defs>
+      <path fill="var(--logo-blue,#0f46b5)" fill-rule="evenodd" mask="url(#qcm-q1)" d="M 509 63 A 337 337 0 1 1 508.9 63 Z M 509 174 A 226 226 0 1 0 509.1 174 Z"/>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 656 615 L 822 781 L 724 879 L 558 713 Z"/>
+      <g mask="url(#qcm-c1)">
+        <path fill="var(--logo-green,#39a935)" d="M 132 514 L 346 608 L 564 506 L 564 571 L 346 682 L 132 589 Z"/>
+        <path fill="var(--logo-g1,#68727f)" d="M 132 642 L 346 736 L 564 620 L 564 681 L 346 804 L 132 704 Z"/>
+        <path fill="var(--logo-g2,#4f5a66)" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
+      </g>
+      <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
+    </svg></a>
+    <div>
+      <div class="title">Portal SP-934</div>
+      <div class="subtitle">Control de calidad del hormigón bajo la Special Provision 934</div>
+    </div>
+  </div>
+  </header>
+
+<main><div id="app"></div></main>
+
+<div id="modal-root"></div>
+<div id="toast"></div>
+
+<script src="assets/sync.js?v=426ef405"></script>
+<script src="assets/seed.js?v=acf41aba"></script>
+<script src="assets/core.js?v=98267cde"></script>
+<script src="assets/sp934.js?v=265feda9"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   PORTAL SP-934 — Q-66, 8 de agosto de 2026.
+
+   Puerta de entrada a todo lo de la 934, y **no toca nada de QCheck**: no
+   cambia una pantalla, no añade un enlace en ninguna, no altera un dato. Es un
+   sitio nuevo que se abre solo si se sabe la dirección y se tiene la cuenta.
+
+   Sirve para dos cosas, y las dos las pidió Víctor:
+
+     1. Enseñar qué es la aplicación que hace falta para manejar un proyecto
+        934 — no como folleto, sino con lo que hay construido y funcionando.
+     2. Entrar, por cada tipo de usuario, en la pantalla que esa persona vería
+        de verdad. Sin capturas ni maquetas: la pantalla, con datos.
+
+   El segundo punto es el que convence. Cualquiera puede enseñar un diagrama de
+   lo que su producto haría; entrar y usarlo es otra cosa.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Lo que la 934 obliga a hacer, y qué de eso está resuelto. Se marca lo hecho
+   y lo pendiente sin adornar: un portal que dice que todo está listo no se
+   puede volver a creer cuando de verdad lo esté. */
+const CAPACIDADES = [
+  { n: "Lotes y sub-lotes", listo: true,
+    q: "250 m³ en diez sub-lotes de 25. Lote nuevo al cambiar el diseño de mezcla o tras 56 días sin producción. Un lote puede abarcar varios vaciados y un vaciado partirse entre dos lotes.",
+    art: "934-6.01(j)" },
+  { n: "PWL por distribución beta", listo: true,
+    q: "Integración de la beta incompleta, no aproximación. El cálculo reproduce la Tabla 934-6 que publica la propia especificación, en 32 puntos con muestras de tres a diez sub-lotes.",
+    art: "934-7.05" },
+  { n: "Factores de ajuste de pago", listo: true,
+    q: "Individual por característica y compuesto, con las dos fórmulas: con permeabilidad (0.45/0.45/0.10) y sin ella (0.90/0.10). Umbrales de rechazo y tabla de cantidades pequeñas.",
+    art: "934-7.05(c)" },
+  { n: "Muestreo aleatorio verificable", listo: true,
+    q: "El punto se sortea ANTES de recibir el hormigón, queda firmado con quién y cuándo, y se guarda la semilla: cualquiera puede rehacer el sorteo y comprobar que da lo mismo.",
+    art: "ASTM D3665" },
+  { n: "Cilindros y cadena de custodia", listo: true,
+    q: "Seis por sub-lote a las edades del plan, dos de permeabilidad, dos por lote de tensión indirecta. Quién los hizo, cuándo salieron y qué falta. Aviso de las 48 horas de coordinación con el laboratorio.",
+    art: "934-6.01(b) y (f)" },
+  { n: "Reporte de lote firmable", listo: true,
+    q: "Con el cálculo entero a la vista —media, desviación, índices de calidad y porcentajes parciales— para que quien firme pueda rehacerlo con una calculadora. Nadie firma un número que no puede reconstruir.",
+    art: "934-7.05" },
+  { n: "Hacia dónde va el lote", listo: true,
+    q: "Con cinco sub-lotes de diez ya se ve el techo del lote. No predice: da lo que hay, el máximo alcanzable y el mínimo. Enterarse en el sub-lote cuatro deja seis para reaccionar; enterarse a los 28 días, ninguno.",
+    art: "—" },
+  { n: "Aceptación por la Autoridad", listo: true,
+    q: "Pantalla de decidir, no de operar. Solo lotes completos. Rechazar exige motivo. La decisión lleva autor y hora y no se borra.",
+    art: "934-6.01" },
+  { n: "Conduce conforme a la 934", listo: false,
+    q: "Los trece renglones de 934-4.04(h) y las dos certificaciones firmadas. Hoy la mitad viven en la pesada de planta, y el porcentaje de diferencia por material y las firmas no están en ningún papel. Se resuelve leyendo el sistema de la planta.",
+    art: "934-4.04(h)" },
+  { n: "Temperatura de hormigón masivo", listo: false,
+    q: "Máximo 160 °F y diferencial de 35 °F, con termopares en el elemento. Un grado de exceso descuenta el 1 % del precio unitario por metro cúbico.",
+    art: "934-4.10" },
+];
+
+/* Cada tipo de usuario y la pantalla que vería de verdad. Las de la 934 y las
+   que QCheck ya tiene en producción — porque un proyecto 934 no deja de ser
+   una obra, y lo de siempre sigue haciendo falta. */
+const USUARIOS = [
+  { rol: "Autoridad de Carreteras", ico: "⚖",
+    q: "Acepta o rechaza cada lote. Ve el cálculo completo, cómo se eligió cada muestra, y de dónde sale cada número hasta el camión.",
+    ve: "No entra datos. No opera. Decide.",
+    pantallas: [["Aceptación de lotes", "aceptacion.html"], ["Su tablero de siempre", "autoridad.html"]] },
+  { rol: "Ingeniero de récord", ico: "✍",
+    q: "Lleva el programa y firma. Programa vaciados, cierra lotes, emite reportes, y es el único que puede reabrir lo cerrado.",
+    ve: "Todo lo operativo, y la responsabilidad.",
+    pantallas: [["Lotes y evaluación", "lotes.html"], ["Control Center", "control-center.html"], ["Límites del plan", "settings.html"]] },
+  { rol: "Contratista", ico: "🏗",
+    q: "Le pagan por lote y el factor le afecta. Ve hacia dónde va cada lote mientras se llena, no a los 28 días.",
+    ve: "Su obra y su dinero. No toca el expediente.",
+    pantallas: [["Su tablero", "contratista.html"], ["Lotes y proyección", "lotes.html"]] },
+  { rol: "Concretera", ico: "🏭",
+    q: "Un lote rechazado es su problema antes que el de nadie. Ve cómo rinde su diseño de mezcla y puede corregir la planta a tiempo.",
+    ve: "Calidad, no factores de pago. Eso es entre el contratista y la Autoridad.",
+    pantallas: [["Su tablero", "produccion.html"]] },
+  { rol: "Técnico de campo", ico: "🧪",
+    q: "Necesita saber qué hacer ahora. A qué camión le toca muestra, qué ensayos y cuántos cilindros.",
+    ve: "El trabajo de ahora. Ni PWL, ni factores, ni dinero: un número de pago en la pantalla de quien toma la muestra es una presión que no debe existir.",
+    pantallas: [["Recepción", "conduce.html"], ["Muestras", "muestras.html"], ["Field Display", "display.html"]] },
+];
+
+function tarjetaCapacidad(c) {
+  return `<div class="cap ${c.listo ? "listo" : "pendiente"}">
+    <div class="cap-cab">
+      <span class="cap-marca">${c.listo ? "✓" : "○"}</span>
+      <b>${esc(c.n)}</b>
+      <span class="cap-art">${esc(c.art)}</span>
+    </div>
+    <p>${esc(c.q)}</p>
+  </div>`;
+}
+
+function tarjetaUsuario(u) {
+  return `<section class="panel usuario">
+    <div class="panel-head">
+      <h2><span class="u-ico">${u.ico}</span> ${esc(u.rol)}</h2>
+    </div>
+    <div class="panel-body">
+      <p>${esc(u.q)}</p>
+      <p class="muted u-ve">${esc(u.ve)}</p>
+      <div class="u-botones">
+        ${u.pantallas.map(([n, h]) => `<a class="btn small" href="${esc(h)}">${esc(n)}</a>`).join("")}
+      </div>
+    </div>
+  </section>`;
+}
+
+function render() {
+  const hechas = CAPACIDADES.filter((c) => c.listo).length;
+  document.getElementById("app").innerHTML = `
+    <section class="panel intro">
+      <div class="panel-body">
+        <p class="lead">La Special Provision 934 no acepta el hormigón camión a camión:
+        lo acepta por <b>lotes de 250 m³</b>, con <b>evaluación estadística</b>, y de ahí
+        sale <b>cuánto se cobra</b>. Es un modelo distinto del control de proceso que
+        se usa hoy, y necesita herramientas distintas.</p>
+        <p class="muted">Esto es lo que hace falta para manejar un proyecto bajo esa
+        norma, y lo que de ello está construido y funcionando. Lo pendiente se dice
+        pendiente: un portal que asegura que todo está listo no se puede volver a creer
+        cuando de verdad lo esté.</p>
+      </div>
+    </section>
+
+    <div class="grid cols-3" style="margin:16px 0">
+      <div class="stat"><div class="label">Capacidades</div>
+        <div class="value">${hechas} <span style="font-size:14px">de ${CAPACIDADES.length}</span></div>
+        <div class="sub">construidas y probadas</div></div>
+      <div class="stat"><div class="label">Comprobaciones</div>
+        <div class="value">129</div>
+        <div class="sub">32 contra la Tabla 934-6 de la Autoridad</div></div>
+      <div class="stat"><div class="label">Estado del proyecto</div>
+        <div class="value">${es934() ? "SP-934" : "Proceso"}</div>
+        <div class="sub">${es934() ? "aceptación estadística activa" : "la 934 está apagada"}</div></div>
+    </div>
+
+    <h2 class="seccion">Lo que la norma obliga a hacer</h2>
+    <div class="caps">${CAPACIDADES.map(tarjetaCapacidad).join("")}</div>
+
+    <h2 class="seccion">Qué vería cada quien</h2>
+    <p class="muted seccion-sub">No son maquetas ni capturas: son las pantallas, con datos.
+    Cada persona ve lo suyo y nada más — y eso es una decisión, no una limitación.</p>
+    ${USUARIOS.map(tarjetaUsuario).join("")}
+
+    <section class="panel cierre">
+      <div class="panel-body">
+        <p class="muted">El cálculo de PWL de esta plataforma reproduce la
+        <b>Tabla 934-6</b> que la propia especificación publica «only to assist in the
+        preliminary by hand verification purposes», en 32 puntos con muestras de tres a
+        diez sub-lotes. No es una afirmación: está en las pruebas del proyecto y se
+        puede correr.</p>
+      </div>
+    </section>`;
+}
+
+loadDB();
+initTheme();
+mountThemeToggle();
+mountStatusBar();
+render();
+</script>
+</body>
+</html>

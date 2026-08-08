@@ -148,9 +148,13 @@ const problemas = [];
 for (const f of pantallas934)
   if (!enObras.includes(path.basename(f))) problemas.push(`${f} usa sp934.js y no está en EN_OBRAS_934`);
 for (const f of html) {
+  /* Entre pantallas de la 934 sí se enlazan: viven todas tras la misma puerta,
+     así que un enlace de una a otra no abre nada. Lo que no puede pasar es que
+     una pantalla VIVA enlace a una en obras. */
+  if (enObras.includes(path.basename(f))) continue;
   const src = leer(f);
   for (const p of enObras)
-    if (path.basename(f) !== p && src.includes(p)) problemas.push(`${f} enlaza a ${p}`);
+    if (src.includes(p)) problemas.push(`${f} enlaza a ${p}`);
 }
 if (problemas.length) problemas.forEach((s) => mal(s));
 else bien(`${pantallas934.length} pantalla(s) de la 934, todas tras qcVeConfig() y sin enlazar`);

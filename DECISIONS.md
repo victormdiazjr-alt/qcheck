@@ -1141,3 +1141,34 @@ Probado: Rubén y el técnico acaban en el Control Center, la Autoridad en su
 tablero de siempre, y solo la cuenta de Víctor entra. Las dos pantallas de la
 934 están en `EN_OBRAS_934` y el verificador lo comprueba.
 
+## 42 · El portal de la 934
+
+**Q-66 — 8 de agosto de 2026**
+
+Puerta de entrada a todo lo de la 934, y **no toca nada de QCheck**: no cambia
+una pantalla, no añade un enlace en ninguna, no altera un dato. Es un sitio
+nuevo que se abre solo si se sabe la dirección y se tiene la cuenta.
+
+Sirve para dos cosas:
+
+**Enseñar qué hace falta para manejar un proyecto 934**, con el artículo de la
+norma al lado de cada capacidad. Y **lo pendiente se dice pendiente** — hoy,
+ocho de diez, con el conduce conforme y el hormigón masivo aún sin hacer. Un
+portal que asegura que todo está listo no se puede volver a creer el día que de
+verdad lo esté.
+
+**Y entrar, por cada tipo de usuario, en la pantalla que esa persona vería.**
+Sin capturas ni maquetas: la pantalla, con datos. Es lo que separa esto de un
+folleto — cualquiera puede dibujar lo que su producto haría; entrar y usarlo es
+otra cosa.
+
+Cada usuario lleva escrito **qué NO ve**, porque eso es tan producto como lo
+que ve: el técnico no ve factores de pago, la concretera no ve el dinero del
+contratista, y la Autoridad no opera. Son decisiones, no limitaciones, y
+conviene decirlas antes de que alguien las lea como un hueco.
+
+**Una regla del verificador tuvo que aflojarse, y con cuidado.** Las pantallas
+de la 934 sí pueden enlazarse entre ellas —viven todas tras la misma puerta,
+así que un enlace de una a otra no abre nada—. Lo que sigue prohibido, y
+comprobado en cada corrida, es que una pantalla **viva** enlace a una en obras.
+
