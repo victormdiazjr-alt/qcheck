@@ -96,7 +96,7 @@ const red = (x, n) => Number(x.toFixed(n));
    lado no tiene límite —la permeabilidad solo tiene techo (Tabla 934-4)— y
    entonces ese lado aporta el 100 %. */
 function pwlDeLote(valores, lsl, usl) {
-  const v = (valores || []).map(Number).filter(Number.isFinite);
+  const v = (valores || []).map(cifra).filter((x) => x != null);
   const n = v.length;
   if (n < 3) return { n, pwl: null, motivo: "menos de 3 sub-lotes" };
 
@@ -185,8 +185,8 @@ const SP934_CCS = {
    y son cosas distintas: aquello vigila la mezcla, esto decide el pago. */
 const SP934_CUW_TOLERANCIA = 2.9;
 function sp934LimitesCUW(objetivo) {
-  const o = Number(objetivo);
-  if (!Number.isFinite(o)) return { lsl: null, usl: null };
+  const o = cifra(objetivo);
+  if (o == null) return { lsl: null, usl: null };
   return { lsl: red(o - SP934_CUW_TOLERANCIA, 4), usl: red(o + SP934_CUW_TOLERANCIA, 4) };
 }
 
@@ -208,7 +208,37 @@ const SP934_LOTE_M3 = 250;
 const SP934_SUBLOTE_M3 = 25;
 const CY_A_M3 = 0.764554857984;
 
-function m3DeCY(cy) { const n = Number(cy); return Number.isFinite(n) ? n * CY_A_M3 : 0; }
+/* `Number(null)` es 0 y `Number.isFinite(0)` es cierto. Ese descuido ya costó
+   un lote sano rechazado (Q-63) y volvió a colarse una hora después en
+   `fmtVolumen`. Así que deja de estar al alcance: **en este archivo no se
+   llama a `Number()` a pelo**, se llama a esto.
+
+   Devuelve `null` para lo que no es un número, incluidos `null`, `undefined`
+   y la cadena vacía. Un cero de verdad sigue siendo un cero. Q-64. */
+function cifra(v) {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function m3DeCY(cy) { const n = cifra(cy); return n == null ? 0 : n * CY_A_M3; }
+function cyDeM3(m3) { const n = cifra(m3); return n == null ? 0 : n / CY_A_M3; }
+
+/* LAS DOS UNIDADES SIEMPRE JUNTAS — Q-64, 8 de agosto de 2026.
+
+   La 934 mide en metros cúbicos: el lote son 250 y el sub-lote 25. El conduce
+   viene en yardas y la obra habla en yardas. Enseñar solo una obliga a
+   convertir de cabeza, y convertir de cabeza a media mañana es como se cuelan
+   los errores.
+
+   Una sola función para que la pareja no pueda separarse. Si mañana alguien
+   cambia el formato, cambia en los dos sitios a la vez o en ninguno. */
+function fmtVolumen(m3, dec) {
+  const n = cifra(m3);
+  if (n == null) return "—";
+  const d = dec == null ? 1 : dec;
+  return `${n.toFixed(d)} m³ (${cyDeM3(n).toFixed(d)} CY)`;
+}
 
 function diasEntre(a, b) {
   const d = (new Date(b + "T00:00:00Z") - new Date(a + "T00:00:00Z")) / 86400000;
@@ -285,10 +315,8 @@ function valorDeSublote(sublote, campo) {
      pantalla, no leyendo el código. Q-63, 8 ago 2026. */
   const v = [];
   for (const t of sublote.ensayos || []) {
-    const x = t[campo];
-    if (x === null || x === undefined || x === "") continue;
-    const n = Number(x);
-    if (Number.isFinite(n)) v.push(n);
+    const n = cifra(t[campo]);
+    if (n != null) v.push(n);
   }
   return v.length ? red(v.reduce((a, b) => a + b, 0) / v.length, 4) : null;
 }
@@ -664,7 +692,7 @@ function reporteDeLote(lote, opciones) {
       ${cab("Clase de hormigón", (o.limites && o.limites.ccs && o.limites.ccs.clase) || "—")}
       ${cab("Diseño de mezcla", lote.mezcla || "—")}
       ${cab("Período", fecha(lote.desde) + (lote.hasta !== lote.desde ? " – " + fecha(lote.hasta) : ""))}
-      ${cab("Hormigón colocado", n(lote.m3, 1) + " m³  (" + n(lote.cy, 1) + " CY)")}
+      ${cab("Hormigón colocado", fmtVolumen(lote.m3))}
       ${cab("Sub-lotes", lote.sublotes.length + " de 10" + (lote.parcial ? " — lote parcial" : ""))}
       ${cab("Camiones", lote.ensayos.length)}
     </table>

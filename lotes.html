@@ -80,7 +80,7 @@ main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
 <script src="assets/sync.js?v=426ef405"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/core.js?v=599c1133"></script>
-<script src="assets/sp934.js?v=d8bf8505"></script>
+<script src="assets/sp934.js?v=265feda9"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════════
    LOTES — M1 de la SP-934. Q-59, 8 de agosto de 2026.
@@ -191,7 +191,7 @@ function panelLote(l, cfgs) {
   for (let i = 0; i < porSub; i++) {
     const s = l.sublotes[i];
     const lleno = s && s.m3 >= SP934_SUBLOTE_M3 * 0.98;
-    tira += `<i class="${s ? (lleno ? "on" : "medio") : ""}" title="Sub-lote ${i + 1}${s ? ` · ${fmt(s.m3, 1)} m³ · ${s.ensayos.length} camión(es)` : " · vacío"}"></i>`;
+    tira += `<i class="${s ? (lleno ? "on" : "medio") : ""}" title="Sub-lote ${i + 1}${s ? ` · ${fmtVolumen(s.m3)} · ${s.ensayos.length} camión(es)` : " · vacío"}"></i>`;
   }
 
   return `<section class="panel lote">

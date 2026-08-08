@@ -1071,3 +1071,33 @@ Ahora un `null`, un `undefined` y una cadena vacía son huecos, y **un cero de
 verdad sigue siendo un dato**. Con prueba de las cuatro cosas y de que un lote
 sin resultados no se rechaza: no hay nada que juzgar todavía.
 
+## 40 · Las dos unidades, y una sola puerta para los números
+
+**Q-64 — 8 de agosto de 2026**
+
+La 934 mide en **metros cúbicos** —el lote son 250 y el sub-lote 25— y el
+conduce viene en **yardas**, que es como habla la obra. Enseñar solo una obliga
+a convertir de cabeza, y convertir de cabeza a media mañana es como se cuelan
+los errores.
+
+Las dos van siempre juntas, y por una sola función (`fmtVolumen`) para que la
+pareja no pueda separarse: si mañana alguien cambia el formato, cambia en los
+dos sitios a la vez o en ninguno.
+
+### Y la piedra con la que se tropieza dos veces
+
+`Number(null)` es **0**, y `Number.isFinite(0)` es **cierto**.
+
+Ese descuido rechazó un lote sano en Q-63. **Y volvió a colarse una hora
+después**, en `fmtVolumen`, recién escrita — con el arreglo anterior todavía
+fresco. Un `null` salía como «0.0 m³ (0.0 CY)».
+
+Dos veces en una hora no es mala suerte: es que la trampa está bien puesta. Así
+que deja de estar al alcance. **En `sp934.js` no se llama a `Number()` a
+pelo**: hay una sola puerta, `cifra()`, que devuelve `null` para `null`,
+`undefined` y la cadena vacía, y deja pasar un cero de verdad.
+
+Y una prueba que **barre todas las puertas de entrada** con los tres huecos, en
+vez de confiar en que alguien se acuerde. Ese bloque existe precisamente porque
+acordarse no funcionó.
+

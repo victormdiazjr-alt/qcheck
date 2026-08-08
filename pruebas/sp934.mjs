@@ -16,7 +16,7 @@ new Function(src + `
     sp934Lotes, sp934EvaluarLote, sp934LimitesCUW, SP934_CCS, m3DeCY, loteRechazado,
     sortearMuestreo, muestrasDelSorteo, verificarSorteo, generadorConSemilla,
     cilindrosDelLote, edadesDeRotura, vencimientosDeCilindro, estadoDeCilindros,
-    avisoLaboratorio, SP934_CILINDROS, proyeccionDeLote, valorDeSublote });
+    avisoLaboratorio, SP934_CILINDROS, proyeccionDeLote, valorDeSublote, fmtVolumen, cyDeM3, cifra, pwlDeLote });
 `).call(mod);
 
 let bien = 0, mal = 0;
@@ -296,6 +296,29 @@ ok(evSin.aqc.ccs.n === 0, "sin resultados de resistencia, n = 0");
 ok(evSin.aqc.ccs.pwl === null, "y no hay PWL que dar");
 ok(evSin.aqc.ccs.rechazado === false,
    "un lote sin resultados NO se rechaza: no hay nada que juzgar todavía");
+
+t("LAS DOS UNIDADES");
+ok(mod.fmtVolumen(250) === "250.0 m³ (327.0 CY)", `250 m³ → ${mod.fmtVolumen(250)}`);
+ok(mod.fmtVolumen(null) === "—", "sin dato, un guion — no un cero");
+ok(Math.abs(mod.cyDeM3(mod.m3DeCY(10)) - 10) < 1e-9, "convertir y volver da lo mismo");
+
+/* ═══ 12 · Ninguna puerta de entrada confunde un hueco con un cero ═══
+   Este bloque existe porque el mismo descuido se coló DOS veces en una hora:
+   una vez en `valorDeSublote` (Q-63, rechazó un lote sano) y otra en
+   `fmtVolumen` recién escrita (Q-64). `Number(null)` es 0 y
+   `Number.isFinite(0)` es cierto, así que el error es fácil y silencioso.
+   En vez de confiar en acordarse, se barren todas las puertas. */
+t("NINGÚN HUECO SE VUELVE CERO");
+for (const hueco of [null, undefined, ""]) {
+  const q = hueco === "" ? '""' : String(hueco);
+  ok(mod.cifra(hueco) === null, `cifra(${q}) es null`);
+  ok(mod.fmtVolumen(hueco) === "—", `fmtVolumen(${q}) es un guion`);
+  ok(mod.valorDeSublote({ ensayos: [{ x: hueco }] }, "x") === null, `valorDeSublote(${q}) es null`);
+  ok(mod.pwlDeLote([hueco, hueco, hueco], 1, 10).n === 0, `pwlDeLote con tres ${q} no cuenta ninguno`);
+}
+ok(mod.cifra(0) === 0, "pero un cero de verdad sigue siendo cero");
+ok(mod.cifra("3.5") === 3.5, "y un número en texto se lee");
+ok(mod.cifra("hola") === null, "y lo que no es número, null");
 
 console.log(`\n  ${bien} bien · ${mal} mal\n`);
 process.exit(mal ? 1 : 0);
