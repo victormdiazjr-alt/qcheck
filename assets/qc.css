@@ -857,3 +857,37 @@ body.con-sim-bar { padding-top: 40px; }
   margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .dinero-cab h2 { margin: 0; font-size: 17px; }
 .dinero-nota { font-size: 12px; margin: 12px 0 0; }
+
+/* La pantalla del pago — Q-74. */
+.pago-cab { display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.pago-cab h1 { font-size: 22px; font-weight: 300; letter-spacing: -.02em; margin: 0; }
+.pago-cab .spacer { flex: 1; }
+.pago-encurso { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.pago-encurso .spacer { flex: 1; }
+.pago-tres { display: flex; gap: 20px; }
+.pago-tres > div { text-align: right; }
+.pago-tres .k { display: block; font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ink-soft); font-weight: 800; }
+.pago-tres b { font-size: 20px; font-weight: 400; font-variant-numeric: tabular-nums; }
+
+/* Una fila por lote, con la barra hasta su factor. La marca del 1.000 es la
+   frontera entre cobrar entero y que te descuenten, así que se dibuja. */
+.pf-fila { display: grid; grid-template-columns: 150px 1fr 62px 96px; gap: 12px;
+  align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.pf-fila:last-of-type { border-bottom: 0; }
+.pf-n { font-size: 13px; font-weight: 600; }
+.pf-n span { display: block; font-size: 11px; font-weight: 400; }
+.pf-barra { position: relative; height: 9px; border-radius: 5px;
+  background: rgba(238,242,246,.07); overflow: visible; }
+.pf-relleno { height: 100%; border-radius: 5px; }
+.pf-relleno.ok { background: var(--ok); }
+.pf-relleno.act { background: var(--act); }
+.pf-uno { position: absolute; top: -3px; width: 1.5px; height: 15px;
+  background: var(--ink-soft); opacity: .75; }
+.pf-f { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; }
+.pf-e { text-align: right; }
+@media (max-width: 640px) {
+  .pf-fila { grid-template-columns: 1fr auto; }
+  .pf-barra { grid-column: 1 / -1; }
+}

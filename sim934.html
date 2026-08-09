@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>QCheck 934 — Simulación</title>
-<link rel="stylesheet" href="assets/qc.css?v=73e8ccf1">
+<link rel="stylesheet" href="assets/qc.css?v=2badcced">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%234a63d8' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -109,7 +109,9 @@ const SIM_ROLES = {
   concretera:  { n: "Concre-Tech", q: "Concretera", ico: "🏭" },
 };
 
-const simRol = (new URLSearchParams(location.search).get("rol") || "ruben");
+const simParams = new URLSearchParams(location.search);
+const simRol = simParams.get("rol") || "ruben";
+const simVista = simParams.get("v") || "";
 
 /* LO INTERNO SE VE POR CUENTA, NO POR PANTALLA — Q-68, 8 ago 2026.
 
@@ -302,12 +304,32 @@ function simPanelRuben() {
     </section>`;
 }
 
-/* TODO EL DINERO, EN UN SITIO — Q-69.
+/* ══════════════════════════════════════════════════════════════════════════
+   LA PANTALLA DEL PAGO — Q-74, 8 de agosto de 2026.
 
-   Lotes, PWL, factores individuales y compuesto, proyección y lo que falta
-   para cerrar. Una sola puerta, y con la marca de la 934 encima: nada de esto
-   existe en un proyecto que no se acepte bajo la norma. */
-function verDinero() {
+   Pantalla completa, no una ficha encima. Aquí está **todo** lo que tiene que
+   ver con el dinero del contrato: el estado, lote por lote, el histórico y los
+   reportes que se firman.
+
+   Es pantalla y no ventana emergente porque una ficha se lee de pie y esto se
+   estudia sentado: es la conversación de cuánto se cobra, y se compara,
+   se imprime y se lleva a una reunión.
+
+   Sale de los mismos números que la 934 exige y de ningún otro sitio. Aquí no
+   hay estimaciones comerciales: si un lote no tiene factor todavía, se dice
+   que no lo tiene.
+   ══════════════════════════════════════════════════════════════════════════ */
+function panelPago() {
+  /* Quitar el botón no basta: quien escriba la dirección entraría igual. Los
+     factores de pago son entre el contratista y la Autoridad, y una regla que
+     solo vive en un botón no es una regla — es una sugerencia. Q-74. */
+  if (simRol === "concretera") {
+    return `<section class="panel"><div class="panel-body">
+      <p>Los factores de pago son entre el contratista y la Autoridad de Carreteras.</p>
+      <p class="muted">La concretera ve la calidad de su mezcla, que es lo que puede corregir.</p>
+      <div class="lote-acciones"><a class="btn small" href="sim934.html?rol=concretera">← Volver</a></div>
+    </div></section>`;
+  }
   const cfgs = simLimites();
   const ls = simLotes();
   const enCurso = ls[ls.length - 1];
@@ -315,47 +337,118 @@ function verDinero() {
   const cerrados = ls.filter((l) => !l.parcial).map((l) => ({ l, ev: sp934EvaluarLote(l, cfgs) }));
   const i = indicador7();
 
-  const cuerpo = `
-    <div class="dinero-cab">
-      <h2>Pago del contrato</h2>${m934()}
+  /* El factor medio se pesa por VOLUMEN, no por número de lotes: un lote de
+     250 m³ que descuenta pesa lo mismo que uno que bonifica solo si los dos
+     tienen el mismo tamaño, y los lotes parciales no lo tienen. */
+  const m3Cerrado = cerrados.reduce((a, c) => a + c.l.m3, 0);
+  const medio = m3Cerrado
+    ? cerrados.reduce((a, c) => a + c.ev.cpaf * c.l.m3, 0) / m3Cerrado : null;
+
+  const barra = (f) => {
+    /* De 0.85 a 1.05, que es el rango que la 934 puede dar. La línea del 1.000
+       está dibujada porque es la frontera entre cobrar y que te descuenten. */
+    const min = 0.85, max = 1.05;
+    const pct = Math.max(0, Math.min(1, (f - min) / (max - min))) * 100;
+    const uno = ((1 - min) / (max - min)) * 100;
+    return `<div class="pf-barra">
+      <div class="pf-relleno ${f >= 1 ? "ok" : "act"}" style="width:${pct}%"></div>
+      <div class="pf-uno" style="left:${uno}%" title="1.000 — se cobra a precio"></div>
+    </div>`;
+  };
+
+  return `
+    <div class="pago-cab">
+      <a class="btn small" href="sim934.html?rol=${simRol}">← Volver</a>
+      <div><h1>Pago del contrato</h1>
+        <div class="muted">${esc(S.project.name)} · ${esc(S.project.contractId)}</div></div>
       <div class="spacer"></div>
-      <span class="muted">${esc(S.project.name)}</span>
+      ${m934()}
     </div>
 
-    <h3 style="font-size:13px;margin:0 0 8px">Lote ${enCurso.n} — en curso</h3>
-    ${proy.cpaf.ahora != null ? `
-      <div class="proy-cifras">
-        <div class="proy-c suelo"><div class="lbl2">Suelo</div><div class="v">${fmt(proy.cpaf.suelo, 3)}</div></div>
-        <div class="proy-c ahora"><div class="lbl2">Con lo que hay</div><div class="v">${fmt(proy.cpaf.ahora, 3)}</div></div>
-        <div class="proy-c techo"><div class="lbl2">Techo</div><div class="v">${fmt(proy.cpaf.techo, 3)}</div></div>
-      </div>`
-    : `<p>El factor de este lote <b>no existe todavía</b>: la 934 lo calcula con las roturas
-       a <b>28 días</b> y este hormigón se está colocando hoy. Se sabrá el <b>5 sep 2026</b>.</p>
-       <p class="muted dinero-nota">Señal a 7 días: <b>${i.media != null ? fmt(i.media, 0) : "—"} psi</b>
-       en ${i.n} juegos rotos, el ${i.sobre != null ? fmt(i.sobre * 100, 0) : "—"} % del diseño.
-       A 7 días la norma no juzga; solo dice si la mezcla va por donde debe.</p>`}
+    <div class="grid cols-3" style="margin-bottom:16px">
+      ${simStat("Factor medio del contrato", medio != null ? fmt(medio, 3) : "—",
+             `ponderado por volumen · ${fmt(m3Cerrado, 0)} m³ evaluados`,
+             medio == null ? "" : medio >= 1 ? "z-ok" : "z-act")}
+      ${simStat("Lotes evaluados", `${cerrados.length} <span style="font-size:14px">de ${ls.length}</span>`,
+             `${ls.length - cerrados.length} en curso`)}
+      ${simStat("Efecto sobre el precio",
+             medio != null ? (medio >= 1 ? "+" : "") + fmt((medio - 1) * 100, 1) + " %" : "—",
+             "sobre el hormigón ya evaluado",
+             medio == null ? "" : medio >= 1 ? "z-ok" : "z-act")}
+    </div>
 
-    <h3 style="font-size:13px;margin:20px 0 8px">Lotes cerrados</h3>
-    <div class="tabla-ancha"><table class="data"><thead><tr>
-      <th class="n">Lote</th><th>Período</th><th class="n">Hormigón</th>
-      <th class="n">PWL</th><th class="n">Factor</th><th>Efecto</th>
-    </tr></thead><tbody>
-      ${cerrados.map(({ l, ev }) => `<tr>
-        <td class="n mono">${l.n}</td><td>${esc(fmtDate(l.desde))}</td>
-        <td class="n mono">${fmt(l.m3, 1)} m³</td>
-        <td class="n mono">${fmt(ev.aqc.ccs.pwl, 1)} %</td>
-        <td class="n mono"><b class="${ev.cpaf >= 1 ? "z-ok" : "z-act"}">${fmt(ev.cpaf, 3)}</b></td>
-        <td>${ev.cpaf > 1 ? `<span class="badge ok">bonificación</span>`
-             : ev.cpaf === 1 ? `<span class="muted">a precio</span>`
-             : `<span class="badge act">descuento</span>`}</td></tr>`).join("")}
-    </tbody></table></div>
-    <p class="muted dinero-nota">El factor multiplica el precio unitario por el tamaño del lote.
-    ${cerrados.some(({ ev }) => ev.cpaf < 1)
-      ? `El lote ${cerrados.find(({ ev }) => ev.cpaf < 1).l.n} paga
-         ${fmt((1 - cerrados.find(({ ev }) => ev.cpaf < 1).ev.cpaf) * 100, 1)} % menos: en 250 m³ eso no es un matiz.`
-      : ""}</p>`;
+    <h2 class="seccion">Lote en curso</h2>
+    <section class="panel es934"><div class="panel-body">
+      <div class="pago-encurso">
+        <div><b>Lote ${enCurso.n}</b>
+          <div class="muted">${enCurso.sublotes.length} de 10 sub-lotes · ${fmtVolumen(enCurso.m3)}</div></div>
+        <div class="spacer"></div>
+        ${proy.cpaf.ahora != null
+          ? `<div class="pago-tres">
+              <div><span class="k">Suelo</span><b>${fmt(proy.cpaf.suelo, 3)}</b></div>
+              <div><span class="k">Ahora</span><b>${fmt(proy.cpaf.ahora, 3)}</b></div>
+              <div><span class="k">Techo</span><b>${fmt(proy.cpaf.techo, 3)}</b></div>
+             </div>`
+          : `<div class="muted">Sin factor hasta las roturas de 28 días</div>`}
+      </div>
+      ${proy.cpaf.ahora == null ? `
+        <p style="margin:12px 0 0">El factor de este lote <b>no existe todavía</b>: la 934 lo
+        calcula con las roturas a <b>28 días</b> y este hormigón se está colocando hoy.
+        Se sabrá el <b>5 de septiembre de 2026</b>.</p>
+        <p class="muted dinero-nota">Señal a 7 días: <b>${i.media != null ? fmt(i.media, 0) : "—"} psi</b>
+        en ${i.n} juegos, el ${i.sobre != null ? fmt(i.sobre * 100, 0) : "—"} % del diseño.
+        A 7 días la norma no juzga.</p>` : ""}
+    </div></section>
 
-  simFicha("Pago del contrato", cuerpo);
+    <h2 class="seccion">Histórico de lotes</h2>
+    <section class="panel"><div class="panel-body">
+      ${cerrados.map(({ l, ev }) => `
+        <div class="pf-fila">
+          <div class="pf-n">Lote ${l.n}<span class="muted">${esc(fmtDate(l.desde))}</span></div>
+          ${barra(ev.cpaf)}
+          <div class="pf-f ${ev.cpaf >= 1 ? "z-ok" : "z-act"}">${fmt(ev.cpaf, 3)}</div>
+          <div class="pf-e">${ev.cpaf > 1 ? `<span class="badge ok">bonifica</span>`
+            : ev.cpaf === 1 ? `<span class="muted">a precio</span>`
+            : `<span class="badge act">descuenta</span>`}</div>
+        </div>`).join("")}
+      <p class="muted dinero-nota">La marca vertical es el <b>1.000</b>: a la derecha se
+      bonifica, a la izquierda se descuenta. El factor multiplica el precio unitario por el
+      tamaño del lote.</p>
+    </div></section>
+
+    <h2 class="seccion">Detalle por característica</h2>
+    <section class="panel"><div class="panel-body">
+      <div class="tabla-ancha"><table class="data"><thead><tr>
+        <th class="n">Lote</th><th>Característica</th><th class="n">n</th>
+        <th class="n">Media</th><th class="n">s</th><th class="n">PWL</th><th class="n">Factor</th>
+      </tr></thead><tbody>
+        ${cerrados.map(({ l, ev }) => Object.entries(ev.aqc).map(([k, r], j) => `<tr>
+          <td class="n mono">${j === 0 ? l.n : ""}</td>
+          <td>${esc(cfgs[k].n)}<div class="muted" style="font-size:11px">${esc(cfgs[k].u)}</div></td>
+          <td class="n mono">${r.n}</td><td class="n mono">${fmt(r.media, 1)}</td>
+          <td class="n mono">${fmt(r.s, 2)}</td>
+          <td class="n"><b class="z-${r.pwl >= 90 ? "ok" : r.pwl >= 60 ? "act" : "susp"}">${fmt(r.pwl, 1)} %</b></td>
+          <td class="n mono">${fmt(r.paf, 3)}</td></tr>`).join("")).join("")}
+      </tbody></table></div>
+      <p class="muted dinero-nota">El factor compuesto sale de estos: ${cfgs.cp
+        ? "0.45 · resistencia + 0.45 · permeabilidad + 0.10 · Unit Weight"
+        : "0.90 · resistencia + 0.10 · Unit Weight — este proyecto no inspecciona permeabilidad"}.</p>
+    </div></section>
+
+    <h2 class="seccion">Reportes</h2>
+    <section class="panel"><div class="panel-body">
+      <p class="muted">El reporte de lote lleva el cálculo entero —media, desviación, índices
+      de calidad y porcentajes parciales— para que quien firme pueda rehacerlo. Y el sorteo del
+      muestreo con su semilla.</p>
+      <div class="lote-acciones">
+        ${cerrados.map(({ l }) => `<button class="btn small"
+          onclick="alert('Reporte del lote ${l.n} — en la aplicación sale a impresora o PDF.')">
+          Reporte del lote ${l.n}</button>`).join("")}
+        <button class="btn small"
+          onclick="alert('Resumen del contrato — un documento con todos los lotes y el factor ponderado.')">
+          Resumen del contrato</button>
+      </div>
+    </div></section>`;
 }
 
 function simFicha(titulo, cuerpo) {
@@ -537,14 +630,14 @@ function botonDinero() {
   /* Icono de trazo, no un signo de texto: en QCheck todos los iconos son SVG
      con el mismo grosor de línea, y un glifo tipográfico canta al lado. El
      dólar se dibuja como se dibuja — una S con la barra vertical pasada. */
-  return `<button class="dinero" onclick="verDinero()"
+  return `<a class="dinero" href="sim934.html?rol=${simRol}&v=pago"
     title="Pago del contrato — SP-934" aria-label="Pago del contrato">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M12 3.5v17"/>
       <path d="M16 7.6c-.5-1.5-2-2.4-4-2.4-2.3 0-3.9 1.1-3.9 2.9 0 1.7 1.3 2.5 4 3.1
                2.9.6 4.3 1.5 4.3 3.4 0 2-1.8 3.2-4.3 3.2-2.3 0-3.9-1-4.4-2.7"/>
-    </svg></button>`;
+    </svg></a>`;
 }
 
 function simCabeceraRol() {
@@ -561,7 +654,8 @@ function simRender() {
   document.getElementById("t-titulo").textContent = "QCheck 934";
   document.getElementById("t-sub").textContent = S.project.name;
   document.getElementById("app").innerHTML =
-    simRol === "autoridad" ? simPanelAutoridad()
+    simVista === "pago" ? panelPago()
+    : simRol === "autoridad" ? simPanelAutoridad()
     : simRol === "contratista" ? simPanelContratista()
     : simRol === "concretera" ? simPanelConcretera()
     : simPanelRuben();

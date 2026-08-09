@@ -1410,3 +1410,35 @@ La lección no es de este botón: **un elemento nuevo no se diseña solo, se
 diseña contra lo que ya existe.** Si hay que mirarlo dos veces para saber si
 pertenece a la misma aplicación, no pertenece.
 
+## 50 · La pantalla del pago
+
+**Q-74 — 8 de agosto de 2026**
+
+El botón `$` deja de abrir una ficha y **lleva a una pantalla completa**. Una
+ficha se lee de pie; esto se estudia sentado: es la conversación de cuánto se
+cobra, y se compara, se imprime y se lleva a una reunión.
+
+Lleva cuatro cosas:
+
+  · **El estado del contrato** — factor medio **ponderado por volumen**, no por
+    número de lotes: un lote que descuenta pesa lo que pesa su hormigón.
+  · **El lote en curso**, con suelo, ahora y techo — o con la fecha en que se
+    sabrá, si todavía no hay roturas de 28 días.
+  · **El histórico**, una barra por lote con la marca del **1.000** dibujada:
+    es la frontera entre cobrar entero y que te descuenten, y verla convierte
+    una tabla de números en una lectura de un vistazo.
+  · **El detalle por característica y los reportes** que se firman.
+
+De aquí no sale ninguna estimación comercial. Si un lote no tiene factor
+todavía, dice que no lo tiene.
+
+### Una regla que solo vive en un botón no es una regla
+
+La concretera no tiene el botón del dinero desde Q-71. Pero **escribiendo la
+dirección entraba igual**: la puerta estaba cerrada y la pared no existía.
+
+Ahora la pantalla misma se niega y explica por qué. La lección va más allá de
+esta pantalla: **esconder el acceso no es controlarlo**, y en cuanto una regla
+importa —y aquí importa: son los factores de pago entre el contratista y la
+Autoridad— tiene que estar donde se decide, no donde se pulsa.
+
