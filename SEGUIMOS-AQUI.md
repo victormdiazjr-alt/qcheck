@@ -11,9 +11,12 @@ momento y el código es lo que corre.
 ## 1 · Lo que pasó hoy y hay que saber
 
 **QCheck corrió su primer vaciado en vivo** en la PR-52. **Y Rubén no pudo
-usarlo** — va a entrar los datos a mano hoy o mañana. **Nadie sabe todavía por
-qué no pudo.** Esa es la pregunta más importante que hay abierta, y es de
-Víctor: hasta que no diga qué le falló, no se puede arreglar.
+usarlo.**
+
+**RESUELTO (9 ago 2026, Víctor):** no falló nada. **Rubén no pudo ir al tiro.**
+No hubo error, ni de entrada, ni de cámara, ni de sesión — sencillamente no
+estuvo allí. No hay nada que arreglar por este lado: QCheck sigue sin estrenarse
+en vivo, que no es lo mismo que haber fallado.
 
 El expediente de producción lo confirma: el último cambio de un camión es del
 **7 de agosto**, y **ningún camión lleva `source: "foto"`** — el lector no ha
@@ -56,7 +59,9 @@ urgente.
 
 ## 4 · Lo que queda abierto
 
-1. **Preguntarle a Víctor por qué Rubén no pudo usar QCheck.** Lo primero.
+1. ~~Preguntarle a Víctor por qué Rubén no pudo usar QCheck.~~ **Cerrado:** no
+   falló nada, Rubén no pudo ir al tiro. Queda pendiente **estrenar QCheck en un
+   vaciado de verdad**, con alguien delante.
 2. **El candado del navegador (CSP)** para que el lector de QR tampoco pueda
    hablar con nadie. Ver `DECISIONS` §57.
 3. **El lector de QR nuestro**, y borrar jsQR. Repartido con QTicket: la
@@ -67,7 +72,13 @@ urgente.
 5. **Sin demostrar**: que el lector use los nombres del esquema al marcar un
    campo manuscrito. Hace falta un conduce con, por ejemplo, el número de
    conduce escrito a mano.
-6. **La llave del proyecto**, quemada desde el 8 de agosto.
+6. ~~La llave del proyecto, quemada desde el 8 de agosto.~~ **Cambiada el 9 de
+   agosto** (`DECISIONS` §59). Quedan por cambiar el **secreto de
+   administración** (`QC_ADMIN`) y **las claves de los usuarios**, que también
+   se vieron. `QC_ADMIN` no deja fuera a nadie: es el más barato.
+7. **Repartir el enlace nuevo** a Rubén y al técnico. Está en
+   `datos/enlace-conexion.txt`. Hasta que lo abran, sus aparatos no hablan con
+   el servidor.
 
 ## 5 · Dos errores míos de esta noche, para que no se repitan
 

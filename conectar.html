@@ -199,9 +199,24 @@ function probar(alGuardar) {
          contesta a cualquiera, así que se pide algo que sí esté protegido.
          Guardar una llave mal escrita y descubrirlo en obra es el fallo que
          esta pantalla existe para evitar. */
-      return fetch(api + "/api/cambios?desde=999999999", { headers: cab }).then((r2) => {
-        if (r2.status === 401) { decir("mal", "La llave no es la de este proyecto."); elKey.focus(); return; }
-        if (!r2.ok) throw new Error("http " + r2.status);
+      return fetch(api + "/api/cambios?desde=999999999", { headers: cab }).then(async (r2) => {
+        /* UN 401 NO SIGNIFICA SIEMPRE «LLAVE MALA», y confundirlos dejaba el
+           aparato sin poder conectarse. Los dos servidores distinguen en el
+           cuerpo:
+             error "token"  → la llave no pasó la puerta. Es llave mala.
+             error "sesion" → la llave SÍ pasó, y el servidor solo quiere que
+                              alguien entre con su clave. Eso es justo lo
+                              siguiente que pasa en `index.html`.
+           Desde que `exigir_sesion` se encendió (8 ago 2026), esta ruta
+           contesta «sesion» a todo aparato recién conectado, así que la
+           pantalla llamaba mala a la llave buena y se negaba a guardarla.
+           Q-86, 9 ago 2026. */
+        if (r2.status === 401) {
+          const cuerpo = await r2.json().catch(() => ({}));
+          if (cuerpo.error !== "sesion") {
+            decir("mal", "La llave no es la de este proyecto."); elKey.focus(); return;
+          }
+        } else if (!r2.ok) throw new Error("http " + r2.status);
         decir("ok", `Servidor al habla · ${s.cambios} cambios guardados`);
         if (alGuardar) guardarYa(api, llave);
       });

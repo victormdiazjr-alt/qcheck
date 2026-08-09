@@ -1828,3 +1828,67 @@ Lo que se probó: que los dos pases mueren, que el que echa lo cuenta, que se
 puede volver a entrar con la clave y sin enlace nuevo, que sin el secreto de
 administración da 403 y no echa a nadie, y que con `exigir_sesion` encendido la
 llave sola ya no escribe.
+
+## 59 · La llave quemada, cambiada — y la pantalla de conectar, que estaba rota
+
+**Q-86 — 9 de agosto de 2026**
+
+La llave del proyecto quedó a la vista de internet el 8 de agosto (§54). Víctor
+decidió aquel día no cambiarla todavía, para no dejar fuera a Rubén y al técnico
+la noche antes del vaciado: «cuando terminemos pruebas la cambiamos». Ese
+momento llegó, y se cambió.
+
+    npx wrangler secret put QC_TOKEN
+
+**Comprobado contra producción**, que es lo único que cuenta: contra
+`/api/cambios`, la llave vieja da `401 {"error":"token"}` y la nueva pasa la
+puerta y contesta `401 {"error":"sesion"}` — que es lo correcto con
+`exigir_sesion` encendido. `/api/salud` **no sirve para probar una llave**:
+contesta a cualquiera a propósito, para que un aparato sepa si el servidor pide
+sesión antes de enseñar la pantalla de acceso.
+
+### Y aquí salió lo de verdad importante
+
+Al ir a probar el enlace nuevo, `conectar.html` llamaba **mala a la llave
+buena** y se negaba a guardarla. O sea: **desde que se encendió `exigir_sesion`,
+ningún aparato podía conectarse.** No se había notado porque nadie necesitaba
+enlace nuevo (§58) — el fallo estaba dormido esperando justo a este día.
+
+La pantalla comprueba la llave pidiendo algo protegido y miraba solo el número:
+
+    if (r2.status === 401) → «La llave no es la de este proyecto»
+
+Pero un 401 tiene dos motivos distintos, y el cuerpo los separa —igual en los
+dos servidores:
+
+- `{"error":"token"}` → la llave no pasó la puerta. Es llave mala.
+- `{"error":"sesion"}` → la llave **sí** pasó, y el servidor solo quiere que
+  alguien entre con su clave. Que es exactamente lo siguiente que pasa.
+
+Ahora se mira el cuerpo, no el número.
+
+### Lo que hay que llevarse de aquí
+
+- **Un código de estado no es un diagnóstico.** El mismo 401 quería decir «vete»
+  y «casi, ahora identifícate». Juntarlos costó tener la puerta cerrada por
+  fuera sin saberlo.
+- **Encender una bandera rompe cosas lejos de donde se enciende.** `exigir_sesion`
+  se tocó en el servidor y quien se rompió fue una pantalla que nadie miró.
+- **Lo dormido se despierta en el peor momento.** Este fallo llevaba un día
+  puesto y eligió aparecer el día que había que repartir enlaces nuevos.
+
+### Comprobado
+
+En pantalla, contra el servidor de producción y con el enlace de verdad:
+
+- Con la llave nueva → «Servidor al habla · 884 cambios guardados», guarda la
+  llave y el servidor, y pasa a `index.html`.
+- Con la llave vieja, la quemada → «La llave no es la de este proyecto», y **no**
+  guarda nada. El aviso que tiene que saltar, sigue saltando.
+
+### Lo que queda
+
+El **secreto de administración** (`QC_ADMIN`) y **las claves de los usuarios**
+también quedaron a la vista el 8 de agosto, y siguen sin cambiar. `QC_ADMIN` no
+deja fuera a nadie al cambiarlo —solo lo usa Víctor con `node cuentas.js`—, así
+que es el más barato de los tres.
