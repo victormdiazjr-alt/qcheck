@@ -1785,3 +1785,46 @@ código dudoso se rechaza y se pide otra foto. Que es exactamente la regla de la
 casa: **un hueco es mejor que un número equivocado.**
 
 El día que ese lector exista, `qr-lector.js` se borra y §56 se cierra.
+
+## 58 · El botón de echar a todo el mundo
+
+**Q-85 — 9 de agosto de 2026**
+
+Víctor: «bota a todo el mundo y que todos tengan que volver a entrar».
+
+Y ahí había una diferencia que no estaba dicha en ningún sitio, y que importa:
+
+- **Desconectar un aparato** (Q-77) le quita también la llave del proyecto. Para
+  volver hace falta **el enlace de conexión**. Es el botón de «fuera».
+- **Cerrar las sesiones** solo tira los pases. Todos vuelven tecleando su clave,
+  y **no hay que repartir ningún enlace nuevo**. Es el botón de «otra vez».
+
+Lo que pedía Víctor era lo segundo, y no existía.
+
+### Por qué hace falta tenerlo
+
+Es el botón de después de un susto: una llave filtrada, un aparato perdido,
+alguien que ya no trabaja aquí. Sin él, la única manera de echar a todo el mundo
+era desconectar aparato por aparato y volver a repartir el enlace a cada uno.
+
+Y hoy hace falta de verdad: la llave del proyecto se publicó sin querer el 8 de
+agosto (§54). Con `exigir_sesion` apagado, esa llave sola basta para escribir en
+el expediente. **Encenderlo y cerrar las sesiones tapa casi todo ese riesgo sin
+tocar la llave** — que es más barato y menos molesto que cambiarla.
+
+### Quién puede
+
+El secreto de administración, no la llave del proyecto. Una sesión de QC
+tampoco vale: probado que devuelve 403 y que no se echa a nadie. Echar a todo el
+mundo es cosa de Víctor, igual que dar de alta cuentas.
+
+### Comprobado
+
+`pruebas/echar-a-todos.mjs` —contra el servidor de verdad, sobre una carpeta de
+usar y tirar— y cuatro casos más en `servidores-iguales.mjs`, que ahora son 44
+con una sola divergencia, la de diseño.
+
+Lo que se probó: que los dos pases mueren, que el que echa lo cuenta, que se
+puede volver a entrar con la clave y sin enlace nuevo, que sin el secreto de
+administración da 403 y no echa a nadie, y que con `exigir_sesion` encendido la
+llave sola ya no escribe.

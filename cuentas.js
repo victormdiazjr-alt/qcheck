@@ -13,6 +13,7 @@
      node cuentas.js alta ruben
      node cuentas.js exigir-sesion on
      node cuentas.js exigir-sesion off
+     node cuentas.js cerrar-sesiones        ← echa a todos; vuelven con su clave
 
    QUÉ HACE FALTA TENER PUESTO
 
@@ -133,6 +134,29 @@ async function main() {
       console.log(`  ${u.usr.padEnd(12)} ${String(u.nombre).padEnd(22)} ${marcas}`);
     }
     console.log(`\n  exigir sesión: ${d.exigir_sesion ? "SÍ — sin pase no se escribe" : "no — todavía se acepta la llave sola"}\n`);
+    return;
+  }
+
+  /* ECHAR A TODO EL MUNDO — Q-85.
+
+     Cierra todas las sesiones abiertas. Nadie pierde su cuenta ni su clave:
+     todos vuelven a entrar tecleándola. **NO les quita la llave del proyecto**,
+     así que no hay que repartir ningún enlace nuevo — esa es la diferencia con
+     desconectar un aparato desde Estado del sistema.
+
+     Es el botón de después de un susto: una llave filtrada, un aparato
+     perdido, alguien que ya no trabaja aquí. */
+  if (orden === "cerrar-sesiones") {
+    const d = await pedir("/api/cuentas");
+    const qc = d.usuarios.filter((u) => u.rol === "qc" && u.activo).map((u) => u.usr);
+    console.log("\n  Se van a cerrar TODAS las sesiones abiertas.");
+    console.log("  Todos tendrán que entrar otra vez con su usuario y su clave.");
+    console.log(`  Nadie pierde la cuenta: siguen dentro ${qc.length} de QC (${qc.join(", ")}) y las de consulta.`);
+    console.log("  NO se les quita la llave del proyecto — no hay que repartir enlaces nuevos.\n");
+    const si = await preguntarClave("  Escribe SI para confirmar: ");
+    if (si.trim().toUpperCase() !== "SI") morir("no se tocó nada.");
+    const r = await pedir("/api/cuentas", "POST", { cerrar_sesiones: true });
+    console.log(`\n  ✓ ${r.cerradas} sesión(es) cerradas. Todos vuelven a entrar con su clave.\n`);
     return;
   }
 

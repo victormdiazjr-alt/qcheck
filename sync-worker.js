@@ -293,6 +293,13 @@ export default {
         let d;
         try { d = await req.json(); } catch (_) { return json({ error: "json" }, 400); }
 
+        /* Todas las sesiones a la basura — Q-85. El botón de después de un
+           susto. No les quita la llave del proyecto: todos vuelven a entrar
+           con su clave y no hay que repartir ningún enlace nuevo. */
+        if (d.cerrar_sesiones === true) {
+          const r = await env.DB.prepare("DELETE FROM sesiones").run();
+          return json({ ok: true, cerradas: (r.meta && r.meta.changes) || 0 });
+        }
         if (d.exigir_sesion != null) {
           await env.DB.prepare(
             "INSERT INTO ajustes (clave, valor) VALUES ('exigir_sesion', ?) " +

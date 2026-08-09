@@ -65,6 +65,12 @@ const CASOS = [
   ["desconectar desconocido",      "/api/desconectar", { m: "POST", cuerpo: { dev: "no-existe" }, mira: ["conocido"] }],
   ["latido tras desconectar",      "/api/latido", { m: "POST", cuerpo: { dev: "d1", usr: "x", pagina: "index.html" }, mira: ["fuera"] }],
   ["latido de después",            "/api/latido", { m: "POST", cuerpo: { dev: "d1", usr: "x", pagina: "index.html" }, mira: ["fuera"] }],
+  /* Echar a todo el mundo — Q-85. Va al final: cierra las sesiones que
+     abrieron los casos de arriba, así que si se pusiera antes las tumbaría. */
+  ["cerrar sesiones sin admin",    "/api/cuentas", { m: "POST", cuerpo: { cerrar_sesiones: true } }],
+  ["cerrar sesiones admin malo",   "/api/cuentas", { m: "POST", cab: { "X-QC-Admin": "no" }, cuerpo: { cerrar_sesiones: true } }],
+  ["cerrar sesiones ok",           "/api/cuentas", { m: "POST", cab: { "X-QC-Admin": AD }, cuerpo: { cerrar_sesiones: true }, mira: ["ok"] }],
+  ["cerrar sesiones valor falso",  "/api/cuentas", { m: "POST", cab: { "X-QC-Admin": AD }, cuerpo: { cerrar_sesiones: false } }],
 ];
 
 console.log("\n  CASO                              LOCAL         WORKER        ¿IGUAL?\n" + "  " + "─".repeat(74));

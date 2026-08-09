@@ -31,11 +31,12 @@ npx wrangler d1 execute DB --local -c wrangler.toml --command "UPDATE ajustes SE
 node pruebas/servidores-iguales.mjs    # 40 casos a los dos, comparando respuesta
 node pruebas/candado-de-sesion.mjs     # exigir_sesion de punta a punta
 node pruebas/desconectar-aparato.mjs   # Q-77, y este no necesita nada levantado
+node pruebas/echar-a-todos.mjs         # Q-85, tampoco necesita nada levantado
 ```
 
 Lo que se espera: `servidores-iguales` saca **una sola divergencia y es de diseño**
 (fuera de `/api/` el servidor local sirve archivos y el Worker no). Cualquier otra hay
-que mirarla. `candado-de-sesion` y `desconectar-aparato` salen enteros en verde.
+que mirarla. `candado-de-sesion`, `desconectar-aparato` y `echar-a-todos` salen enteros en verde.
 
 Si el 8461 ya está ocupado por un servidor de verdad, se levanta el de prueba en otro
 puerto y se le dice a la batería por dónde entrar — es mejor que tumbar el que alguien

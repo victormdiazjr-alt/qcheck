@@ -293,6 +293,21 @@ function crearCuentas(dir) {
       return this.ficha(u);
     },
 
+    /* Todas las sesiones de todo el mundo, a la basura — Q-85.
+
+       Es el botón de después de un susto: una llave filtrada, un aparato
+       perdido, alguien que ya no trabaja aquí. Nadie pierde la cuenta ni la
+       clave — todos vuelven a entrar tecleándola.
+
+       NO les quita la llave del proyecto, y esa es la diferencia con
+       `cerrarAparato`: aquí no hace falta repartir ningún enlace nuevo. */
+    cerrarTodas() {
+      const n = Object.keys(sesiones).length;
+      sesiones = {};
+      guardarS();
+      return n;
+    },
+
     async salir(token) {
       if (!token) return;
       delete sesiones[await huella(token)];
@@ -578,6 +593,11 @@ function montarAPI(almacen, token, opciones) {
         if (d.exigir_sesion != null) {
           cuentas.ponerAjuste("exigir_sesion", !!d.exigir_sesion);
           return responder(res, 200, { ok: true, exigir_sesion: cuentas.exigeSesion() });
+        }
+        /* Q-85. Va detrás del secreto de administración, no de la llave del
+           proyecto: echar a todo el mundo es cosa de Víctor. */
+        if (d.cerrar_sesiones === true) {
+          return responder(res, 200, { ok: true, cerradas: cuentas.cerrarTodas() });
         }
         try {
           const usr = await cuentas.guardar(d);
