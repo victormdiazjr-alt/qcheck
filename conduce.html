@@ -512,6 +512,23 @@ function applyScan(raw) {
   toast("Conduce escaneado — verifique y registre");
 }
 
+/* «06:18», «6:18», «10:54AM», «1:05 p.m.» → «06:18» / «13:05». Lo que no se
+   entienda vuelve null y el campo se queda vacío. */
+function horaDe24(v) {
+  const s = String(v ?? "").trim().toUpperCase().replace(/[\s.]/g, "");
+  const m = s.match(/^(\d{1,2}):(\d{2})(AM|PM)?$/);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2]);
+  if (min > 59) return null;
+  if (m[3]) {
+    if (h < 1 || h > 12) return null;
+    if (m[3] === "PM" && h !== 12) h += 12;
+    if (m[3] === "AM" && h === 12) h = 0;
+  } else if (h > 23) return null;
+  return String(h).padStart(2, "0") + ":" + m[2];
+}
+
 /* Vuelca la ficha que mandó QTicket en el formulario — Q-82.
 
    Solo campos conocidos, y ninguno se da por bueno: esto rellena para que el
@@ -522,7 +539,18 @@ function rellenarDelConduce(d, eticketId) {
   pon("f-ticket", d.ticket);
   pon("f-truck", d.truck);
   pon("f-vol", d.vol);
-  if (d.batch && /^\d{1,2}:\d{2}$/.test(String(d.batch))) pon("f-batch", String(d.batch).padStart(5, "0"));
+  /* La hora, en 24 horas — Q-83.
+
+     El contrato §3 dice `HH:MM` y QTicket manda `10:54AM`. Cuando se probó de
+     verdad contra su servidor, esa hora se PERDÍA EN SILENCIO: no casaba con el
+     formato, se descartaba, y nadie se enteraba. Un dato que desaparece sin
+     ruido es peor que uno que no llega.
+
+     Se avisa a QTicket para que lo mande como dice el contrato, y mientras
+     tanto se acepta lo que de verdad llega: el papel de la concretera lo
+     imprime en 12 horas y esa es la costumbre del oficio. Lo que no se entienda
+     se deja vacío, no se adivina. */
+  pon("f-batch", horaDe24(d.batch));
   document.getElementById("f-arrive").value = nowHM();
   /* El identificador de QTicket viaja con el camión: es lo único que permite
      mandar una corrección del mismo conduce sin duplicarlo (contrato §2). */
