@@ -1442,3 +1442,28 @@ esta pantalla: **esconder el acceso no es controlarlo**, y en cuanto una regla
 importa —y aquí importa: son los factores de pago entre el contratista y la
 Autoridad— tiene que estar donde se decide, no donde se pulsa.
 
+## 51 · Navegación en la demostración
+
+**Q-75 — 8 de agosto de 2026**
+
+**Atrás, adelante y casa**, con los mismos iconos que la barra de QCheck
+(`ICONO_NAV`). No es coherencia por coherencia: quien ve la demostración tiene
+que reconocer el programa, y **la navegación es lo primero que se toca**.
+
+Se aplica el criterio de Q-51 entero: «adelante» solo se enciende si de verdad
+hay algo delante, mirando el tipo de navegación de esta carga. Un botón que no
+hace nada es peor que un botón ausente.
+
+**Casa quiere decir cosas distintas según dónde estés**, y eso es correcto: en
+una pantalla de rol, casa es el portal de la demostración —de donde vienes y
+donde eliges la siguiente parte—. En el portal, casa es el **Control Center**,
+porque el portal ya es esta casa y desde ahí lo que hace falta es una salida de
+vuelta a QCheck.
+
+Sin esa salida, quien entrara desde un enlace se quedaba dentro de la
+demostración sin manera de volver.
+
+Probado con clics de verdad, no leyendo el código: portal → ingeniero → pago →
+atrás → adelante → casa, y el «adelante» se enciende solo después de haber
+retrocedido.
+
