@@ -419,7 +419,86 @@ function stopScan() {
   scanTimer = scanStream = null;
   document.getElementById("video-wrap").style.display = "none";
 }
+/* ¿Es esto el enlace de un conduce de QTicket? — Q-82.
+
+   El QR que imprime QTicket NO lleva los datos dentro: lleva una dirección,
+   `<lo que sea>/c/<id>`. No caben en un código: la ficha entera del contrato
+   son ochocientos y pico caracteres y el generador de QTicket llega hasta unos
+   doscientos. Así que el código lleva la llave y los datos se piden.
+
+   Se reconoce por la FORMA, no por el dominio: cada concretera tendrá el suyo.
+   Y solo por https —o localhost, para probar—, porque un QR lo imprime
+   cualquiera y esto es texto que llega de fuera. */
+function enlaceDeQTicket(raw) {
+  let u;
+  try { u = new URL(String(raw).trim()); } catch (_) { return null; }
+  const local = u.hostname === "localhost" || u.hostname === "127.0.0.1";
+  if (u.protocol !== "https:" && !(u.protocol === "http:" && local)) return null;
+  const m = u.pathname.match(/^\/c\/([0-9A-Za-z]{1,64})$/);
+  if (!m) return null;
+
+  /* Y el servidor tiene que ser UNO DE LOS DEL PROYECTO — Q-82.
+
+     Sin esto, cualquiera imprime un QR con su propia dirección, lo cuela en el
+     montón de conduces, y QCheck le pide los datos a un servidor de fuera y
+     rellena el formulario con lo que le manden. Con choferes que ya alteran
+     conduces a bolígrafo (banco de reglas 04), eso no es una hipótesis.
+
+     La lista vive en el plan del proyecto, no en el código: cada concretera
+     tendrá su dominio, y quien da de alta el proyecto es quien sabe cuál es.
+     **Vacía por defecto: hasta que alguien la ponga, no se pide nada a nadie.**
+     Puerta cerrada mientras no exista QTicket, que es hoy. */
+  const permitidos = ((db.project || {}).qticketHosts || []).map((h) => String(h).toLowerCase());
+  if (!permitidos.includes(u.hostname.toLowerCase())) {
+    return { id: m[1], url: u.href, host: u.hostname, desconocido: true };
+  }
+  return { id: m[1], url: u.href, host: u.hostname };
+}
+
+/* Pide la ficha del conduce a QTicket y rellena lo que traiga.
+
+   **Lo que llega por aquí es de fuera y no se firma solo.** Un QR lo imprime
+   cualquiera; esto rellena el formulario para que el técnico lo mire, igual
+   que la foto. Por eso se leen SOLO los campos que se conocen, se convierten a
+   número los que son número, y no se manda ninguna llave nuestra en la
+   petición: ese servidor es de la concretera, no nuestro. */
+async function pedirConduceAQTicket(enlace) {
+  const aviso = document.getElementById("aviso-lectura");
+  aviso.style.display = "block";
+  aviso.textContent = "Pidiendo el conduce a QTicket…";
+  try {
+    const r = await fetch(enlace.url + ".json", { credentials: "omit", mode: "cors" });
+    if (!r.ok) throw new Error("contestó " + r.status);
+    const d = await r.json();
+    aviso.textContent = "";
+    aviso.style.display = "none";
+    return d;
+  } catch (e) {
+    /* Que no se pueda pedir no es el fin: el número de conduce sigue estando
+       en el enlace, y con eso el técnico puede seguir a mano. */
+    aviso.className = "aviso-lectura pendiente";
+    aviso.textContent = "Se leyó el código de QTicket (" + enlace.id +
+      ") pero no se pudo pedir la ficha: " + e.message + ". Entra los datos a mano.";
+    return null;
+  }
+}
+
 function applyScan(raw) {
+  const enlace = enlaceDeQTicket(raw);
+  if (enlace && enlace.desconocido) {
+    /* Se dice el servidor con todas las letras: quien mire la pantalla tiene
+       que poder ver a dónde apuntaba el código que le acaban de dar. */
+    const aviso = document.getElementById("aviso-lectura");
+    aviso.className = "aviso-lectura pendiente";
+    aviso.style.display = "block";
+    aviso.textContent = "Ese código apunta a «" + enlace.host + "», que no es un servidor de este proyecto. " +
+      "No se pidió nada. Si es correcto, hay que darlo de alta en Plan & Datos; si no, entra el conduce a mano.";
+    return;
+  }
+  if (enlace) {
+    pedirConduceAQTicket(enlace).then((d) => { if (d) rellenarDelConduce(d, enlace.id); });
+    return;
+  }
   let d = {};
   try { d = JSON.parse(raw); } catch (_) {
     const parts = raw.split(/[;|,]/).map((s) => s.trim());
@@ -432,6 +511,25 @@ function applyScan(raw) {
   document.getElementById("f-arrive").value = nowHM();
   toast("Conduce escaneado — verifique y registre");
 }
+
+/* Vuelca la ficha que mandó QTicket en el formulario — Q-82.
+
+   Solo campos conocidos, y ninguno se da por bueno: esto rellena para que el
+   técnico mire, exactamente igual que cuando se lee de la foto. Un campo que
+   QTicket manda en `null` se deja vacío y no se inventa (DECISIONS §3). */
+function rellenarDelConduce(d, eticketId) {
+  const pon = (id, v) => { if (v !== null && v !== undefined && v !== "") document.getElementById(id).value = v; };
+  pon("f-ticket", d.ticket);
+  pon("f-truck", d.truck);
+  pon("f-vol", d.vol);
+  if (d.batch && /^\d{1,2}:\d{2}$/.test(String(d.batch))) pon("f-batch", String(d.batch).padStart(5, "0"));
+  document.getElementById("f-arrive").value = nowHM();
+  /* El identificador de QTicket viaja con el camión: es lo único que permite
+     mandar una corrección del mismo conduce sin duplicarlo (contrato §2). */
+  pendingEticket = eticketId || d.eticketId || null;
+  toast("Conduce de QTicket — verifique y registre");
+}
+let pendingEticket = null;
 
 /* El conduce a pantalla completa — Q-78.
 
@@ -692,7 +790,11 @@ function saveArrival() {
        la siguiente carga, dos entradas seguidas del mismo ticket en la misma
        sesión no se reconocían como repetidas. */
     company: plantCompany(planta),
-    source: pendingPhoto ? "foto" : "manual",
+    /* De dónde vino este camión, y no es cosmético: un dato que llegó por
+       QTicket es un dato certificado por la planta; uno leído de una foto es
+       una lectura; uno tecleado es lo que dijo una persona. Dentro de un año
+       alguien querrá saber cuál era cuál. */
+    source: pendingEticket ? "qticket" : pendingPhoto ? "foto" : "manual",
     batch: document.getElementById("f-batch").value || null,
     arrive: document.getElementById("f-arrive").value || nowHM(),
     ident: document.getElementById("f-ident").value.trim() || null,
@@ -701,6 +803,10 @@ function saveArrival() {
     rejected: false,
   };
   if (pendingPhoto) t.photo = pendingPhoto;
+  /* El identificador de QTicket es lo único que permite mandar una corrección
+     del mismo conduce sin duplicar el camión (contrato §2). Si viene, se
+     guarda. */
+  if (pendingEticket) t.eticketId = pendingEticket;
 
   /* EL AVISO, EN EL ACTO — Q-55. Se da ANTES de guardar y se puede parar:
      puede que el conduce esté bien y el que esté mal sea el plan, y en ese
@@ -722,6 +828,7 @@ function saveArrival() {
   db.tests.push(t);
   saveDB();
   pendingPhoto = null;
+  pendingEticket = null;
   ordenadasLeidas = null;
   document.getElementById("photo-slot").innerHTML = "";
   ["f-ticket", "f-truck", "f-ident", "f-batch", "f-arrive"].forEach((id) => document.getElementById(id).value = "");

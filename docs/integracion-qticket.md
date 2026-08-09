@@ -285,3 +285,67 @@ tiene que poder verla una sola vez sin que nadie se la pise.
 ## 10 · Lo que sigue sin decidir
 
 Nada bloqueante. Cuando aparezca algo, va aquí.
+
+---
+
+# 8 · El código QR del conduce impreso
+
+Añadido el 9 de agosto de 2026 (Q-82), después de comprobar que **QCheck y
+QTicket no casaban**: QTicket mete una dirección en el código y QCheck esperaba
+`ticket;camión;yardas;hora`. Escaneando un conduce de QTicket, QCheck habría
+metido la dirección entera en la casilla del número de conduce.
+
+## Lo que lleva el código
+
+**Una dirección, no los datos.** La ficha del §3 son más de ochocientos
+caracteres y el generador de QTicket llega a unos doscientos: no caben. El
+código lleva la llave y los datos se piden.
+
+```
+https://<el dominio de la concretera>/c/<eticketId>
+```
+
+- **`https` obligatorio.** QCheck rechaza `http`, salvo `localhost` para probar.
+- **`eticketId`**: de 1 a 64 caracteres, solo letras y números. Es el mismo del
+  §3 y **es para siempre**.
+
+## Lo que QCheck hace al leerlo
+
+1. Comprueba la forma y que el **dominio esté dado de alta en el proyecto**
+   (`project.qticketHosts`). Si no lo está, **no pide nada** y dice a qué
+   servidor apuntaba el código. Está vacío por defecto: puerta cerrada.
+2. Pide `GET <la misma dirección>.json`.
+3. Rellena el formulario para que **el técnico lo mire y lo registre**. No se
+   guarda solo. Un campo en `null` se deja vacío.
+4. Guarda `eticketId` con el camión y marca `source: "qticket"`.
+
+## Lo que hace falta de QTicket
+
+**`GET /c/<eticketId>.json`**, devolviendo la ficha del §3, con
+`Access-Control-Allow-Origin` — la pide un navegador desde otro dominio.
+
+Hoy QTicket sirve `/c/<id>` (la página) y `/c/<id>.pdf`. **`.json` no existe
+todavía.** Hasta que exista, QCheck lee el código, saca el `eticketId` y avisa
+de que no pudo pedir la ficha.
+
+## Por qué el dominio va en una lista
+
+Un QR lo imprime cualquiera. Sin la lista, alguien cuela un código con su propia
+dirección en el montón y QCheck le pide los datos a un servidor de fuera. Con
+choferes que ya alteran conduces a bolígrafo (banco de reglas 04), eso no es una
+hipótesis.
+
+**La petición no lleva ninguna llave nuestra** (`credentials: "omit"`): ese
+servidor es de la concretera, no nuestro.
+
+## El sobre técnico del código
+
+El generador de QTicket hace **modo byte, corrección nivel M, versiones 1 a 10**.
+Una dirección de unos 45 caracteres cae en versión 3 — 29×29 módulos, que se
+lee bien impreso en un conduce.
+
+**Conviene que la dirección sea corta.** Cada carácter de más engorda el código,
+y un código más denso se lee peor en un papel arrugado y a pleno sol.
+
+Ese sobre —byte, nivel M, versiones 1 a 10— es también lo que tendrá que cubrir
+el lector propio cuando lo escribamos (DECISIONS §57).
