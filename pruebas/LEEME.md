@@ -28,7 +28,7 @@ npx wrangler d1 execute DB --local -c wrangler.toml --command "UPDATE ajustes SE
 ## Correrlas
 
 ```
-node pruebas/servidores-iguales.mjs    # 40 casos a los dos, comparando respuesta
+node pruebas/servidores-iguales.mjs    # 44 casos a los dos, comparando respuesta
 node pruebas/candado-de-sesion.mjs     # exigir_sesion de punta a punta
 node pruebas/desconectar-aparato.mjs   # Q-77, y este no necesita nada levantado
 node pruebas/echar-a-todos.mjs         # Q-85, tampoco necesita nada levantado
