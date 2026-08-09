@@ -76,6 +76,33 @@ body { background: var(--bg); }
 .aps[hidden] { display: none; }
 .ap .filas b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
 
+/* Desconectar — Q-77. Va abajo del todo de la tarjeta, separado por una línea:
+   es la única acción que hay aquí y la única que le hace algo a otra persona.
+   El rojo entra por el borde y el texto, no por el relleno (AGENTS.md §10):
+   un botón rojo macizo en cada tarjeta convierte la sala de máquinas en un
+   panel de alarmas, y lo que se mira aquí el 99% de las veces es quién está. */
+.ap .acciones { margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--line); }
+.btn.peligro {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-color: rgba(255,90,82,.35); color: var(--susp); background: transparent;
+}
+.btn.peligro svg { width: 14px; height: 14px; flex: none; }
+.btn.peligro:hover { border-color: var(--susp); background: rgba(255,90,82,.10); color: var(--susp); }
+/* Este mismo aparato, marcado. Desconectarse a uno mismo funciona igual de
+   bien, y hay que enterarse antes de pulsar y no después. */
+.ap .yo {
+  font-size: 9.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-soft); border: 1px solid var(--line); border-radius: 20px;
+  padding: 2px 7px; margin-left: 6px; vertical-align: middle;
+  /* Entera o a la línea siguiente, pero nunca partida: «ESTE / APARATO» en dos
+     renglones estira la tarjeta y descuadra la fila de al lado. */
+  white-space: nowrap; display: inline-block;
+}
+.aviso-ok {
+  border: 1px solid rgba(52,210,123,.45); background: rgba(52,210,123,.09); color: var(--ok);
+  border-radius: 12px; padding: 13px 16px; font-size: 13.5px; font-weight: 600; margin-bottom: 16px;
+}
+
 .vacio { text-align: center; padding: 46px 20px; color: var(--ink-soft); font-size: 14px; }
 .aviso-sync {
   border: 1px solid var(--susp); background: var(--susp-bg); color: var(--susp);
@@ -123,7 +150,7 @@ body { background: var(--bg); }
   <div class="pie-nota" id="pie"></div>
 </main>
 
-<script src="assets/sync.js?v=426ef405"></script>
+<script src="assets/sync.js?v=1cfabbf3"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/core.js?v=f7c96e7a"></script>
 <script>
@@ -229,11 +256,19 @@ function loQueHizo(dev, usr, ahora) {
          ` <span class="cuando">· hace ${cuando}${deOtro ? ", desde otro aparato" : ""}</span></div>`;
 }
 
+/* Este mismo aparato, el que está mirando la pantalla. Se marca porque
+   desconectarse a uno mismo funciona igual de bien y hay que saberlo antes de
+   pulsar, no después. */
+function esEsteAparato(dev) {
+  return dev && dev === (typeof qcAparato === "function" ? qcAparato() : null);
+}
+
 function tarjeta(a, vivo, ahora) {
+  const yo = esEsteAparato(a.dev);
   return `<div class="ap ${vivo ? "vivo" : "ido"}">
     <div class="cab">
       <i class="luz"></i>
-      <span class="nom">${esc(a.dev)}</span>
+      <span class="nom">${esc(a.dev)}${yo ? ` <span class="yo">este aparato</span>` : ""}</span>
       <span class="quien">${esc(a.usr || "—")}</span>
     </div>
     <div class="pant">${esc(HACIENDO[a.pagina] || PANTALLA[a.pagina] || a.pagina || "—")}</div>
@@ -242,7 +277,63 @@ function tarjeta(a, vivo, ahora) {
       <div>Usando QCheck desde hace <b>${hace(a.usando)}</b></div>
       <div>${vivo ? `Última señal hace <b>${hace(a.inactivo)}</b>` : `Sin señal desde hace <b>${hace(a.inactivo)}</b>`}</div>
     </div>
+    <div class="acciones">
+      <button class="btn small peligro" data-dev="${esc(a.dev)}" data-usr="${esc(a.usr || "")}" data-yo="${yo ? "1" : ""}">
+        ${ICONO_DESCONECTAR}Desconectar</button>
+    </div>
   </div>`;
+}
+
+const ICONO_DESCONECTAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.8v7.4"/><path d="M17.6 6.6a7.6 7.6 0 1 1-11.2 0"/></svg>`;
+
+/* Desconectar un aparato — Q-77.
+
+   Se pregunta antes con el nombre del aparato y de quien lo está usando
+   escritos con todas las letras: en la lista hay tarjetas parecidas, y echar
+   al iPad de Muestras creyendo que se echaba a un portátil viejo se arregla
+   volviendo a entrar, pero en mitad de un vaciado cuesta un rato de obra.
+
+   Lo que hace: al servidor se le caen las sesiones de ese aparato, y el aparato
+   se entera en su siguiente latido —hasta 20 segundos— y se va al acceso. Lo
+   que tuviera sin subir NO se pierde: sale en cuanto vuelva a entrar. */
+async function desconectar(dev, usr, yo) {
+  const quien = usr && usr !== "?" ? ` (${usr})` : "";
+  const aviso = yo
+    ? `¿Desconectar ESTE aparato?\n\nEs el que está usando ahora mismo: va a salir al acceso y tendrá que entrar otra vez.`
+    : `¿Desconectar «${dev}»${quien}?\n\nSaldrá al acceso en menos de un minuto y tendrá que entrar otra vez con su clave.\n\nLo que tenga sin subir no se pierde.`;
+  if (!confirm(aviso)) return;
+
+  try {
+    const cab = { "Content-Type": "application/json" };
+    const tk = qcApiToken();
+    if (tk) cab["X-QC-Token"] = tk;
+    const ses = sessionStorage.getItem("qc-sesion");
+    if (ses) cab["X-QC-Sesion"] = ses;
+    const r = await fetch(qcApiURL() + "/api/desconectar", {
+      method: "POST", headers: cab, body: JSON.stringify({ dev }),
+    });
+    if (r.status === 403) throw new Error("Esta cuenta no puede desconectar aparatos.");
+    if (r.status === 404 || r.status === 501) throw new Error("Este servidor todavía no sabe desconectar aparatos. Hay que actualizarlo.");
+    if (!r.ok) throw new Error("El servidor contestó " + r.status + ".");
+    const d = await r.json();
+
+    /* Se dice lo que pasó de verdad, no «listo». Si el servidor no conocía el
+       aparato o no había ninguna sesión abierta suya, eso es justo lo que hay
+       que saber: el botón se pulsó y no echó a nadie. */
+    if (!d.conocido) {
+      fallo(`El servidor no tiene latido de «${dev}», así que no hay a quién avisar.`);
+    } else {
+      nota = {
+        html: `<div class="aviso-ok">«${esc(dev)}» quedó desconectado` +
+              (d.sesiones ? ` · ${d.sesiones} ${d.sesiones === 1 ? "sesión cerrada" : "sesiones cerradas"} en el servidor` : "") +
+              ` · sale al acceso en su próximo latido, hasta 20 s.</div>`,
+        hasta: Date.now() + 30000,
+      };
+    }
+    refrescar();
+  } catch (e) {
+    fallo(e.message === "Failed to fetch" ? "No se está llegando al servidor." : e.message);
+  }
 }
 
 function pintar(datos) {
@@ -285,6 +376,13 @@ function pintar(datos) {
   const btn = document.getElementById("btn-idos");
   if (btn) btn.onclick = () => { verIdos = !verIdos; pintar(datos); };
 
+  /* Los botones se enganchan después de pintar y no con `onclick=` dentro del
+     HTML: el nombre del aparato lo pone quien conecta y puede traer comillas.
+     Va por `data-dev`, que el navegador ya sabe leer sin que nadie lo escape. */
+  for (const b of document.querySelectorAll(".ap .acciones button")) {
+    b.onclick = () => desconectar(b.dataset.dev, b.dataset.usr, !!b.dataset.yo);
+  }
+
   document.getElementById("pie").textContent =
     `Se refresca sola cada 10 segundos · un aparato se da por ido si pasa un minuto sin latir · hora del servidor ${new Date(ahora).toLocaleTimeString("es-PR")}`;
 }
@@ -292,9 +390,21 @@ function pintar(datos) {
 /* Un aviso que dice «conéctelo primero» y no dice por dónde deja a alguien
    mirando una pantalla roja. El aviso trae su puerta. */
 function fallo(msg, puerta) {
+  nota = null;
   document.getElementById("aviso").innerHTML =
     `<div class="aviso-sync">${esc(msg)}${puerta
       ? ` <a class="btn small" href="conectar.html" style="margin-left:10px">Conectar este aparato</a>` : ""}</div>`;
+}
+
+/* Lo que se acaba de hacer, con fecha de caducidad. La pantalla se repinta sola
+   cada 10 segundos y limpia el aviso; sin esto, «quedó desconectado» duraría
+   menos que el parpadeo y nadie llegaría a leerlo. */
+let nota = null;
+function pintarNota() {
+  const caja = document.getElementById("aviso");
+  if (nota && Date.now() < nota.hasta) { caja.innerHTML = nota.html; return; }
+  nota = null;
+  caja.innerHTML = "";
 }
 
 async function refrescar() {
@@ -335,7 +445,7 @@ async function refrescar() {
       }
     } catch (_) { /* sin actividad se sigue igual */ }
 
-    document.getElementById("aviso").innerHTML = "";
+    pintarNota();
     pintar(await r.json());
   } catch (e) {
     fallo(e.message === "Failed to fetch" ? "No se está llegando al servidor." : e.message);

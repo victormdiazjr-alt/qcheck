@@ -357,7 +357,18 @@ export default {
       try { d = await req.json(); } catch (_) { return json({ error: "json" }, 400); }
       const dev = String(d.dev || "?").slice(0, 60);
       const ahora = new Date().toISOString();
-      const prev = await env.DB.prepare("SELECT desde, visto FROM presencia WHERE dev = ?").bind(dev).first();
+      const prev = await env.DB.prepare("SELECT desde, visto, fuera FROM presencia WHERE dev = ?").bind(dev).first();
+
+      /* ¿Lo desconectaron mientras no miraba? — Q-77. La orden esperaba en la
+         fila y se entrega ahora, una sola vez: el aparato cierra la sesión solo
+         y vuelve al acceso. Se limpia al entregarla porque si no, el aparato
+         quedaría expulsado para siempre y no podría ni volver a entrar. */
+      if (prev && prev.fuera) {
+        await env.DB.prepare("UPDATE presencia SET fuera = NULL, visto = ? WHERE dev = ?")
+          .bind(ahora, dev).run();
+        return json({ ok: true, ahora, fuera: true });
+      }
+
       const CORTE = 5 * 60 * 1000;
       const sigue = prev && (Date.parse(ahora) - Date.parse(prev.visto)) < CORTE;
       await env.DB.prepare(
@@ -381,6 +392,29 @@ export default {
          pantalla calcula los «hace cuánto» contra ella y no contra su propio
          reloj, que es otro que puede ir descuadrado. */
       return json({ ahora: new Date().toISOString(), aparatos: results || [] });
+    }
+
+    /* Desconectar un aparato a mano — Q-77. Mismo trato que en
+       `sync-servidor.js`: se le quitan las sesiones abiertas EN EL SERVIDOR y
+       queda la orden esperando para que él se cierre en su siguiente latido.
+
+       Quién puede: quien traiga la llave del proyecto, que es la puerta de toda
+       esta API; y si además hay sesión, se exige `config` — la misma llave que
+       abre la pantalla. Se comprueba aquí y no solo en el botón, porque la
+       dirección se puede escribir a mano. */
+    if (url.pathname === "/api/desconectar" && req.method === "POST") {
+      if (quien && !quien.config) return json({ error: "config" }, 403);
+      let d;
+      try { d = await req.json(); } catch (_) { return json({ error: "json" }, 400); }
+      const dev = String(d.dev || "").slice(0, 60);
+      if (!dev) return json({ error: "dev" }, 400);
+      const caidas = await env.DB.prepare("DELETE FROM sesiones WHERE dev = ?").bind(dev).run();
+      const r = await env.DB.prepare("UPDATE presencia SET fuera = ? WHERE dev = ?")
+        .bind(new Date().toISOString(), dev).run();
+      /* `changes` dice si existía la fila. Sin latido previo no hay a quién
+         avisar, y tampoco se inventa una: se dice que no se conocía. */
+      const conocido = !!(r.meta && r.meta.changes);
+      return json({ ok: true, dev, sesiones: (caidas.meta && caidas.meta.changes) || 0, conocido });
     }
 
     /* ---------------------------------------------------------- Q-01: leer el conduce

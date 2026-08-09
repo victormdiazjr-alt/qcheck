@@ -298,6 +298,22 @@ function crearCuentas(dir) {
       delete sesiones[await huella(token)];
       guardarS();
     },
+
+    /* Todas las sesiones abiertas en un aparato, a la basura — Q-77.
+       Devuelve cuántas cayó, que es lo que la pantalla enseña.
+
+       Se busca por `dev` y no por token porque quien desconecta no es el
+       aparato: es Víctor desde otra pantalla, y él no tiene el pase del iPad
+       de la obra. */
+    cerrarAparato(dev) {
+      const d = String(dev || "");
+      let n = 0;
+      for (const k of Object.keys(sesiones)) {
+        if (sesiones[k].dev === d) { delete sesiones[k]; n++; }
+      }
+      if (n) guardarS();
+      return n;
+    },
   };
 }
 
@@ -570,6 +586,16 @@ function montarAPI(almacen, token, opciones) {
       const dev = String(d.dev || "?").slice(0, 60);
       const ahora = new Date().toISOString();
       const prev = presencia.get(dev);
+
+      /* ¿Lo desconectaron mientras no miraba? — Q-77. La orden esperaba aquí y
+         se entrega ahora, una sola vez: el aparato cierra la sesión solo y
+         vuelve al acceso. Se limpia al entregarla porque si no, el aparato
+         quedaría expulsado para siempre y no podría ni volver a entrar. */
+      if (prev && prev.fuera) {
+        presencia.set(dev, { ...prev, fuera: null, visto: ahora, pagina: prev.pagina });
+        return responder(res, 200, { ok: true, ahora, fuera: true });
+      }
+
       const sigue = prev && (Date.parse(ahora) - Date.parse(prev.visto)) < 5 * 60 * 1000;
       presencia.set(dev, {
         dev,
@@ -585,6 +611,32 @@ function montarAPI(almacen, token, opciones) {
     if (url.pathname === "/api/presencia" && req.method === "GET") {
       const aparatos = [...presencia.values()].sort((a, b) => b.visto.localeCompare(a.visto));
       return responder(res, 200, { ahora: new Date().toISOString(), aparatos });
+    }
+
+    /* Desconectar un aparato a mano — Q-77.
+
+       Hace las dos cosas que hacen falta para que «desconectado» quiera decir
+       algo: le quita las sesiones abiertas EN EL SERVIDOR (el pase deja de
+       valer aquí, no solo en su navegador) y deja la orden esperando para que
+       el propio aparato se cierre en su siguiente latido.
+
+       Quién puede: hoy, quien traiga la llave del proyecto, que es la misma
+       puerta que ya tiene toda esta API. Cuando hay sesión, además se exige
+       `config` — la misma llave que abre esta pantalla. Se comprueba AQUÍ y no
+       solo en el botón, porque una regla que solo vive en un botón no es una
+       regla: la dirección se puede escribir a mano. */
+    if (url.pathname === "/api/desconectar" && req.method === "POST") {
+      if (quien && !quien.config) return responder(res, 403, { error: "config" });
+      let d;
+      try { d = await cuerpoDe(req, 1e4); } catch (_) { return responder(res, 400, { error: "json" }); }
+      const dev = String(d.dev || "").slice(0, 60);
+      if (!dev) return responder(res, 400, { error: "dev" });
+      const sesionesCaidas = cuentas ? cuentas.cerrarAparato(dev) : 0;
+      const prev = presencia.get(dev);
+      /* Sin latido previo no hay a quién avisar, y tampoco se inventa una fila:
+         se dice que no se conocía y quien mira decide. */
+      if (prev) presencia.set(dev, { ...prev, fuera: new Date().toISOString() });
+      return responder(res, 200, { ok: true, dev, sesiones: sesionesCaidas, conocido: !!prev });
     }
 
     /* Leer el conduce de la foto — Q-01. Idéntico a `sync-worker.js`: el mismo

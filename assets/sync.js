@@ -345,7 +345,28 @@ const QCSync = {
     this._pedir("/api/latido", {
       method: "POST",
       body: JSON.stringify({ dev: qcAparato(), usr: sessionStorage.getItem("qc-user") || "?", pagina }),
-    }).catch(() => {});
+    }).then((r) => { if (r && r.fuera) this._echar(); }).catch(() => {});
+  },
+
+  /* Nos desconectaron desde Estado del sistema — Q-77.
+
+     El pase ya no vale en el servidor; esto es la otra mitad, la que hace que
+     el aparato se entere en vez de quedarse con la pantalla puesta. Se cierra
+     la sesión de este navegador y se vuelve al acceso, que es exactamente lo
+     mismo que hace el botón de salir.
+
+     **Lo encolado NO se toca.** Si el técnico tenía tres muestras sin subir
+     cuando lo desconectaron, siguen en la cola y salen en cuanto vuelva a
+     entrar. Desconectar un aparato es echar a quien lo está usando, no tirar
+     su trabajo — y esa diferencia, el día que pase, es todo. */
+  _echar() {
+    if (this._echado) return;          // el ciclo va cada 3 s; una vez basta
+    this._echado = true;
+    sessionStorage.removeItem("qc-auth");
+    sessionStorage.removeItem("qc-user");
+    sessionStorage.removeItem("qc-sesion");
+    sessionStorage.removeItem("qc-ident");
+    location.href = "index.html?fuera=1";
   },
 
   async _ciclo() {

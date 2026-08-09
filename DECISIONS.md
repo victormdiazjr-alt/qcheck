@@ -1467,3 +1467,83 @@ Probado con clics de verdad, no leyendo el código: portal → ingeniero → pag
 atrás → adelante → casa, y el «adelante» se enciende solo después de haber
 retrocedido.
 
+
+## 52 · El estado del sistema, entre la navegación y el en vivo
+
+**Q-76 — 8 de agosto de 2026**
+
+Víctor pidió el botoncito de estado entre los botones de navegación y el
+indicador de en vivo. Mover el bloque en el HTML **no bastó**: `.qcs-nav` y
+`.qcs-sistema` llevaban las dos `margin-left: auto`, y dos elementos que empujan
+a la derecha en el mismo flex se separan entre ellos. El botón habría quedado
+flotando en medio de la barra en vez de pegado al grupo.
+
+Ahora empuja solo la navegación y el estado la sigue. Es el mismo error de
+siempre en otra forma: **el orden del HTML y el orden que se ve no son lo
+mismo cuando el CSS opina**.
+
+## 53 · Desconectar un aparato
+
+**Q-77 — 8 de agosto de 2026**
+
+Un botón en cada tarjeta de Estado del sistema. Lo que había hasta ahora era
+mirar: se veía que el iPad de la obra llevaba tres horas abierto en Muestras y
+no se podía hacer nada al respecto.
+
+### Que «desconectado» quiera decir algo
+
+Son dos cosas, y hacen falta las dos:
+
+1. **Al servidor se le caen las sesiones de ese aparato.** El pase deja de valer
+   *ahí*, no solo en su navegador. Se busca por `dev` y no por token porque
+   quien desconecta no es el aparato: es Víctor desde otra pantalla, y él no
+   tiene el pase del iPad.
+2. **Queda una orden esperando en la fila de presencia**, y el aparato la
+   recoge en su siguiente latido —hasta 20 segundos—: cierra la sesión solo y
+   se va a la pantalla de acceso, que le dice por qué está ahí.
+
+La orden **espera**, a propósito. Si el iPad está apagado o sin señal no se
+pierde: se cumple en cuanto vuelva. Una desconexión que solo funciona si el
+aparato está mirando no sirve para lo que se pide de ella. Y se limpia al
+entregarla, porque si no el aparato quedaría expulsado para siempre y no podría
+ni volver a entrar.
+
+### Lo encolado no se toca
+
+`_echar()` vacía `sessionStorage`; la cola de cambios sin subir vive en
+`localStorage` y **se queda**. Si al técnico lo desconectan con tres muestras
+sin sincronizar, salen en cuanto vuelva a entrar. Desconectar un aparato es
+echar a quien lo está usando, no tirar su trabajo, y el día que eso pase la
+diferencia es todo.
+
+### Quién puede, y dónde se comprueba
+
+Hoy: quien traiga la llave del proyecto, que es la puerta de toda esta API. Si
+además hay sesión, se exige `config` — la misma llave que abre la pantalla.
+
+Se comprueba **en el servidor** y no solo en el botón. Es la regla que ya se
+escribió en §50 y vale igual aquí: una regla que solo vive en un botón no es una
+regla, porque la dirección se puede escribir a mano.
+
+### Lo que esto NO es
+
+**No es echar a alguien de QCheck.** Es cerrarle la sesión en un aparato. Vuelve
+a entrar con su clave, y debe poder: el iPad de la obra desconectado en mitad de
+un vaciado tiene que poder volver sin que nadie le mande un enlace nuevo.
+
+Y mientras `exigir_sesion` siga apagada (Q-30), lo que de verdad echa al aparato
+es que él obedezca la orden. El aparato conserva la llave del proyecto, así que
+un navegador manipulado podría seguir sincronizando. Cuando Q-30 entre, la
+sesión caída lo cierra de verdad. **Conviene saberlo antes de contárselo a un
+cliente como si fuera un candado.**
+
+### Probado
+
+`pruebas/desconectar-aparato.mjs` —17 comprobaciones contra el servidor de
+verdad sobre una carpeta de usar y tirar— y seis casos nuevos en
+`servidores-iguales.mjs`, que ahora compara también campos del cuerpo: sin eso,
+«desconecté un aparato conocido» y «no lo conocía» son los dos un 200 y la
+batería los daba por iguales.
+
+Y en pantalla: se desconectó este mismo navegador y salió solo al acceso con el
+aviso puesto.

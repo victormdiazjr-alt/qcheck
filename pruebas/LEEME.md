@@ -16,16 +16,38 @@ npx wrangler dev --local --port 8462 --var QC_TOKEN:llave-de-prueba --var QC_ADM
 
 **Con `--local`.** Nunca contra producción: estas pruebas escriben.
 
+**Los dos tienen que tener `exigir_sesion` igual.** Si no, el Worker contesta 401 en
+media batería y el servidor local 200, y salen divergencias que no son de código sino
+de estado — pasó el 8 ago 2026 y costó un rato. Se mira con `/api/salud`, que lo dice
+en `sesiones`, y se iguala así:
+
+```
+npx wrangler d1 execute DB --local -c wrangler.toml --command "UPDATE ajustes SET valor='0' WHERE clave='exigir_sesion'"
+```
+
 ## Correrlas
 
 ```
-node pruebas/servidores-iguales.mjs    # 33 casos a los dos, comparando respuesta
+node pruebas/servidores-iguales.mjs    # 40 casos a los dos, comparando respuesta
 node pruebas/candado-de-sesion.mjs     # exigir_sesion de punta a punta
+node pruebas/desconectar-aparato.mjs   # Q-77, y este no necesita nada levantado
 ```
 
 Lo que se espera: `servidores-iguales` saca **una sola divergencia y es de diseño**
 (fuera de `/api/` el servidor local sirve archivos y el Worker no). Cualquier otra hay
-que mirarla. `candado-de-sesion` sale entero en verde.
+que mirarla. `candado-de-sesion` y `desconectar-aparato` salen enteros en verde.
+
+Si el 8461 ya está ocupado por un servidor de verdad, se levanta el de prueba en otro
+puerto y se le dice a la batería por dónde entrar — es mejor que tumbar el que alguien
+puede estar usando:
+
+```
+QC_A=http://127.0.0.1:8463 node pruebas/servidores-iguales.mjs
+```
+
+**`servidores-iguales` escribe en `datos/`** —crea la cuenta `prueba` y mete líneas en el
+registro de cambios—, así que conviene copiar `datos/usuarios.json` y `datos/cambios.jsonl`
+antes y devolverlos después. `desconectar-aparato` no: se monta su propia carpeta.
 
 ## Cuándo
 

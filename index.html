@@ -332,11 +332,27 @@ async function entrar(e) {
       : (next && /^[\w.-]+\.html([?#].*)?$/.test(next) ? next : casa);
     location.replace(destino);
   } else {
+    /* El texto se pone aquí y no se da por bueno el que trae el HTML: desde
+       Q-77 ese mismo hueco puede llevar el aviso de «lo desconectaron», y sin
+       esta línea una clave mala después de una desconexión seguiría diciendo
+       que lo desconectaron. */
+    document.getElementById("err").textContent = "Usuario o contraseña incorrectos.";
     document.getElementById("err").classList.add("show");
     document.getElementById("p").value = "";
     document.getElementById("p").focus();
   }
 }
+
+/* Llegó aquí porque lo desconectaron desde Estado del sistema — Q-77. Se dice,
+   y se dice quién puede volver a abrirle: encontrarse la pantalla de acceso sin
+   explicación en mitad de un vaciado es lo que hace que alguien piense que
+   QCheck se rompió y deje de anotar. */
+if (new URLSearchParams(location.search).get("fuera") === "1") {
+  const e = document.getElementById("err");
+  e.textContent = "Este aparato se desconectó desde el Estado del sistema. Puede volver a entrar con su usuario y su clave.";
+  e.classList.add("show");
+}
+
 document.getElementById("u").focus();
 </script>
 </body>

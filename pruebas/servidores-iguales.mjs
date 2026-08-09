@@ -3,8 +3,11 @@
    error. Leer los dos archivos y compararlos NO sirve: en la auditoría del 6 ago 2026
    el grep dijo que el servidor local no validaba, y era falso.
    Ver pruebas/LEEME.md para levantarlos. */
-const A = { n: "local ", u: "http://127.0.0.1:8461" };
-const B = { n: "worker", u: "http://127.0.0.1:8462" };
+/* Los puertos se pueden cambiar por variable de entorno. Hace falta cuando ya
+   hay un servidor de verdad ocupando el 8461: levantar el de prueba en otro
+   puerto es mejor que tumbar el que alguien puede estar usando. */
+const A = { n: "local ", u: process.env.QC_A || "http://127.0.0.1:8461" };
+const B = { n: "worker", u: process.env.QC_B || "http://127.0.0.1:8462" };
 const TK = "llave-de-prueba", AD = "admin-de-prueba";
 
 async function pega(s, ruta, { m = "GET", cab = {}, cuerpo, crudo } = {}) {
@@ -14,8 +17,8 @@ async function pega(s, ruta, { m = "GET", cab = {}, cuerpo, crudo } = {}) {
     const r = await fetch(s.u + ruta, { method: m, headers: h, body: crudo !== undefined ? crudo : (cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined) });
     const txt = await r.text();
     let j = null; try { j = JSON.parse(txt); } catch (_) {}
-    return { s: r.status, json: !!j, e: j && j.error ? j.error : null, ct: (r.headers.get("content-type") || "").split(";")[0] };
-  } catch (e) { return { s: "CAÍDA", json: false, e: e.message.slice(0, 40), ct: "" }; }
+    return { s: r.status, json: !!j, e: j && j.error ? j.error : null, ct: (r.headers.get("content-type") || "").split(";")[0], j };
+  } catch (e) { return { s: "CAÍDA", json: false, e: e.message.slice(0, 40), ct: "", j: null }; }
 }
 
 const CASOS = [
@@ -52,15 +55,33 @@ const CASOS = [
   ["cuentas crear rol inventado",  "/api/cuentas", { m: "POST", cab: { "X-QC-Admin": AD }, cuerpo: { usr: "nuevo2", clave: "abc", rol: "superjefe" } }],
   ["cuentas crear ok",             "/api/cuentas", { m: "POST", cab: { "X-QC-Admin": AD }, cuerpo: { usr: "prueba", clave: "clave-larga-123", rol: "qc", nombre: "Prueba" } }],
   ["leer-conduce sin llave IA",    "/api/leer-conduce", { m: "POST", cuerpo: { imagen: "x" } }],
+  /* Desconectar un aparato — Q-77. Va DESPUÉS del latido de arriba a propósito:
+     así «d1» existe en los dos y se compara el caso de verdad, el del aparato
+     conocido, y no dos «no lo conozco» que serían iguales por casualidad. */
+  ["desconectar sin dev",          "/api/desconectar", { m: "POST", cuerpo: {} }],
+  ["desconectar JSON roto",        "/api/desconectar", { m: "POST", crudo: "{no es json" }],
+  ["desconectar método malo",      "/api/desconectar", { m: "GET" }],
+  ["desconectar conocido",         "/api/desconectar", { m: "POST", cuerpo: { dev: "d1" }, mira: ["conocido"] }],
+  ["desconectar desconocido",      "/api/desconectar", { m: "POST", cuerpo: { dev: "no-existe" }, mira: ["conocido"] }],
+  ["latido tras desconectar",      "/api/latido", { m: "POST", cuerpo: { dev: "d1", usr: "x", pagina: "index.html" }, mira: ["fuera"] }],
+  ["latido de después",            "/api/latido", { m: "POST", cuerpo: { dev: "d1", usr: "x", pagina: "index.html" }, mira: ["fuera"] }],
 ];
 
 console.log("\n  CASO                              LOCAL         WORKER        ¿IGUAL?\n" + "  " + "─".repeat(74));
 let dif = 0, n = 0;
 for (const [nombre, ruta, op] of CASOS) {
   const a = await pega(A, ruta, op), b = await pega(B, ruta, op);
-  const igual = a.s === b.s && a.json === b.json && a.e === b.e;
+  /* Comparar solo el código de estado deja pasar la mitad de lo que importa:
+     «desconectar un aparato conocido» y «desconectar uno que no existe» son los
+     dos un 200, y la diferencia entre ellos vive en el cuerpo. `mira` nombra
+     los campos que además tienen que coincidir — Q-77. */
+  const campos = (op && op.mira) || [];
+  const mismoCuerpo = campos.every((c) => JSON.stringify(a.j && a.j[c]) === JSON.stringify(b.j && b.j[c]));
+  const igual = a.s === b.s && a.json === b.json && a.e === b.e && mismoCuerpo;
   n++; if (!igual) dif++;
-  const f = (r) => `${r.s} ${r.e ? r.e : (r.json ? "ok" : "no-json")}`.padEnd(13);
+  const f = (r) => `${r.s} ${r.e ? r.e : campos.length
+    ? campos.map((c) => c[0] + ":" + JSON.stringify(r.j && r.j[c])).join(" ")
+    : (r.json ? "ok" : "no-json")}`.padEnd(13);
   console.log(`  ${nombre.padEnd(33)} ${f(a)} ${f(b)} ${igual ? "sí" : "◀ NO"}`);
 }
 console.log("  " + "─".repeat(74));

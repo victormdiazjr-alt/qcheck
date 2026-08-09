@@ -34,14 +34,28 @@ CREATE INDEX IF NOT EXISTS ops_registro ON ops (ent, id, seq);
 --
 -- Las horas las pone el SERVIDOR, no el aparato. El reloj de un iPad en la
 -- obra puede ir descuadrado, y entonces «conectado hace 3 horas» sería mentira.
+-- `fuera` — Q-77. Cuando Víctor desconecta un aparato desde Estado del
+-- sistema, aquí queda la hora. El aparato se entera en su siguiente latido:
+-- el servidor le contesta que está fuera, él cierra la sesión y vuelve a la
+-- pantalla de acceso, y la marca se limpia al entregarla.
+--
+-- Queda esperando a propósito. Si el iPad está apagado o sin señal, la orden
+-- no se pierde: se cumple en cuanto vuelva. Una desconexión que solo funciona
+-- si el aparato está mirando no sirve para lo que se pide de ella.
 CREATE TABLE IF NOT EXISTS presencia (
   dev    TEXT PRIMARY KEY,   -- el nombre que se le puso al aparato
   usr    TEXT,               -- quién tiene la sesión abierta
   pagina TEXT,               -- en qué pantalla está
   desde  TEXT NOT NULL,      -- cuándo empezó ESTA sesión
-  visto  TEXT NOT NULL       -- último latido
+  visto  TEXT NOT NULL,      -- último latido
+  fuera  TEXT                -- desconectado a mano; null mientras no lo esté
 );
 CREATE INDEX IF NOT EXISTS presencia_visto ON presencia (visto);
+
+-- Para las bases que ya existían antes de Q-77. D1 no tiene `ADD COLUMN IF NOT
+-- EXISTS`, así que esta línea da error «duplicate column» en una base ya
+-- migrada — es el error correcto y se ignora sin más.
+ALTER TABLE presencia ADD COLUMN fuera TEXT;
 
 -- ============================================================ Q-07
 --
