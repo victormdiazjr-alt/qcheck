@@ -1892,3 +1892,53 @@ El **secreto de administración** (`QC_ADMIN`) y **las claves de los usuarios**
 también quedaron a la vista el 8 de agosto, y siguen sin cambiar. `QC_ADMIN` no
 deja fuera a nadie al cambiarlo —solo lo usa Víctor con `node cuentas.js`—, así
 que es el más barato de los tres.
+
+## 60 · La llave se cambió y se deshizo el mismo día — y por qué eso está bien
+
+**9 de agosto de 2026, por la noche**
+
+La §59 cuenta que la llave del proyecto se cambió. **Se deshizo esa misma noche**,
+y la §59 sin esta nota al lado dejaría a la siguiente sesión creyendo lo que no es.
+
+### Qué pasó
+
+Cambiar la llave deja fuera a **todo aparato** hasta que abre el enlace nuevo:
+la llave vive guardada en el navegador de cada uno. Rubén podía entrar esa noche
+a crear el tiro del día anterior y meter los resultados, y Víctor no quería
+tratar con nadie ese día:
+
+> «Necesito que arregles lo que haya que hacer para que Rubén pueda entrar en
+> cualquier momento a trabajar en QCheck PR-52.»
+
+La única forma de conseguir eso **sin que Rubén reciba nada** es devolverle la
+llave que su PC ya tenía guardada. Así se hizo.
+
+### Lo que se aprendió, y vale para toda rotación futura
+
+**Rotar una credencial que vive en el aparato del cliente no es un cambio
+técnico: es una operación de logística.** El comando dura diez segundos; el
+trabajo real es que treinta aparatos vuelvan a estar dentro. Elegir el momento
+es parte del cambio, no un detalle posterior.
+
+Y una comprobación que ahorró el susto: al ir a probar el enlace nuevo se
+descubrió que **`conectar.html` estaba roto desde que se encendió
+`exigir_sesion`** (§59). Si la llave se hubiera cambiado un día de vaciado, con
+prisa, nadie habría podido reconectar. **El fallo se encontró porque se probó en
+pantalla y no en el código.**
+
+### El estado que queda
+
+- **Llave viva: la de siempre**, la que se publicó el 8 de agosto. Sigue quemada.
+- **`exigir_sesion` ENCENDIDO**, que es lo que de verdad tapa el riesgo: la llave
+  sola da 401.
+- **Claves: `1234`** para todos menos `admin`, que es de Víctor. Provisionales.
+- La llave nueva, hecha y probada, espera en `datos/llave-lista-para-repartir.txt`
+  con los mensajes ya escritos al lado. Cambiarla vuelve a ser un comando.
+- **El arreglo de `conectar.html` SÍ se queda** (§59). Ese no se deshizo, y
+  gracias a él la rotación del futuro no encontrará la puerta atrancada.
+
+### Comprobado
+
+Contra producción, las dos puertas por separado: la llave de los aparatos pasa y
+pide sesión; `ruben` / `1234` entra de punta a punta; la llave nueva queda fuera
+con `401 token`. Y `node cuentas.js listar` vuelve a hablar con el servidor.

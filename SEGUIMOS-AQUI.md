@@ -52,9 +52,12 @@ al camión, y son treinta conduces reales para el banco.
   es su clave.
 - Las siete cuentas siguen activas.
 - El Worker está desplegado con el lector nuevo (chofer + manuscrito).
-- **La llave del proyecto se cambió el 9 de agosto** (`DECISIONS` §59). La
-  anterior ya no abre nada, así que **todo aparato necesita el enlace nuevo**,
-  que está en `datos/enlace-conexion.txt`.
+- **La llave del proyecto es la de siempre.** Se cambió el 9 de agosto y **se
+  deshizo el cambio esa misma noche** para que Rubén pudiera entrar a trabajar
+  sin recibir nada (`DECISIONS` §59 y **§60**). **Nadie necesita enlace nuevo.**
+  La llave nueva, hecha y probada, espera en
+  `datos/llave-lista-para-repartir.txt` con los mensajes ya escritos al lado.
+  Sigue quemada desde el 8 de agosto; lo que tapa el riesgo es `exigir_sesion`.
 - **Las claves están provisionalmente cortas**, por decisión de Víctor del 9 de
   agosto, para trabajar cómodo mientras se prueba. Están en
   `datos/claves-20260809.txt` — nunca aquí, que este repositorio es público. El
@@ -79,13 +82,15 @@ urgente.
 5. **Sin demostrar**: que el lector use los nombres del esquema al marcar un
    campo manuscrito. Hace falta un conduce con, por ejemplo, el número de
    conduce escrito a mano.
-6. ~~La llave del proyecto, quemada desde el 8 de agosto.~~ **Cambiada el 9 de
-   agosto** (`DECISIONS` §59). Quedan por cambiar el **secreto de
-   administración** (`QC_ADMIN`) y **las claves de los usuarios**, que también
-   se vieron. `QC_ADMIN` no deja fuera a nadie: es el más barato.
-7. **Repartir el enlace nuevo** a Rubén y al técnico. Está en
-   `datos/enlace-conexion.txt`. Hasta que lo abran, sus aparatos no hablan con
-   el servidor.
+6. **La llave del proyecto, quemada desde el 8 de agosto y todavía viva.** Se
+   intentó cambiar el 9 y se deshizo (`DECISIONS` §60): rotarla obliga a
+   repartir enlace a todos los aparatos, y Víctor decidió no repartir nada ese
+   día. **Todo está listo para el día que quiera**: llave en
+   `datos/llave-lista-para-repartir.txt`, mensajes en
+   `datos/mensaje-enlace-nuevo-20260809.txt`, y `conectar.html` ya arreglado.
+7. **El secreto de administración** (`QC_ADMIN`), quemado el mismo día y sin
+   cambiar. **No deja fuera a nadie** —solo lo usa Víctor con `cuentas.js`—,
+   así que es el más barato de todos los pendientes de seguridad.
 8. **Devolver las claves a claves de verdad.** Son provisionales desde el 9 de
    agosto y hoy no prueban quién firmó qué. Cómo deshacerlo está escrito al pie
    de `datos/claves-20260809.txt`. Esto es lo que más fácil se queda olvidado:
