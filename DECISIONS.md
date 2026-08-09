@@ -1675,3 +1675,52 @@ El navegador de pruebas tiene la cámara bloqueada. Quedó demostrado que ahora 
 pide la cámara **antes** de mirar el lector —que era el fallo—, pero **encender
 la cámara de verdad hay que probarlo en el iPad**. Está dicho así y no de otra
 manera a propósito: «debería funcionar» no es haberlo probado.
+
+## 56 · La única pieza que no escribimos nosotros
+
+**Q-80 — 9 de agosto de 2026**
+
+`assets/qr-lector.js` es **jsQR 1.4.0**, de Cosmo Wolfe, licencia Apache-2.0.
+No lo escribimos nosotros, y es lo único de todo QCheck que no.
+
+### Por qué, si §1 dice que aquí no hay dependencias
+
+Porque **Safari no sabe leer códigos QR desde una página web**. Chrome de
+Android trae `BarcodeDetector` y lo resuelve el sistema; Safari no lo trae, y el
+aparato de la obra es un iPad. Sin esta pieza, «Escanear QR» no puede funcionar
+en el único sitio donde hace falta que funcione.
+
+Las alternativas eran dos: escribir un decodificador entero —detección de los
+patrones de esquina, corrección de errores Reed-Solomon, quitar la máscara, la
+transformación de perspectiva— o no tener QR. Lo primero lleva días y no se
+puede comprobar de un vistazo: un decodificador con un bug no falla, lee mal.
+Víctor pidió que funcionara ahora.
+
+### Lo que se conserva del espíritu de §1
+
+**No hay nada que instalar.** No hay npm, no hay paso de compilación, y no se
+pide a ningún CDN en tiempo de ejecución. Es un archivo, vive en el repositorio,
+y funciona sin red igual que el resto.
+
+Y se carga **solo cuando alguien pulsa «Escanear QR»**: quien nada más saca
+fotos de conduces —que es el 100% del trabajo de mañana— no descarga esos
+130 KB nunca.
+
+### Lo que se comprobó antes de meterlo
+
+- Que no llama a internet ni ejecuta texto: ni `fetch`, ni `XMLHttpRequest`, ni
+  `eval`, ni `new Function`.
+- Que **lee un código de verdad**. Se generó uno con el codificador que escribió
+  QTicket (`qticket/qr.mjs`), se pintó en un lienzo con su margen blanco, y se
+  leyó de vuelta: `67638;128;10.00;06:50`, exacto. Después, por el camino
+  completo, hasta ver los campos del formulario rellenos.
+
+  La primera pasada dio `null` y **el fallo era mío**: pegué la matriz cortada
+  al pasarla al navegador. Conviene saberlo — un lector que devuelve `null` casi
+  siempre está mirando una imagen mala, no fallando.
+
+### Lo que sigue sin estar
+
+Nada de esto lee un QR **que no exista**. Los conduces de Concre-Tech son papel
+y no llevan código. Esto es para cuando exista QTicket, que es quien va a
+imprimirlos.

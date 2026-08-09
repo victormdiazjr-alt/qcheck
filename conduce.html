@@ -307,27 +307,76 @@ async function startScan() {
     return;
   }
 
-  if (!("BarcodeDetector" in window)) {
-    const video0 = document.getElementById("scan-video");
-    video0.srcObject = scanStream;
-    await video0.play();
-    wrap.style.display = "block";
-    document.getElementById("scan-nota").textContent =
-      "Este aparato no lee códigos QR por su cuenta. Usa «Escanear conduce» para leerlo de la foto, o entra el ticket a mano.";
-    return;
-  }
-  document.getElementById("scan-nota").textContent = "";
-  const video = document.getElementById("scan-video");
-  video.srcObject = scanStream;
-  await video.play();
+  const video0 = document.getElementById("scan-video");
+  video0.srcObject = scanStream;
+  await video0.play();
   wrap.style.display = "block";
+  document.getElementById("scan-nota").textContent = "";
+
+  /* Dos maneras de leer el código, y se prueba la buena primero — Q-80.
+
+     `BarcodeDetector` lo trae Chrome de Android y lo resuelve el propio
+     sistema: rápido y sin cargar nada. Safari NO lo trae, y el aparato de la
+     obra es un iPad, así que ahí se cae al lector propio (`assets/qr-lector.js`).
+
+     El lector propio se pide AQUÍ y no arriba del todo a propósito: son 130 KB
+     que solo paga quien pulsa este botón. Quien nada más saca fotos de
+     conduces no los descarga nunca. */
+  let mirar;
+  if ("BarcodeDetector" in window) {
+    const detector = new BarcodeDetector({ formats: ["qr_code", "code_128", "code_39"] });
+    mirar = async () => {
+      const codes = await detector.detect(video0);
+      return codes.length ? codes[0].rawValue : null;
+    };
+  } else {
+    let leer;
+    try {
+      leer = await cargarLectorQR();
+    } catch (_) {
+      document.getElementById("scan-nota").textContent =
+        "No se pudo cargar el lector de códigos. Usa «Escanear conduce» o entra el ticket a mano.";
+      return;
+    }
+    /* El fotograma se mira reducido a 640 px de ancho. A tamaño completo el
+       iPad tarda más en cada pasada que lo que dura la pasada, y la cámara se
+       ve a tirones justo cuando hace falta apuntar bien. */
+    const lienzo = document.createElement("canvas");
+    const ctx = lienzo.getContext("2d", { willReadFrequently: true });
+    mirar = async () => {
+      const w = video0.videoWidth, h = video0.videoHeight;
+      if (!w || !h) return null;
+      const escala = Math.min(1, 640 / w);
+      lienzo.width = Math.round(w * escala);
+      lienzo.height = Math.round(h * escala);
+      ctx.drawImage(video0, 0, 0, lienzo.width, lienzo.height);
+      const d = ctx.getImageData(0, 0, lienzo.width, lienzo.height);
+      const r = leer(d.data, d.width, d.height, { inversionAttempts: "attemptBoth" });
+      return r && r.data ? r.data : null;
+    };
+  }
   const detector = new BarcodeDetector({ formats: ["qr_code", "code_128", "code_39"] });
   scanTimer = setInterval(async () => {
     try {
-      const codes = await detector.detect(video);
-      if (codes.length) { applyScan(codes[0].rawValue); stopScan(); }
+      const leido = await mirar();
+      if (leido) { applyScan(leido); stopScan(); }
     } catch (_) {}
   }, 400);
+}
+
+/* Trae el lector propio la primera vez que hace falta, y una sola vez. */
+let cargandoLectorQR = null;
+function cargarLectorQR() {
+  if (window.jsQR) return Promise.resolve(window.jsQR);
+  if (cargandoLectorQR) return cargandoLectorQR;
+  cargandoLectorQR = new Promise((ok, no) => {
+    const s = document.createElement("script");
+    s.src = "assets/qr-lector.js";
+    s.onload = () => window.jsQR ? ok(window.jsQR) : no(new Error("cargó pero no está jsQR"));
+    s.onerror = () => { cargandoLectorQR = null; no(new Error("no se pudo cargar")); };
+    document.head.appendChild(s);
+  });
+  return cargandoLectorQR;
 }
 function stopScan() {
   if (scanTimer) clearInterval(scanTimer);
