@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Conduce — QC PR-52</title>
-<link rel="stylesheet" href="assets/qc.css?v=4382f732">
+<link rel="stylesheet" href="assets/qc.css?v=29cd4915">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0d12'/><text x='50' y='70' font-size='52' text-anchor='middle' fill='white'>▤</text></svg>">
 <style>
 /* Conduce entry — field data-entry person. Mobile-first, glove-friendly. */
@@ -246,6 +246,9 @@ body { background: var(--bg); }
       </div>
       <!-- Lo que el lector sacó de la foto, y lo que no pudo (Q-01). -->
       <div id="aviso-lectura"></div>
+      <!-- Q-84: un campo impreso que llega a bolígrafo. Rojo, no ámbar: no es
+           una tendencia que vigilar, es un papel que alguien tocó. -->
+      <div id="aviso-mano" class="aviso-mano" style="display:none"></div>
       <div style="display:flex; gap:10px; margin-top:14px; align-items:center">
         <span id="photo-slot"></span>
         <div style="flex:1"></div>
@@ -741,6 +744,37 @@ async function leerDeLaFoto(dataUrl) {
     ? `Leídos ${puestos} campo${puestos === 1 ? "" : "s"} — revísalos antes de registrar.`
       + (faltan ? ` ${faltan} no se leyeron y quedan vacíos.` : "")
     : "No se pudo leer ningún campo con seguridad. Entra los datos a mano.";
+
+  avisarDeLoEscritoAMano(c);
+}
+
+/* UN CAMPO IMPRESO QUE LLEGA A BOLÍGRAFO — Q-84, banco de reglas 04.
+
+   Los choferes alteran conduces a mano, y está prohibido. Pero hay dos cosas
+   distintas en el mismo papel y no valen igual:
+
+     · Las horas del ciclo se escriben a mano SIEMPRE. Esas casillas se imprimen
+       en blanco justo para eso, y es literalmente lo que QCheck digitaliza.
+     · El número de conduce, el camión, las yardas, la mezcla y las ordenadas
+       los imprime la planta. **Si uno de esos llega escrito a mano, alguien lo
+       cambió después de que la planta lo certificara.**
+
+   Un lector de los que leen por plantilla no puede distinguirlo: para él todo
+   son letras. Un modelo sí, y por eso se le pide. Este aviso es el motivo más
+   fuerte que tenemos para leer con modelo.
+
+   No bloquea nada: avisa. Quien decide es el técnico, con el papel delante. */
+const CAMPOS_QUE_IMPRIME_LA_PLANTA = ["ticket", "truck", "vol", "mix", "company", "ordenadas"];
+function avisarDeLoEscritoAMano(c) {
+  const caja = document.getElementById("aviso-mano");
+  if (!caja) return;
+  const aMano = (c.manuscrito || []).filter((k) => CAMPOS_QUE_IMPRIME_LA_PLANTA.includes(k));
+  if (!aMano.length) { caja.style.display = "none"; caja.textContent = ""; return; }
+  const nombres = aMano.map((k) => QC_NOMBRE_CAMPO[k] || k).join(", ");
+  caja.style.display = "block";
+  caja.textContent = "Ojo: " + (aMano.length === 1 ? "este campo venía" : "estos campos venían") +
+    " escrito" + (aMano.length === 1 ? "" : "s") + " a mano y la planta lo imprime — " + nombres +
+    ". Compruébalo contra el papel antes de registrar.";
 }
 
 /* ---------- save arrival ---------- */

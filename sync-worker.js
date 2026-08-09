@@ -474,9 +474,11 @@ export default {
              Si no cuadran, alguien está pidiendo o entregando otra cosa, y eso
              se sabe con el primer camión y no al cerrar el día. Q-55. */
           ordenadas: oNulo("number"),
+          chofer: QC_NULO("string"),
+          manuscrito: { type: "array", items: { type: "string" } },
           ilegible: { type: "array", items: { type: "string" } },
         },
-        required: ["ticket", "truck", "vol", "batch", "company", "mix", "ordenadas", "ilegible"],
+        required: ["ticket", "truck", "vol", "batch", "company", "mix", "ordenadas", "chofer", "manuscrito", "ilegible"],
         additionalProperties: false,
       };
 
@@ -510,6 +512,15 @@ export default {
         "  `vol` es lo que trae ESTE camión («Servidas» o «Cantidad»). No los confundas:",
         "  un camión trae 10 y el día puede tener 150 ordenadas.",
         "- El `Slump` impreso es el TEÓRICO de diseño, no el medido en obra. No lo devuelvas.",
+        "- `chofer` es el nombre del conductor. Se pide para COMPROBAR, no para",
+        "  rellenar: si no se lee, devuélvelo null y no lo deduzcas del camión.",
+        "- `manuscrito` es la lista de campos que venían ESCRITOS A MANO y no impresos",
+        "  por la planta. Es importante y hay que mirarlo con cuidado: la tinta de",
+        "  bolígrafo, el trazo irregular y la posición torcida se distinguen del texto",
+        "  impreso. Si un campo está impreso, NO lo pongas. Si dudas, no lo pongas",
+        "  tampoco: aquí un aviso falso hace que dejen de mirarse los avisos.",
+        "  Las casillas del ciclo (horas de salida, llegada, comienzo, fin) se rellenan",
+        "  a mano por costumbre y eso es normal; aun así, dilo si las lees.",
       ].join("\n");
 
       let r;

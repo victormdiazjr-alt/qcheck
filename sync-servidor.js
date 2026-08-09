@@ -337,9 +337,11 @@ const QC_ESQUEMA_CONDUCE = {
     /* Las yardas ORDENADAS del día, no las de este camión. Ver la nota gemela
        en sync-worker.js: los dos servidores tienen que dar la MISMA ficha. */
     ordenadas: QC_NULO("number"),
+    chofer: QC_NULO("string"),
+    manuscrito: { type: "array", items: { type: "string" } },
     ilegible: { type: "array", items: { type: "string" } },
   },
-  required: ["ticket", "truck", "vol", "batch", "company", "mix", "ordenadas", "ilegible"],
+  required: ["ticket", "truck", "vol", "batch", "company", "mix", "ordenadas", "chofer", "manuscrito", "ilegible"],
   additionalProperties: false,
 };
 const QC_INSTRUCCIONES_CONDUCE = [
@@ -372,6 +374,15 @@ const QC_INSTRUCCIONES_CONDUCE = [
   "  `vol` es lo que trae ESTE camión («Servidas» o «Cantidad»). No los confundas:",
   "  un camión trae 10 y el día puede tener 150 ordenadas.",
   "- El `Slump` impreso es el TEÓRICO de diseño, no el medido en obra. No lo devuelvas.",
+  "- `chofer` es el nombre del conductor. Se pide para COMPROBAR, no para",
+  "  rellenar: si no se lee, devuélvelo null y no lo deduzcas del camión.",
+  "- `manuscrito` es la lista de campos que venían ESCRITOS A MANO y no impresos",
+  "  por la planta. Es importante y hay que mirarlo con cuidado: la tinta de",
+  "  bolígrafo, el trazo irregular y la posición torcida se distinguen del texto",
+  "  impreso. Si un campo está impreso, NO lo pongas. Si dudas, no lo pongas",
+  "  tampoco: aquí un aviso falso hace que dejen de mirarse los avisos.",
+  "  Las casillas del ciclo (horas de salida, llegada, comienzo, fin) se rellenan",
+  "  a mano por costumbre y eso es normal; aun así, dilo si las lees.",
 ].join("\n");
 
 async function leerConduce(llave, imagen, tipo) {

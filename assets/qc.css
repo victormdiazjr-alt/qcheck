@@ -902,3 +902,12 @@ body.con-sim-bar { padding-top: 40px; }
   .pf-fila { grid-template-columns: 1fr auto; }
   .pf-barra { grid-column: 1 / -1; }
 }
+
+/* Un campo impreso que llegó escrito a mano — Q-84. Rojo: no es una tendencia
+   que vigilar, es un papel que alguien tocó después de que la planta lo
+   certificara. Ver banco de reglas 04. */
+.aviso-mano {
+  margin-top: 8px; border: 1px solid var(--susp); background: var(--susp-bg);
+  color: var(--susp); border-radius: 10px; padding: 10px 13px;
+  font-size: 13px; font-weight: 650; line-height: 1.4;
+}
