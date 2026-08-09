@@ -640,6 +640,11 @@ table.descartados td:nth-child(2) { min-width: 0; }
 .orden-par .num { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
 .orden-par .num span { font-size: 13px; font-weight: 600; color: var(--muted); }
 .orden-vs { font-size: 22px; color: var(--susp, #ff5a52); font-weight: 700; }
+/* El ajuste del último camión NO es rojo — Q-79. Es información: el tiro se
+   pidió «150+» y el último va con lo que falte. Pintarlo del mismo rojo que una
+   contradicción de verdad es enseñar a ignorar el rojo. */
+.aviso-orden.es-ajuste { border-left-color: var(--info, #5b8dbf); }
+.aviso-orden.es-ajuste .orden-vs { color: var(--info, #5b8dbf); }
 
 /* Lotes de la SP-934 — Q-59. Las tres cifras del lote van en línea: se leen
    juntas o no se leen —cuánto va, cuánto falta, y en cuánto queda el pago. */

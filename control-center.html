@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Control Center — QCheck</title>
-<link rel="stylesheet" href="assets/qc.css?v=ab8a8ee5">
+<link rel="stylesheet" href="assets/qc.css?v=4382f732">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d12'/><circle cx='50' cy='50' r='26' fill='none' stroke='%2396c93d' stroke-width='8'/></svg>">
 <style>
 /* ============================================================
@@ -265,7 +265,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=a4ef02ff"></script>
-<script src="assets/core.js?v=f7c96e7a"></script>
+<script src="assets/core.js?v=0bf0c388"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script src="assets/clima.js?v=d5c4fb65"></script>
 <script src="assets/usuarios.js?v=03f894c7"></script>
@@ -482,21 +482,39 @@ function panelFantasmas(lista) {
    de tendencia: esto no es una sospecha del sistema, es una contradicción
    entre dos papeles, y se resuelve con una llamada de teléfono mientras el
    camión todavía está en la obra. */
+/* Dos avisos distintos, no uno con dos caras — Q-79.
+
+   Si el único conduce que discrepa es el último que ha llegado, lo más probable
+   es el AJUSTE: el tiro se pidió «150+» y antes del último camión midieron lo
+   que faltaba de verdad. Eso no es un problema, es cómo se trabaja, y mandar
+   parar el vaciado por ello es equivocarse a la misma hora todos los días.
+
+   Cualquier otro reparto —varios conduces discrepando, o uno que no es el
+   último— sigue siendo lo de antes: hay algo que aclarar antes de seguir. */
 function panelDiscrepancia(d) {
   if (!d) return "";
   const lista = d.conduces.map((c) => fmt(c, 0) + " CY").join(" · ");
+  const camion = d.camion ? ` (camión ${esc(d.camion)})` : "";
   return `
-    <section class="panel aviso-orden">
-      <div class="panel-head"><h2>El conduce no cuadra con el tiro</h2></div>
+    <section class="panel aviso-orden${d.ajuste ? " es-ajuste" : ""}">
+      <div class="panel-head"><h2>${d.ajuste
+        ? "El último conduce trae otra cantidad"
+        : "El conduce no cuadra con el tiro"}</h2></div>
       <div class="panel-body">
         <div class="orden-par">
           <div><div class="lbl">Programado en QCheck</div><div class="num">${fmt(d.plan, 0)} <span>CY</span></div></div>
-          <div class="orden-vs">≠</div>
-          <div><div class="lbl">${d.conduces.length === 1 ? "Dice el conduce" : "Dicen los conduces"}</div><div class="num">${esc(lista)}</div></div>
+          <div class="orden-vs">${d.ajuste ? "→" : "≠"}</div>
+          <div><div class="lbl">${d.ajuste
+            ? "Dice el último conduce"
+            : (d.conduces.length === 1 ? "Dice el conduce" : "Dicen los conduces")}</div>
+            <div class="num">${esc(lista)}</div></div>
         </div>
-        <p class="muted" style="margin:10px 0 0">
-          O se cambió el pedido y no se apuntó, o algún camión viene contra otra orden.
-          Se aclara con la concretera antes de seguir vaciando.
+        <p class="muted" style="margin:10px 0 0">${d.ajuste
+          ? `Normal si el tiro se pidió con ajuste${camion}: antes del último camión se mide lo que
+             falta de verdad para llenar la estructura, y ese último va con lo que falte.
+             Si no se pidió con ajuste, hay que aclararlo con la concretera.`
+          : `O se cambió el pedido y no se apuntó, o algún camión viene contra otra orden.
+             Se aclara con la concretera antes de seguir vaciando.`}
         </p>
       </div>
     </section>`;

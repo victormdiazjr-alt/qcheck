@@ -1017,17 +1017,43 @@ function es934(dia) { return specDelDia(dia) === "934"; }
    cuando ya hay hormigón puesto.
 
    Se compara con margen de media yarda: los conduces redondean. */
+/* EL AJUSTE DEL ÚLTIMO CAMIÓN — Q-79, 9 de agosto de 2026.
+
+   Cuando el tiro es grande, el contratista no ordena «150»: ordena «150+», que
+   es 150 CON AJUSTE. Antes de que salga el último camión miden lo que falta de
+   verdad para llenar la estructura, y ese último va con lo que falte — a veces
+   menos, a veces más. Por eso el último conduce puede decir 157 ordenadas
+   cuando los quince anteriores decían 150.
+
+   Es la práctica normal de la industria (Víctor, 9 ago 2026). Sin esta regla,
+   el aviso saltaba en el ÚLTIMO camión de cada tiro grande y le decía a Rubén
+   que parara de vaciar cuando no había nada que parar. Un aviso que se equivoca
+   siempre a la misma hora es un aviso que se aprende a ignorar, y entonces el
+   día que tenga razón tampoco lo mira nadie. */
 function discrepanciaDeOrden(day) {
   const d = day || diaActivo();
   const plan = num((db.dayMeta[d] || {}).cyPlan);
   if (plan == null) return null;
+  const delDia = testsOfDate(d);
   const dichas = new Set();
-  for (const t of testsOfDate(d)) {
+  let ultimo = null;
+  for (const t of delDia) {
     const o = num(t.ordenadas);
-    if (o != null && Math.abs(o - plan) > 0.5) dichas.add(o);
+    if (o == null || Math.abs(o - plan) <= 0.5) continue;
+    dichas.add(o);
+    if (ultimo == null || t.n > ultimo.n) ultimo = t;
   }
   if (!dichas.size) return null;
-  return { plan, conduces: [...dichas].sort((a, b) => a - b), dia: d };
+
+  /* Huele a ajuste si el ÚNICO conduce que discrepa es el último que ha
+     llegado. Se dice «huele» y no «es» a propósito: mientras el tiro no esté
+     cerrado, el último de ahora puede no ser el último del día, y este mismo
+     aviso volverá a mirarse cuando llegue el siguiente. */
+  const mayorN = delDia.reduce((m, t) => Math.max(m, t.n), -Infinity);
+  const ajuste = dichas.size === 1 && ultimo != null && ultimo.n === mayorN;
+
+  return { plan, conduces: [...dichas].sort((a, b) => a - b), dia: d, ajuste,
+           camion: ajuste ? (ultimo.truck || null) : null };
 }
 function nextTestN() { return db.tests.length ? Math.max(...db.tests.map((t) => t.n)) + 1 : 1; }
 function shortIdent(s) {
