@@ -26,6 +26,10 @@ body { background: var(--bg); }
 }
 .entry-hero h1 { margin: 0 0 2px; font-size: 21px; }
 .entry-hero .sub { color: #bcd4e8; font-size: 13px; }
+.scan-nota:empty { display: none; }
+.scan-nota { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 2;
+  background: rgba(10,13,18,.88); border: 1px solid var(--susp); color: var(--susp);
+  border-radius: 10px; padding: 10px 12px; font-size: 12.5px; font-weight: 600; line-height: 1.35; }
 .capture-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
 @media (max-width: 640px) { .capture-row { grid-template-columns: 1fr; } }
 .cap-btn {
@@ -75,6 +79,48 @@ body { background: var(--bg); }
 }
 #video-wrap .close-scan { position: absolute; top: 10px; right: 10px; }
 .photo-chip { height: 42px; border-radius: 6px; border: 1px solid var(--line); }
+/* La miniatura se pulsa — Q-78. Sin esta pista nadie descubre que se puede:
+   una imagen pequeña no parece un botón. */
+/* El clip de la lista era un adorno: decía que había foto y no dejaba verla.
+   Ahora es un botón, y se nota que lo es. */
+.clip { background: none; border: 0; padding: 0 2px; font-size: 13px; cursor: zoom-in;
+  line-height: 1; opacity: .75; }
+.clip:hover { opacity: 1; transform: scale(1.15); }
+.photo-chip.abre { cursor: zoom-in; transition: border-color .12s, transform .12s; }
+.photo-chip.abre:hover { border-color: var(--info); transform: scale(1.06); }
+
+/* El visor. Tapa la pantalla entera porque es para leer, y leer un conduce con
+   la pantalla a medias es no leerlo. */
+/* 400, como la ventana de los tableros en qc.css. Con 90 se metía DEBAJO de la
+   barra de estado —que va en 330— y la fila de cerrar quedaba tapada: el visor
+   se abría y no había manera de salir de él. */
+.visor { position: fixed; inset: 0; z-index: 400; background: rgba(10,13,18,.97);
+  display: flex; flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom); }
+.visor[hidden] { display: none; }
+.visor-barra { display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.10); flex: none; }
+.visor-tit { font-weight: 700; font-size: 14px; color: #eef2f6; }
+.visor-ayuda { font-size: 12px; color: #8b97a3; margin-left: auto; }
+.visor-barra .btn { flex: none; }
+/* La caja hace de lupa: con la imagen a tamaño natural, el propio scroll —y el
+   pellizco en el iPad— es el zoom. No hace falta inventar controles. */
+/* Flex y no grid, y el centrado con `margin: auto` en la imagen. Las dos cosas
+   son a propósito:
+
+   · Con `display: grid` y `place-items: center`, el `max-height: 100%` de la
+     imagen se mide contra una fila que crece con la imagen — se mide contra sí
+     misma— así que no limita nada: un conduce de 900 px se salía de la caja por
+     abajo y el final no se veía.
+   · Con `justify-content: center` en vez de `margin: auto`, al acercar, la
+     parte izquierda de la imagen queda fuera del scroll y NO se puede alcanzar.
+     Es el fallo clásico de flex con overflow. */
+.visor-caja { flex: 1; min-height: 0; overflow: auto; display: flex; padding: 14px;
+  -webkit-overflow-scrolling: touch; }
+.visor-caja img { margin: auto; max-width: 100%; max-height: 100%; object-fit: contain;
+  cursor: zoom-in; border-radius: 8px; box-shadow: 0 18px 60px rgba(0,0,0,.6); }
+.visor-caja.cerca img { max-width: none; max-height: none; width: auto; cursor: zoom-out; }
+@media (max-width: 640px) { .visor-ayuda { display: none; } }
 /* El campo que falta se señala donde está el dedo, no solo en el aviso de
    abajo: el resplandor, nunca el relleno (AGENTS.md §10). */
 .field input.falta {
@@ -138,6 +184,22 @@ body { background: var(--bg); }
     <video id="scan-video" playsinline muted></video>
     <div class="scan-frame"></div>
     <button class="btn small close-scan" onclick="stopScan()">✕ Cerrar</button>
+    <!-- Q-78: aquí se dice si este aparato sabe leer QR o solo enseña la
+         cámara. Va DENTRO del visor de la cámara, que es donde se está
+         mirando; un aviso arriba del todo no lo lee nadie. -->
+    <div class="scan-nota" id="scan-nota"></div>
+  </div>
+
+  <!-- El conduce a pantalla completa — Q-78. La miniatura de 42 px sirve para
+       saber que hay foto adjunta; no sirve para LEERLA, y un conduce es un
+       documento que a veces hay que releer. -->
+  <div class="visor" id="visor" hidden>
+    <div class="visor-barra">
+      <span class="visor-tit" id="visor-tit"></span>
+      <span class="visor-ayuda" id="visor-ayuda">Toca la imagen para acercar</span>
+      <button class="btn small" id="visor-cerrar">✕ Cerrar</button>
+    </div>
+    <div class="visor-caja" id="visor-caja"><img id="visor-img" alt="Conduce"></div>
   </div>
 
   <div class="capture-row">
@@ -147,7 +209,12 @@ body { background: var(--bg); }
     </button>
     <label class="cap-btn">
       <svg class="ico" viewBox="0 0 24 24"><path d="M3.4 8.6h3.2l1.5-2.4h7.8l1.5 2.4h3.2a1 1 0 0 1 1 1v8.4a1 1 0 0 1-1 1H3.4a1 1 0 0 1-1-1V9.6a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.6" r="3.6"/></svg>
-      <span class="t">Tomar foto</span>
+      <!-- «Escanear conduce» y no «Tomar foto»: es la palabra que se usa en
+           obra, y además dice lo que pasa después —que se lee solo—. En iPhone
+           y iPad, `capture="environment"` abre la cámara trasera directamente,
+           sin pasar por el carrete. En una PC no hay cámara que abrir y el
+           navegador enseña el buscador de archivos, que es lo correcto. -->
+      <span class="t" id="t-escanear">Escanear conduce</span>
       <input type="file" accept="image/*" capture="environment" style="display:none" onchange="photoCapture(this)">
     </label>
     <button class="cap-btn" onclick="document.getElementById('manual-card').scrollIntoView({behavior:'smooth'}); document.querySelector('#f-ticket').focus()">
@@ -216,16 +283,40 @@ function setNow(id) { document.getElementById(id).value = nowHM(); }
 /* ---------- QR scan (BarcodeDetector + camera) ---------- */
 async function startScan() {
   const wrap = document.getElementById("video-wrap");
-  if (!("BarcodeDetector" in window)) {
-    alert("Este navegador no soporta lectura de QR nativa (use Chrome/Edge en Android, o Safari 17+). Use entrada manual o foto.");
-    return;
-  }
+
+  /* La cámara PRIMERO, y el lector de QR después — Q-78.
+
+     Antes se preguntaba por `BarcodeDetector` antes de nada, así que en un
+     iPhone o un iPad el botón no encendía la cámara: soltaba un aviso y ahí se
+     acababa. Safari no trae ese lector, y ese es justo el aparato que está en
+     la obra.
+
+     Ahora la cámara se abre siempre. Si el navegador sabe leer QR, lee; si no,
+     se ve por la pantalla y se dice con todas las letras que en este aparato
+     hay que apuntar el número a mano o escanear el conduce con la otra puerta.
+     Enseñar la cámara y decir la verdad es mejor que un botón que no hace nada:
+     el técnico ve que el aparato responde y sabe qué hacer a continuación. */
   try {
     scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
   } catch (e) {
-    alert("No se pudo abrir la cámara: " + e.message);
+    /* En iOS la cámara solo se abre sobre HTTPS. Si se entra por IP a pelo, el
+       navegador la niega y el mensaje del error no lo explica. */
+    alert("No se pudo abrir la cámara: " + e.message
+      + (location.protocol !== "https:" ? "\n\nEste aparato está entrando por " + location.protocol
+         + " — la cámara solo funciona por https." : ""));
     return;
   }
+
+  if (!("BarcodeDetector" in window)) {
+    const video0 = document.getElementById("scan-video");
+    video0.srcObject = scanStream;
+    await video0.play();
+    wrap.style.display = "block";
+    document.getElementById("scan-nota").textContent =
+      "Este aparato no lee códigos QR por su cuenta. Usa «Escanear conduce» para leerlo de la foto, o entra el ticket a mano.";
+    return;
+  }
+  document.getElementById("scan-nota").textContent = "";
   const video = document.getElementById("scan-video");
   video.srcObject = scanStream;
   await video.play();
@@ -258,6 +349,49 @@ function applyScan(raw) {
   toast("Conduce escaneado — verifique y registre");
 }
 
+/* El conduce a pantalla completa — Q-78.
+
+   La miniatura dice que hay foto; el visor deja leerla. Y lo que enseña es
+   **la foto que de verdad se guardó**, no una copia bonita hecha aparte: si el
+   conduce guardado no se lee, hay que enterarse ahora y volver a tomarlo, no el
+   día que alguien reclame una yarda. */
+/* El conduce de un camión ya registrado. Se busca por `n` —el número de fila—
+   porque es lo que la lista tiene a mano; si ese camión no trae foto no se
+   enseña nada y tampoco se inventa un hueco: el clip solo aparece cuando la
+   hay. */
+function verConduceDe(n) {
+  const t = (db.tests || []).find((x) => String(x.n) === String(n));
+  if (!t || !t.photo) return;
+  verConduce(t.photo, `Conduce · camión ${t.truck || "—"} · ticket ${t.ticket || "—"}`);
+}
+
+function verConduce(src, titulo) {
+  if (!src) return;
+  document.getElementById("visor-img").src = src;
+  document.getElementById("visor-tit").textContent = titulo || "Conduce";
+  document.getElementById("visor-caja").classList.remove("cerca");
+  document.getElementById("visor").hidden = false;
+  /* Sin esto la página de detrás sigue moviéndose bajo el dedo, y en el iPad
+     eso se siente como que el visor no responde. */
+  document.body.style.overflow = "hidden";
+}
+
+function cerrarVisor() {
+  document.getElementById("visor").hidden = true;
+  document.getElementById("visor-img").src = "";      // que no se quede en memoria
+  document.body.style.overflow = "";
+}
+
+document.getElementById("visor-cerrar").onclick = cerrarVisor;
+document.getElementById("visor-caja").onclick = (e) => {
+  /* Pulsar la imagen acerca y aleja; pulsar el fondo cierra. Es lo que hace
+     cualquier visor de fotos, y aquí lo que menos hace falta es aprender algo
+     nuevo con un camión esperando. */
+  if (e.target.id === "visor-img") document.getElementById("visor-caja").classList.toggle("cerca");
+  else cerrarVisor();
+};
+addEventListener("keydown", (e) => { if (e.key === "Escape") cerrarVisor(); });
+
 /* ---------- photo evidence ---------- */
 /* Una foto, dos usos y dos tamaños (Q-01).
 
@@ -281,8 +415,11 @@ function photoCapture(input) {
   const img = new Image();
   img.onload = () => {
     pendingPhoto = reducir(img, 900, 0.6);          // la que se guarda
-    document.getElementById("photo-slot").innerHTML =
-      `<img class="photo-chip" src="${pendingPhoto}"> <span class="muted" style="font-size:12px">foto adjunta</span>`;
+    const slot = document.getElementById("photo-slot");
+    slot.innerHTML =
+      `<img class="photo-chip abre" src="${pendingPhoto}" title="Ver el conduce completo">` +
+      ` <span class="muted" style="font-size:12px">foto adjunta · toca para verla</span>`;
+    slot.querySelector("img").onclick = () => verConduce(pendingPhoto, "Conduce sin registrar todavía");
     document.getElementById("f-arrive").value = document.getElementById("f-arrive").value || nowHM();
     toast("Foto del conduce adjuntada");
     leerDeLaFoto(reducir(img, 2576, 0.92));          // la que se lee, y no se guarda
@@ -559,7 +696,8 @@ function render() {
     return `<div class="truck-row ${t.rejected ? "rejected" : ""}">
       <div class="tno">${esc(t.truck || "—")}</div>
       <div class="tinfo">
-        <div><b>Ticket ${esc(t.ticket || "—")}</b> ${t.photo ? "📎" : ""}</div>
+        <div><b>Ticket ${esc(t.ticket || "—")}</b>${t.photo
+          ? ` <button class="clip" onclick="verConduceDe(${t.n})" title="Ver el conduce de este camión">📎</button>` : ""}</div>
         <div class="meta">${fmt(t.vol, 1)} CY · llegó ${esc(t.arrive || "—")}${t.ident ? " · " + esc(shortIdent(t.ident)) : ""}</div>
       </div>
       ${step("start", "▶ Comienza")}

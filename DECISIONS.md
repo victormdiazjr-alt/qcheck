@@ -1609,3 +1609,69 @@ Rubén y al técnico la noche antes del vaciado. Queda pendiente y es suyo.
   raíz de nada que se pueda publicar.
 - **No se supo cuánto tiempo estuvo expuesto.** El propio despliegue dijo «1313
   ya subidos», así que la copia era anterior a ese día.
+
+## 55 · El conduce se puede leer, y la cámara se enciende
+
+**Q-78 — 8 de agosto de 2026**
+
+Dos cosas que Víctor pidió el mismo día, y que son la misma idea: lo que se ve
+en Recepción tiene que servir para trabajar, no solo para saber que algo pasó.
+
+### La miniatura no se leía
+
+Al adjuntar la foto salía un cuadradito de 42 px. Servía para saber que había
+foto; no servía para **leer el conduce**, y un conduce es un documento que a
+veces hay que releer —cuando se reclama una yarda, cuando no cuadra una hora—.
+En la lista de camiones había un 📎 que era puro adorno: decía que había foto y
+no dejaba abrirla.
+
+Ahora los dos abren el conduce a pantalla completa. Un toque en la imagen la
+acerca a tamaño natural y el propio scroll —o el pellizco en el iPad— hace de
+lupa; otro toque la aleja, y el fondo o Esc cierran.
+
+**Lo que enseña es la foto que de verdad se guardó**, la de 900 px, no una copia
+bonita hecha aparte. Si el conduce guardado no se lee, hay que enterarse ahora y
+volver a tomarlo, no el día que alguien reclame.
+
+Dos fallos que salieron al mirarlo en pantalla, y ninguno se habría visto
+leyendo el código:
+
+- **El visor iba por debajo de la barra de estado.** Estaba en `z-index: 90` y
+  la barra en 330: se abría y la fila de cerrar quedaba tapada. Ahora en 400,
+  como la ventana de tableros de `qc.css`.
+- **La imagen se salía de la caja.** Con `display: grid` y `place-items:
+  center`, el `max-height: 100%` de la imagen se mide contra una fila que crece
+  con la imagen —contra sí misma—, así que no limitaba nada y el final del
+  conduce no se veía. Con flex y `margin: auto` sí. El `margin: auto` tampoco es
+  capricho: con `justify-content: center`, al acercar, la parte izquierda queda
+  fuera del scroll y no se puede alcanzar.
+
+### La cámara se preguntaba al revés
+
+«Escanear QR» miraba primero si el navegador traía `BarcodeDetector` y, si no,
+soltaba un aviso y ahí se acababa. Safari no lo trae — y Safari es justo el
+navegador del iPad que está en la obra. Así que en el aparato de campo, el botón
+no encendía la cámara.
+
+Ahora **la cámara se abre siempre**, y el lector se consulta después. Si el
+navegador sabe leer QR, lee. Si no, se ve por la pantalla y un aviso DENTRO del
+visor —donde se está mirando, no arriba del todo— dice qué hacer en su lugar.
+Enseñar la cámara y decir la verdad es mejor que un botón que no responde: el
+técnico ve que el aparato reacciona y sabe cuál es el siguiente paso.
+
+«Tomar foto» pasó a llamarse **«Escanear conduce»**: es la palabra que se usa en
+obra y además dice lo que pasa después, que se lee solo. Lleva
+`capture="environment"`, que en iPhone y iPad abre la cámara trasera directa; en
+una PC no hay cámara y el navegador enseña el buscador de archivos, que es lo
+correcto y es como Víctor lo usó la primera vez.
+
+Si la cámara se niega, el mensaje añade una línea cuando la página no va por
+`https`: en iOS la cámara solo funciona con https y el error del navegador no lo
+explica.
+
+### Lo que no se pudo probar aquí
+
+El navegador de pruebas tiene la cámara bloqueada. Quedó demostrado que ahora se
+pide la cámara **antes** de mirar el lector —que era el fallo—, pero **encender
+la cámara de verdad hay que probarlo en el iPad**. Está dicho así y no de otra
+manera a propósito: «debería funcionar» no es haberlo probado.
