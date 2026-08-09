@@ -1566,3 +1566,46 @@ Y en pantalla, desconectando este mismo navegador: salió solo al acceso con el
 aviso puesto, `qc-api` y `qc-token` quedaron vacíos, el nombre del aparato y la
 muestra sin subir siguieron ahí, y el servidor dejó de recibir su latido — dos
 lecturas de la presencia con seis segundos de diferencia dan la misma hora.
+
+## 54 · La carpeta entera publicada en internet, con las llaves dentro
+
+**8 de agosto de 2026**
+
+Al correr `npx wrangler deploy` desde `qcheck` para subir el servidor, Wrangler
+no subió el servidor: subió **la carpeta entera como sitio estático** a
+`laude.qcheck.workers.dev`, con `datos/` dentro.
+
+Quedaron legibles desde internet, sin contraseña: la llave del proyecto, el
+secreto de administración, las claves de los usuarios —las de ahora y las
+anteriores—, `usuarios.json` y el registro de cambios completo. Comprobado uno
+por uno con `curl`: 200 en todos.
+
+### Las dos causas, que son independientes
+
+1. **Un `wrangler.jsonc` en la carpeta de arriba** (`~/Documents/Claude`) con
+   `"assets": { "directory": "qcheck" }`. Wrangler sube por el árbol buscando
+   configuración, y lo encontraba **antes** que `qcheck/wrangler.toml`. Así que
+   `deploy` desde `qcheck` desplegaba otro proyecto, con otro nombre.
+2. **Wrangler no mira `.gitignore`.** `datos/` está ahí para que no entre en el
+   repositorio, y esa protección **no vale fuera de git**. Es una suposición que
+   estaba metida en la cabeza de todos y en ningún sitio escrita.
+
+### Lo que se hizo
+
+Se desactivó el `wrangler.jsonc` —renombrado, no borrado, con un LEEME al lado
+explicando por qué— y Víctor borró el Worker `laude`. Comprobado después: 404 en
+todo, y QCheck intacto (las pantallas cargan y `qcheck-api` responde).
+
+**La llave no se cambió**: decisión de Víctor, 8 ago 2026, para no dejar fuera a
+Rubén y al técnico la noche antes del vaciado. Queda pendiente y es suyo.
+
+### Lo que hay que llevarse de aquí
+
+- **Un comando de despliegue puede publicar lo que no le pediste.** Antes de
+  correr `deploy` en una carpeta nueva, mirar qué configuración va a coger, y
+  con qué directorio de assets.
+- **`.gitignore` protege de git y de nada más.** Si una herramienta lee la
+  carpeta, `datos/` está dentro. Lo suyo es que los secretos no vivan bajo la
+  raíz de nada que se pueda publicar.
+- **No se supo cuánto tiempo estuvo expuesto.** El propio despliegue dijo «1313
+  ya subidos», así que la copia era anterior a ese día.
