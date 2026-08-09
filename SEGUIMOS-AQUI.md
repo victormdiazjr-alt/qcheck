@@ -52,6 +52,13 @@ al camión, y son treinta conduces reales para el banco.
   es su clave.
 - Las siete cuentas siguen activas.
 - El Worker está desplegado con el lector nuevo (chofer + manuscrito).
+- **La llave del proyecto se cambió el 9 de agosto** (`DECISIONS` §59). La
+  anterior ya no abre nada, así que **todo aparato necesita el enlace nuevo**,
+  que está en `datos/enlace-conexion.txt`.
+- **Las claves están provisionalmente cortas**, por decisión de Víctor del 9 de
+  agosto, para trabajar cómodo mientras se prueba. Están en
+  `datos/claves-20260809.txt` — nunca aquí, que este repositorio es público. El
+  mínimo de doce de `cuentas.js` **no se tocó**: se pusieron contra la API.
 
 **Esto tapa casi todo el riesgo de la llave quemada** (`DECISIONS` §54): la
 llave sola ya no vale para nada. Cambiarla sigue siendo buena idea, ya no es
@@ -79,6 +86,10 @@ urgente.
 7. **Repartir el enlace nuevo** a Rubén y al técnico. Está en
    `datos/enlace-conexion.txt`. Hasta que lo abran, sus aparatos no hablan con
    el servidor.
+8. **Devolver las claves a claves de verdad.** Son provisionales desde el 9 de
+   agosto y hoy no prueban quién firmó qué. Cómo deshacerlo está escrito al pie
+   de `datos/claves-20260809.txt`. Esto es lo que más fácil se queda olvidado:
+   funciona, no molesta, y por eso nadie se acuerda.
 
 ## 5 · Dos errores míos de esta noche, para que no se repitan
 
