@@ -481,7 +481,7 @@ export default {
              Si no cuadran, alguien está pidiendo o entregando otra cosa, y eso
              se sabe con el primer camión y no al cerrar el día. Q-55. */
           ordenadas: oNulo("number"),
-          chofer: QC_NULO("string"),
+          chofer: oNulo("string"),
           manuscrito: { type: "array", items: { type: "string" } },
           ilegible: { type: "array", items: { type: "string" } },
         },
@@ -523,6 +523,11 @@ export default {
         "  rellenar: si no se lee, devuélvelo null y no lo deduzcas del camión.",
         "- `manuscrito` es la lista de campos que venían ESCRITOS A MANO y no impresos",
         "  por la planta. Es importante y hay que mirarlo con cuidado: la tinta de",
+        "  **Si el campo es uno de los del esquema, llámalo EXACTAMENTE como se llama",
+        "  ahí** —ticket, truck, vol, batch, company, mix, ordenadas, chofer— y no con",
+        "  otro nombre: hay un aviso en pantalla que depende de esos nombres, y un aviso",
+        "  que nunca salta es peor que no tenerlo. Lo que no esté en el esquema, dilo",
+        "  como quieras.",
         "  bolígrafo, el trazo irregular y la posición torcida se distinguen del texto",
         "  impreso. Si un campo está impreso, NO lo pongas. Si dudas, no lo pongas",
         "  tampoco: aquí un aviso falso hace que dejen de mirarse los avisos.",
