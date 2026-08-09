@@ -88,9 +88,12 @@ urgente.
    día. **Todo está listo para el día que quiera**: llave en
    `datos/llave-lista-para-repartir.txt`, mensajes en
    `datos/mensaje-enlace-nuevo-20260809.txt`, y `conectar.html` ya arreglado.
-7. **El secreto de administración** (`QC_ADMIN`), quemado el mismo día y sin
-   cambiar. **No deja fuera a nadie** —solo lo usa Víctor con `cuentas.js`—,
-   así que es el más barato de todos los pendientes de seguridad.
+7. ~~El secreto de administración (`QC_ADMIN`), quemado.~~ **CAMBIADO el 9 de
+   agosto por la noche.** Comprobado ocho veces seguidas: el viejo da 403, el
+   nuevo 200. El anterior quedó en `datos/secreto-admin-anterior-20260809.txt`.
+   **Aviso para la próxima:** un secreto de Cloudflare tarda segundos en
+   propagarse y mientras tanto las respuestas bailan. Comprobar varias veces
+   hasta que sea estable, nunca una sola.
 8. **Devolver las claves a claves de verdad.** Son provisionales desde el 9 de
    agosto y hoy no prueban quién firmó qué. Cómo deshacerlo está escrito al pie
    de `datos/claves-20260809.txt`. Esto es lo que más fácil se queda olvidado:
