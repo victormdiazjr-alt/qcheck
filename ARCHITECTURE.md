@@ -7,12 +7,18 @@ a mano los ensayos de campo del proyecto PR-52.
 
 ## 1. La forma del sistema
 
-No hay servidor. No hay compilación. Once páginas HTML que cargan cinco archivos de
-JavaScript plano y comparten un único objeto en `localStorage`.
+> **Corregido el 9 de agosto de 2026.** Este documento decía «no hay servidor» y «once
+> páginas HTML». Las dos cosas dejaron de ser verdad: desde el 5 de agosto hay **dos
+> servidores gemelos** y hoy son **diecinueve pantallas**. Se corrige aquí porque un
+> documento de arquitectura que miente hace más daño que uno que no existe.
+
+**Sigue sin haber compilación y sin una sola dependencia.** Diecinueve páginas HTML
+planas que cargan JavaScript plano y comparten un único objeto en `localStorage`. Y
+detrás, un registro sincronizado que puede vivir en la laptop de la obra o en internet.
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
-│  NAVEGADOR                                                        │
+│  NAVEGADOR — donde de verdad trabaja la obra                      │
 │                                                                   │
 │   index.html ──▶ usuarios.js ──▶ auth.js  (papel y guardián)      │
 │                                                                   │
@@ -20,21 +26,41 @@ JavaScript plano y comparten un único objeto en `localStorage`.
 │      ├── shared/conduce-contract.js   interoperar con e-Ticket    │
 │      ├── assets/seed.js               397 ensayos reales          │
 │      ├── assets/core.js               EL MOTOR                    │
+│      ├── assets/sp934.js              la aritmética de la 934     │
+│      ├── assets/sync.js               habla con el servidor       │
+│      ├── assets/qr-lector.js          + qr-aislado.js (jsQR)      │
 │      ├── assets/demo.js               siembra el tiro de hoy      │
 │      ├── assets/clima.js              NWS + Open-Meteo            │
 │      └── (script propio de la pantalla)                           │
 │                     │                                             │
 │                     ▼                                             │
-│         localStorage["qc-pr52-db-v1"]  ◀── única fuente de verdad │
+│         localStorage["qc-pr52-db-v1"]  ◀── fuente de verdad LOCAL │
 │                     │                                             │
 │         evento `storage` ──▶ las demás pestañas se repintan       │
+└──────────────────────────┬────────────────────────────────────────┘
+                           │  /api  ·  llave de proyecto + pase de sesión
+                           ▼
+┌───────────────────────────────────────────────────────────────────┐
+│  DOS SERVIDORES GEMELOS — el mismo trato, contestan idéntico      │
+│                                                                   │
+│   sync-servidor.js   Node, en la laptop de la obra, sin internet  │
+│   sync-worker.js     Cloudflare Worker + D1, para el resto        │
+│                                                                   │
+│   COMPARTEN EL TEXTO, NO LAS FUNCIONES. Copiar una línea de uno   │
+│   al otro rompió producción el 8 ago 2026 y `node --check` no lo  │
+│   cazó. Después de tocar cualquiera de los dos:                   │
+│        node pruebas/servidores-iguales.mjs                        │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
 **Por qué así.** El cliente es una cuadrilla en carretera. Cualquiera abre una dirección
 y trabaja. Sin instalación, sin cuentas de nube, sin que un despliegue roto deje el
-vaciado a ciegas. El precio es que hoy los datos viven en el navegador de cada aparato
-— por eso el backend es la tarea Q-02 y la primera de la lista.
+vaciado a ciegas. **Que la pantalla siga funcionando cuando se cae la red no es una
+carencia: es la razón de que esto sirva en obra**, y es lo que hay que defender en
+cualquier evolución futura.
+
+El registro del servidor (Q-02) **ya existe**: es de solo añadir, nada se edita ni se
+borra, y es lo que convierte esto en un expediente y no en una base de datos más.
 
 ---
 
@@ -144,7 +170,7 @@ hay interruptores que alguien tenga que acordarse de mover.
 
 ---
 
-## 6. Las catorce pantallas
+## 6. Las diecinueve pantallas
 
 | Pantalla | Aparato | Para quién |
 |---|---|---|
@@ -162,6 +188,11 @@ hay interruptores que alguien tenga que acordarse de mover.
 | `conectar.html` | cualquiera | conectar el aparato al servidor, una vez (§16) |
 | `estado.html` | PC | qué aparatos están conectados y qué hace cada quien — solo `config` |
 | `settings.html` | PC | los límites del plan de control — solo `limites`. Es la de Rubén (Q-37) |
+| `lotes.html` | PC | los lotes y sub-lotes de la SP-934 |
+| `aceptacion.html` | PC | la aceptación según la SP-934 |
+| `934.html` | PC | el portal de la SP-934 |
+| `sim934.html` | PC | simulación de la 934 — herramienta, no producto |
+| `demo934.html` | PC | demostración de la 934 — herramienta, no producto |
 
 **Los tres tableros se abren solos para quien tiene `casa`.** El contratista, el
 concretero y la Autoridad entran directos al suyo, sin navegación y sin poder salirse
@@ -175,7 +206,21 @@ la de Concre-Ticket enseña lo interno de la planta. No unificar.
 
 ## 7. Lo que sale a internet
 
-Solo el clima. Todo lo demás es local.
+> **Corregido el 9 de agosto de 2026.** Aquí decía «solo el clima» y ya no es cierto.
+
+Cuatro cosas, y conviene tenerlas contadas porque cada salida a internet es una
+puerta:
+
+1. **El registro sincronizado** — `/api` contra el Worker, con llave de proyecto y pase
+   de sesión. Es la principal, y también funciona contra la laptop de la obra.
+2. **El lector de conduces** — el servidor manda la foto a la API de Claude y devuelve
+   la ficha. La llave vive en el servidor (`QC_ANTHROPIC`); **el navegador nunca la ve**.
+3. **La ficha de un conduce de QTicket** — al leer un QR, y **solo** si el dominio está
+   en la lista blanca del proyecto (`project.qticketHosts`), que está vacía de fábrica.
+   Va sin ninguna credencial nuestra: ese servidor es de la concretera.
+4. **El clima**, que era lo único que había antes.
+
+### El clima, en detalle
 
 - **Fuente principal: NWS, oficina de San Juan** (`api.weather.gov`) — la oficial para
   Puerto Rico, con un meteorólogo ajustando la rejilla. Su texto viene en inglés y
