@@ -350,18 +350,28 @@ const QCSync = {
 
   /* Nos desconectaron desde Estado del sistema — Q-77.
 
-     El pase ya no vale en el servidor; esto es la otra mitad, la que hace que
-     el aparato se entere en vez de quedarse con la pantalla puesta. Se cierra
-     la sesión de este navegador y se vuelve al acceso, que es exactamente lo
-     mismo que hace el botón de salir.
+     **Desconectar es soltar el aparato del servidor, no solo cerrarle la
+     sesión** (Víctor, 8 ago 2026). La diferencia importa: cerrar la sesión deja
+     al aparato con la llave del proyecto en el bolsillo, así que seguía
+     conectado y seguía latiendo. Aquí se le quita la llave y la dirección del
+     servidor, que es lo que lo tiene enchufado. A partir de este momento no
+     sincroniza, no late y desaparece de la lista de aparatos.
 
-     **Lo encolado NO se toca.** Si el técnico tenía tres muestras sin subir
-     cuando lo desconectaron, siguen en la cola y salen en cuanto vuelva a
-     entrar. Desconectar un aparato es echar a quien lo está usando, no tirar
-     su trabajo — y esa diferencia, el día que pase, es todo. */
+     Para volver hace falta **el enlace de conexión**, no solo la clave. Es caro
+     a propósito: es lo que hace que «desconectado» quiera decir desconectado.
+
+     **Lo encolado NO se borra.** Si el técnico tenía tres muestras sin subir
+     cuando lo desconectaron, siguen en la cola y salen en cuanto alguien vuelva
+     a conectar el aparato. Desconectar es echar a quien lo está usando, no
+     tirar su trabajo — y esa diferencia, el día que pase, es todo.
+
+     Tampoco se borra `qc-dev`: el aparato vuelve con su mismo nombre y su
+     historial en la lista sigue teniendo sentido. */
   _echar() {
     if (this._echado) return;          // el ciclo va cada 3 s; una vez basta
     this._echado = true;
+    localStorage.removeItem(QC_API_URL);
+    localStorage.removeItem(QC_API_TOKEN);
     sessionStorage.removeItem("qc-auth");
     sessionStorage.removeItem("qc-user");
     sessionStorage.removeItem("qc-sesion");

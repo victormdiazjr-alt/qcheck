@@ -1499,8 +1499,10 @@ Son dos cosas, y hacen falta las dos:
    quien desconecta no es el aparato: es Víctor desde otra pantalla, y él no
    tiene el pase del iPad.
 2. **Queda una orden esperando en la fila de presencia**, y el aparato la
-   recoge en su siguiente latido —hasta 20 segundos—: cierra la sesión solo y
-   se va a la pantalla de acceso, que le dice por qué está ahí.
+   recoge en su siguiente latido —hasta 20 segundos—: **suelta la llave del
+   proyecto y la dirección del servidor**, cierra la sesión y se va a la
+   pantalla de acceso, que le dice por qué está ahí. Deja de sincronizar, deja
+   de latir y desaparece de la lista.
 
 La orden **espera**, a propósito. Si el iPad está apagado o sin señal no se
 pierde: se cumple en cuanto vuelva. Una desconexión que solo funciona si el
@@ -1508,13 +1510,27 @@ aparato está mirando no sirve para lo que se pide de ella. Y se limpia al
 entregarla, porque si no el aparato quedaría expulsado para siempre y no podría
 ni volver a entrar.
 
+### Soltar la llave, y no solo cerrar la sesión
+
+La primera versión solo cerraba la sesión. Víctor lo miró y dijo lo que había
+que decir: **«que se desconecte del servidor»**. Tenía razón y el matiz es todo
+el asunto — un aparato con la sesión cerrada conserva la llave del proyecto, así
+que seguía enchufado, seguía latiendo y seguía pudiendo sincronizar. Eso no es
+desconectado; es deslogueado.
+
+Ahora `_echar()` borra `qc-api` y `qc-token`. Para volver hace falta **el enlace
+de conexión**, no solo la clave. Es caro a propósito: es lo que hace que la
+palabra signifique lo que dice.
+
+`qc-dev` **no** se borra: el aparato vuelve con su mismo nombre y su historial en
+la lista sigue teniendo sentido.
+
 ### Lo encolado no se toca
 
-`_echar()` vacía `sessionStorage`; la cola de cambios sin subir vive en
-`localStorage` y **se queda**. Si al técnico lo desconectan con tres muestras
-sin sincronizar, salen en cuanto vuelva a entrar. Desconectar un aparato es
-echar a quien lo está usando, no tirar su trabajo, y el día que eso pase la
-diferencia es todo.
+La cola de cambios sin subir vive en `localStorage` y **se queda**. Si al técnico
+lo desconectan con tres muestras sin sincronizar, siguen ahí y salen en cuanto
+alguien vuelva a conectar el aparato. Desconectar es echar a quien lo está
+usando, no tirar su trabajo, y el día que eso pase la diferencia es todo.
 
 ### Quién puede, y dónde se comprueba
 
@@ -1525,17 +1541,18 @@ Se comprueba **en el servidor** y no solo en el botón. Es la regla que ya se
 escribió en §50 y vale igual aquí: una regla que solo vive en un botón no es una
 regla, porque la dirección se puede escribir a mano.
 
-### Lo que esto NO es
+### Lo que cuesta, dicho antes de que pase
 
-**No es echar a alguien de QCheck.** Es cerrarle la sesión en un aparato. Vuelve
-a entrar con su clave, y debe poder: el iPad de la obra desconectado en mitad de
-un vaciado tiene que poder volver sin que nadie le mande un enlace nuevo.
+Desconectar el iPad de la obra en mitad de un vaciado **para el trabajo hasta que
+alguien le pase el enlace de conexión**. No es un botón de «vuelve a entrar»: es
+un botón de «fuera». Por eso pregunta antes con el nombre del aparato y el de
+quien lo está usando escritos con todas las letras, y por eso el aviso lo dice
+en la pantalla de acceso, para que quien se lo encuentre sepa qué pedir.
 
-Y mientras `exigir_sesion` siga apagada (Q-30), lo que de verdad echa al aparato
-es que él obedezca la orden. El aparato conserva la llave del proyecto, así que
-un navegador manipulado podría seguir sincronizando. Cuando Q-30 entre, la
-sesión caída lo cierra de verdad. **Conviene saberlo antes de contárselo a un
-cliente como si fuera un candado.**
+Queda un resquicio honesto: la orden se entrega por el latido, así que quien
+manipulara el navegador podría no obedecerla. Contra eso está la sesión caída, y
+lo que la vuelve un candado de verdad es Q-30 (`exigir_sesion`). **Conviene
+saberlo antes de contárselo a un cliente como si fuera un candado.**
 
 ### Probado
 
@@ -1545,5 +1562,7 @@ verdad sobre una carpeta de usar y tirar— y seis casos nuevos en
 «desconecté un aparato conocido» y «no lo conocía» son los dos un 200 y la
 batería los daba por iguales.
 
-Y en pantalla: se desconectó este mismo navegador y salió solo al acceso con el
-aviso puesto.
+Y en pantalla, desconectando este mismo navegador: salió solo al acceso con el
+aviso puesto, `qc-api` y `qc-token` quedaron vacíos, el nombre del aparato y la
+muestra sin subir siguieron ahí, y el servidor dejó de recibir su latido — dos
+lecturas de la presencia con seis segundos de diferencia dan la misma hora.

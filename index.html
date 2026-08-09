@@ -349,7 +349,8 @@ async function entrar(e) {
    QCheck se rompió y deje de anotar. */
 if (new URLSearchParams(location.search).get("fuera") === "1") {
   const e = document.getElementById("err");
-  e.textContent = "Este aparato se desconectó desde el Estado del sistema. Puede volver a entrar con su usuario y su clave.";
+  e.textContent = "Este aparato se desconectó del servidor desde el Estado del sistema. "
+    + "Para volver a conectarlo hace falta el enlace de conexión del proyecto.";
   e.classList.add("show");
 }
 

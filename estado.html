@@ -150,7 +150,7 @@ body { background: var(--bg); }
   <div class="pie-nota" id="pie"></div>
 </main>
 
-<script src="assets/sync.js?v=1cfabbf3"></script>
+<script src="assets/sync.js?v=a4ef02ff"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/core.js?v=f7c96e7a"></script>
 <script>
@@ -294,13 +294,18 @@ const ICONO_DESCONECTAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentC
    volviendo a entrar, pero en mitad de un vaciado cuesta un rato de obra.
 
    Lo que hace: al servidor se le caen las sesiones de ese aparato, y el aparato
-   se entera en su siguiente latido —hasta 20 segundos— y se va al acceso. Lo
-   que tuviera sin subir NO se pierde: sale en cuanto vuelva a entrar. */
+   se entera en su siguiente latido —hasta 20 segundos—, **suelta la llave del
+   proyecto** y se va al acceso. Deja de sincronizar, deja de latir y desaparece
+   de esta lista. Para volver hace falta el enlace de conexión, no solo la
+   clave: eso es lo que hace que «desconectado» quiera decir desconectado.
+
+   Lo que tuviera sin subir NO se pierde: se queda en su cola y sale en cuanto
+   alguien lo vuelva a conectar. */
 async function desconectar(dev, usr, yo) {
   const quien = usr && usr !== "?" ? ` (${usr})` : "";
   const aviso = yo
-    ? `¿Desconectar ESTE aparato?\n\nEs el que está usando ahora mismo: va a salir al acceso y tendrá que entrar otra vez.`
-    : `¿Desconectar «${dev}»${quien}?\n\nSaldrá al acceso en menos de un minuto y tendrá que entrar otra vez con su clave.\n\nLo que tenga sin subir no se pierde.`;
+    ? `¿Desconectar ESTE aparato del servidor?\n\nEs el que está usando ahora mismo. Va a salir al acceso, y para volver a conectarlo hará falta el enlace de conexión del proyecto.`
+    : `¿Desconectar «${dev}»${quien} del servidor?\n\nEn menos de un minuto saldrá al acceso y dejará de sincronizar.\n\nPara volver a conectarlo hará falta el enlace de conexión del proyecto — no basta con la clave.\n\nLo que tenga sin subir no se pierde: sale cuando se reconecte.`;
   if (!confirm(aviso)) return;
 
   try {
@@ -326,7 +331,7 @@ async function desconectar(dev, usr, yo) {
       nota = {
         html: `<div class="aviso-ok">«${esc(dev)}» quedó desconectado` +
               (d.sesiones ? ` · ${d.sesiones} ${d.sesiones === 1 ? "sesión cerrada" : "sesiones cerradas"} en el servidor` : "") +
-              ` · sale al acceso en su próximo latido, hasta 20 s.</div>`,
+              ` · suelta el servidor en su próximo latido, hasta 20 s.</div>`,
         hasta: Date.now() + 30000,
       };
     }
