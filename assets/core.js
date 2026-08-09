@@ -445,10 +445,10 @@ function mountStatusBar(day, opciones) {
       const veSistema = typeof qcVeConfig === "function" && qcVeConfig();
       bar.innerHTML = `
       <a class="qcs-tiro" id="qcs-tiro" href="results.html#daily"></a>
+      ${navHTML()}
       ${veSistema ? `<a class="qcs-sistema" href="estado.html" title="Estado del sistema — qué aparatos están conectados">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3.5" width="18" height="6" rx="1.6"/><rect x="3" y="14.5" width="18" height="6" rx="1.6"/><path d="M6.6 6.5h.01M6.6 17.5h.01"/></svg>
       </a>` : ""}
-      ${navHTML()}
       <div class="qcs-conn" id="qcs-conn"><i></i><span></span></div>`;
     document.body.appendChild(bar);
     document.documentElement.classList.add("qcs-fija");
@@ -627,8 +627,13 @@ html.qcs-fija header.qc-header { top: var(--qcs-h); }
 .qcs-conn + .close-btn { margin-left: 0; }
 /* El atajo al estado del sistema (Q-45). Cuando está, es él quien empuja hacia
    la derecha y la conexión lo sigue pegada. */
+/* Ya no empuja a la derecha: desde Q-76 va DESPUES de la navegacion, que es
+   quien empuja. Con margin-left auto se separaria de ella y quedaria flotando
+   en medio de la barra. Sin acentos ni comillas invertidas: esto vive dentro
+   de una plantilla de JavaScript y un backtick la parte en dos. */
 .qcs-sistema {
-  display: flex; align-items: center; flex: none; margin-left: auto;
+  display: flex; align-items: center; flex: none;
+  margin-left: calc(2px * var(--qcs-e,1));
   color: rgba(238,242,246,.42); text-decoration: none;
   padding: calc(3px * var(--qcs-e,1)) calc(9px * var(--qcs-e,1)) calc(3px * var(--qcs-e,1)) 0;
   transition: color .18s ease;
