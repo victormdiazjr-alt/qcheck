@@ -330,12 +330,18 @@ async function startScan() {
       return codes.length ? codes[0].rawValue : null;
     };
   } else {
-    let leer;
+    /* El lector de fuera NO corre aquí — Q-81. Corre en un cuarto cerrado
+       (`assets/qr-aislado.js`), donde el navegador no le da ni `localStorage` ni
+       `sessionStorage` ni `document`. Entran píxeles, sale texto. Si esa pieza
+       fuera maliciosa, no tendría desde dónde ver la llave del proyecto.
+
+       Ver DECISIONS §57. */
+    let cuarto;
     try {
-      leer = await cargarLectorQR();
+      cuarto = abrirCuartoDelQR();
     } catch (_) {
       document.getElementById("scan-nota").textContent =
-        "No se pudo cargar el lector de códigos. Usa «Escanear conduce» o entra el ticket a mano.";
+        "No se pudo abrir el lector de códigos. Usa «Escanear conduce» o entra el ticket a mano.";
       return;
     }
     /* El fotograma se mira reducido a 640 px de ancho. A tamaño completo el
@@ -351,8 +357,7 @@ async function startScan() {
       lienzo.height = Math.round(h * escala);
       ctx.drawImage(video0, 0, 0, lienzo.width, lienzo.height);
       const d = ctx.getImageData(0, 0, lienzo.width, lienzo.height);
-      const r = leer(d.data, d.width, d.height, { inversionAttempts: "attemptBoth" });
-      return r && r.data ? r.data : null;
+      return await cuarto(d);
     };
   }
   const detector = new BarcodeDetector({ formats: ["qr_code", "code_128", "code_39"] });
@@ -364,21 +369,51 @@ async function startScan() {
   }, 400);
 }
 
-/* Trae el lector propio la primera vez que hace falta, y una sola vez. */
-let cargandoLectorQR = null;
-function cargarLectorQR() {
-  if (window.jsQR) return Promise.resolve(window.jsQR);
-  if (cargandoLectorQR) return cargandoLectorQR;
-  cargandoLectorQR = new Promise((ok, no) => {
-    const s = document.createElement("script");
-    s.src = "assets/qr-lector.js";
-    s.onload = () => window.jsQR ? ok(window.jsQR) : no(new Error("cargó pero no está jsQR"));
-    s.onerror = () => { cargandoLectorQR = null; no(new Error("no se pudo cargar")); };
-    document.head.appendChild(s);
+/* Abre el cuarto cerrado donde corre el lector de fuera — Q-81.
+
+   Devuelve una función: se le da un fotograma, contesta el texto del código o
+   `null`. El Worker se abre la PRIMERA vez que alguien pulsa «Escanear QR» y no
+   antes: quien solo saca fotos de conduces no descarga esos 130 KB nunca. */
+let cuartoQR = null;
+function abrirCuartoDelQR() {
+  if (cuartoQR) return cuartoQR;
+  const w = obreroQR = new Worker("assets/qr-aislado.js");
+  const esperando = new Map();
+  let siguiente = 0;
+  w.onmessage = (e) => {
+    const { id, texto } = e.data || {};
+    const ok = esperando.get(id);
+    if (ok) { esperando.delete(id); ok(texto); }
+  };
+  /* Si el cuarto se cae, se contesta que no hay código y la cámara sigue: es
+     preferible un escáner que no encuentra nada a una pantalla congelada con
+     un camión esperando. */
+  w.onerror = () => { for (const ok of esperando.values()) ok(null); esperando.clear(); };
+
+  cuartoQR = (imageData) => new Promise((ok) => {
+    if (!cuartoQR) return ok(null);
+    const id = ++siguiente;
+    esperando.set(id, ok);
+    /* Los píxeles se MUEVEN, no se copian: 640×480 son 1,2 MB por fotograma y
+       tres fotogramas por segundo. Copiarlos calienta el iPad para nada. */
+    const datos = imageData.data;
+    w.postMessage({ id, datos, ancho: imageData.width, alto: imageData.height },
+                  [datos.buffer]);
+    setTimeout(() => { if (esperando.delete(id)) ok(null); }, 3000);
   });
-  return cargandoLectorQR;
+  return cuartoQR;
+}
+
+/* Se cierra al salir del escáner. `terminate()` y no solo soltar la variable:
+   sin eso el Worker sigue vivo con sus 130 KB dentro hasta que se cierre la
+   pestaña, y en un iPad de obra eso se nota. */
+let obreroQR = null;
+function cerrarCuartoDelQR() {
+  if (obreroQR) { obreroQR.terminate(); obreroQR = null; }
+  cuartoQR = null;
 }
 function stopScan() {
+  cerrarCuartoDelQR();
   if (scanTimer) clearInterval(scanTimer);
   if (scanStream) scanStream.getTracks().forEach((t) => t.stop());
   scanTimer = scanStream = null;

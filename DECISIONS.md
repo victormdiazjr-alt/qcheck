@@ -1724,3 +1724,64 @@ fotos de conduces —que es el 100% del trabajo de mañana— no descarga esos
 Nada de esto lee un QR **que no exista**. Los conduces de Concre-Tech son papel
 y no llevan código. Esto es para cuando exista QTicket, que es quien va a
 imprimirlos.
+
+## 57 · El lector de fuera, en un cuarto sin ventanas
+
+**Q-81 — 9 de agosto de 2026**
+
+Víctor preguntó lo que había que preguntar: **«¿es seguro que usemos eso?»**
+
+La respuesta honesta era incómoda. Yo había comprobado que `qr-lector.js` no
+llama a internet ni ejecuta texto, y que lee de verdad. Pero son 130 KB
+comprimidos: nadie se los lee línea por línea, y una llamada montada por partes
+—`window['fe'+'tch']`— se le escapa a cualquier búsqueda.
+
+Y el riesgo era real y concreto: esa página lleva en el navegador **la llave del
+proyecto** (`qc-token`) y **el pase de la sesión** (`qc-sesion`).
+
+### Lo que se hizo
+
+El lector de fuera **ya no corre en la página**. Corre dentro de un Web Worker
+(`assets/qr-aislado.js`), y un Worker no tiene `localStorage`, ni
+`sessionStorage`, ni `document`, ni `window`. **No se lo prohibimos nosotros: el
+navegador no se los da.**
+
+Entran los píxeles de un fotograma. Sale el texto del código, o nada.
+
+### Por qué esta respuesta vale más que «lo revisé»
+
+Porque no depende de fiarse de nadie. No hace falta auditar 130 KB para saber
+que un cuarto sin ventanas no tiene vistas. Comprobado en el navegador con la
+llave puesta a propósito:
+
+```
+en la página:      qc-token = "LLAVE-DE-PRUEBA-NO-DEBE-VERSE"
+dentro del cuarto: localStorage undefined · sessionStorage undefined
+                   document undefined · window undefined
+                   leer la llave → NO ALCANZA (TypeError)
+```
+
+Y sigue leyendo: el mismo cuarto devolvió `67638;128;10.00;06:50` exacto.
+
+### Lo que esto NO resuelve
+
+Un Worker **sí puede** pedir cosas a internet. No tiene nada que mandar —esa es
+la gracia— pero podría hablar. Eso se cierra con el candado del navegador
+(Content Security Policy), y **no se hizo esta noche a propósito**: una CSP mal
+puesta rompe cosas en silencio, y mañana hay vaciado en vivo.
+
+### A dónde va esto
+
+Lo de fuera es temporal. QTicket ya escribió un **generador** de códigos QR
+propio, con su corrección de errores Reed-Solomon hecha a mano. Escribir el
+**lector** es la otra mitad, y es más dura —hay que encontrar el código en la
+foto, enderezarlo y muestrearlo— pero comparte la misma aritmética.
+
+Y hay un atajo honesto que lo hace mucho más pequeño: **no necesitamos leer
+cualquier QR del mundo, solo los que imprime QTicket.** Controlamos los dos
+extremos. Con la versión y la máscara fijadas por nosotros, y comprobando los
+síndromes de Reed-Solomon para **detectar** errores en vez de corregirlos, un
+código dudoso se rechaza y se pide otra foto. Que es exactamente la regla de la
+casa: **un hueco es mejor que un número equivocado.**
+
+El día que ese lector exista, `qr-lector.js` se borra y §56 se cierra.
