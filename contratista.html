@@ -334,6 +334,16 @@ render();
     color:var(--ink-soft); font:600 18px/1 Georgia,serif; cursor:pointer; z-index:40;
     box-shadow:var(--shadow); transition:color .18s, border-color .18s }
   #qc-info-btn:hover{ color:var(--ink) }
+  /* EL `hidden` TIENE QUE GANAR — Q-73c, 10 de agosto de 2026.
+
+     Un selector de id con `display:grid` le gana al `[hidden]{display:none}`
+     del navegador, así que el panel se enseñaba SIEMPRE y tapaba el tablero
+     entero. Y el botón de cerrar «no funcionaba»: ponía `hidden` y el CSS lo
+     volvía a enseñar en el mismo instante.
+
+     Le pasó a Víctor al abrir el tablero de la concretera. Un `hidden` que no
+     esconde es peor que no tenerlo: la pantalla queda secuestrada. */
+  #qc-info-capa[hidden]{ display:none }
   #qc-info-capa{ position:fixed; inset:0; background:rgba(0,0,0,.62); z-index:50;
     display:grid; place-items:center; padding:22px }
   #qc-info-caja{ background:var(--panel); border:1px solid var(--line);
@@ -343,6 +353,7 @@ render();
     color:var(--ink-soft); font-size:24px; line-height:1; cursor:pointer }
   #qc-info-caja h3{ font-size:21px; margin-bottom:6px; color:var(--ink) }
   #qc-info-caja p{ color:var(--ink-soft); font-size:14.5px; margin-bottom:18px }
+  #qc-info-form[hidden]{ display:none }
   #qc-info-form{ display:flex; gap:8px; flex-wrap:wrap }
   #qc-info-mail{ flex:1 1 160px; padding:11px 13px; border-radius:10px;
     border:1px solid var(--line); background:var(--panel-2); color:var(--ink); font:inherit }
