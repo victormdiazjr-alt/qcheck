@@ -243,8 +243,33 @@ function avisarDeLosQueLlegan(vivos) {
     const donde = a.pagina ? ` · ${a.pagina.replace(/\.html$/, "")}` : "";
     sonarLlegada();
     notificar(`${quien} entró a QCheck`, `${dev}${donde}`);
+    avisarPorCorreo(quien, dev, a.pagina);
     if (typeof toast === "function") toast(`${quien} acaba de entrar`);
   }
+}
+
+/* EL CORREO — Q-85, 10 de agosto de 2026.
+
+   El sonido y la notificación solo llegan si esta pantalla está abierta. Este
+   es el aviso que llega con QCheck cerrado y el ordenador apagado: lo manda el
+   servidor, no el navegador.
+
+   NO LLEVA DESTINATARIO NI TEXTO. Los dos los pone el servidor (`/api/aviso`).
+   Si viajaran desde aquí, cualquiera con una sesión podría mandar lo que
+   quisiera desde nuestra dirección.
+
+   SI FALLA, NO MOLESTA. El aviso de verdad — el sonido — ya sonó. Un correo que
+   no sale no puede quedarse gritando encima de una pantalla que se usa en obra.
+   Se apunta en la consola y se sigue. */
+async function avisarPorCorreo(quien, aparato, pagina) {
+  if (typeof QC === "undefined" || !QC._pedir) return;
+  try {
+    const r = await QC._pedir("/api/aviso", {
+      method: "POST",
+      body: JSON.stringify({ tipo: "llegada", quien, aparato, pagina: pagina || "" }),
+    });
+    if (!r || !r.ok) console.warn("[aviso] el correo no salió:", r && r.error);
+  } catch (e) { console.warn("[aviso] el correo no salió:", e.message); }
 }
 
 /* Dos notas cortas, generadas al vuelo. Sin archivo y sin descarga. */

@@ -651,6 +651,54 @@ export default {
        CONSULTA y esa no escribe en el expediente, y así tiene que seguir siendo.
        Esta puerta es estrecha a propósito — solo escribe `interes`, nada más, y
        necesita sesión válida igual que todo lo demás. */
+    /* ══════════════════════════════════════════════════════════════════
+       AVISOS POR CORREO — Q-85, 10 de agosto de 2026
+
+       Víctor: «QCheck me puede mandar un email?» — para enterarse de que entró
+       otro aparato con la pantalla de estado cerrada.
+
+       DOS DECISIONES DE SEGURIDAD, y las dos importan:
+
+       1 · **Quien llama NO elige el destinatario.** Va a `QC_AVISOS_A` y a
+           ningún otro sitio. Si el destino viajara en el cuerpo, esta ruta
+           sería un servidor de correo abierto para cualquiera con una sesión.
+
+       2 · **Quien llama NO escribe el texto.** Manda un TIPO de aviso y unos
+           datos; el texto lo compone el servidor. Si el cuerpo llegara escrito,
+           se podría mandar cualquier cosa desde nuestra dirección.
+
+       Sin `QC_CORREO` puesta contesta 501 y lo dice — no se inventa que envió.
+       Sin `QC_AVISOS_A`, lo mismo: no hay a quién avisar. */
+    if (url.pathname === "/api/aviso" && req.method === "POST") {
+      if (!quien) return json({ error: "sesion" }, 401);
+      if (!env.QC_AVISOS_A) return json({ error: "sin-destino" }, 501);
+      let d; try { d = await req.json(); } catch (_) { return json({ error: "json" }, 400); }
+
+      const dato = (k, n) => String((d && d[k]) || "").slice(0, n).replace(/[<>]/g, "");
+      const AVISOS = {
+        llegada: () => {
+          const q = dato("quien", 40) || "alguien";
+          const ap = dato("aparato", 60) || "un aparato";
+          const pg = dato("pagina", 40);
+          return {
+            asunto: `QCheck · entró ${q}`,
+            texto: `${q} acaba de entrar a QCheck.\n\nAparato: ${ap}` +
+                   (pg ? `\nPantalla: ${pg}` : "") +
+                   `\nHora: ${new Date().toISOString()}\n\n— aviso automático de QCheck`,
+          };
+        },
+      };
+      const hacer = AVISOS[String(d && d.tipo)];
+      if (!hacer) return json({ error: "tipo" }, 400);
+
+      const { asunto, texto } = hacer();
+      const r = await enviarCorreo(env, {
+        para: String(env.QC_AVISOS_A).split(/[,;\s]+/).filter(Boolean),
+        asunto, texto,
+      });
+      return json(r.ok ? { ok: true } : { error: r.error }, r.ok ? 200 : r.codigo);
+    }
+
     if (url.pathname === "/api/interes" && req.method === "POST") {
       if (!quien) return json({ error: "sesion" }, 401);
       let d; try { d = await req.json(); } catch (_) { return json({ error: "json" }, 400); }
