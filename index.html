@@ -264,11 +264,31 @@ pintarRed();
    la LLAVE, no la dirección: sin llave, el servidor contesta 401 igual. */
 const SERVIDOR_DEL_PROYECTO = "https://qcheck-api.qcheck.workers.dev";
 
+/* ══════════════════════════════════════════════════════════════════════════
+   LA LLAVE DEL PROYECTO, PUESTA POR DEFECTO — Q-71, 10 de agosto de 2026
+
+   Víctor, con el tiro empezando: «ponle de default ya escrita la llave del
+   proyecto». Antes de esto un teléfono nuevo tenía que abrir el enlace de
+   conexión ANTES de poder entrar, y quien no lo hacía veía «contraseña
+   incorrecta» con la clave correcta en la mano.
+
+   POR QUÉ HOY ES SEGURO, y está medido, no supuesto: con `exigir_sesion`
+   encendido la llave SOLA no sirve para nada —leer da 401 y escribir da 401—.
+   Dice QUÉ PROYECTO es, no SI PUEDES. Quien la lea en este repositorio, que es
+   público, sigue necesitando un usuario y una clave que no están aquí.
+
+   ⚠ LA CONDICIÓN, y hay que leerla antes de tocar el interruptor:
+
+       El día que alguien apague `exigir_sesion`, esta llave publicada pasa a
+       ser la ÚNICA cerradura del expediente. No se apaga sin cambiar la llave
+       primero y sacarla de aquí. */
+const LLAVE_DEL_PROYECTO = "qIxviKxSWSUVqcSGi6A-v6EtoUaDF_5l";
+
 async function entrarEnServidor(u, p) {
   const api = (localStorage.getItem("qc-api") || SERVIDOR_DEL_PROYECTO).replace(/\/+$/, "");
   if (!api) return undefined;
   const cab = { "Content-Type": "application/json" };
-  const tk = localStorage.getItem("qc-token");
+  const tk = localStorage.getItem("qc-token") || LLAVE_DEL_PROYECTO;
   if (tk) cab["X-QC-Token"] = tk;
   let r;
   try {
@@ -280,6 +300,10 @@ async function entrarEnServidor(u, p) {
   if (r.status === 401) return null;         // preguntamos y la respuesta fue que no
   if (!r.ok) return undefined;               // 501 sin cuentas dadas de alta, 500, …
   const s = await r.json();
+  /* Q-71: si entró con la llave por defecto, el aparato queda conectado. La
+     siguiente pantalla ya sincroniza sin que nadie abra ningún enlace. */
+  if (!localStorage.getItem("qc-api")) localStorage.setItem("qc-api", api);
+  if (!localStorage.getItem("qc-token")) localStorage.setItem("qc-token", LLAVE_DEL_PROYECTO);
   localStorage.setItem("qc-sesion", s.tk);
   localStorage.setItem("qc-ident", JSON.stringify(s.usuario));
   return s.usuario;
