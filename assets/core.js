@@ -158,6 +158,27 @@ function migrarBase(db) {
   }
   if (!db.proyectoActivo) db.proyectoActivo = (db.proyectos[0] || {}).id || "pr-52";
 
+  /* LOS LÍMITES TAMBIÉN SON DE CADA OBRA — Q-59b, y esto se encontró probando.
+
+     `db.plan` y `db.planes` eran globales. Con dos obras abiertas, el primer
+     camión de las vigas se juzgó con la vara de la PR-52 —slump objetivo 3"
+     contra 8"— y el Field Display cantó **RECHAZADO** sobre un camión bueno.
+
+     Ningún valor estaba fuera de su límite. Estaban fuera del límite DE OTRA
+     OBRA. Y en la pantalla que ve el chofer, eso es un camión devuelto.
+
+     Así que el plan y su historia viven dentro de la obra, y `db.plan` sigue
+     siendo el de la abierta — igual que `db.project`. */
+  const act0 = db.proyectos.find((p) => p.id === db.proyectoActivo) || db.proyectos[0];
+  for (const p of db.proyectos) {
+    if (!p.plan && p === act0 && db.plan) p.plan = db.plan;
+    if (!p.planes && p === act0 && Array.isArray(db.planes)) p.planes = db.planes;
+  }
+  if (act0) {
+    if (act0.plan) db.plan = act0.plan;
+    if (act0.planes) db.planes = act0.planes;
+  }
+
   /* EL SELLADO. Lo que existía antes de que hubiera dos obras es de la
      primera, por definición: no había otra donde ponerlo. */
   const primera = (db.proyectos[0] || {}).id || "pr-52";
@@ -176,8 +197,25 @@ function esDeLaObra(x) { return proyectoDe(x) === proyectoActivo(); }
 function abrirProyecto(id) {
   const p = (db.proyectos || []).find((x) => x.id === id);
   if (!p) return false;
+  /* Se guarda lo que estaba puesto ANTES de cambiar: `db.plan` es el objeto
+     vivo de la obra que se deja, y si no se ancla aquí se pierde el último
+     retoque. */
+  const antes = (db.proyectos || []).find((x) => x.id === db.proyectoActivo);
+  if (antes) { antes.plan = db.plan; antes.planes = db.planes; }
+
   db.proyectoActivo = id;
   db.project = p;
+  /* Q-59b: una obra sin límites propios NO hereda los de la anterior. Se le
+     dan los de fábrica y se ponen a mano en Plan & Datos, a la vista. Juzgar
+     el hormigón de una obra con la vara de otra es lo que hizo que el Field
+     Display rechazara un camión bueno. */
+  if (!p.plan) p.plan = JSON.parse(JSON.stringify((typeof QC_SEED !== "undefined" && QC_SEED.plan) || {}));
+  if (!Array.isArray(p.planes) || !p.planes.length) {
+    p.planes = [{ desde: "1970-01-01", plan: JSON.parse(JSON.stringify(p.plan)),
+                  autor: "obra nueva", ts: new Date().toISOString() }];
+  }
+  db.plan = p.plan;
+  db.planes = p.planes;
   saveDB();
   return true;
 }
@@ -2707,6 +2745,7 @@ const QC_NOMBRE_CAMPO = {
   slump: "Slump", uw: "Unit Weight", air: "Aire", temp: "Temperatura",
   uwTarget: "Objetivo de Unit Weight", rejected: "Rechazo",
   cs1: "Resistencia 1 día", cs5: "Resistencia 5 días", cs28: "Resistencia 28 días",
+  cs56: "Resistencia 56 días", cp: "Permeabilidad", cpMetodo: "Método de permeabilidad",
   comments: "Comentarios", source: "Origen", n: "Número de fila",
   resultsAt: "Resultados registrados",
 

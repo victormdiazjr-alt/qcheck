@@ -101,7 +101,11 @@ function qcProyectar(base) {
     p.dayMeta[dia] = Object.assign({}, m);
   }
   for (const h of base.humidity || []) p.humidity[qcIdDe(h, "h")] = Object.assign({}, h);
-  p.plan[""] = Object.assign({}, base.plan);
+  /* Q-59b: el plan es de la obra, así que viaja bajo el id de la obra. En
+     singular, las dos se pisaban y una acababa juzgando con la vara de la
+     otra — que es exactamente lo que hizo que el Field Display rechazara un
+     camión bueno en la prueba del 10 de agosto. */
+  for (const pr of base.proyectos || []) if (pr && pr.id && pr.plan) p.plan[pr.id] = Object.assign({}, pr.plan);
   /* Q-59, 10 ago 2026: UNA LÍNEA POR OBRA, cada una bajo su id.
 
      Iba `p.project[""]`, en singular, porque solo había una obra. Con dos, las
@@ -181,7 +185,15 @@ function qcAplicarOp(o) {
     if (!h) { h = { id: o.id }; db.humidity.push(h); }
     h[o.campo] = o.valor;
   } else if (o.ent === "plan") {
-    db.plan[o.campo] = o.valor;
+    if (!o.id) { db.plan[o.campo] = o.valor; }        // formato viejo
+    else {
+      if (!db.proyectos) db.proyectos = [];
+      let pr = db.proyectos.find((x) => x.id === o.id);
+      if (!pr) { pr = { id: o.id }; db.proyectos.push(pr); }
+      if (!pr.plan) pr.plan = {};
+      pr.plan[o.campo] = o.valor;
+      if (o.id === (db.proyectoActivo || "")) db.plan = pr.plan;
+    }
   } else if (o.ent === "project") {
     /* Q-59. El id vacío es el formato viejo —una sola obra— y sigue entrando
        en la activa, para que una base que aún no ha migrado no se rompa. */

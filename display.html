@@ -368,8 +368,8 @@ footer {
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/sync.js?v=c0a431e2"></script>
-<script src="assets/core.js?v=46b4d49c"></script>
+<script src="assets/sync.js?v=59693f27"></script>
+<script src="assets/core.js?v=c0a635e1"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -470,7 +470,10 @@ function render() {
   const meta = (db.dayMeta && db.dayMeta[day]) || {};
 
   document.getElementById("proj-line").textContent =
-    ["PR-52", meta.fase ? "Fase " + meta.fase : null, meta.lane ? "Carril " + meta.lane : null, meta.km ? "Km " + meta.km : null]
+    /* Q-59: la obra abierta, no un texto fijo. Con dos obras vivas, «PR-52»
+       escrito a mano en la pantalla del chofer es decirle que está en la obra
+       que no es. */
+    [((db.project || {}).name || "PR-52"), meta.fase ? "Fase " + meta.fase : null, meta.lane ? "Carril " + meta.lane : null, meta.km ? "Km " + meta.km : null]
       .filter(Boolean).join("  ·  ");
 
   const verdict = document.getElementById("verdict");
@@ -516,6 +519,17 @@ function render() {
       cell("Unit Weight", num(last.uw), "pcf", proximity("uw", last), 1) +
       cell("Aire", num(last.air), "%", proximity("air", last), 1) +
       cell("Temp", num(last.temp), "°F", proximity("temp", last), 0) +
+      /* LA PERMEABILIDAD, TAMBIÉN AQUÍ — Víctor, 10 ago 2026: «tiene que decir
+         la permeabilidad donde quiera que hayan resultados, hasta en el field
+         display».
+
+         Solo sale si la obra la inspecciona y si esa carga la trae: es un
+         resultado que devuelve el laboratorio semanas después, así que en el
+         camión de esta mañana casi nunca estará. Una casilla vacía permanente
+         en la pantalla del chofer sería ruido (Q-56). */
+      (typeof nivelPermeabilidadDe === "function" && nivelPermeabilidadDe(day) && num(last.cp) != null
+        ? cell("Permeabilidad", num(last.cp), last.cpMetodo === "sr" ? "kΩ·cm" : "coulombs", null, 0)
+        : "") +
       `<div class="cell"><div class="k"><i></i>Hora</div><div class="v" style="font-size:7.6vh">${fmt12(hora) || "—"}</div><div class="u">último registro</div></div>`;
   }
 
