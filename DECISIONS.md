@@ -2273,3 +2273,30 @@ puede someter**, y mandar al técnico a mirar el router cuando lo que tiene que
 hacer es volver a entrar es perder un camión. El aviso distingue **señal, sesión,
 llave, permiso y cuota** — los mismos cinco nombres que ya usaba la barra de
 estado.
+
+---
+
+## Q-72 · Pasados tres días, «listo para tirar» — 10 de agosto de 2026
+
+**Víctor:** *«Después de 3 días de un tiro, que en Control Center no diga nada del
+último tiro. Que diga ready para tirar.»*
+
+**Y tiene razón por una razón que se ve en pantalla:** la casilla decía «Último
+vaciado · 18 jul» durante semanas. **Un dato que lleva un mes en el mismo sitio
+deja de leerse** — y encima ocupa el hueco donde debería estar lo de ahora.
+
+> **Pasados tres días, lo que hace falta saber no es cuánto se vació entonces:
+> es que no hay nada abierto.**
+
+**Dónde cambia:** la casilla de arriba del Control Center y la barra de estado que
+llevan todas las pantallas. Las dos por la misma puerta, `tiroReciente()`, para
+que no puedan decir cosas distintas.
+
+**Y lleva a dónde hay que ir:** la casilla enlaza al tablero del contratista, que
+es donde se programa el próximo. Antes enlazaba al detalle del vaciado viejo.
+
+**Los datos no se borran.** Siguen en Results, en el reporte y en el expediente,
+con su fecha. **Lo que cambia es qué se enseña arriba, no qué se guarda.**
+
+**Comprobado en frío:** hoy y hasta tres días atrás enseñan el tiro; a partir del
+cuarto, «Listo para tirar».

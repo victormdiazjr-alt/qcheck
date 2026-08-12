@@ -651,11 +651,40 @@ function pintarConexion() {
    hay nada (Q-47), esa etiqueta miente por omisión: se lee como la obra de
    ahora mismo. Con «Último tiro · 18 jul 2026» se sabe en un vistazo que lo
    que hay delante es historia, no la jornada. */
+/* CUÁNDO UN TIRO DEJA DE SER NOTICIA — Q-72, 10 de agosto de 2026.
+
+   Víctor: «después de 3 días de un tiro, que en Control Center no diga nada del
+   último tiro. Que diga ready para tirar».
+
+   Y tiene razón: la barra decía «Último tiro · 18 jul» durante semanas. Un dato
+   que lleva un mes en la misma casilla deja de leerse, y peor — ocupa el sitio
+   donde debería estar lo de ahora. Pasados tres días, lo que hay que saber no es
+   cuánto se vació entonces: es que no hay nada abierto.
+
+   Los datos NO se borran: siguen en Results y en el reporte, con su fecha. Lo
+   que cambia es qué se enseña arriba. */
+const DIAS_TIRO_RECIENTE = 3;
+function tiroReciente(d) {
+  if (!d) return false;
+  const hoy = parseDate(todayISO()), t = parseDate(d);
+  if (!hoy || !t) return false;
+  return Math.round((hoy - t) / 86400000) <= DIAS_TIRO_RECIENTE;
+}
+
 function pintarTiro(day) {
   const el = document.getElementById("qcs-tiro");
   if (!el) return;
   const d = day || diaActivo();
   const esHoy = d === todayISO();
+  /* Q-72: pasados tres días, la barra deja de contar el tiro viejo. */
+  if (!esHoy && !tiroReciente(d)) {
+    el.className = "qcs-tiro sin-plan";
+    el.href = "results.html#daily";
+    el.title = d ? `El último vaciado fue el ${fmtDate(d)}. No hay ninguno abierto.` : "No hay vaciados registrados.";
+    el.innerHTML = `<span class="qcs-lb">Listo para tirar</span>
+      <span class="qcs-cy">sin vaciado abierto</span>`;
+    return;
+  }
   const p = dayProgress(d);
   const hayPlan = p.cyPlan != null && p.cyPlan > 0;
   const pct = hayPlan ? p.pct : 0;
