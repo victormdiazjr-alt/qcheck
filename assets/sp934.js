@@ -190,8 +190,25 @@ function sp934LimitesCUW(objetivo) {
   return { lsl: red(o - SP934_CUW_TOLERANCIA, 4), usl: red(o + SP934_CUW_TOLERANCIA, 4) };
 }
 
-/* Tabla 934-4: la permeabilidad solo tiene techo, y el nivel 1 no se juzga. */
-const SP934_CP_USL = { "1": null, "2": 1950 };
+/* TABLA 934-2 del borrador FINAL del 5 de diciembre de 2025.
+
+   La permeabilidad solo tiene techo, y el nivel 1 no se juzga.
+
+   CORREGIDO EL 10 DE AGOSTO DE 2026. Decía **1950** y citaba una «Tabla
+   934-4» que en el borrador de diciembre ya no existe: la permeabilidad está
+   en la 934-2 y su techo es **1,500 coulombs**. El 1950 venía de un borrador
+   anterior — la numeración de las tablas cambió con él, que es la señal de
+   que la fuente era otra edición.
+
+   Un techo 450 coulombs más alto de la cuenta **no da ningún error**: acepta
+   hormigón que la especificación rechaza, en la característica que pesa el
+   45 % del factor de pago. Es el fallo de la edición vieja en el sitio más
+   caro posible.
+
+   La nota 7 de esa misma tabla, además, fija el defecto: **si los planos no
+   indican nivel, se usa el 2 en todas las mezclas de la obra.** */
+const SP934_CP_USL = { "1": null, "2": 1500 };
+const SP934_CP_NIVEL_POR_DEFECTO = "2";
 
 /* ------------------------------------------------------- lotes y sub-lotes */
 /* 934-6.01(j): el lote son 250 m³ en 10 sub-lotes de 25 m³.

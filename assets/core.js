@@ -2245,6 +2245,97 @@ function panelLimites(editable) {
   </div>`;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   LO QUE LA SP-934 PIDE DECLARAR — Q-61, 10 de agosto de 2026
+
+   Víctor: «cualquier límite que tenga que ser declarado por Rubén tiene que
+   salir en Settings».
+
+   Y no es una preferencia de sitio: es que **Rubén no tiene Plan & Datos**.
+   Su cuenta lleva `limites`, no `config`. El nivel de permeabilidad vivía en
+   el formulario del proyecto —o sea, en Plan & Datos— así que hasta hoy el
+   ingeniero de récord no podía declarar el dato que decide el 45 % del pago
+   de su propia obra. Tenía que pedírselo a Víctor.
+
+   Aquí abajo va lo que él declara. Lo que fija la especificación se enseña al
+   lado, en gris y con su tabla, para que se vea de dónde sale cada número y
+   nadie lo confunda con una opinión nuestra. */
+function panelSP934(editable) {
+  const pr = db.project || {};
+  const clase = pr.clase934 || "";
+  const lim = SP934_CCS[clase] || null;
+  const nivel = String(pr.nivelPermeabilidad || SP934_CP_NIVEL_POR_DEFECTO);
+  const techo = SP934_CP_USL[nivel];
+  const uw = (db.plan && db.plan.uw && db.plan.uw.target) || null;
+  const cuw = typeof sp934LimitesCUW === "function" ? sp934LimitesCUW(uw) : { lsl: null, usl: null };
+  const g = (x) => x == null ? "—" : x;
+  return `<div class="panel">
+    <div class="panel-head"><h2>SP-934 · lo que declara esta obra</h2><div class="spacer"></div>
+      ${editable ? `<button class="btn small" onclick="formSP934()">Editar</button>` : ""}</div>
+    <div class="panel-body flush"><div class="table-wrap"><table class="data">
+      <tr><th>Qué</th><th class="num">Declarado</th><th class="num">Lo que fija la 934</th></tr>
+      <tr><td>Clase de hormigón</td>
+          <td class="num mono">${esc(clase || "— sin declarar")}</td>
+          <td class="num muted">Tabla 934-1</td></tr>
+      <tr><td>Resistencia especificada @28d</td>
+          <td class="num mono">${lim ? fmt(lim.lsl, 0) + " psi" : "—"}</td>
+          <td class="num muted">sale de la clase</td></tr>
+      <tr><td>Techo de resistencia</td>
+          <td class="num mono">${lim ? fmt(lim.usl, 0) + " psi" : "—"}</td>
+          <td class="num muted">Tabla 934-3</td></tr>
+      <tr><td>Nivel de permeabilidad</td>
+          <td class="num mono">PL#${esc(nivel)}</td>
+          <td class="num muted">Tabla 934-2 · sin nivel en planos, el 2</td></tr>
+      <tr><td>Carga máxima que pasa</td>
+          <td class="num mono">${techo == null ? "no se juzga" : fmt(techo, 0) + " coulombs"}</td>
+          <td class="num muted">Tabla 934-2</td></tr>
+      <tr><td>Unit Weight objetivo</td>
+          <td class="num mono">${g(uw)}${uw ? " pcf" : ""}</td>
+          <td class="num muted">del diseño de mezcla</td></tr>
+      <tr><td>Ventana del Unit Weight</td>
+          <td class="num mono">${cuw.lsl == null ? "—" : fmt(cuw.lsl, 2) + " – " + fmt(cuw.usl, 2)}</td>
+          <td class="num muted">objetivo ± ${SP934_CUW_TOLERANCIA} pcf · Tabla 934-5</td></tr>
+      <tr><td>Lote / sub-lote</td>
+          <td class="num muted">—</td>
+          <td class="num muted">250 m³ en 10 de 25 m³ · 934-6.01(j)</td></tr>
+    </table></div></div>
+  </div>`;
+}
+
+function formSP934() {
+  const pr = db.project || {};
+  openForm({
+    title: "SP-934 — " + (pr.name || "esta obra"),
+    initial: { clase934: pr.clase934 || "",
+               nivelPermeabilidad: String(pr.nivelPermeabilidad || SP934_CP_NIVEL_POR_DEFECTO),
+               uwTarget: (db.plan && db.plan.uw && db.plan.uw.target) || "" },
+    fields: [
+      { key: "clase934", label: "Clase de hormigón", type: "select", full: true,
+        options: [{ value: "", label: "— sin declarar —" }].concat(
+          Object.keys(SP934_CCS).map((c) => ({
+            value: c,
+            label: `Clase ${c} · ${fmt(SP934_CCS[c].lsl, 0)} psi a 28 días` }))),
+        hint: "De la Tabla 934-1. La resistencia especificada y su techo salen de aquí: no se teclean." },
+      { key: "nivelPermeabilidad", label: "Nivel de permeabilidad", type: "select", full: true,
+        options: [
+          { value: "1", label: "PL#1 — no se juzga la permeabilidad" },
+          { value: "2", label: `PL#2 — máximo ${fmt(SP934_CP_USL["2"], 0)} coulombs` },
+        ],
+        hint: "Tabla 934-2. Si los planos no lo indican, la nota 7 manda usar el 2 en toda la obra." },
+      { key: "uwTarget", label: "Unit Weight objetivo (pcf)", type: "number", step: "0.1", full: true,
+        hint: `Del diseño de mezcla aprobado. La ventana de aceptación es ese valor ± ${SP934_CUW_TOLERANCIA} pcf.` },
+    ],
+    onSave: (v) => {
+      db.project.clase934 = v.clase934 || "";
+      db.project.nivelPermeabilidad = v.nivelPermeabilidad || "";
+      const uw = num(v.uwTarget);
+      if (uw != null) { db.plan.uw = Object.assign({}, db.plan.uw, { target: uw }); }
+      saveDB(); if (typeof render === "function") render();
+      toast("SP-934 actualizada");
+    },
+  });
+}
+
 function formPlan(alGuardar) {
   const p = db.plan;
   openForm({

@@ -2102,3 +2102,60 @@ del pase que da el servidor.
 En el navegador, contra un servidor de prueba: sesión puesta en una pestaña,
 **abierta otra en `muestras.html` y entró directa**, sin pasar por el portal.
 `verificar.js` sin fallos.
+
+---
+
+## Q-61 · Lo que Rubén declara, en Settings — 10 de agosto de 2026
+
+**Víctor:** *«Cualquier límite que tenga que ser declarado por Rubén tiene que
+salir en Settings.»*
+
+**Y no es una preferencia de sitio: es que Rubén no tiene Plan & Datos.** Su
+cuenta lleva `limites`, no `config`. El nivel de permeabilidad vivía en el
+formulario del proyecto — o sea, en Plan & Datos.
+
+> **El ingeniero de récord no podía declarar el dato que decide el 45 % del pago
+> de su propia obra. Tenía que pedírselo a Víctor.**
+
+### Qué entra en Settings
+
+**Pestaña SP-934**, solo si la obra se acepta bajo la 934. Lo que él declara
+—clase, nivel de permeabilidad, Unit Weight objetivo— **y al lado, en gris, lo
+que fija la especificación con su tabla**: de dónde sale cada número, para que
+nadie lo confunda con una opinión nuestra.
+
+**Pestaña Obras**, solo si hay más de una. Rubén no las crea —eso es de quien
+lleva el contrato— pero **tiene que poder cambiar**: mañana está en los puentes y
+el sábado vuelve a la PR-52.
+
+### Un fallo de la especificación que estaba en producción
+
+`SP934_CP_USL` decía **1950** coulombs y citaba una **«Tabla 934-4»** que en el
+borrador del 5 de diciembre de 2025 **ya no existe**: la permeabilidad está en la
+**934-2** y su techo es **1,500**.
+
+**El 1950 venía de un borrador anterior** — la numeración de las tablas cambió con
+él, que es la señal de que la fuente era otra edición.
+
+> **Un techo 450 coulombs más alto de la cuenta no da ningún error: acepta
+> hormigón que la especificación rechaza**, en la característica que pesa el 45 %
+> del factor de pago.
+
+Y de paso entra la **nota 7** de esa tabla: **sin nivel indicado en los planos, se
+usa el 2 en toda la obra.**
+
+### Tres fallos que encontró la prueba en pantalla, no el código
+
+1. **`TABS` se construía antes de `loadDB()`** — Settings salía **en blanco**.
+2. **`settings.html` no cargaba `sp934.js`** — la pestaña reventaba al abrirla.
+3. **Recepción decía «… · undefined»** en una obra sin Mix ID.
+
+**Ninguno lo habría cazado leer el código.** Los tres salieron de abrir la
+pantalla.
+
+### Lo que queda dicho y no hecho
+
+**Quitar Plan & Datos entero** y repartir lo que queda —logos, correos,
+coordenadas, importaciones— **toca la navegación y los permisos de diecinueve
+pantallas.** Es el cambio grande que nadie revisa, y no se hace de madrugada
+antes de un vaciado. **Se hace con calma y con el banco de pruebas delante.**

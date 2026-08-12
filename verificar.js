@@ -153,11 +153,21 @@ const enObras = (authSrc.match(/EN_OBRAS_934 = \[([^\]]*)\]/) || [, ""])[1]
    La segunda puede verla cualquiera: no hay nada que proteger en unos datos
    que no existen. Q-68. */
 const pantallas934 = html.filter((f) => leer(f).includes("sp934.js"));
+/* SETTINGS ES LA EXCEPCIÓN, Y A PROPÓSITO — Q-61, 10 de agosto de 2026.
+
+   Las tres pantallas de la 934 —934, lotes, aceptación— siguen en obras: son
+   las que JUZGAN, y media función que juzga es peor que ninguna.
+
+   Settings no juzga: es donde Rubén DECLARA la clase, el nivel de permeabilidad
+   y el Unit Weight objetivo de su obra. Sin eso no puede trabajar, porque no
+   tiene Plan & Datos. Dejarlo detrás del candado significaba que el ingeniero
+   de récord tenía que pedirle a Víctor el dato que decide el 45 % de su pago. */
+const declaran = ["settings.html"];
 const problemas = [];
 for (const f of pantallas934) {
   const b = path.basename(f);
   const esDemo = leer(f).includes("sim934.js");
-  if (!enObras.includes(b) && !esDemo)
+  if (!enObras.includes(b) && !esDemo && !declaran.includes(b))
     problemas.push(`${f} usa sp934.js sobre datos reales y no está en EN_OBRAS_934`);
   if (enObras.includes(b) && esDemo)
     problemas.push(`${f} es de demostración y está en EN_OBRAS_934 — sobra la puerta`);

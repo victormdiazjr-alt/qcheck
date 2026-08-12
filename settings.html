@@ -79,8 +79,9 @@ main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
 <div id="modal-root"></div>
 
 <script src="assets/sync.js?v=59693f27"></script>
+<script src="assets/sp934.js?v=fbe2c96c"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=c0a635e1"></script>
+<script src="assets/core.js?v=939a0863"></script>
 <script>
 /* La nota va con el panel que explica, no con la pantalla: colgada del
    <main> se colaba debajo de todas las pestañas y le decía al lector de
@@ -98,6 +99,30 @@ const NOTA_LIMITES = `
    Es la pantalla del ingeniero de récord, que es quien los descarta y el
    único que puede devolverlos. Y tiene que existir una puerta de vuelta:
    un descarte sin marcha atrás sería un borrado con otro nombre. */
+/* Las obras que hay y cuál está abierta. Rubén no las crea —eso es de quien
+   lleva el contrato— pero tiene que poder cambiar de una a otra: el sábado
+   vuelve a la PR-52 y mañana está en los puentes. */
+function panelObras() {
+  const filas = (db.proyectos || []).map((p) => {
+    const n = (db.tests || []).filter((t) => (t.proyecto || "pr-52") === p.id && !t.borrado).length;
+    const abierta = p.id === db.proyectoActivo;
+    return `<tr>
+      <td>${abierta ? "<b>" + esc(p.name || p.id) + "</b>" : esc(p.name || p.id)}</td>
+      <td class="num mono">${n}</td>
+      <td class="num">${abierta ? '<span class="muted">abierta</span>'
+        : `<button class="btn sm" onclick="if (abrirProyecto('${esc(p.id)}')) render()">Abrir</button>`}</td>
+    </tr>`;
+  }).join("");
+  return `<section class="panel"><div class="panel-head"><h2>Obras</h2></div>
+    <div class="panel-body flush"><div class="table-wrap"><table class="data">
+      <tr><th>Obra</th><th class="num">Ensayos</th><th class="num"></th></tr>
+      ${filas}
+    </table></div></div>
+    <div class="panel-body"><p class="muted" style="font-size:13px;margin:0">
+      Cambiar de obra no mueve un solo dato: cada ensayo queda sellado con la suya.
+    </p></div></section>`;
+}
+
 function panelDescartados() {
   const filas = Object.entries(db.dayMeta || {})
     .filter(([, m]) => m && m.borrado)
@@ -123,20 +148,39 @@ function panelDescartados() {
     </tbody></table></div></div></section>`;
 }
 
-const TABS = [
-  { id: "limites", n: "Límites", pinta: () => panelLimites(true) + NOTA_LIMITES },
-  { id: "descartados", n: "Descartados", pinta: () => panelDescartados() },
-];
-let cual = TABS[0].id;
+/* Q-61, 10 ago 2026: la 934 y las obras entran aquí porque es la pantalla que
+   tiene Rubén. `config` —Plan & Datos— es la sala de máquinas y no es suya.
+
+   La pestaña de la 934 solo aparece si la obra se acepta bajo la 934: un
+   técnico que trabaja en control de proceso no tiene por qué ver tablas de una
+   norma que no le rige. */
+/* FUNCIÓN Y NO CONSTANTE, y costó una pantalla en blanco. Se construía al
+   cargar el archivo —antes de `loadDB()`—, así que `db` todavía no existía y
+   preguntarle por las obras o por la 934 reventaba: Settings salía vacía.
+
+   Y además tiene que recalcularse: al cambiar de obra, las pestañas cambian. */
+function tabs() {
+  return [
+    { id: "limites", n: "Límites", pinta: () => panelLimites(true) + NOTA_LIMITES },
+    ...(typeof es934 === "function" && es934()
+      ? [{ id: "sp934", n: "SP-934", pinta: () => panelSP934(true) }] : []),
+    ...(((db && db.proyectos) || []).length > 1
+      ? [{ id: "obras", n: "Obras", pinta: () => panelObras() }] : []),
+    { id: "descartados", n: "Descartados", pinta: () => panelDescartados() },
+  ];
+}
+let cual = "limites";
 
 /* Se llama `render` a propósito y no `pintar`: es el nombre que busca
    `formPlan()` en core.js para repintar después de guardar, el mismo que usa
    Results. Cambiarlo deja el editor guardando sin que se vea el cambio. */
 function render() {
-  const t = TABS.find((x) => x.id === cual) || TABS[0];
+  const T = tabs();
+  const t = T.find((x) => x.id === cual) || T[0];
+  cual = t.id;                       // si la pestaña abierta ya no existe, no deja la pantalla vacía
   document.getElementById("app").innerHTML = t.pinta();
   document.getElementById("tabs-settings").innerHTML =
-    TABS.map((x) => `<button class="${x.id === cual ? "active" : ""}" onclick="cual='${x.id}'; render()">${x.n}</button>`).join("");
+    T.map((x) => `<button class="${x.id === cual ? "active" : ""}" onclick="cual='${x.id}'; render()">${x.n}</button>`).join("");
 }
 
 loadDB();
