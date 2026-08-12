@@ -205,6 +205,85 @@ const HACIENDO = {
    de quien acaba de abrirla. */
 let verIdos = false;
 
+/* ══════════════════════════════════════════════════════════════════════════
+   AVISAR CUANDO ENTRA OTRO — Q-84, 10 de agosto de 2026
+
+   Víctor: «tengo la ventana de estado de sistema abierta y solo estoy yo.
+   Quiero que cuando entre otro dispositivo me haga un sonido y me envíe una
+   notificación.»
+
+   Esta pantalla ya sabía quién está dentro: se refrescaba y aparecía una
+   tarjeta más. Pero **una tarjeta más no se ve si no estás mirando** — y esta
+   pantalla se deja abierta en una esquina justo para no tener que mirarla.
+
+   Solo avisa de los que LLEGAN. Nunca del propio aparato, y nunca de los que ya
+   estaban cuando se abrió la pantalla: si al abrirla sonara por cada uno, en una
+   obra con cuatro teléfonos sonaría cuatro veces y se apagaría el sonido para
+   siempre (Q-56).
+
+   El sonido se genera aquí —dos notas cortas— y no es un archivo: no hay que
+   descargar nada y suena igual sin conexión. Dos notas y no una porque un pitido
+   suelto se confunde con cualquier cosa del teléfono. */
+let conocidos = null;              // null = todavía no se ha visto la primera lista
+let permisoAviso = null;
+
+function avisarDeLosQueLlegan(vivos) {
+  const ahora = new Set(vivos.map((a) => a.dev).filter(Boolean));
+  const yo = (typeof qcAparato === "function" ? qcAparato() : "") || "";
+
+  if (conocidos === null) { conocidos = ahora; return; }   // la primera vuelta no avisa
+
+  const nuevos = [...ahora].filter((d) => !conocidos.has(d) && d !== yo);
+  conocidos = ahora;
+  if (!nuevos.length) return;
+
+  for (const dev of nuevos) {
+    const a = vivos.find((x) => x.dev === dev) || {};
+    const quien = a.usr && a.usr !== "?" ? a.usr : dev;
+    const donde = a.pagina ? ` · ${a.pagina.replace(/\.html$/, "")}` : "";
+    sonarLlegada();
+    notificar(`${quien} entró a QCheck`, `${dev}${donde}`);
+    if (typeof toast === "function") toast(`${quien} acaba de entrar`);
+  }
+}
+
+/* Dos notas cortas, generadas al vuelo. Sin archivo y sin descarga. */
+function sonarLlegada() {
+  try {
+    const A = window.AudioContext || window.webkitAudioContext;
+    if (!A) return;
+    sonarLlegada.ctx = sonarLlegada.ctx || new A();
+    const ctx = sonarLlegada.ctx;
+    if (ctx.state === "suspended") ctx.resume();
+    [[880, 0], [1174.7, 0.13]].forEach(([hz, t]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = hz;
+      g.gain.setValueAtTime(0.0001, ctx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + 0.22);
+      o.connect(g).connect(ctx.destination);
+      o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.25);
+    });
+  } catch (_) {}
+}
+
+/* La notificación del sistema, si la dejan. Se pide permiso UNA vez y al
+   primer aviso, no al abrir: pedir permiso nada más entrar es lo que hace que
+   se diga que no. */
+function notificar(titulo, cuerpo) {
+  try {
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "granted") {
+      new Notification(titulo, { body: cuerpo, tag: "qc-llegada", icon: "assets/icono-180.png" });
+    } else if (Notification.permission !== "denied" && permisoAviso === null) {
+      permisoAviso = true;
+      Notification.requestPermission().then((p) => {
+        if (p === "granted") new Notification(titulo, { body: cuerpo, tag: "qc-llegada" });
+      });
+    }
+  } catch (_) {}
+}
+
 /* Un aparato se da por conectado si latió hace menos de un minuto. El latido
    va cada 20 s, así que se puede perder dos seguidos antes de darlo por ido —
    en obra la señal parpadea y no por eso alguien dejó de trabajar. */
@@ -363,6 +442,8 @@ function pintar(datos) {
 
   const vivosDom = aps.filter((a) => a.inactivo < VIVO_MS);
   const idos = aps.filter((a) => a.inactivo >= VIVO_MS);
+
+  avisarDeLosQueLlegan(vivosDom);
 
   document.getElementById("aparatos").innerHTML = aps.length
     ? (vivosDom.length

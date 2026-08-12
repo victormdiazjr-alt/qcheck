@@ -2467,3 +2467,36 @@ de la misma propiedad.
 **Tres versiones en veinte minutos, y las tres las corrigió el oficio, no el
 código.** Ninguna prueba habría dicho dónde va ese dato. **Lo sabe quien ha
 tomado un cilindro.**
+
+---
+
+## Q-84 · Aviso cuando entra otro aparato — 10 de agosto de 2026
+
+**Víctor:** *«Tengo la ventana de estado del sistema abierta y solo estoy yo.
+Quiero que cuando entre otro dispositivo me haga un sonido y me envíe una
+notificación.»*
+
+**La pantalla ya sabía quién estaba dentro** —se refresca y aparece una tarjeta
+más— **pero una tarjeta más no se ve si no estás mirando.** Y esa pantalla se
+deja abierta en una esquina justo para no tener que mirarla.
+
+### Solo de los que LLEGAN
+
+**Nunca del propio aparato, y nunca de los que ya estaban al abrir la pantalla.**
+Si al abrirla sonara por cada uno, en una obra con cuatro teléfonos sonaría cuatro
+veces — **y el sonido se apagaría para siempre** (Q-56).
+
+### El sonido se genera, no se descarga
+
+**Dos notas cortas hechas al vuelo.** Sin archivo: no hay que descargar nada y
+suena igual sin conexión. **Dos y no una** porque un pitido suelto se confunde con
+cualquier cosa del teléfono.
+
+### Y el permiso se pide al primer aviso, no al abrir
+
+Pedir permiso de notificaciones nada más entrar **es lo que hace que la gente diga
+que no.** Se pide cuando de verdad hay algo que decir.
+
+**Comprobado en pantalla:** con dos aparatos ya dentro, **0 avisos** al abrir; al
+entrar un tercero, **sonido y notificación con quién y en qué pantalla**; y sin
+cambios, **0 avisos**.
