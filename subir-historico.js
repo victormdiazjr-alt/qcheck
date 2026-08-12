@@ -20,15 +20,14 @@
    CÓMO SE CORRE
 
      QC_API=https://qcheck-api.qcheck.workers.dev \
-     QC_TOKEN=<la llave del proyecto> \
-     QC_USR=ruben QC_CLAVE=<su clave> \
-     node subir-historico.js            ← enseña lo que haría, sin escribir
+     QC_TOKEN="$(tr -d "[:space:]" < datos/llave-proyecto.txt)" \
+     node subir-historico.js                ← enseña lo que haría, sin escribir
+     node subir-historico.js --de-verdad    ← escribe
 
-     ... y con --de-verdad al final, escribe.
-
-   La clave se lee del entorno y NO se escribe en la línea de comandos ni queda
-   en ningún archivo. Ver la cabecera de `cuentas.js`: lo que se teclea en la
-   línea queda en el historial del terminal.
+   LA CLAVE LA PIDE EL PROGRAMA y no se ve al teclearla. No va en la línea de
+   comandos: lo que se escribe ahí queda en el historial del terminal y en la
+   lista de procesos, a la vista de cualquiera que pase por la máquina. Es lo
+   mismo que hace `cuentas.js` y por el mismo motivo.
 
    EL AUTOR DE CADA LÍNEA. Estos ensayos los tecleó alguien en un Excel antes de
    que QCheck existiera. Firmarlos con la cuenta que los sube sería decir que
@@ -48,6 +47,31 @@ const CLAVE = process.env.QC_CLAVE || "";
 const DE_VERDAD = process.argv.includes("--de-verdad");
 
 const morir = (m) => { console.error("\n  ✗ " + m + "\n"); process.exit(1); };
+
+/* LA CLAVE SE PIDE, NO SE ESCRIBE EN LA LÍNEA — como en `cuentas.js`.
+
+   La primera versión la esperaba en el entorno y el comando llevaba un hueco
+   para rellenar. Víctor lo pegó tal cual y zsh se comió el `<` como redirección.
+   Además, una clave escrita en la línea queda en el historial del terminal y en
+   la lista de procesos. Se pide aquí, sin eco. */
+function preguntarClave(texto) {
+  return new Promise((resolve) => {
+    process.stdout.write(texto);
+    const tty = process.stdin;
+    if (!tty.isTTY) { let d = ""; tty.on("data", (c) => d += c); tty.on("end", () => resolve(d.trim())); return; }
+    tty.setRawMode(true); tty.resume(); tty.setEncoding("utf8");
+    let clave = "";
+    const alTeclear = (c) => {
+      if (c === "\n" || c === "\r" || c === "\u0004") {
+        tty.setRawMode(false); tty.pause(); tty.removeListener("data", alTeclear);
+        process.stdout.write("\n"); resolve(clave);
+      } else if (c === "\u0003") { process.stdout.write("\n"); process.exit(1); }
+      else if (c === "\u007f") { clave = clave.slice(0, -1); }
+      else clave += c;
+    };
+    tty.on("data", alTeclear);
+  });
+}
 if (!API) morir("falta QC_API");
 if (!TOKEN) morir("falta QC_TOKEN — la llave del proyecto");
 
@@ -121,11 +145,13 @@ async function main() {
 
   let pase = null;
   if (salud.cuerpo.sesiones) {
-    if (!USR || !CLAVE) morir("el servidor exige sesión: hacen falta QC_USR y QC_CLAVE");
-    const s = await pedir("/api/sesion", { method: "POST", body: JSON.stringify({ usr: USR, clave: CLAVE }) });
-    if (s.estado !== 200 || !s.cuerpo.pase) morir(`no pude entrar como ${USR} (${s.estado})`);
+    const usr = USR || "ruben";
+    const clave = CLAVE || await preguntarClave(`  Clave de ${usr} (no se ve al teclear): `);
+    if (!clave) morir("sin clave no se puede entrar");
+    const s = await pedir("/api/sesion", { method: "POST", body: JSON.stringify({ usr, clave }) });
+    if (s.estado !== 200 || !s.cuerpo.pase) morir(`no pude entrar como ${usr} (${s.estado})`);
     pase = s.cuerpo.pase;
-    console.log(`  Sesión  : dentro como ${USR}`);
+    console.log(`  Sesión  : dentro como ${usr}`);
   }
 
   /* De 500 en 500: un cuerpo enorme se cae por tiempo y deja medio subido. Con
