@@ -109,7 +109,37 @@
 .hero-prog { flex: 1 1 260px; min-width: 240px; }
 .hero-datos { flex: 2 1 300px; display: grid; gap: 12px 20px;
   grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); align-content: start; padding-top: 3px; }
-.hero-clima { flex: 0 0 auto; }
+.hero-clima { flex: 0 1 auto; min-width: 0; }
+/* --- lecturas del último camión (Q-82b) --- */
+.lect { border-left: 1px solid rgba(255,255,255,.12); padding-left: 18px; }
+.lect-cab { font-size: 9px; font-weight: 800; letter-spacing: .18em;
+  text-transform: uppercase; color: #8ea6bd; margin-bottom: 10px; }
+.lect-cab b { color: #dce7f2; font-weight: 800; }
+.lect-t { color: #8ea6bd; font-weight: 600; margin-left: 6px; }
+.lect-fila { display: flex; gap: 20px; flex-wrap: wrap; }
+.lect-d { min-width: 62px; }
+.lect-k { font-size: 9px; font-weight: 800; letter-spacing: .14em;
+  text-transform: uppercase; color: #8ea6bd; }
+.lect-v { font-size: 21px; font-weight: 600; letter-spacing: -.02em; line-height: 1.15;
+  margin-top: 2px; font-variant-numeric: tabular-nums; color: #dce7f2; }
+.lect-v em { font-style: normal; font-size: 10.5px; font-weight: 700;
+  color: #8ea6bd; margin-left: 3px; }
+.lect-l { font-size: 10px; color: #8ea6bd; margin-top: 2px;
+  font-variant-numeric: tabular-nums; }
+/* Las tres zonas del semáforo SPC, las de siempre. El color entra por el
+   número, no por un relleno: en la cabecera un bloque de color pesa demasiado. */
+.lect-d.z-ok   .lect-v { color: #7ce7a8; }
+.lect-d.z-act  .lect-v { color: #ffd98a; }
+.lect-d.z-susp .lect-v { color: #ff9d97; }
+@media (max-width: 900px) {
+  .lect { border-left: 0; padding-left: 0; border-top: 1px solid rgba(255,255,255,.12);
+          padding-top: 14px; width: 100%; }
+}
+/* Q-82: apagado el tiempo, su hueco no ocupa sitio. Y se esconde EL HUECO DEL
+   TIEMPO, no la columna: ahí viven ahora las lecturas del último camión, y la
+   primera versión de esta regla las escondía a ellas también. */
+#clima:empty { display: none; }
+.hero-clima:empty { display: none; }
 .hero-clima .clima { color: #eaf1f8; }
 .dato { min-width: 0; }
 .dato.ancho { grid-column: span 2; }
@@ -342,6 +372,48 @@ function progresoHTML(p) {
 /* Los datos del tiro en una rejilla compacta: llenan el hueco que quedaba
    entre el progreso y el tiempo, y de paso caben cosas que antes no se veían.
    Cada uno aparece solo si existe — nada se rellena a ojo. */
+/* ══════════════════════════════════════════════════════════════════════════
+   LAS LECTURAS DEL ÚLTIMO CAMIÓN — Q-82b, 10 de agosto de 2026
+
+   Víctor: «utiliza el espacio para enseñar más info importante».
+
+   Ahí iba el tiempo. La cabecera decía «Último camión 303 · Aceptado» y ningún
+   número: el veredicto sin la medición. Y el veredicto sale de cuatro lecturas
+   que un ingeniero de calidad quiere ver **con su ventana al lado**, porque un
+   slump de 3.50 no dice nada hasta que se sabe que la ventana era 2.00–4.00.
+
+   Cada una con su zona —verde, ámbar, rojo—, que son las mismas tres del
+   semáforo SPC y significan lo de siempre: si ese camión descarga.
+
+   Si el camión todavía no tiene lecturas, esto NO sale: un panel de cuatro
+   huecos vacíos ocupa el sitio y no dice nada (Q-56). */
+function lecturasHTML(day, last) {
+  if (!last) return "";
+  const p = planDe(last.date);
+  const L = [
+    { k: "Slump", v: num(last.slump), u: "in", z: zoneSlump(last), dp: 2,
+      lim: `${fmtSlump(p.slump.actLo)}–${fmtSlump(p.slump.actHi)}` },
+    { k: "Unit Weight", v: num(last.uw), u: "pcf", z: zoneUW(last), dp: 2,
+      lim: `${fmt(last.uwTarget ?? p.uw.target, 1)} ± ${p.uw.act}` },
+    { k: "Aire", v: num(last.air), u: "%", z: zoneAir(last), dp: 1,
+      lim: `${p.air.actLo}–${p.air.actHi}` },
+    { k: "Temp", v: num(last.temp), u: "°F", z: zoneTemp(last), dp: 0,
+      lim: `máx ${p.tempMax}` },
+  ].filter((x) => x.v != null);
+  if (!L.length) return "";
+
+  return `<div class="lect">
+    <div class="lect-cab">Último camión <b>${esc(last.truck || "—")}</b>
+      <span class="lect-t">${esc(last.testTime || last.start || "")}</span></div>
+    <div class="lect-fila">${L.map((x) => `
+      <div class="lect-d z-${x.z || "ok"}">
+        <div class="lect-k">${x.k}</div>
+        <div class="lect-v">${x.k === "Slump" ? fmtSlump(x.v) : fmt(x.v, x.dp)}<em>${x.u}</em></div>
+        <div class="lect-l">${x.lim}</div>
+      </div>`).join("")}</div>
+  </div>`;
+}
+
 function datosHTML(day, meta, prog, lt) {
   const d = [];
   const planificada = hora12(meta.horaInicio), real = hora12(inicioReal(day));
@@ -738,7 +810,7 @@ function render() {
             ${progresoHTML(prog)}
           </div>
           ${datosHTML(day, meta, prog, lt)}
-          <div class="hero-clima"><div id="clima"></div></div>
+          <div class="hero-clima">${lecturasHTML(day, last)}<div id="clima"></div></div>
         </div>
         ${piezasHTML(day)}`}
       </div>
@@ -841,11 +913,23 @@ function render() {
       </div>
     </section>`;
 
-  // El tiempo en el sitio del tiro. Las coordenadas viven en el proyecto
-  // (Plan & Datos) para que Rubén las corrija si el tramo se mueve.
-  montarClima(document.getElementById("clima"), {
-    lat: num(db.project.lat), lon: num(db.project.lon), lugar: db.project.place,
-  });
+  /* EL TIEMPO, APAGADO — Q-82, 10 de agosto de 2026. Víctor: «el módulo de
+     condiciones del tiempo desactívalo».
+
+     No se borra: se apaga en un sitio. El módulo entero sigue en `clima.js` y
+     las coordenadas siguen en el proyecto, así que volver a encenderlo es
+     quitar esta constante.
+
+     Y hay una razón para que vuelva algún día: en tiempo caluroso —que en
+     Puerto Rico es el día normal— la temperatura del aire, la humedad y el
+     viento deciden si el hormigón se agrieta antes de fraguar, y este módulo ya
+     trae dos de esas cuatro. Cuando eso se construya, se enciende aquí. */
+  const CLIMA_ENCENDIDO = false;
+  if (CLIMA_ENCENDIDO) {
+    montarClima(document.getElementById("clima"), {
+      lat: num(db.project.lat), lon: num(db.project.lon), lugar: db.project.place,
+    });
+  }
 }
 
 loadDB();

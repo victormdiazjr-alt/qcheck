@@ -2389,3 +2389,46 @@ otra es la clase de mentira que este sistema existe para impedir.**
 
 **Comprobado:** con la obra forzada a la PR-52, al recargar se abre sola la del
 tiro y la cabecera nombra la correcta.
+
+---
+
+## Q-82 · Fuera el tiempo, dentro las lecturas — 10 de agosto de 2026
+
+**Víctor:** *«El módulo de condiciones del tiempo desactívalo»*, y después:
+*«utiliza el espacio para enseñar más info importante o la que ya está
+mejorarla».*
+
+**El tiempo se apaga, no se borra.** El módulo entero sigue en `clima.js` y las
+coordenadas siguen en el proyecto: volver a encenderlo es quitar una constante.
+
+**Y hay una razón para que vuelva algún día:** en tiempo caluroso —que en Puerto
+Rico es el día normal— la temperatura del aire, la humedad y el viento deciden si
+el hormigón se agrieta antes de fraguar, y ese módulo **ya trae dos de las cuatro
+entradas** de esa cuenta.
+
+### Lo que ocupa su sitio
+
+La cabecera decía **«Último camión 303 · Aceptado»** y ningún número: **el
+veredicto sin la medición.** Ahora van las cuatro lecturas con su ventana al
+lado, porque **un slump de 3.50 no dice nada hasta que se sabe que la ventana era
+2.00–4.00**:
+
+    ÚLTIMO CAMIÓN 303  08:23
+    SLUMP      UNIT WEIGHT   AIRE     TEMP
+    3.50 in    150.2 pcf     2 %      87 °F
+    2.00–4.00  150.1 ± 2.3   0.5–4    máx 95
+
+Cada una con su zona del semáforo SPC, **y el color en el número, no en un
+relleno**: en la cabecera un bloque de color pesa demasiado.
+
+**Si el camión aún no tiene lecturas, esto no sale** — cuatro huecos vacíos ocupan
+sitio y no dicen nada (Q-56).
+
+### Y un fallo mío de diez minutos de vida
+
+Al apagar el tiempo puse `.hero-clima:has(> :empty) { display: none }` para que el
+hueco no ocupara sitio. **Luego metí las lecturas en esa misma columna y esa regla
+las escondía también**: estaban en el DOM y no se veían.
+
+**Se cazó midiendo, no mirando el código:** la función devolvía 869 caracteres y
+el nodo existía. **Esconder el hueco del tiempo no es esconder la columna.**
