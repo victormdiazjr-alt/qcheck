@@ -644,7 +644,6 @@ function render() {
   document.getElementById("app").innerHTML = `
     <div class="cc-hero t-${tiro.cls}">
       <div class="cc-cuerpo">
-        <div class="obra-abierta">${esc(db.project.name || "")}${db.project.qcFirm ? " · " + esc(db.project.qcFirm) : ""}</div>
         ${tiro.listo ? `
         <!-- Q-72b: pasados tres días la cabecera no cuenta el tiro viejo. Ni
              yardas, ni camiones, ni losas: eso ya es historia y vive en Results.
@@ -666,6 +665,10 @@ function render() {
           </div>
           <div class="hero-clima"><div id="clima"></div></div>
         </div>` : `
+        <!-- Q-75b: la obra se nombra SOLO cuando hay tiro. Sin vaciado abierto,
+             nombrar una obra no informa de nada — y enseñaba la anterior, que es
+             peor que no decir nada. -->
+        <div class="obra-abierta">${esc(db.project.name || "")}${db.project.qcFirm ? " · " + esc(db.project.qcFirm) : ""}</div>
         <div class="hero-fila">
           <div class="hero-prog">
             <div class="hp-cab">
