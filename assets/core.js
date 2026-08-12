@@ -2862,7 +2862,7 @@ function cerrarDashboards() {
 }
 
 /* ------------------------------------------------------------ modal form builder */
-function openForm({ title, fields, initial = {}, onSave, onDelete = null, submitLabel = "Guardar", liveEval = null }) {
+function openForm({ title, fields, initial = {}, onSave, onDelete = null, submitLabel = "Guardar", liveEval = null, alCambiar = null }) {
   const root = document.getElementById("modal-root");
   const fid = "f-" + uid();
   root.innerHTML = `
@@ -2942,6 +2942,29 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
       liveEl.innerHTML = liveEval(values);
     };
     form.addEventListener("input", run);
+    form.addEventListener("change", run);
+    run();
+  }
+  /* UN FORMULARIO QUE REACCIONA — Q-58b, 10 de agosto de 2026.
+
+     Las etiquetas se decidían AL ABRIR, con lo que ya estaba guardado. En un
+     tiro nuevo no hay nada guardado, así que se abría como losas: pedía «Tramo
+     del día» y lo pedía OBLIGATORIO. Elegir «Vigas» no cambiaba nada y no se
+     podía guardar. Le pasó a Víctor creando el tiro de mañana.
+
+     `alCambiar` recibe el formulario y los valores cada vez que se toca algo. */
+  if (alCambiar) {
+    const form = document.getElementById(fid);
+    const leer = () => {
+      const v = {};
+      for (const f of fields) {
+        if (f.type === "label") continue;
+        const el = form.elements[f.key];
+        if (el) v[f.key] = el.value;
+      }
+      return v;
+    };
+    const run = () => alCambiar(form, leer());
     form.addEventListener("change", run);
     run();
   }
@@ -3344,8 +3367,11 @@ function formDayMeta(day) {
          de losas; unas vigas se cuentan, no se recorren. */
       { key: "losasPlan", label: `Cuántas ${PIEZA_DE[meta.estructura || "losas"].plural}`, type: "number", step: "1", half: true,
         hint: "Opcional. Sin esto, del tramo sale una estimación y se enseña con «≈»." },
+      /* Q-58b: ya no es obligatorio nunca. Lo era para asegurar el tramo de
+         losas, pero un tiro de vigas no tiene tramo y se quedaba sin poder
+         guardarse. Lo que hace falta lo pide `alCambiar`, abajo, según lo que
+         se esté tirando de verdad. */
       { key: "losas", label: PIEZA_DE[meta.estructura || "losas"].tramo, type: "textarea", full: true,
-        required: (meta.estructura || "losas") === "losas",
         placeholder: PIEZA_DE[meta.estructura || "losas"].ej,
         hint: PIEZA_DE[meta.estructura || "losas"].ayuda },
       { key: "fase", label: "Fase" },
@@ -3354,6 +3380,23 @@ function formDayMeta(day) {
       { key: "km", label: "Km (desde–hasta)", half: true, placeholder: "0.943 – 0.461" },
       { key: "notas", label: "Notas", type: "textarea", full: true },
     ],
+    /* Q-58b: las etiquetas siguen a lo que se elige, en el momento. Antes se
+       decidían al abrir —con lo ya guardado— y en un tiro nuevo eso era
+       siempre «losas». */
+    alCambiar: (form, v) => {
+      const e = PIEZA_DE[v.estructura] || PIEZA_DE.losas;
+      const campo = (k) => form.querySelector(`[name="${k}"]`)?.closest(".field");
+      const c1 = campo("losasPlan");
+      if (c1) c1.querySelector("label").textContent = `Cuántas ${e.plural}`;
+      const c2 = campo("losas");
+      if (c2) {
+        c2.querySelector("label").textContent = e.tramo;
+        const t = c2.querySelector("textarea");
+        if (t) { t.placeholder = e.ej; t.required = false; }
+        const h = c2.querySelector(".hint");
+        if (h) h.textContent = e.ayuda;
+      }
+    },
     // Se fusiona: este formulario y el del contratista escriben el mismo día,
     // y reemplazar el objeto le borraba el plan al otro.
     onSave: (v) => {
