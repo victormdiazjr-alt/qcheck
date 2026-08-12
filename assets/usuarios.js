@@ -33,8 +33,8 @@
 "use strict";
 
 const QC_CUENTAS = {
-  admin:    { clave: "1234", rol: "qc",       nombre: "Administrador", tablero: true, config: true, limites: true },
-  ruben:    { clave: "1234", rol: "qc",       nombre: "Rubén Segarra", limites: true, firma: true },
+  admin:    { clave: "vd0330", rol: "qc",       nombre: "Administrador", tablero: true, config: true, limites: true },
+  ruben:    { clave: "secg", rol: "qc",       nombre: "Rubén Segarra", limites: true, firma: true },
   invitado: { clave: "1234", rol: "consulta", nombre: "Invitado" },
 
   /* El técnico de campo de Rubén — 8 ago 2026. Ve lo mismo que Rubén (Víctor
