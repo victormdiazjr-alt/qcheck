@@ -54,7 +54,9 @@
    falta. */
 const QC_CUENTAS = {
   admin:    { rol: "qc",       nombre: "Administrador", tablero: true, config: true, limites: true },
-  ruben:    { rol: "qc",       nombre: "Rubén Segarra", limites: true, firma: true },
+  /* Q-77: Rubén lleva su Control Center. Trabaja el día entero del teléfono y
+     esa es su casa, no un portal de resúmenes. */
+  ruben:    { rol: "qc",       nombre: "Rubén Segarra", tablero: true, limites: true, firma: true },
   invitado: { rol: "consulta", nombre: "Invitado" },
 
   /* El técnico de campo de Rubén — 8 ago 2026. Ve lo mismo que Rubén (Víctor

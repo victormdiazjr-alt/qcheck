@@ -128,9 +128,9 @@ button.mv-btn { width: 100%; text-align: left; font-family: inherit; cursor: poi
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=59693f27"></script>
-<script src="assets/core.js?v=b6b7c6a2"></script>
+<script src="assets/core.js?v=fefefb92"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
-<script src="assets/usuarios.js?v=02167dc1"></script>
+<script src="assets/usuarios.js?v=e03e5a7e"></script>
 <script src="assets/auth.js?v=b9cf7fd2"></script>
 <script>
 "use strict";
@@ -156,10 +156,36 @@ const PUERTA_RESULTADOS = { href: "results.html", n: "Resultados", ic: MARCA_SEG
    No es una pantalla de trabajo: es la puerta para que miren desde fuera el
    concretero, el contratista y la Autoridad. Quien usa QCheck todo el día
    entra por las de arriba; esta se abre de vez en cuando. */
+/* LAS DOS DE TRABAJAR, QUE FALTABAN — Q-76, 10 de agosto de 2026.
+
+   Víctor: «Rubén va a trabajar todo del celular. Asegúrate de que pueda entrar
+   a todo y hacer todo.»
+
+   Y no podía: este portal ofrecía Resultados, Field Display y Dashboards — tres
+   pantallas de MIRAR. Recepción y Muestras, que son su trabajo entero, no
+   estaban por ningún sitio. Desde el teléfono no se podía registrar un camión ni
+   entrar una lectura.
+
+   Van las primeras y por ese orden, que es el del vaciado: primero llega el
+   camión, después se muestrea. */
+const PUERTAS_TRABAJO = [
+  { href: "conduce.html", n: "Recepción", destaca: true,
+    sub: "Registrar cada camión que llega",
+    ic: `<svg viewBox="0 0 24 24" class="ic"><path d="M2.5 7.5h11v9h-11z"/><path d="M13.5 10.5h4l3.5 3.5v2.5h-7.5z"/><circle cx="6.5" cy="18" r="1.9"/><circle cx="17" cy="18" r="1.9"/></svg>` },
+  { href: "muestras.html", n: "Muestras", destaca: true,
+    sub: "Revenimiento, unit weight, aire y temperatura",
+    ic: `<svg viewBox="0 0 24 24" class="ic"><path d="M9 2.5h6M10.5 2.5v6.2L5.6 17.4a2.4 2.4 0 0 0 2.1 3.6h8.6a2.4 2.4 0 0 0 2.1-3.6L13.5 8.7V2.5"/><path d="M7.6 14h8.8"/></svg>` },
+];
+
 const PUERTAS = [
   { href: "display.html?acostar=1", n: "Field Display",
-    destaca: true,
     ic: `<svg viewBox="0 0 24 24" class="ic"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M12 16.5v4M8.5 20.5h7"/></svg>` },
+  /* Settings lleva los límites, la SP-934 y las obras. Rubén los declara —es el
+     ingeniero de récord— y sin esto tendría que pedir un ordenador para abrir su
+     propia obra. Solo para quien tenga esa llave. */
+  { href: "settings.html", n: "Settings", soloLimites: true,
+    sub: "Límites, SP-934 y obras",
+    ic: `<svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/></svg>` },
   { tableros: true, n: "Dashboards", ic: ICONO_DASHBOARDS.replace("<svg", `<svg class="ic"`) },
 ];
 
@@ -186,7 +212,11 @@ function pintar() {
     <div class="mv-nota">${p.loads} ${p.loads === 1 ? "camión recibido" : "camiones recibidos"}${
       hayPlan ? ` · faltan ${fmt(p.pending, 1)} CY` : ""}</div>`;
 
-  const puertas = qcEsQC() ? [PUERTA_RESULTADOS, ...PUERTAS] : PUERTAS;
+  /* El orden es el del día: recibir, muestrear, mirar. Quien no lleva el
+     control de calidad no ve ninguna de las de trabajar. */
+  const puertas = qcEsQC()
+    ? [...PUERTAS_TRABAJO, PUERTA_RESULTADOS, ...PUERTAS]
+    : PUERTAS;
   document.getElementById("mv-menu").innerHTML = puertas.map((x) => x.tableros
     ? `<button class="mv-btn" type="button" onclick="abrirDashboards()">
         ${x.ic}

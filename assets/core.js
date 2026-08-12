@@ -314,6 +314,18 @@ function casaDe() {
   const propia = typeof qcCasa === "function" && qcCasa();
   if (propia) return propia;
   if (typeof qcEsQC === "function" && !qcEsQC()) return "movil.html";
+  /* EL CONTROL CENTER TAMBIÉN EN EL TELÉFONO — Q-77, 10 de agosto de 2026.
+
+     Víctor: «haz que Rubén en el celular vaya al Control Center. Su Control
+     Center. Y pueda hacer todas sus cosas.»
+
+     Antes, un teléfono caía siempre en `movil.html` — un portal con tres
+     puertas de MIRAR. Rubén trabaja el día entero del celular: mandarlo a un
+     resumen y esconderle su propia casa es dejarle a medias.
+
+     `movil.html` NO se retira: sigue siendo la casa de quien no lleva el
+     tablero. Lo que cambia es que quien SÍ lo lleva lo tiene en el bolsillo. */
+  if (typeof qcVeTablero === "function" && qcVeTablero()) return "control-center.html";
   return esTelefono() ? "movil.html" : "control-center.html";
 }
 
