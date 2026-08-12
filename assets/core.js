@@ -3219,7 +3219,7 @@ const PIEZA_DE = {
   vigas: { plural: "vigas", tramo: "Cuáles vigas",
            ej: "V-1 a V-8",
            ayuda: "Opcional. Cómo las identifican en el plano — un rango o la lista separada por coma." },
-  otra:  { plural: "piezas", tramo: "Qué se tira",
+  otra:  { plural: "piezas", tramo: "Cuáles",
            ej: "",
            ayuda: "Opcional. Descríbelo como se lo dan en la obra." },
 };
@@ -3272,7 +3272,7 @@ function formDayMeta(day) {
 
          Manda lo que se elija aquí: de ella salen las etiquetas de abajo y de
          ella depende que el tramo sea obligatorio o no. */
-      { key: "estructura", label: "Qué se tira", type: "select", half: true,
+      { key: "estructura", label: "Estructura", type: "select", half: true,
         options: [
           { value: "losas", label: "Losas" },
           { value: "vigas", label: "Vigas" },
