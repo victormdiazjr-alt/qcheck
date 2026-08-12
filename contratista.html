@@ -132,7 +132,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=59693f27"></script>
-<script src="assets/core.js?v=79bff78c"></script>
+<script src="assets/core.js?v=17827ac0"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -148,8 +148,8 @@ function render() {
   const p = dayProgress(state.day);
   const meta = db.dayMeta[state.day] || {};
 
+  /* Q-74: sin monograma. Ver produccion.html. */
   document.getElementById("hero-eyebrow").innerHTML =
-    marcaHTML("contratista", db.project.contractor) +
     `<span class="mp-nombre">${esc(db.project.contractor || "Contratista")}</span>`;
   document.getElementById("hero-title").textContent = fmtDate(state.day);
   document.getElementById("hero-sub").textContent =

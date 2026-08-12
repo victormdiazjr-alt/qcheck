@@ -443,13 +443,12 @@ function logoDeParte(parte) {
   return l[parte] || "";
 }
 
-/* `parte` = contratista | concretera | autoridad | qc */
-function marcaHTML(parte, nombre, clase) {
-  const src = logoDeParte(parte);
-  const n = esc(nombre || "");
-  if (src) return `<img class="marca-parte ${esc(clase || "")}" src="${esc(src)}" alt="${n}" title="${n}">`;
-  return `<span class="marca-parte mono ${esc(clase || "")}" title="${n}">${esc(inicialesDe(nombre))}</span>`;
-}
+/* `marcaHTML()` se retiró el 10 ago 2026 (Q-74). Dibujaba el logo de cada parte
+   —contratista, concretera, Autoridad— y, cuando no había archivo, un monograma
+   con su inicial. En los tableros esa inicial suelta al lado del nombre no decía
+   nada y parecía un botón. `logoDeParte()` e `inicialesDe()` se quedan: los usa
+   el reporte, que sí lleva los logos oficiales. */
+
 
 /* ------------------------------------------------------------ ¿es un teléfono?
    Se mira el agente de usuario y no el ancho a propósito: el iPad en vertical
