@@ -73,6 +73,7 @@ Versión vigente del contrato: **4**.
 | 2026-08-01 | **Q-02 — Sincronización entre aparatos**, por registro de cambios campo a campo. Desplegada en Cloudflare Workers + D1 (`qcheck-api.qcheck.workers.dev`) y probada de punta a punta entre el sitio publicado y un segundo aparato | claude |
 | 2026-07-31 | **Q-28 — El ciclo cierra**: Muestras solo engancha camiones que esperan resultados y se limpia al enviar; la simulación deja de borrar el trabajo real en cada acceso | claude |
 | 2026-07-31 | **Q-27 — La marca**: «Smart Quality Control» como descripción del nombre y «Build Connected» como lema | claude |
+| 2026-08-10 | **Q-75 — El lema cambia a «Smart Building»** (Víctor), y sale de debajo del logo el nombre de la obra: QCheck deja de ser de un proyecto | claude |
 | 2026-07-31 | **Q-26 — La portada de la guía dice lo que hace la herramienta**: «Se mide una vez. Lo ve toda la obra», y fuera el párrafo | claude |
 | 2026-07-31 | **Q-19 (cerrada) — El vector del mixer de Víctor** es ya el icono del camión hormigonera, y toma el color del estado | claude |
 | 2026-07-31 | **Q-25 — Delete, Next y Clear** en el teclado de Muestras | claude |
