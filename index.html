@@ -257,8 +257,15 @@ pintarRed();
    sesión local NO puede es escribir en el expediente compartido: con
    `exigir_sesion` encendida, el servidor le rechaza los cambios y la franja de
    arriba lo canta. */
+/* LA DIRECCIÓN DEL SERVIDOR NO ES UN SECRETO — Q-70, 10 de agosto de 2026.
+
+   Estaba solo en `conectar.html`. Un aparato con la llave pero sin la dirección
+   —o al que se le limpió el navegador— no podía ni preguntar. Y el secreto es
+   la LLAVE, no la dirección: sin llave, el servidor contesta 401 igual. */
+const SERVIDOR_DEL_PROYECTO = "https://qcheck-api.qcheck.workers.dev";
+
 async function entrarEnServidor(u, p) {
-  const api = (localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
+  const api = (localStorage.getItem("qc-api") || SERVIDOR_DEL_PROYECTO).replace(/\/+$/, "");
   if (!api) return undefined;
   const cab = { "Content-Type": "application/json" };
   const tk = localStorage.getItem("qc-token");
@@ -336,8 +343,24 @@ async function entrar(e) {
        Q-77 ese mismo hueco puede llevar el aviso de «lo desconectaron», y sin
        esta línea una clave mala después de una desconexión seguiría diciendo
        que lo desconectaron. */
-    document.getElementById("err").textContent = "Usuario o contraseña incorrectos.";
-    document.getElementById("err").classList.add("show");
+    /* SIN LLAVE NO ES «CLAVE MALA» — Q-70, 10 de agosto de 2026.
+
+       Desde que las claves salieron del código (Q-65), la única forma de
+       comprobar una es preguntándole al servidor, y para eso hace falta la
+       llave del proyecto. Un aparato sin conectar no puede entrar de ninguna
+       manera — y hasta hoy la pantalla decía «usuario o contraseña
+       incorrectos», que es MENTIRA y manda a la persona a probar claves que
+       están bien. Le pasó a Víctor diez minutos antes de un tiro.
+
+       Ahora lo dice con su nombre y con la salida al lado. */
+    const err = document.getElementById("err");
+    if (!localStorage.getItem("qc-token")) {
+      err.innerHTML = "Este aparato todavía no está conectado al proyecto.<br>" +
+        "<a href=\"conectar.html\" style=\"color:var(--accent2);font-weight:600\">Conectarlo ahora</a>";
+    } else {
+      err.textContent = "Usuario o contraseña incorrectos.";
+    }
+    err.classList.add("show");
     document.getElementById("p").value = "";
     document.getElementById("p").focus();
   }

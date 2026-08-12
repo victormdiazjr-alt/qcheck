@@ -636,6 +636,41 @@ export default {
       return json(r.ok ? { ok: true, id: r.id } : { error: r.error }, r.ok ? 200 : r.codigo);
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       «ME INTERESA» DESDE UN TABLERO — Q-69, 10 de agosto de 2026
+
+       Víctor: «si le da al botón de contact us que me avise por la aplicación.
+       Tú. Que no envíe nada.»
+
+       No manda correo a propósito. `/api/correo` existe pero pide el secreto de
+       administración —para que nadie lo use de servidor de basura— y la llave
+       del correo ni siquiera está puesta. Esto **escribe una línea** y Víctor la
+       ve dentro de QCheck, que es donde ya mira.
+
+       POR QUÉ NO VA POR `/api/cambios`: los tableros entran con cuenta de
+       CONSULTA y esa no escribe en el expediente, y así tiene que seguir siendo.
+       Esta puerta es estrecha a propósito — solo escribe `interes`, nada más, y
+       necesita sesión válida igual que todo lo demás. */
+    if (url.pathname === "/api/interes" && req.method === "POST") {
+      if (!quien) return json({ error: "sesion" }, 401);
+      let d; try { d = await req.json(); } catch (_) { return json({ error: "json" }, 400); }
+      const correo = String(d.correo || "").trim().slice(0, 120);
+      /* Comprobación mínima: que parezca un correo. Ni validaciones finas ni
+         listas de dominios — lo que importa es que llegue el aviso. */
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(correo)) return json({ error: "correo" }, 400);
+      const ahora = new Date().toISOString();
+      const id = "int-" + ahora.slice(0, 10) + "-" + quien.usr;
+      await env.DB.prepare(
+        "INSERT OR IGNORE INTO ops (uid, ent, id, campo, valor, ts, dev, usr) VALUES (?,?,?,?,?,?,?,?)"
+      ).bind(`interes-${id}-correo`, "interes", id, "correo",
+             JSON.stringify(correo), ahora, String(d.dev || "?").slice(0, 60), quien.usr).run();
+      await env.DB.prepare(
+        "INSERT OR IGNORE INTO ops (uid, ent, id, campo, valor, ts, dev, usr) VALUES (?,?,?,?,?,?,?,?)"
+      ).bind(`interes-${id}-desde`, "interes", id, "desde",
+             JSON.stringify(String(d.desde || "").slice(0, 40)), ahora, String(d.dev || "?").slice(0, 60), quien.usr).run();
+      return json({ ok: true });
+    }
+
     if (url.pathname === "/api/cambios" && req.method === "GET") {
       if (exige && !quien) return json({ error: "sesion" }, 401);
       const desde = Number(url.searchParams.get("desde") || 0) || 0;

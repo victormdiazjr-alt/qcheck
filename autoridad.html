@@ -62,7 +62,7 @@ h2.sec-title { font-size: 18px; margin: 26px 0 12px; }
 
 <header class="qc-header">
   <div class="brand">
-    <a href="control-center.html" style="text-decoration:none"><svg class="mark" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
+    <span><svg class="mark" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="QCheck">
       <defs>
         <mask id="qcm-q1"><rect width="1000" height="1000" fill="#fff"/><path fill="#000" d="M 139 531 H 558 V 802 H 139 Z"/></mask>
         <mask id="qcm-c1"><rect width="1000" height="1000" fill="#fff"/><circle cx="346" cy="720" r="103" fill="#000"/></mask>
@@ -75,7 +75,7 @@ h2.sec-title { font-size: 18px; margin: 26px 0 12px; }
         <path fill="var(--logo-g2,#4f5a66)" d="M 132 755 L 346 852 L 564 730 L 564 795 L 346 918 L 132 816 Z"/>
       </g>
       <path fill="var(--logo-blue,#0f46b5)" d="M 412 665 A 86 86 0 1 0 412 775 L 368 739 A 31 31 0 1 1 368 701 Z"/>
-    </svg></a>
+    </svg></span>
     <div>
       <div class="title">Autoridad de Carreteras / FHWA — Fiscalización</div>
       <div class="subtitle">Calidad del hormigón PR-52 — vista de cumplimiento, solo lectura</div>
@@ -301,5 +301,79 @@ mountStatusBar();
 enableLiveSync(render);
 render();
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     «¿Te gusta esta aplicación?» — Q-69, 10 de agosto de 2026.
+
+     Lo único que se puede tocar en un tablero además de mirar. No manda
+     correo: escribe una línea que Víctor ve dentro de QCheck.
+     ═══════════════════════════════════════════════════════════════════ -->
+<button id="qc-info-btn" title="Información" aria-label="Información">i</button>
+<div id="qc-info-capa" hidden>
+  <div id="qc-info-caja">
+    <button id="qc-info-x" aria-label="Cerrar">×</button>
+    <h3>Like this app?</h3>
+    <p>Contact us to build your own.</p>
+    <div id="qc-info-form">
+      <input id="qc-info-mail" type="email" placeholder="tu@correo.com" autocomplete="email">
+      <button id="qc-info-send">Contact us</button>
+    </div>
+    <p id="qc-info-ok" hidden>Gracias. Te contactamos pronto.</p>
+    <div id="qc-info-pie">QCheck · Segarra Engineering</div>
+  </div>
+</div>
+<style>
+  #qc-info-btn{ position:fixed; right:18px; bottom:18px; width:42px; height:42px;
+    border-radius:50%; border:1px solid var(--line); background:var(--panel-2);
+    color:var(--ink-soft); font:600 18px/1 Georgia,serif; cursor:pointer; z-index:40;
+    box-shadow:var(--shadow) }
+  #qc-info-btn:hover{ color:var(--ink) }
+  #qc-info-capa{ position:fixed; inset:0; background:rgba(0,0,0,.62); z-index:50;
+    display:grid; place-items:center; padding:22px }
+  #qc-info-caja{ background:var(--panel); border:1px solid var(--line);
+    border-radius:var(--radius); box-shadow:var(--shadow); padding:30px 28px 22px;
+    max-width:380px; width:100%; position:relative; text-align:center }
+  #qc-info-x{ position:absolute; top:10px; right:12px; background:none; border:0;
+    color:var(--ink-soft); font-size:24px; line-height:1; cursor:pointer }
+  #qc-info-caja h3{ font-size:21px; margin-bottom:6px; color:var(--ink) }
+  #qc-info-caja p{ color:var(--ink-soft); font-size:14.5px; margin-bottom:18px }
+  #qc-info-form{ display:flex; gap:8px; flex-wrap:wrap }
+  #qc-info-mail{ flex:1 1 160px; padding:11px 13px; border-radius:10px;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--ink); font:inherit }
+  #qc-info-send{ flex:0 0 auto; padding:11px 17px; border-radius:10px; border:0;
+    background:var(--accent); color:#fff; font:600 14.5px inherit; cursor:pointer }
+  #qc-info-ok{ color:var(--accent2); font-weight:600; margin:0 }
+  #qc-info-pie{ margin-top:18px; padding-top:14px; border-top:1px solid var(--line);
+    color:var(--ink-soft); font-size:12px; letter-spacing:.06em; text-transform:uppercase }
+</style>
+<script>
+(function(){
+  const btn=document.getElementById("qc-info-btn"), capa=document.getElementById("qc-info-capa");
+  const abrir=()=>capa.hidden=false, cerrar=()=>capa.hidden=true;
+  btn.onclick=abrir;
+  document.getElementById("qc-info-x").onclick=cerrar;
+  capa.onclick=(e)=>{ if(e.target===capa) cerrar(); };
+  document.getElementById("qc-info-send").onclick=async ()=>{
+    const mail=document.getElementById("qc-info-mail");
+    const v=(mail.value||"").trim();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(v)){ mail.focus(); mail.style.borderColor="var(--susp)"; return; }
+    mail.style.borderColor="";
+    try{
+      const api=(localStorage.getItem("qc-api")||"").replace(/\/+$/,"");
+      await fetch(api+"/api/interes",{ method:"POST",
+        headers:{ "Content-Type":"application/json",
+                  "X-QC-Token": localStorage.getItem("qc-token")||"",
+                  "X-QC-Sesion": localStorage.getItem("qc-sesion")||"" },
+        body: JSON.stringify({ correo:v, desde:location.pathname.split("/").pop(),
+                               dev: localStorage.getItem("qc-dev")||"?" }) });
+    }catch(_){}
+    /* Se agradece pase lo que pase: el visitante no tiene por qué enterarse de
+       si nuestro servidor contestó. Si no llegó, no llegó — no es su problema. */
+    document.getElementById("qc-info-form").hidden=true;
+    document.getElementById("qc-info-ok").hidden=false;
+  };
+})();
+</script>
+
 </body>
 </html>
