@@ -680,7 +680,7 @@ function pintarTiro(day) {
     el.className = "qcs-tiro sin-plan";
     el.href = "results.html#daily";
     el.title = d ? `El último vaciado fue el ${fmtDate(d)}. No hay ninguno abierto.` : "No hay vaciados registrados.";
-    el.innerHTML = `<span class="qcs-lb">Listo para tirar</span>
+    el.innerHTML = `<span class="qcs-lb">Ready para Tirar</span>
       <span class="qcs-cy">sin vaciado abierto</span>`;
     return;
   }
@@ -1687,6 +1687,11 @@ function estadoTiro(day) {
   /* Un día que no es hoy es, por definición, el último vaciado que hubo: la
      pantalla llegó aquí porque hoy no hay tiro abierto. Se dice con todas las
      letras y con su fecha — Q-50. */
+  /* Q-72b: pasados tres días deja de ser «el último tiro» y pasa a ser «no hay
+     ninguno». La cabecera entera cambia con esto, no solo la etiqueta. */
+  if (day !== todayISO() && !tiroReciente(day))
+    return { cls: "quieto", icono: "raya", txt: "Ready para Tirar", listo: true };
+
   if (day !== todayISO())
     return { cls: "fin", icono: "check",
              txt: (completo || p.loads ? "Último tiro" : "Sin actividad") + ` · ${fmtDate(day)}` };

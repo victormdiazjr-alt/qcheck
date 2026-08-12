@@ -265,7 +265,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=59693f27"></script>
-<script src="assets/core.js?v=17827ac0"></script>
+<script src="assets/core.js?v=87956c8d"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script src="assets/clima.js?v=d5c4fb65"></script>
 <script src="assets/usuarios.js?v=02167dc1"></script>
@@ -629,6 +629,27 @@ function render() {
   document.getElementById("app").innerHTML = `
     <div class="cc-hero t-${tiro.cls}">
       <div class="cc-cuerpo">
+        ${tiro.listo ? `
+        <!-- Q-72b: pasados tres días la cabecera no cuenta el tiro viejo. Ni
+             yardas, ni camiones, ni losas: eso ya es historia y vive en Results.
+             Aquí arriba lo que hace falta saber es que no hay nada abierto — y
+             el tiempo se queda, porque para programar el próximo importa. -->
+        <div class="hero-fila">
+          <div class="hero-prog">
+            <div class="hp-cab">
+              <div class="mark2">${ICONO_TIRO[tiro.icono]}</div>
+              <div class="t-estado">${esc(tiro.txt)}</div>
+            </div>
+            <div class="pt-cifra" style="margin-top:6px">
+              <b style="font-size:30px">Sin vaciado abierto</b>
+            </div>
+            <div class="pt-nota" style="margin-top:8px">
+              ${day ? "El último fue el " + esc(fmtDate(day)) : "Todavía no hay vaciados"}
+              · <a href="contratista.html" style="color:var(--vc);font-weight:700">programa el próximo</a>
+            </div>
+          </div>
+          <div class="hero-clima"><div id="clima"></div></div>
+        </div>` : `
         <div class="hero-fila">
           <div class="hero-prog">
             <div class="hp-cab">
@@ -640,7 +661,7 @@ function render() {
           ${datosHTML(day, meta, prog, lt)}
           <div class="hero-clima"><div id="clima"></div></div>
         </div>
-        ${losasHTML(day)}
+        ${losasHTML(day)}`}
       </div>
     </div>
 
@@ -662,7 +683,7 @@ function render() {
         <div class="sub">${prog.loads} camiones${prog.rejected ? " · " + prog.rejected + " rechazado(s)" : ""}</div>
       </a>` : `
       <a class="w" href="contratista.html">
-        <div class="lbl">Listo para tirar</div>
+        <div class="lbl">Ready para Tirar</div>
         <div class="big" style="font-size:20px; line-height:1.35">Sin vaciado abierto</div>
         <div class="sub">${day ? "El último fue el " + esc(fmtDate(day)) : "Todavía no hay vaciados"} · programa el próximo</div>
       </a>`}
