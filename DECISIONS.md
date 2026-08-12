@@ -2351,3 +2351,41 @@ Losa o Pieza— y el ejemplo va con él.
 
 > **Los cuatro se vieron abriendo la pantalla a lo ancho de un teléfono. Ninguno
 > se ve leyendo el código.**
+
+---
+
+## Q-79 y Q-80 · Las vigas se ven, y el tiro abre su obra — 10 ago 2026
+
+### La banda de vigas
+
+**Víctor:** *«Si es de vigas, crea un diagrama o manera visual de verla en la
+barra, como el modulito de las losas.»*
+
+`losasDelDia()` solo entiende códigos de losa y tramos de carretera. **En un tiro
+de vigas devolvía la lista vacía y la banda no salía** — la pantalla se quedaba
+sin lo único que dice cómo va el vaciado pieza a pieza.
+
+`vigasDelDia()` lee lo que declaró el ingeniero —«V-1 a V-3» o la lista— y reparte
+los camiones por su identificación. **Con las mismas reglas que las losas y por el
+mismo motivo:** un camión que sirve a dos vigas no puede atribuir sus yardas
+enteras a ninguna, y eso **se dice con un «≥», no se reparte a ojo.**
+
+### El tiro abre su obra
+
+**Víctor:** *«No puede haber una obra abierta y otro tiro de otra obra abierta. El
+tiro abre la obra del tiro. Solo se ve ese tiro que se está trabajando, y ese
+proyecto.»*
+
+**Y sin esto pasaba lo peor posible en una mañana de vaciado:** Rubén abría
+QCheck, la obra abierta era la PR-52 —la que venía de antes— y **el tiro de vigas
+de hoy no aparecía**, porque todas las pantallas filtran por la obra abierta.
+Habría tenido que saber que existe un selector de obras y encontrarlo, **con un
+camión entrando.**
+
+> **Manda el trabajo: si hoy hay tiro, esa es la obra.**
+
+Y desaparece el estado mezclado. **Mirar los números de una obra bajo el nombre de
+otra es la clase de mentira que este sistema existe para impedir.**
+
+**Comprobado:** con la obra forzada a la PR-52, al recargar se abre sola la del
+tiro y la cabecera nombra la correcta.

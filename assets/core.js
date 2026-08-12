@@ -11,7 +11,7 @@ let db;
 function loadDB() {
   try {
     const raw = localStorage.getItem(DB_KEY);
-    if (raw) { db = JSON.parse(raw); migrateDB(); sembrarDia(); return; }
+    if (raw) { db = JSON.parse(raw); migrateDB(); sembrarDia(); abrirLaObraDelTiro(); return; }
   } catch (e) { console.error(e); }
   db = {
     version: 2,
@@ -23,6 +23,7 @@ function loadDB() {
   };
   migrateDB();
   sembrarDia();
+  abrirLaObraDelTiro();
   saveDB();
   /* Los límites con fecha (Q-40). Al abrir una base vieja se crea la primera
      versión desde el ensayo más antiguo: nada se vuelve a juzgar. */
@@ -186,6 +187,34 @@ function migrarBase(db) {
   for (const m of Object.values(db.dayMeta)) if (m && !m.proyecto) m.proyecto = primera;
 
   db.version = 3;
+}
+
+/* EL TIRO ABRE SU OBRA — Q-80, 10 de agosto de 2026.
+
+   Víctor: «no puede haber una obra abierta y otro tiro de otra obra abierta. El
+   tiro abre la obra del tiro. Solo se ve ese tiro que se está trabajando, y ese
+   proyecto.»
+
+   Sin esto pasaba lo peor posible en una mañana de vaciado: Rubén abría QCheck,
+   la obra abierta era la PR-52 —la que venía de antes— y el tiro de vigas de hoy
+   **no aparecía**, porque las pantallas filtran por la obra abierta. Habría
+   tenido que saber que existe un selector de obras y encontrarlo, con un camión
+   entrando.
+
+   Ahora manda el trabajo: si hoy hay un tiro programado, esa es la obra. Y no
+   hay estado mezclado — mirar los números de una obra bajo el nombre de otra es
+   la clase de mentira que este sistema existe para impedir.
+
+   Se llama al cargar, después de sembrar. Si no hay tiro hoy, no toca nada: se
+   queda la última que se estuviera mirando. */
+function abrirLaObraDelTiro() {
+  const hoy = todayISO();
+  const m = (db.dayMeta || {})[hoy];
+  if (!m || m.borrado) return;
+  const suya = m.proyecto;
+  if (!suya || suya === db.proyectoActivo) return;
+  if (!(db.proyectos || []).some((p) => p.id === suya)) return;   // todavía no ha bajado
+  abrirProyecto(suya);
 }
 
 /* La obra abierta ahora mismo. Una sola puerta, como `es934()`. */
@@ -1513,6 +1542,78 @@ function losaEnRango(codigo, r) {
   if (m[1] !== r.carril) return false;
   const v = Number(m[2]);
   return v >= Math.min(r.desde, r.hasta) - 1e-9 && v <= Math.max(r.desde, r.hasta) + 1e-9;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LAS PIEZAS DEL TIRO CUANDO NO SON LOSAS — Q-79, 10 de agosto de 2026
+
+   Víctor: «en el Control Center, si es de vigas, crea un diagrama o manera
+   visual de verla en la barra, como el modulito de las losas».
+
+   `losasDelDia()` solo entiende códigos de losa —`L3-0.443`— y tramos de
+   carretera. En un tiro de vigas devolvía la lista vacía y la banda no salía:
+   la pantalla se quedaba sin lo único que dice CÓMO VA el vaciado pieza a pieza.
+
+   Esto lee lo que declaró el ingeniero —«V-1 a V-3», o la lista separada por
+   comas— y reparte los camiones entre esas piezas por su identificación.
+
+   Se apoya en las mismas reglas que las losas y por el mismo motivo: un camión
+   puede servir a dos vigas y entonces sus yardas no se pueden atribuir enteras
+   a ninguna. Eso se dice, no se reparte a ojo. */
+function vigasDelDia(day) {
+  const meta = db.dayMeta[day] || {};
+  const texto = String(meta.losas || "").trim();
+  const cuantas = num(meta.losasPlan);
+
+  /* «V-1 a V-3» o «V-1 - V-3»: un rango con el mismo prefijo a los dos lados. */
+  let nombres = [];
+  const rango = texto.match(/^\s*([A-Za-zÁ-Úá-ú]*)\s*-?\s*(\d+)\s*(?:a|al|-|–|→|@)\s*\1?\s*-?\s*(\d+)\s*$/i);
+  if (rango) {
+    const pre = rango[1] || "V";
+    const a = +rango[2], b = +rango[3];
+    if (b >= a && b - a < 400) for (let i = a; i <= b; i++) nombres.push(`${pre}-${i}`);
+  } else if (texto) {
+    nombres = texto.split(/[,;\n]+/).map((x) => x.trim()).filter(Boolean);
+  }
+  /* Sin lista declarada pero con un número, se nombran V-1..V-n: es lo que hace
+     el plano y es mejor que no enseñar nada. */
+  if (!nombres.length && cuantas > 0 && cuantas < 400)
+    for (let i = 1; i <= cuantas; i++) nombres.push(`V-${i}`);
+  if (!nombres.length) return { lista: [], hechas: 0, fuera: [] };
+
+  const norm = (x) => String(x || "").toUpperCase().replace(/\s+/g, "").replace(/[·.]+$/, "");
+  const indice = new Map(nombres.map((n) => [norm(n), n]));
+
+  const rows = testsOfDate(day).filter((t) => !t.rejected);
+  const de = new Map(nombres.map((n) => [n, { codigo: n, cy: 0, cargas: 0, compartida: false }]));
+  const fuera = [];
+
+  for (const t of rows) {
+    /* Un camión puede servir varias piezas: «V-1, V-2» o «V-1 / V-2». */
+    const trozos = String(t.ident || "").split(/[,/+]|\sy\s/).map((x) => x.trim()).filter(Boolean);
+    const tocadas = [];
+    for (const tr of trozos) {
+      const n = indice.get(norm(tr));
+      if (n) tocadas.push(n);
+      else if (tr) fuera.push(tr);
+    }
+    if (!tocadas.length) continue;
+    const vol = num(t.vol) || 0;
+    for (const n of tocadas) {
+      const v = de.get(n);
+      v.cargas += 1;
+      if (tocadas.length === 1) v.cy += vol;
+      else v.compartida = true;      // no se reparte a ojo: se dice
+    }
+  }
+
+  const lista = nombres.map((n) => {
+    const v = de.get(n);
+    v.estado = v.cargas === 0 ? "pendiente" : "vaciada";
+    return v;
+  });
+  return { lista, hechas: lista.filter((x) => x.cargas > 0).length,
+           fuera: [...new Set(fuera)] };
 }
 
 function losasDelDia(day) {

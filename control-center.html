@@ -268,7 +268,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=59693f27"></script>
-<script src="assets/core.js?v=daf47072"></script>
+<script src="assets/core.js?v=db25a108"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script src="assets/clima.js?v=d5c4fb65"></script>
 <script src="assets/usuarios.js?v=e03e5a7e"></script>
@@ -353,6 +353,46 @@ function datosHTML(day, meta, prog, lt) {
 
 /* Las losas del tiro, cada una con lo que se sepa de su avance.
    Sin lista declarada en el plan del día no se pinta nada — ni un aviso. */
+/* Q-79: la banda de piezas. Si el tiro no es de losas, va la de vigas — el
+   mismo lenguaje visual, porque es la misma pregunta: ¿cuál va y cuál falta? */
+function piezasHTML(day) {
+  const e = ((db.dayMeta || {})[day] || {}).estructura;
+  return (e && e !== "losas") ? vigasHTML(day) : losasHTML(day);
+}
+
+function vigasHTML(day) {
+  const V = vigasDelDia(day);
+  if (!V.lista.length) return "";
+
+  const tarjetas = V.lista.map((v) => {
+    const cls = v.cargas > 0 ? "ok" : "pendiente";
+    const cargas = `${v.cargas} ${v.cargas === 1 ? "carga" : "cargas"}`;
+    /* Una viga no tiene «plan de yardas» propio como una losa: lo que se sabe
+       es cuánto le cayó y en cuántas cargas. Con el camión compartido, el «≥»
+       dice que hay más de lo que se puede atribuir. */
+    const avance = v.cy > 0
+      ? `<div class="lz-cy">${v.compartida ? "≥ " : ""}${fmt(v.cy, 1)} <b>cy</b> · ${cargas}</div>`
+      : v.cargas > 0
+        ? `<div class="lz-cy">${cargas} <b>compartida${v.cargas === 1 ? "" : "s"}</b></div>`
+        : "";
+    return `<div class="lz ${cls}">
+      <div class="lz-c">${esc(v.codigo)}</div>
+      ${avance}
+    </div>`;
+  }).join("");
+
+  const enc = `Vigas del tiro <b>${V.hechas} de ${V.lista.length}</b>`;
+  const fuera = V.fuera.length
+    ? `<div class="lz-fuera">Fuera de las declaradas: <b>${V.fuera.map(esc).join(", ")}</b></div>`
+    : "";
+
+  return `<a class="losas" href="results.html#daily" title="Ver el detalle y qué camión sirvió cada viga">
+      <div class="lz-cab">${enc}</div>
+      <div class="lz-fila">${tarjetas}</div>
+      ${fuera}
+    </a>`;
+}
+
 function losasHTML(day) {
   const L = losasDelDia(day);
   if (!L.lista.length && !L.rango) return "";
@@ -668,6 +708,8 @@ function render() {
         <!-- Q-75b: la obra se nombra SOLO cuando hay tiro. Sin vaciado abierto,
              nombrar una obra no informa de nada — y enseñaba la anterior, que es
              peor que no decir nada. -->
+        <!-- Q-80: la obra abierta ES la del tiro, siempre — el tiro la abre al
+             cargar. Así que aquí basta con nombrarla. -->
         <div class="obra-abierta">${esc(db.project.name || "")}${db.project.qcFirm ? " · " + esc(db.project.qcFirm) : ""}</div>
         <div class="hero-fila">
           <div class="hero-prog">
@@ -680,7 +722,7 @@ function render() {
           ${datosHTML(day, meta, prog, lt)}
           <div class="hero-clima"><div id="clima"></div></div>
         </div>
-        ${losasHTML(day)}`}
+        ${piezasHTML(day)}`}
       </div>
     </div>
 
