@@ -261,8 +261,47 @@ function avisarDeLosQueLlegan(vivos) {
    SI FALLA, NO MOLESTA. El aviso de verdad — el sonido — ya sonó. Un correo que
    no sale no puede quedarse gritando encima de una pantalla que se usa en obra.
    Se apunta en la consola y se sigue. */
+/* APAGADO — 12 de agosto de 2026. Víctor: «olvida lo de que envíe correo por
+   ahora». El sonido y la notificación de Q-84 siguen funcionando igual; lo
+   único dormido es el correo.
+
+   Se queda el código en vez de borrarlo porque estaba terminado y probado
+   contra producción, y porque encenderlo es cambiar este `false`. Lo que NO
+   se queda es la llamada: con esto en `false` no sale ni una petición, así
+   que no hay avisos rojos en la consola ni intentos contra el servidor. */
+const CORREO_ENCENDIDO = false;
+
+/* UNO POR APARATO CADA HORA, y esto no es un detalle de cortesía.
+
+   En obra la señal va y viene. Un aparato que se cae de la lista de presencia
+   y vuelve cuenta como llegada nueva — sin freno, una mañana con mala cobertura
+   son treinta correos por el mismo iPhone. Y un buzón con treinta avisos
+   iguales es un buzón donde ya no se lee ninguno.
+
+   El sonido y la notificación NO llevan freno: esos son inmediatos y el que
+   está delante quiere verlos todos. El freno es solo del correo, que es el
+   aviso de cuando no hay nadie delante.
+
+   Vive en el aparato (`localStorage`) para que aguante una recarga. Si Víctor
+   abre la pantalla en dos sitios podría llegar un correo por sitio; se arregla
+   en el servidor el día que estorbe, y hoy no estorba. */
+const HORAS_ENTRE_CORREOS = 1;
+function correoYaMandado(aparato) {
+  const K = "qc-aviso-correo";
+  let m = {};
+  try { m = JSON.parse(localStorage.getItem(K) || "{}"); } catch (_) {}
+  const ahora = Date.now(), tope = HORAS_ENTRE_CORREOS * 3600e3;
+  for (const k of Object.keys(m)) if (ahora - m[k] > tope) delete m[k];   // no crece sin fin
+  if (m[aparato]) return true;
+  m[aparato] = ahora;
+  try { localStorage.setItem(K, JSON.stringify(m)); } catch (_) {}
+  return false;
+}
+
 async function avisarPorCorreo(quien, aparato, pagina) {
+  if (!CORREO_ENCENDIDO) return;
   if (typeof QC === "undefined" || !QC._pedir) return;
+  if (correoYaMandado(aparato)) return;
   try {
     const r = await QC._pedir("/api/aviso", {
       method: "POST",
