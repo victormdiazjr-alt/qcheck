@@ -60,14 +60,25 @@ function preguntarClave(texto) {
     const tty = process.stdin;
     if (!tty.isTTY) { let d = ""; tty.on("data", (c) => d += c); tty.on("end", () => resolve(d.trim())); return; }
     tty.setRawMode(true); tty.resume(); tty.setEncoding("utf8");
-    let clave = "";
-    const alTeclear = (c) => {
-      if (c === "\n" || c === "\r" || c === "\u0004") {
-        tty.setRawMode(false); tty.pause(); tty.removeListener("data", alTeclear);
-        process.stdout.write("\n"); resolve(clave);
-      } else if (c === "\u0003") { process.stdout.write("\n"); process.exit(1); }
-      else if (c === "\u007f") { clave = clave.slice(0, -1); }
-      else clave += c;
+    let clave = "", cerrado = false;
+    /* CARÁCTER A CARÁCTER, y no el trozo entero — el fallo de la primera
+       versión. Al PEGAR una clave, el terminal entrega el texto y el salto de
+       línea **en el mismo trozo**; comparar el trozo con "\r" no coincidía y la
+       clave se guardaba con el salto pegado al final. El servidor contestaba
+       401 y parecía que la clave estaba mal. */
+    const alTeclear = (trozo) => {
+      if (cerrado) return;
+      for (const c of String(trozo)) {
+        if (c === "\n" || c === "\r" || c === "\u0004") {
+          cerrado = true;
+          tty.setRawMode(false); tty.pause(); tty.removeListener("data", alTeclear);
+          process.stdout.write("\n"); resolve(clave);
+          return;
+        }
+        if (c === "\u0003") { process.stdout.write("\n"); process.exit(1); }
+        else if (c === "\u007f" || c === "\b") clave = clave.slice(0, -1);
+        else if (c >= " ") clave += c;          // los de control no entran
+      }
     };
     tty.on("data", alTeclear);
   });
