@@ -225,7 +225,6 @@ let verIdos = false;
    descargar nada y suena igual sin conexión. Dos notas y no una porque un pitido
    suelto se confunde con cualquier cosa del teléfono. */
 let conocidos = null;              // null = todavía no se ha visto la primera lista
-let permisoAviso = null;
 
 function avisarDeLosQueLlegan(vivos) {
   const ahora = new Set(vivos.map((a) => a.dev).filter(Boolean));
@@ -241,10 +240,18 @@ function avisarDeLosQueLlegan(vivos) {
     const a = vivos.find((x) => x.dev === dev) || {};
     const quien = a.usr && a.usr !== "?" ? a.usr : dev;
     const donde = a.pagina ? ` · ${a.pagina.replace(/\.html$/, "")}` : "";
+    /* SOLO AQUÍ Y SOLO MIENTRAS ESTÁ ABIERTA — Víctor, 12 ago 2026:
+       «que solo suene la ventana de estado de sistema cuando entre un
+       dispositivo».
+
+       Suena y se ve, y no sale de esta pantalla. Ya NO se pide permiso de
+       notificaciones ni se lanza un aviso del sistema: eso aparecía por
+       encima de cualquier cosa que estuviera haciendo, y esto es para mirar
+       la sala de máquinas cuando se está mirando la sala de máquinas.
+
+       El correo también queda fuera (mismo día, misma razón). */
     sonarLlegada();
-    notificar(`${quien} entró a QCheck`, `${dev}${donde}`);
-    avisarPorCorreo(quien, dev, a.pagina);
-    if (typeof toast === "function") toast(`${quien} acaba de entrar`);
+    if (typeof toast === "function") toast(`${quien} acaba de entrar${donde}`);
   }
 }
 
@@ -328,23 +335,6 @@ function sonarLlegada() {
       o.connect(g).connect(ctx.destination);
       o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.25);
     });
-  } catch (_) {}
-}
-
-/* La notificación del sistema, si la dejan. Se pide permiso UNA vez y al
-   primer aviso, no al abrir: pedir permiso nada más entrar es lo que hace que
-   se diga que no. */
-function notificar(titulo, cuerpo) {
-  try {
-    if (!("Notification" in window)) return;
-    if (Notification.permission === "granted") {
-      new Notification(titulo, { body: cuerpo, tag: "qc-llegada", icon: "assets/icono-180.png" });
-    } else if (Notification.permission !== "denied" && permisoAviso === null) {
-      permisoAviso = true;
-      Notification.requestPermission().then((p) => {
-        if (p === "granted") new Notification(titulo, { body: cuerpo, tag: "qc-llegada" });
-      });
-    }
   } catch (_) {}
 }
 
