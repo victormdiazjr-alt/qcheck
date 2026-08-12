@@ -177,9 +177,21 @@ async function main() {
     console.log(`  Sesión  : dentro como ${usr}`);
   }
 
-  /* De 500 en 500: un cuerpo enorme se cae por tiempo y deja medio subido. Con
-     `uid` estable, volver a lanzarlo retoma sin duplicar. */
-  const TANDA = 500;
+  /* DE 90 EN 90, y el número no es prudencia: es un tope de D1.
+
+     Con 500 el servidor contestaba 500. El Worker, después de guardar, confirma
+     lo que quedó con `SELECT uid FROM ops WHERE uid IN (?,?,?…)` — un parámetro
+     por línea. **D1 no admite tantos parámetros en una consulta**, así que
+     reventaba.
+
+     Y eso NO es un problema de este programa: `assets/sync.js` manda la cola
+     ENTERA sin trocear, así que un aparato que pase un día sin señal acumula
+     más de cien cambios y su sincronización empieza a fallar con 500 — y ya no
+     se pone al día nunca. Está apuntado como Q-66 y se arregla en el servidor,
+     que es donde vale para todos los aparatos.
+
+     Con `uid` estable, volver a lanzar esto retoma sin duplicar. */
+  const TANDA = 90;
   let subidas = 0;
   for (let i = 0; i < ops.length; i += TANDA) {
     const trozo = ops.slice(i, i + TANDA);
