@@ -564,6 +564,52 @@ function mountStatusBar(day, opciones) {
    servidor caído y los cambios amontonándose sin subir. En obra eso es peor
    que no decir nada: el técnico sigue entrando muestras convencido de que
    la PC de Rubén las está viendo. */
+/* ══════════════════════════════════════════════════════════════════════════
+   SIN CONEXIÓN NO SE SOMETE — Q-67, 10 de agosto de 2026
+
+   Víctor: «todos los dispositivos tienen que funcionar online. El que pierda
+   señal, a la que se vuelve a conectar se sincroniza. Un dispositivo sin estar
+   conectado no puede someter resultados.»
+
+   Le puse delante lo que cuesta —un tiro sin cobertura acaba en un papel, que
+   es el Excel del que salimos— y eligió esto igualmente. Es su decisión y es
+   defendible: el expediente lo firma el servidor con quien está dentro, y un
+   aparato desconectado firma con su propia palabra.
+
+   QUÉ CUENTA COMO CONECTADO. Que la sincronización esté al día. No basta con
+   que el teléfono tenga barras: un aparato con WiFi y la sesión caducada
+   tampoco puede someter, y la barra de estado ya lo distingue con su nombre
+   (`sin-sesion`, `sin-llave`, `sin-permiso`, `sin-cuota`).
+
+   QUÉ NO SE BLOQUEA. Mirar, buscar, abrir el reporte, ver el tiro. Eso sigue
+   funcionando sin señal: leer no ensucia nada. Lo que se para es ESCRIBIR
+   resultados. */
+function puedeSometer() {
+  if (typeof QCSync === "undefined") return true;      // sin sincronización montada, como siempre
+  if (!qcSyncActivo()) return true;                     // aparato suelto, sin servidor: su propio expediente
+  if (navigator.onLine === false) return false;
+  return QCSync.estado === "al-dia" || QCSync.estado === "conectando";
+}
+
+/* Por qué no se puede, con su nombre. Un «sin conexión» genérico manda al
+   técnico a mirar el WiFi cuando el problema es que caducó su sesión. */
+function porQueNoSeSomete() {
+  const s = typeof QCSync !== "undefined" ? QCSync.estado : "";
+  if (navigator.onLine === false) return "El aparato no tiene señal.";
+  if (s === "sin-sesion")  return "Tu sesión caducó. Vuelve a entrar con tu clave.";
+  if (s === "sin-llave")   return "El servidor no reconoce la llave de este aparato.";
+  if (s === "sin-permiso") return "Tu cuenta no puede escribir en el expediente.";
+  if (s === "sin-cuota")   return "El servidor llegó a su límite. Vuelve a intentarlo en un rato.";
+  return "No hay conexión con el servidor.";
+}
+
+/* El aviso, en un solo sitio para que diga lo mismo en las tres pantallas. */
+function avisarSinConexion() {
+  alert("No se puede registrar sin conexión.\n\n" + porQueNoSeSomete() +
+        "\n\nEl resultado tiene que quedar firmado por el servidor en el momento " +
+        "en que se mide. En cuanto vuelva la conexión, se registra normal.");
+}
+
 function pintarConexion() {
   const el = document.getElementById("qcs-conn");
   if (!el) return;
@@ -3303,6 +3349,10 @@ function formDayMeta(day) {
 
 /* ------------------------------------------------------------ truck test form (shared) */
 function formTest(_ignored, n, opts = {}) {
+  /* Q-67: sin conexión no se somete. Se comprueba al ABRIR y otra vez al
+     guardar: entre una cosa y otra el técnico puede haber salido de cobertura,
+     y descubrirlo con el formulario lleno es peor que no dejarle empezar. */
+  if (typeof puedeSometer === "function" && !puedeSometer()) { avisarSinConexion(); return; }
   const existing = n != null ? db.tests.find((t) => t.n === n) : null;
   const init = existing || {
     date: (typeof state !== "undefined" && state.day) ? state.day : todayISO(),
@@ -3400,6 +3450,9 @@ function formTest(_ignored, n, opts = {}) {
       { key: "comments", label: "Comentarios", type: "textarea", full: true },
     ],
     onSave: (v) => {
+      /* Y otra vez aquí: el formulario pudo abrirse con cobertura y perderse
+         mientras se rellenaba. */
+      if (typeof puedeSometer === "function" && !puedeSometer()) { avisarSinConexion(); return; }
       if (existing) Object.assign(existing, v);
       else {
         v.n = nextTestN();

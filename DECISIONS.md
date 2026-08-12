@@ -2237,3 +2237,39 @@ líneas: se mandaron líneas que ya estaban, así que no se escribió nada nuevo
 **Los dos gemelos no se comportan igual con colas grandes.** El de la obra guarda
 en archivo y no tiene ese tope; el Worker sí lo tenía. **El banco de paridad no lo
 caza porque nunca prueba con más de cien líneas.** Caso para `pruebas/`.
+
+---
+
+## Q-67 · Sin conexión no se someten resultados — 10 de agosto de 2026
+
+**Víctor:** *«Todos los dispositivos tienen que funcionar online. El que pierda
+señal, a la que se vuelve a conectar se sincroniza. **Un dispositivo sin estar
+conectado no puede someter resultados.**»*
+
+Se le puso delante lo que cuesta —**un tiro sin cobertura acaba en un papel, que
+es el Excel del que salimos**— y eligió esto igualmente. **Es su decisión y es
+defendible:** el expediente lo firma el servidor con quien está dentro, y un
+aparato desconectado firma con su propia palabra.
+
+### Dónde se para
+
+**Las tres puertas por donde entra un dato:** el formulario del camión —al abrir
+**y** al guardar—, el registro de llegada en Recepción, y las lecturas de
+Muestras.
+
+**Al abrir y al guardar, no solo al guardar:** entre una cosa y otra el técnico
+puede salir de cobertura, y **descubrirlo con el formulario lleno es peor que no
+dejarle empezar.**
+
+### Qué NO se bloquea
+
+**Mirar, buscar, abrir el reporte, ver el tiro.** Leer no ensucia nada y en obra
+hace falta. **Lo que se para es escribir resultados.**
+
+### Y por qué el aviso dice por qué
+
+No basta con «sin conexión»: **un aparato con WiFi y la sesión caducada tampoco
+puede someter**, y mandar al técnico a mirar el router cuando lo que tiene que
+hacer es volver a entrar es perder un camión. El aviso distingue **señal, sesión,
+llave, permiso y cuota** — los mismos cinco nombres que ya usaba la barra de
+estado.
