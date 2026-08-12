@@ -326,10 +326,19 @@ render();
   </div>
 </div>
 <style>
+  /* Q-73: el botón no está desde el primer segundo. Aparece al minuto, cuando
+     quien entró ya ha mirado su tablero — ofrecerle algo antes de que vea para
+     qué entró es interrumpirle. */
   #qc-info-btn{ position:fixed; right:18px; bottom:18px; width:42px; height:42px;
     border-radius:50%; border:1px solid var(--line); background:var(--panel-2);
     color:var(--ink-soft); font:600 18px/1 Georgia,serif; cursor:pointer; z-index:40;
-    box-shadow:var(--shadow) }
+    box-shadow:var(--shadow);
+    opacity:0; transform:translateY(8px); pointer-events:none;
+    transition:opacity .5s ease, transform .5s ease }
+  #qc-info-btn.qc-visible{ opacity:1; transform:none; pointer-events:auto }
+  @media (prefers-reduced-motion: reduce){
+    #qc-info-btn{ transition:none }
+  }
   #qc-info-btn:hover{ color:var(--ink) }
   #qc-info-capa{ position:fixed; inset:0; background:rgba(0,0,0,.62); z-index:50;
     display:grid; place-items:center; padding:22px }
@@ -352,6 +361,10 @@ render();
 <script>
 (function(){
   const btn=document.getElementById("qc-info-btn"), capa=document.getElementById("qc-info-capa");
+  /* Q-73: al minuto. Y si ya lo mandó una vez, no vuelve a aparecer — pedirle
+     el correo dos veces a la misma persona no es insistir, es molestar. */
+  if (localStorage.getItem("qc-interes-enviado")) { btn.remove(); }
+  else setTimeout(() => btn.classList.add("qc-visible"), 60000);
   const abrir=()=>capa.hidden=false, cerrar=()=>capa.hidden=true;
   btn.onclick=abrir;
   document.getElementById("qc-info-x").onclick=cerrar;
@@ -372,6 +385,7 @@ render();
     }catch(_){}
     /* Se agradece pase lo que pase: el visitante no tiene por qué enterarse de
        si nuestro servidor contestó. Si no llegó, no llegó — no es su problema. */
+    try{ localStorage.setItem("qc-interes-enviado","1"); }catch(_){}
     document.getElementById("qc-info-form").hidden=true;
     document.getElementById("qc-info-ok").hidden=false;
   };

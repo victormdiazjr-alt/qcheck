@@ -2300,3 +2300,22 @@ con su fecha. **Lo que cambia es qué se enseña arriba, no qué se guarda.**
 
 **Comprobado en frío:** hoy y hasta tres días atrás enseñan el tiro; a partir del
 cuarto, «Listo para tirar».
+
+---
+
+## Q-73 · «Like this app» sale al minuto — 10 de agosto de 2026
+
+**Víctor:** *«En los dashboards, lo de "like this app" que salga un minuto
+después.»*
+
+**Y es la decisión correcta:** el contratista, la concretera y la Autoridad entran
+a **mirar su número**. Ofrecerles algo antes de que vean para qué entraron es
+interrumpirles en el primer segundo — que es justo cuando peor cae.
+
+**Al minuto ya han mirado lo suyo.** El botón aparece con una transición suave,
+abajo a la derecha, sin tapar nada.
+
+**Y añadido, que no estaba pedido pero hace falta:** **si esa persona ya mandó su
+correo una vez, el botón no vuelve a aparecer.** Pedirle el correo dos veces a
+quien ya lo dio no es insistir, es molestar — y en el tablero de un cliente eso
+cuesta más de lo que trae.
