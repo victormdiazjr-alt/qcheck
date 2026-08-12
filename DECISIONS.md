@@ -2319,3 +2319,35 @@ abajo a la derecha, sin tapar nada.
 correo una vez, el botón no vuelve a aparecer.** Pedirle el correo dos veces a
 quien ya lo dio no es insistir, es molestar — y en el tablero de un cliente eso
 cuesta más de lo que trae.
+
+---
+
+## Q-78 · QCheck en un teléfono, de verdad — 10 de agosto de 2026
+
+**Víctor:** *«Rubén va a trabajar todo del celular. Asegúrate de que pueda entrar
+a todo y hacer todo.»*
+
+**Se probó a 375 px, abriendo las pantallas.** Salieron cuatro cosas:
+
+**1 · No podía trabajar.** El portal del teléfono ofrecía Resultados, Field
+Display y Dashboards — **tres pantallas de mirar.** Recepción y Muestras, que son
+su trabajo entero, no estaban. **Desde el celular no se podía registrar un camión
+ni entrar una lectura** (Q-76).
+
+**2 · Y su casa no era su casa.** Un teléfono caía siempre en `movil.html`. Quien
+lleva el tablero va ahora a su Control Center, que en 375 px entra entero y con
+sus ocho puertas (Q-77).
+
+**3 · La cabecera se rompía.** El subtítulo partía en cuatro líneas de dos
+palabras y **la barra de herramientas se salía de la pantalla** — el botón de
+«Recepción» cortado por la mitad y el último invisible. En Muestras, que es donde
+más tiempo pasa. Ahora la marca ocupa su línea y las herramientas van debajo en
+su propio carril deslizable.
+
+**4 · Y Recepción pedía una losa en un tiro de vigas.** El campo decía «Losa /
+Identificación» siempre. **Pedirle al técnico algo que no existe es mandarlo a
+buscar durante un vaciado.** Ahora se llama como lo que se está tirando —Viga,
+Losa o Pieza— y el ejemplo va con él.
+
+> **Los cuatro se vieron abriendo la pantalla a lo ancho de un teléfono. Ninguno
+> se ve leyendo el código.**

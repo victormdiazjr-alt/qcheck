@@ -70,6 +70,41 @@ header {
 .logo { height: 5.6vh; width: auto; flex: none; }
 .htitle { font-size: 2.6vh; font-weight: 750; letter-spacing: .01em; }
 .hsub { font-size: 1.5vh; color: var(--muted); letter-spacing: .2em; text-transform: uppercase; font-weight: 700; }
+/* En pantalla ancha el envoltorio es transparente: los botones siguen en fila
+   con la cabecera, como estaban. */
+.hbotones { display: contents; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ESTA PANTALLA EN UN TELÉFONO — Q-78, 10 de agosto de 2026
+
+   Víctor: «Rubén va a trabajar todo del celular.» Y ésta es donde más tiempo
+   pasa: cada camión, cuatro lecturas.
+
+   En 375 px se rompía por dos sitios. La marca no cedía sitio, así que el
+   subtítulo —«Segarra Engineering · 12 ago 2026 · 1 camiones»— partía en cuatro
+   líneas de dos palabras. Y los botones de la derecha se salían de la pantalla:
+   el de «Recepción» quedaba cortado por la mitad y el último no se veía.
+
+   La marca ocupa su línea, los botones van debajo en su propio carril con
+   scroll, y el subtítulo se queda en una línea. La medida está en píxeles y no
+   en `vh` a propósito: lo que se queda corto aquí es el ANCHO. */
+@media (max-width: 700px) {
+  header { flex-wrap: wrap; padding: 1.4vh 3vw 1.2vh 3vw; gap: 10px; row-gap: 8px; }
+  .logo { height: 30px; }
+  .htitle { font-size: 17px; }
+  /* Una línea con puntos suspensivos: partido en cuatro no se lee, y esto es
+     contexto — no algo que haya que leer entero con un camión esperando. */
+  .hsub { font-size: 10.5px; letter-spacing: .12em;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
+  /* Los botones, debajo y en su carril. Ninguno cortado. */
+  header > :not(svg):not(div:first-of-type) { flex: none; }
+  header { align-items: flex-start; }
+  .hbotones { display: flex !important; width: 100%; gap: 8px; flex-wrap: nowrap;
+              overflow-x: auto; -webkit-overflow-scrolling: touch;
+              scrollbar-width: none; padding-bottom: 2px; }
+  .hbotones::-webkit-scrollbar { display: none; }
+  .hbotones > * { flex: none; white-space: nowrap; }
+}
 header .spacer { flex: 1; }
 .truck-pick {
   background: var(--surface); border: 2px solid var(--hairline); color: var(--text);
@@ -374,6 +409,9 @@ footer .spacer { flex: 1; }
     <div class="hsub" id="hsub">QCheck · Segarra Engineering</div>
   </div>
   <div class="spacer"></div>
+  <!-- Q-78: envueltos para que en un teléfono bajen a su propio carril con
+       scroll. En pantalla ancha `.hbotones` no hace nada. -->
+  <div class="hbotones">
   <!-- La rejilla de camiones (Q-33). Va PEGADA al selector porque son la misma
        decisión —a qué camión voy— y con la mano sucia se busca en un sitio, no
        en dos. El selector sigue estando: para un solo camión es más rápido. -->
@@ -386,6 +424,7 @@ footer .spacer { flex: 1; }
        Sin esto, desde Muestras solo se podía salir a casa (Q-33). -->
   <a class="a-recepcion" href="conduce.html" onclick="guardarParcial()">⇄ Recepción</a>
   <button class="cerrar-tiro" id="btn-cerrar" onclick="cerrarDesdeMuestras()"></button>
+  </div>
 </header>
 
 <div class="body" id="body"></div>
@@ -428,7 +467,7 @@ footer .spacer { flex: 1; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=59693f27"></script>
-<script src="assets/core.js?v=fefefb92"></script>
+<script src="assets/core.js?v=daf47072"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";

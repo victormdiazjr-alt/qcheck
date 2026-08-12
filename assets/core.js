@@ -3280,6 +3280,13 @@ const ICONO_CERRAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
    El dato guardado NO cambia de nombre: sigue siendo `losas` y `losasPlan`.
    Cambiarlo obligaría a migrar el expediente de la PR-52, y §D-46 ya lo dice —
    el identificador es de la entidad y el nombre es de la pantalla. */
+/* Cómo se llama UNA pieza del tiro de hoy. Q-78: en Recepción el campo decía
+   «Losa / Identificación» en un tiro de vigas. */
+function nombrePieza(dia) {
+  const e = ((db.dayMeta || {})[dia || diaActivo()] || {}).estructura || "losas";
+  return { losas: "Losa", vigas: "Viga", otra: "Pieza" }[e] || "Pieza";
+}
+
 const PIEZA_DE = {
   losas: { plural: "losas", tramo: "Tramo del día",
            ej: "L3-0.431@L3-0.252",
@@ -3492,7 +3499,7 @@ function formTest(_ignored, n, opts = {}) {
       { key: "vol", label: "Volumen (CY)", type: "number", step: "0.5", required: true },
       { key: "plant", label: "Planta" },
       { key: "lot", label: "Lote" },
-      { key: "ident", label: "Losa / Identificación", full: true, placeholder: "p.ej. Phase 10 - Slab L3-0.943" },
+      { key: "ident", label: `${nombrePieza()} / Identificación`, full: true, placeholder: "p.ej. V-1" },
       { type: "label", label: "Tiempos" },
       { key: "batch", label: "Batch", type: "time" },
       { key: "arrive", label: "Llegada", type: "time" },
