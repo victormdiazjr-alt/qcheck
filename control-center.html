@@ -98,6 +98,12 @@
 /* Q-75: la obra abierta, aquí y no bajo el logo. El logo es del producto. */
 .obra-abierta { font-size: 11px; font-weight: 800; letter-spacing: .16em;
   text-transform: uppercase; color: #8ea6bd; margin-bottom: 12px; }
+/* El separador, más apagado que los dos nombres: separa, no compite. */
+.obra-abierta .oa-sep { color: rgba(142,166,189,.45); margin: 0 3px; }
+/* La concretera, entre la barra y la nota. Del tamaño de la nota pero en
+   versalitas: es una identidad, no una cifra. */
+.pt-cia { font-size: 10.5px; font-weight: 800; letter-spacing: .15em;
+  text-transform: uppercase; color: #a9bccf; margin: 2px 0 5px; }
 /* fila de arriba: progreso · datos · tiempo. Abajo, las losas de lado a lado. */
 .hero-fila { display: flex; align-items: flex-start; gap: 26px; flex-wrap: wrap; }
 .hero-prog { flex: 1 1 260px; min-width: 240px; }
@@ -318,6 +324,14 @@ function progresoHTML(p) {
       ${hayPlan ? `<span class="pt-pc">${Math.round(p.pct)}%</span>` : ""}
     </div>
     ${hayPlan ? `<div class="pt-barra"><i style="width:${p.pct.toFixed(1)}%"></i></div>` : ""}
+    <!-- Q-81: de quién es el hormigón, pegado a las yardas. Las yardas y quien
+         las surte son la misma pregunta cuando algo no cuadra. Sale la que
+         DECLARÓ la obra; si los camiones traen otra, manda lo que llegó. -->
+    ${(() => {
+      const dice = [...new Set(testsOfDate(diaActivo()).map((t) => t.company).filter(Boolean))];
+      const cia = dice.length ? dice.join(" · ") : (db.project.concretera || "");
+      return cia ? `<div class="pt-cia">${esc(cia)}</div>` : "";
+    })()}
     <div class="pt-nota">${p.loads} ${p.loads === 1 ? "camión recibido" : "camiones recibidos"}${
       p.enCurso ? ` · <b>${fmt(p.enCurso, 1)} CY en el camión</b>` : ""}${
       hayPlan ? ` · faltan ${fmt(p.pending, 1)} CY` : ""}${
@@ -710,7 +724,11 @@ function render() {
              peor que no decir nada. -->
         <!-- Q-80: la obra abierta ES la del tiro, siempre — el tiro la abre al
              cargar. Así que aquí basta con nombrarla. -->
-        <div class="obra-abierta">${esc(db.project.name || "")}${db.project.qcFirm ? " · " + esc(db.project.qcFirm) : ""}</div>
+        <!-- Q-81: el proyecto y, tras el separador, QUIÉN CONSTRUYE. Iba la
+             firma de QC —siempre la misma, Segarra— que no distingue nada entre
+             una obra y otra. El contratista sí: es de quien es la obra. -->
+        <div class="obra-abierta">${esc(db.project.name || "")}${
+          db.project.contractor ? ` <span class="oa-sep">·</span> ${esc(db.project.contractor)}` : ""}</div>
         <div class="hero-fila">
           <div class="hero-prog">
             <div class="hp-cab">
