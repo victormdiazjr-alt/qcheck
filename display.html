@@ -519,17 +519,21 @@ function render() {
       cell("Unit Weight", num(last.uw), "pcf", proximity("uw", last), 1) +
       cell("Aire", num(last.air), "%", proximity("air", last), 1) +
       cell("Temp", num(last.temp), "°F", proximity("temp", last), 0) +
-      /* LA PERMEABILIDAD, TAMBIÉN AQUÍ — Víctor, 10 ago 2026: «tiene que decir
-         la permeabilidad donde quiera que hayan resultados, hasta en el field
-         display».
+      /* LA PERMEABILIDAD NO VA AQUÍ — Q-83, 10 de agosto de 2026.
 
-         Solo sale si la obra la inspecciona y si esa carga la trae: es un
-         resultado que devuelve el laboratorio semanas después, así que en el
-         camión de esta mañana casi nunca estará. Una casilla vacía permanente
-         en la pantalla del chofer sería ruido (Q-56). */
-      (typeof nivelPermeabilidadDe === "function" && nivelPermeabilidadDe(day) && num(last.cp) != null
-        ? cell("Permeabilidad", num(last.cp), last.cpMetodo === "sr" ? "kΩ·cm" : "coulombs", null, 0)
-        : "") +
+         Estuvo un rato, condicionada a que la carga la trajera. Fuera por
+         decisión de Víctor, y la razón es de oficio y la dio él:
+
+           «La permeabilidad no se entra en muestras ni se ve en Field Display.
+            Solo se puede entrar por el módulo de resultados, en el futuro,
+            cuando le coja permeabilidad a los cilindros.»
+
+         Field Display enseña lo que se mide EN EL CAMIÓN, delante del chofer y
+         del capataz: slump, unit weight, aire, temperatura. La permeabilidad se
+         mide en un cilindro, en el laboratorio, semanas después. Ponerla en la
+         pantalla del vaciado mezcla dos tiempos distintos.
+
+         Su sitio es el formulario de resultados, y ahí está. */
       `<div class="cell"><div class="k"><i></i>Hora</div><div class="v" style="font-size:7.6vh">${fmt12(hora) || "—"}</div><div class="u">último registro</div></div>`;
   }
 

@@ -2432,3 +2432,38 @@ las escondía también**: estaban en el DOM y no se veían.
 
 **Se cazó midiendo, no mirando el código:** la función devolvía 869 caracteres y
 el nodo existía. **Esconder el hueco del tiempo no es esconder la columna.**
+
+---
+
+## Q-83 · La permeabilidad vive en resultados, y en ningún otro sitio
+
+**Víctor la pidió primero en Muestras y en Field Display, y él mismo lo corrigió
+dos veces en cinco minutos:**
+
+> *«Es cierto, estoy mal yo — se toma en el cilindro.»*
+>
+> *«La permeabilidad no se entra en muestras ni se ve en Field Display. Solo se
+> puede entrar por el módulo de resultados, en el futuro, cuando le coja
+> permeabilidad a los cilindros.»*
+
+**Y la razón es de oficio, no de pantallas:**
+
+| Se mide en el camión | Se mide en un cilindro |
+|---|---|
+| Slump · Unit Weight · Aire · Temperatura | **Permeabilidad** |
+| Delante del chofer | En el laboratorio, semanas después |
+
+**Field Display enseña lo que pasa AHORA, delante del capataz y del chofer.**
+Poner ahí un resultado que llega a los 28 días **mezcla dos tiempos distintos** —
+y una casilla que casi nunca tiene valor deja de mirarse (Q-56).
+
+**Su sitio es el formulario de resultados, con su método al lado** (§Q-58): el
+valor y de dónde vino, porque la 934 admite **AASHTO T 277** en culombios o
+**resistividad superficial** (PRHTA T934-10) en kΩ·cm, y son unidades distintas
+de la misma propiedad.
+
+### Lo que esto enseña, que vale más que el campo
+
+**Tres versiones en veinte minutos, y las tres las corrigió el oficio, no el
+código.** Ninguna prueba habría dicho dónde va ese dato. **Lo sabe quien ha
+tomado un cilindro.**
