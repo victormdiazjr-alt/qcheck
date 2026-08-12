@@ -1942,3 +1942,67 @@ pantalla y no en el código.**
 Contra producción, las dos puertas por separado: la llave de los aparatos pasa y
 pide sesión; `ruben` / `1234` entra de punta a punta; la llave nueva queda fuera
 con `401 token`. Y `node cuentas.js listar` vuelve a hablar con el servidor.
+
+---
+
+## Q-58 · Vigas, y la 934 en manos de Rubén — 10 de agosto de 2026
+
+**Víctor, esta noche:** *«Mañana en la mañana tiene tiro y necesita usar QCheck,
+pero es para otro proyecto: es un tiro de vigas en vez de losas y es de SP-934.»*
+
+**La regla roja la levanta él, para esto.**
+
+### Lo que le habría bloqueado mañana
+
+**El campo «Tramo del día» era obligatorio y pedía un rango de losas.** Con un
+tiro de vigas **no se podía guardar el vaciado**. No es que se leyera mal: es que
+el formulario no dejaba pasar.
+
+### Lo que cambia
+
+**1 · La estructura.** Nuevo campo *«Qué se tira»* — losas, vigas u otra. **De él
+salen las etiquetas de abajo y de él depende que el tramo sea obligatorio.** El
+vocabulario está en `PIEZA_DE`, en un solo sitio: el día que aparezcan pilotes o
+muros se añade una línea.
+
+**El dato guardado NO cambia de nombre** — sigue siendo `losas` y `losasPlan`.
+Renombrarlo obligaría a migrar el expediente entero, y el identificador es de la
+entidad; el nombre es de la pantalla.
+
+**2 · La especificación, a la vista.** El selector *«Especificación de este
+tiro»* estaba construido desde el 8 de agosto detrás de `qcVeConfig()`, con una
+nota que decía: *«el día que se termine, se quita esta línea y ya está»*. **Ese
+día es hoy.**
+
+**3 · La permeabilidad, por tiro.** Estaba solo en el proyecto, y eso no sirve
+para una obra mixta —unas vigas de la 934 y unas losas de control de proceso—.
+Ahora el tiro puede decir lo suyo y en blanco manda el proyecto, con la misma
+forma que `specDelDia()`. Se lee siempre por `nivelPermeabilidadDe()`.
+
+**El «0» es «no se inspecciona» y no es lo mismo que vacío**, que es «lo que diga
+el proyecto». Un blanco que significa dos cosas es de los fallos que no dan error.
+
+**4 · Y el método al lado del valor.** El borrador del 5 de diciembre de 2025
+dice, literal:
+
+> *«At the option of the Authority, procedure PRHTA 934 T-10 (Surface
+> Resistivity) may be used to estimate permeability in lieu of AASHTO T 277.»*
+
+**La resistividad no es otra propiedad: es otra forma de medir la misma.** Víctor
+pidió al principio los dos campos y lo corrigió en cuanto lo vio: *«tienes razón,
+me equivoqué, debe salir solo permeabilidad»*. **Dos campos habrían dejado dos
+números que dicen lo mismo sin saber cuál manda, escritos en el expediente para
+siempre.**
+
+**5 · El nombre.** Deja de ser QCheck PR-52. **Es QCheck V1.0**, en los títulos,
+en el manifiesto y en la pantalla de acceso. **La PR-52 sigue siendo el nombre
+del proyecto donde toca serlo** — la obra existe y no cambia.
+
+### Comprobado
+
+`node --check` sobre `core.js`, la suite de la 934 en **129 bien · 0 mal**, y las
+dos piezas nuevas probadas por separado: las etiquetas siguen a la estructura y el
+tramo deja de ser obligatorio fuera de losas; el nivel de permeabilidad propio
+manda, el vacío hereda del proyecto y el «0» devuelve nulo.
+
+**Falta lo último y no lo puedo hacer yo: abrir sesión y verlo en pantalla.**

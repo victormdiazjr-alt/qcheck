@@ -1004,6 +1004,22 @@ function specDelDia(dia) {
    condiciones sueltas por las pantallas. */
 function es934(dia) { return specDelDia(dia) === "934"; }
 
+/* EL NIVEL DE PERMEABILIDAD, CON LA MISMA FORMA — Q-58, 10 ago 2026.
+
+   La segunda puerta única. Estaba solo en el proyecto y una obra mixta no cabía:
+   mañana Rubén tira vigas bajo la 934 en un proyecto que también lleva hormigón
+   normal. Así que el tiro puede decir lo suyo, y en blanco manda el proyecto —
+   exactamente como `specDelDia()`.
+
+   El «0» es «no se inspecciona» y NO es lo mismo que vacío: vacío es «lo que
+   diga el proyecto». Un blanco que significa dos cosas distintas es el fallo que
+   llevamos toda la semana persiguiendo. */
+function nivelPermeabilidadDe(dia) {
+  const propio = ((db.dayMeta || {})[dia || diaActivo()] || {}).nivelPermeabilidad;
+  if (propio != null && propio !== "") return Number(propio) || null;
+  return (db.project || {}).nivelPermeabilidad || null;
+}
+
 /* EL CONDUCE CONTRA EL TIRO PROGRAMADO — Q-55, 8 de agosto de 2026.
 
    El vaciado lo coordina el ingeniero en QCheck: pone las yardas del día antes
@@ -2874,6 +2890,31 @@ function restaurarTiro(day) {
 /* El icono lo comparten las dos pantallas, como la función. */
 const ICONO_CERRAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-3.2-6.6"/><polyline points="8.6,12 11,14.4 16.4,8.2"/></svg>`;
 
+/* CÓMO SE LLAMA LO QUE SE TIRA — Q-58, 10 de agosto de 2026.
+
+   Hasta hoy el sistema solo sabía de losas y lo decía en las etiquetas: «Cuántas
+   losas», «Tramo del día». Con un tiro de vigas eso no solo se lee mal — el
+   tramo era OBLIGATORIO y no se podía guardar.
+
+   Aquí está el vocabulario, en un solo sitio. El día que aparezca otra
+   estructura —pilotes, muros, cabezales— se añade una línea y ya está: ninguna
+   pantalla tiene que enterarse.
+
+   El dato guardado NO cambia de nombre: sigue siendo `losas` y `losasPlan`.
+   Cambiarlo obligaría a migrar el expediente de la PR-52, y §D-46 ya lo dice —
+   el identificador es de la entidad y el nombre es de la pantalla. */
+const PIEZA_DE = {
+  losas: { plural: "losas", tramo: "Tramo del día",
+           ej: "L3-0.431@L3-0.252",
+           ayuda: "El tramo tal como se lo dan: de la primera losa a la última. También acepta la lista completa separada por coma, si la tiene." },
+  vigas: { plural: "vigas", tramo: "Cuáles vigas",
+           ej: "V-1 a V-8",
+           ayuda: "Opcional. Cómo las identifican en el plano — un rango o la lista separada por coma." },
+  otra:  { plural: "piezas", tramo: "Qué se tira",
+           ej: "",
+           ayuda: "Opcional. Descríbelo como se lo dan en la obra." },
+};
+
 function formDayMeta(day) {
   /* UN TIRO CERRADO NO SE EDITA — Q-41, ampliado el 7 ago 2026.
 
@@ -2907,19 +2948,40 @@ function formDayMeta(day) {
          obra mixta, un elemento que entra en otro contrato—. En blanco manda la
          del proyecto, que es lo normal.
 
-         **NO SE ENSEÑA TODAVÍA** — Víctor, 8 ago 2026. La 934 se está
-         construyendo y hasta que esté entera no puede aparecer delante de
-         Rubén ni del técnico: media función a la vista es una función rota, y
-         en obra la gente la toca. Va detrás de `qcVeConfig()`, que hoy solo
-         tiene la cuenta de Víctor. El día que se termine, se quita esta línea
-         y ya está — es lo único que la separa de estar viva. */
-      ...(typeof qcVeConfig === "function" && qcVeConfig()
-        ? [{ key: "spec", label: "Especificación de este tiro", type: "select", half: true,
-             options: [
-               { value: "", label: `Como el proyecto (${QC_SPECS[specDelProyecto()] ? QC_SPECS[specDelProyecto()].n : "control de proceso"})` },
-               { value: "934", label: "SP-934 · Structural Concrete" },
-             ] }]
-        : []),
+         ABIERTO A TODOS — Víctor, 10 ago 2026. Estuvo detrás de `qcVeConfig()`
+         desde el 8 de agosto con una nota que decía: «el día que se termine, se
+         quita esta línea y ya está». Ese día es hoy: Rubén tiene mañana un tiro
+         de vigas bajo SP-934 y necesita poder marcarlo él. */
+      { key: "spec", label: "Especificación de este tiro", type: "select", half: true,
+        options: [
+          { value: "", label: `Como el proyecto (${QC_SPECS[specDelProyecto()] ? QC_SPECS[specDelProyecto()].n : "control de proceso"})` },
+          { value: "934", label: "SP-934 · Structural Concrete" },
+        ] },
+      /* LA ESTRUCTURA — Víctor, 10 ago 2026. Hasta hoy el sistema solo sabía de
+         losas: los dos campos de abajo lo daban por hecho y el del tramo era
+         OBLIGATORIO. Un tiro de vigas no se podía ni guardar.
+
+         Manda lo que se elija aquí: de ella salen las etiquetas de abajo y de
+         ella depende que el tramo sea obligatorio o no. */
+      { key: "estructura", label: "Qué se tira", type: "select", half: true,
+        options: [
+          { value: "losas", label: "Losas" },
+          { value: "vigas", label: "Vigas" },
+          { value: "otra",  label: "Otra estructura" },
+        ] },
+      /* LA PERMEABILIDAD, POR TIRO — Q-58, 10 ago 2026. Estaba solo en el
+         proyecto (`db.project.nivelPermeabilidad`), y eso vale para una obra
+         entera de una clase. No vale para una obra mixta: unas vigas de la 934
+         y unas losas de control de proceso, que es el caso de mañana.
+
+         En blanco manda el proyecto. Se lee siempre por `nivelCP()`. */
+      { key: "nivelPermeabilidad", label: "Permeabilidad de este tiro", type: "select", half: true,
+        options: [
+          { value: "",  label: "Como el proyecto" },
+          { value: "0", label: "No se inspecciona" },
+          { value: "1", label: "PL#1 — sin techo de carga" },
+          { value: "2", label: "PL#2 — máx. 1950 coulombs" },
+        ] },
       { key: "fecha", label: "Día del vaciado", type: "date", half: true, required: true,
         hint: "Se puede dejar programado un tiro para otro día" },
       /* Obligatorios los tres que el sistema NECESITA. Sin la hora no hay plan
@@ -2933,12 +2995,17 @@ function formDayMeta(day) {
         hint: "Sin esto la barra de estado no puede mostrar el avance del tiro" },
       /* Los dos campos se llamaban igual —«Losas a tirar hoy»— y no había forma
          de saber cuál pedía qué. Uno es el conteo y el otro la lista; si se
-         escribe la lista, el conteo sale de ella y este campo sobra. */
-      { key: "losasPlan", label: "Cuántas losas", type: "number", step: "1", half: true,
+         escribe la lista, el conteo sale de ella y este campo sobra.
+
+         Q-58, 10 ago 2026: las etiquetas siguen a la estructura, y el tramo
+         DEJA DE SER OBLIGATORIO cuando no son losas. Un tramo de carretera es
+         de losas; unas vigas se cuentan, no se recorren. */
+      { key: "losasPlan", label: `Cuántas ${PIEZA_DE[meta.estructura || "losas"].plural}`, type: "number", step: "1", half: true,
         hint: "Opcional. Sin esto, del tramo sale una estimación y se enseña con «≈»." },
-      { key: "losas", label: "Tramo del día", type: "textarea", full: true, required: true,
-        placeholder: "L3-0.431@L3-0.252",
-        hint: "El tramo tal como se lo dan: de la primera losa a la última. También acepta la lista completa separada por coma, si la tiene." },
+      { key: "losas", label: PIEZA_DE[meta.estructura || "losas"].tramo, type: "textarea", full: true,
+        required: (meta.estructura || "losas") === "losas",
+        placeholder: PIEZA_DE[meta.estructura || "losas"].ej,
+        hint: PIEZA_DE[meta.estructura || "losas"].ayuda },
       { key: "fase", label: "Fase" },
       { key: "cierre", label: "Cierre" },
       { key: "lane", label: "Carril", placeholder: "L1 / L2 / L3" },
@@ -3046,10 +3113,24 @@ function formTest(_ignored, n, opts = {}) {
          Va aquí y no en Muestras porque no es una prueba de campo: es un
          resultado que devuelve el laboratorio, como las resistencias. Dos
          cilindros por sub-lote, AASHTO T 277. */
-      ...(typeof es934 === "function" && es934() && (db.project || {}).nivelPermeabilidad
+      ...(typeof es934 === "function" && es934() && typeof nivelPermeabilidadDe === "function" && nivelPermeabilidadDe()
         ? [{ key: "cs56", label: "56 días", type: "number", step: "10" },
-            { type: "label", label: "Permeabilidad (AASHTO T 277)" },
-            { key: "cp", label: "Carga que pasa (coulombs)", type: "number", step: "1" }]
+            { type: "label", label: "Permeabilidad" },
+            /* EL MÉTODO, AL LADO DEL VALOR — Q-58, 10 ago 2026. El borrador del
+               5 dic 2025 dice, literal: «At the option of the Authority,
+               procedure PRHTA 934 T-10 (Surface Resistivity) may be used to
+               estimate permeability in lieu of AASHTO T 277».
+
+               O sea que la resistividad NO es otra propiedad: es otra forma de
+               medir la misma. Dos campos sueltos habrían dejado dos números que
+               dicen lo mismo sin saber cuál manda — y eso se queda escrito en el
+               expediente para siempre. Un valor, y de dónde vino. */
+            { key: "cpMetodo", label: "Método", type: "select", half: true,
+              options: [
+                { value: "t277", label: "AASHTO T 277 — carga que pasa" },
+                { value: "sr",   label: "Resistividad superficial — PRHTA T934-10" },
+              ] },
+            { key: "cp", label: "Valor (coulombs, o kΩ·cm si es resistividad)", type: "number", step: "1", half: true }]
         : []),
       { key: "comments", label: "Comentarios", type: "textarea", full: true },
     ],
