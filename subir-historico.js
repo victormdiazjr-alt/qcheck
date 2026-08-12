@@ -160,8 +160,13 @@ async function main() {
     const clave = CLAVE || await preguntarClave(`  Clave de ${usr} (no se ve al teclear): `);
     if (!clave) morir("sin clave no se puede entrar");
     const s = await pedir("/api/sesion", { method: "POST", body: JSON.stringify({ usr, clave }) });
-    if (s.estado !== 200 || !s.cuerpo.pase) morir(`no pude entrar como ${usr} (${s.estado})`);
-    pase = s.cuerpo.pase;
+    /* EL PASE VIENE EN `tk`, no en `pase` — y esto costó una vuelta más. El
+       servidor contestaba 200, o sea que la clave estaba bien, y este código
+       leía un campo que no existe y decía «no pude entrar». Ver `index.html`,
+       que guarda `s.tk` en `qc-sesion`. */
+    if (s.estado !== 200) morir(`no pude entrar como ${usr} (${s.estado})`);
+    pase = s.cuerpo.tk || s.cuerpo.pase;
+    if (!pase) morir(`el servidor aceptó la clave pero no mandó pase: ${JSON.stringify(s.cuerpo).slice(0, 120)}`);
     console.log(`  Sesión  : dentro como ${usr}`);
   }
 
