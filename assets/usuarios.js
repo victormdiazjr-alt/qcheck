@@ -46,6 +46,26 @@ const QC_CUENTAS = {
      máquinas. */
   tecnico:  { clave: "1234", rol: "qc",       nombre: "Técnico de campo", limites: true },
 
+  /* EL EQUIPO DE RUBÉN — Q-63, 10 de agosto de 2026.
+
+     Yarvier es su técnico asistente y entra muestras y recepción; los dos
+     técnicos, lo mismo. Ven los límites contra los que miden y NO los cambian:
+     poner la vara con la que se juzga el hormigón es del ingeniero de récord
+     (Q-62), y ninguno lleva `firma`.
+
+     Claves distintas y no un `1234` para todos, y el motivo no es la fuerza
+     —esto vive en el navegador y el repositorio es público, así que quien
+     quiera leerlas las lee— sino que **el expediente firma con quien está
+     dentro**. Si tres personas comparten cuenta, el récord no sabe quién midió,
+     y eso es exactamente lo que este sistema existe para impedir.
+
+     Son PROVISIONALES, para las pruebas. Cuando la puerta pase al servidor
+     (Q-07 con `exigir_sesion`), se dan de alta con `cuentas.js`, que exige doce
+     caracteres a todo el que escriba en el expediente. */
+  yarvier:  { clave: "yarvier26", rol: "qc", nombre: "Yarvier", limites: true },
+  tecnico1: { clave: "tecnico1-26", rol: "qc", nombre: "Técnico 1", limites: true },
+  tecnico2: { clave: "tecnico2-26", rol: "qc", nombre: "Técnico 2", limites: true },
+
   /* Las tres de fuera — Q-37, 6 ago 2026. Cada una entra y aparece en SU
      tablero, sin portal y sin navegación: no vienen a recorrer QCheck, vienen
      a mirar su número. Lo que ven ya era público para ellas —el contrato le
