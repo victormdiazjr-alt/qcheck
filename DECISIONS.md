@@ -2197,3 +2197,43 @@ solo ve contratista.html y no escribe nada»*.
 > **Clave corta solo para quien no escribe en el expediente.** Los técnicos
 > escriben, y su nombre queda firmado en cada línea. **El sistema se defiende
 > solo, y defiende exactamente lo que vendemos.**
+
+---
+
+## Q-66 · Un aparato sin señal un día no se ponía al día nunca — 10 ago 2026
+
+Encontrado subiendo el histórico de la PR-52, no en obra. **Si lo hubiera
+encontrado Rubén, lo habría encontrado con un tiro empezado.**
+
+### Qué pasaba
+
+Al guardar cambios, el Worker confirmaba lo que quedó con una sola consulta:
+
+    SELECT uid FROM ops WHERE uid IN (?,?,?…)   ← un parámetro por línea
+
+**D1 no admite tantos parámetros.** A partir de unas cien líneas contestaba
+**500**, y ahí se acababa la sincronización.
+
+**Y no era un caso raro:** `assets/sync.js` manda **la cola entera**, sin trocear.
+Un aparato que pasa un día sin señal acumula más de cien cambios y **desde ese
+momento no vuelve a sincronizar** — justo en obra y sin cobertura, que es
+exactamente para lo que existe el modo sin conexión.
+
+**Nadie lo había visto porque los aparatos sincronizan seguido y las colas son
+pequeñas.** El fallo esperaba al primer día largo sin señal.
+
+### Qué se hizo
+
+Trocear **las dos** cosas de 90 en 90 —el guardado y la confirmación— **en el
+servidor**, que es donde vale para todos los aparatos sin que ninguno tenga que
+actualizarse.
+
+**Comprobado contra producción después de desplegar:** 150, 300 y 600 líneas de
+golpe, las tres **200** y confirmadas enteras. Y el expediente se quedó en 10.025
+líneas: se mandaron líneas que ya estaban, así que no se escribió nada nuevo.
+
+### Lo que queda dicho
+
+**Los dos gemelos no se comportan igual con colas grandes.** El de la obra guarda
+en archivo y no tiene ese tope; el Worker sí lo tenía. **El banco de paridad no lo
+caza porque nunca prueba con más de cien líneas.** Caso para `pruebas/`.

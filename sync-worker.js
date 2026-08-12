@@ -675,15 +675,34 @@ export default {
         /* La firma la pone el servidor. Lo que traiga el cuerpo se ignora. */
         quien ? quien.usr : (o.usr || "?")
       ));
-      await env.DB.batch(lote);
+      /* El guardado también por trozos, por el mismo tope. */
+      for (let i = 0; i < lote.length; i += 90) await env.DB.batch(lote.slice(i, i + 90));
 
       /* Se confirma lo que de verdad quedó guardado, no lo que se mandó: el
          cliente solo descuela de su cola lo que el servidor reconoce. */
+      /* DE 90 EN 90, y el número es un tope de D1 — Q-66, 10 de agosto de 2026.
+
+         Esto preguntaba por TODOS los uid en una sola consulta, un parámetro por
+         línea. D1 no admite tantos parámetros, así que a partir de unas cien
+         líneas contestaba 500 y el aparato no podía sincronizar.
+
+         Y no era un caso raro: `assets/sync.js` manda la cola ENTERA. Un aparato
+         que pasa un día sin señal acumula más de cien cambios y **a partir de ahí
+         no se pone al día nunca** — justo en obra y sin cobertura, que es para lo
+         que existe el modo sin conexión.
+
+         Se descubrió subiendo el histórico de la PR-52, no en obra. Si lo hubiera
+         encontrado Rubén, lo habría encontrado con un tiro empezado. */
       const uids = ops.map((o) => String(o.uid || ""));
-      const marcas = uids.map(() => "?").join(",");
-      const { results } = await env.DB.prepare(
-        `SELECT uid FROM ops WHERE uid IN (${marcas})`
-      ).bind(...uids).all();
+      const results = [];
+      for (let i = 0; i < uids.length; i += 90) {
+        const trozo = uids.slice(i, i + 90);
+        const marcas = trozo.map(() => "?").join(",");
+        const r = await env.DB.prepare(
+          `SELECT uid FROM ops WHERE uid IN (${marcas})`
+        ).bind(...trozo).all();
+        for (const fila of (r.results || [])) results.push(fila);
+      }
       const t = await env.DB.prepare("SELECT IFNULL(MAX(seq),0) AS seq FROM ops").first();
       return json({ seq: t.seq, aceptadas: (results || []).map((r) => r.uid) });
     }
