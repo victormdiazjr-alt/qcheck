@@ -32,10 +32,30 @@
    ============================================================ */
 "use strict";
 
+/* SIN CLAVES — Q-65, 10 de agosto de 2026.
+
+   Este archivo lleva desde el principio en un repositorio PÚBLICO con las
+   claves dentro. Daba igual que fueran «1234» o de veinte caracteres: una clave
+   publicada en internet no protege nada.
+
+   Ya no hacen falta. El servidor exige sesión (`exigir_sesion`), las claves
+   viven derivadas en la base con 100.000 vueltas y sal por usuario, y quien
+   manda al entrar es el servidor: la lista local solo contestaba cuando el
+   servidor no contestaba (ver `index.html`). Sin `clave` aquí, esa puerta
+   trasera se cierra sola — la comparación nunca puede dar verdadera.
+
+   LO QUE SÍ SE QUEDA es el papel de cada cuenta. Cuando un aparato ya entró una
+   vez, `qcCuenta()` usa la ficha que mandó el servidor (`qc-ident`); esto es el
+   respaldo para leer permisos sin señal, y no abre ninguna puerta.
+
+   LO QUE ESTO CUESTA, dicho claro: un aparato que NUNCA ha entrado y no tiene
+   señal ya no puede entrar. Es correcto — un teléfono nuevo se da de alta con
+   cobertura, una vez, y a partir de ahí trabaja sin señal todo lo que haga
+   falta. */
 const QC_CUENTAS = {
-  admin:    { clave: "vd0330", rol: "qc",       nombre: "Administrador", tablero: true, config: true, limites: true },
-  ruben:    { clave: "secg", rol: "qc",       nombre: "Rubén Segarra", limites: true, firma: true },
-  invitado: { clave: "1234", rol: "consulta", nombre: "Invitado" },
+  admin:    { rol: "qc",       nombre: "Administrador", tablero: true, config: true, limites: true },
+  ruben:    { rol: "qc",       nombre: "Rubén Segarra", limites: true, firma: true },
+  invitado: { rol: "consulta", nombre: "Invitado" },
 
   /* El técnico de campo de Rubén — 8 ago 2026. Ve lo mismo que Rubén (Víctor
      lo pidió así), o sea Recepción, Muestras, Results, Reportes y Settings.
@@ -44,7 +64,7 @@ const QC_CUENTAS = {
      del expediente son actos del ingeniero de récord, y eso es Rubén en
      persona, no su puesto (DECISIONS §22). Tampoco `config`, que es la sala de
      máquinas. */
-  tecnico:  { clave: "1234", rol: "qc",       nombre: "Técnico de campo", limites: true },
+  tecnico:  { rol: "qc",       nombre: "Técnico de campo", limites: true },
 
   /* EL EQUIPO DE RUBÉN — Q-63, 10 de agosto de 2026.
 
@@ -62,9 +82,9 @@ const QC_CUENTAS = {
      Son PROVISIONALES, para las pruebas. Cuando la puerta pase al servidor
      (Q-07 con `exigir_sesion`), se dan de alta con `cuentas.js`, que exige doce
      caracteres a todo el que escriba en el expediente. */
-  yarvier:  { clave: "yarvier26", rol: "qc", nombre: "Yarvier", limites: true },
-  tecnico1: { clave: "tecnico1-26", rol: "qc", nombre: "Técnico 1", limites: true },
-  tecnico2: { clave: "tecnico2-26", rol: "qc", nombre: "Técnico 2", limites: true },
+  yarvier:  { rol: "qc", nombre: "Yarvier", limites: true },
+  tecnico1: { rol: "qc", nombre: "Técnico 1", limites: true },
+  tecnico2: { rol: "qc", nombre: "Técnico 2", limites: true },
 
   /* Las tres de fuera — Q-37, 6 ago 2026. Cada una entra y aparece en SU
      tablero, sin portal y sin navegación: no vienen a recorrer QCheck, vienen
@@ -75,9 +95,9 @@ const QC_CUENTAS = {
      `casa` va en la cuenta y NUNCA se deduce del nombre de usuario (AGENTS §3):
      el día que la Autoridad quiera dos personas con acceso, se dan de alta dos
      cuentas con la misma casa y no hay que tocar código. */
-  concretero:  { clave: "1234", rol: "consulta", nombre: "Concretero",  casa: "produccion.html" },
-  contratista: { clave: "1234", rol: "consulta", nombre: "Contratista", casa: "contratista.html" },
-  autoridad:   { clave: "1234", rol: "consulta", nombre: "Autoridad",   casa: "autoridad.html" },
+  concretero:  { rol: "consulta", nombre: "Concretero",  casa: "produccion.html" },
+  contratista: { rol: "consulta", nombre: "Contratista", casa: "contratista.html" },
+  autoridad:   { rol: "consulta", nombre: "Autoridad",   casa: "autoridad.html" },
 };
 
 /* La ficha que mandó el servidor al entrar, si la hay. */
