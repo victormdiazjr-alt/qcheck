@@ -102,7 +102,13 @@ function qcProyectar(base) {
   }
   for (const h of base.humidity || []) p.humidity[qcIdDe(h, "h")] = Object.assign({}, h);
   p.plan[""] = Object.assign({}, base.plan);
-  p.project[""] = Object.assign({}, base.project);
+  /* Q-59, 10 ago 2026: UNA LÍNEA POR OBRA, cada una bajo su id.
+
+     Iba `p.project[""]`, en singular, porque solo había una obra. Con dos, las
+     dos se escribían en la misma fila del servidor y la última pisaba a la
+     otra: un aparato podía bajarse el nombre del puente sobre los ensayos de
+     la PR-52. Y en un registro que solo añade, eso no tiene vuelta. */
+  for (const pr of base.proyectos || []) if (pr && pr.id) p.project[pr.id] = Object.assign({}, pr);
   /* De la simulación solo viaja su APAGADO. `db.demo = false` significa que
      alguien programó un tiro de verdad, y eso los demás aparatos tienen que
      saberlo para no sembrar encima. La marca con fecha es cosa de cada uno. */
@@ -177,7 +183,18 @@ function qcAplicarOp(o) {
   } else if (o.ent === "plan") {
     db.plan[o.campo] = o.valor;
   } else if (o.ent === "project") {
-    db.project[o.campo] = o.valor;
+    /* Q-59. El id vacío es el formato viejo —una sola obra— y sigue entrando
+       en la activa, para que una base que aún no ha migrado no se rompa. */
+    if (!o.id) { db.project[o.campo] = o.valor; }
+    else {
+      if (!db.proyectos) db.proyectos = [];
+      let pr = db.proyectos.find((x) => x.id === o.id);
+      if (!pr) { pr = { id: o.id }; db.proyectos.push(pr); }
+      pr[o.campo] = o.valor;
+      /* Si la que llega es la que está abierta, `db.project` tiene que ser
+         ESE objeto y no una copia: media pantalla lo lee directo. */
+      if (o.id === (db.proyectoActivo || "")) db.project = pr;
+    }
   } else if (o.ent === "config") {
     if (o.campo === "demo") db.demo = o.valor;
   }

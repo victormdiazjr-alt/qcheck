@@ -131,8 +131,8 @@ body { background: var(--bg); }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/sync.js?v=a4ef02ff"></script>
-<script src="assets/core.js?v=0bf0c388"></script>
+<script src="assets/sync.js?v=32aa80b4"></script>
+<script src="assets/core.js?v=9e2be988"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -285,6 +285,8 @@ function formDayPlan() {
         return;
       }
       db.dayMeta[state.day] = { ...(db.dayMeta[state.day] || {}), ...v };
+      /* Q-59: el tiro nace sellado con la obra abierta. */
+      if (!db.dayMeta[state.day].proyecto) db.dayMeta[state.day].proyecto = proyectoActivo();
       delete db.dayMeta[state.day].source;
       saveDB(); render(); toast("Plan del día guardado");
     },

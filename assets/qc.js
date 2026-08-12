@@ -614,11 +614,15 @@ function viewPlan() {
     ${panelSync()}
     <div class="grid cols-2">
       <div class="panel">
-        <div class="panel-head"><h2>Proyecto</h2><div class="spacer"></div><button class="btn small" onclick="formProject()">Editar</button></div>
+        <div class="panel-head"><h2>Proyecto</h2><div class="spacer"></div>${
+          (db.proyectos || []).length > 1 || (typeof qcVeConfig === "function" && qcVeConfig())
+            ? `<button class="btn small" onclick="formObras()">Obras (${(db.proyectos || []).length})</button> ` : ""
+        }<button class="btn small" onclick="formProject()">Editar</button></div>
         <div class="panel-body" style="font-size:14px">
           <p style="margin:4px 0"><b>${esc(pr.name)}</b></p>
           <p style="margin:4px 0" class="muted">Mezcla: ${esc(pr.mixId)}</p>
-          <p style="margin:4px 0" class="muted">Contratista: ${esc(pr.contractor || "—")} · QC: ${esc(pr.qcFirm || "—")}</p>
+          <p style="margin:4px 0" class="muted">Contratista: ${esc(pr.contractor || "—")}${pr.concretera ? " · Concretera: " + esc(pr.concretera) : ""} · QC: ${esc(pr.qcFirm || "—")}</p>
+          ${pr.estructuras ? `<p style="margin:4px 0" class="muted">Estructuras: ${esc(String(pr.estructuras).replace(/\n/g, " · "))}</p>` : ""}
           <p style="margin:4px 0" class="muted">Avisos de rechazo: ${esc(pr.notifyEmails || "— (configure emails)")}</p>
         </div>
       </div>
@@ -691,9 +695,28 @@ function formProject() {
           { value: "934", label: "SP-934 · Structural Concrete — Autoridad de Carreteras" },
         ],
         hint: "La SP-934 acepta por lotes de 250 m³ con evaluación estadística. Enciende pantallas y cálculos aparte; lo demás sigue igual." },
+      /* Q-59, 10 ago 2026: la permeabilidad de la obra. Un tiro suelto puede
+         decir otra cosa (`nivelPermeabilidadDe`), pero lo normal es que la
+         ponga la obra una vez y no se vuelva a tocar. */
+      { key: "nivelPermeabilidad", label: "Permeabilidad", type: "select", full: true,
+        options: [
+          { value: "",  label: "No se inspecciona" },
+          { value: "1", label: "PL#1 — sin techo de carga" },
+          { value: "2", label: "PL#2 — máximo 1950 coulombs" },
+        ],
+        hint: "Solo se usa bajo SP-934. Enciende el campo de permeabilidad en los resultados del laboratorio." },
       { key: "mixId", label: "Mezcla / Mix ID", full: true },
       { key: "contractor", label: "Contratista" },
+      /* Q-59: la concretera estaba en cada camión (`company`) pero no en la
+         obra, así que no había dónde decir quién suministra. */
+      { key: "concretera", label: "Concretera" },
       { key: "qcFirm", label: "Firma QC" },
+      /* LAS ESTRUCTURAS DE LA OBRA — Q-59. Lo que hay que tirar, y cuánto.
+         De aquí sale lo que se ofrece al programar un tiro. Una por línea:
+         «vigas 15» o «losas 132». */
+      { key: "estructuras", label: "Estructuras de la obra", type: "textarea", full: true,
+        placeholder: "vigas 15",
+        hint: "Una por línea: qué y cuántas. Ej. «vigas 15» o «losas 132»." },
       { key: "notifyEmails", label: "Emails para avisos de rechazo", full: true, placeholder: "a@dvg.com, b@segarra.com, inspector@act.pr.gov" },
       { key: "place", label: "Sitio del tiro (para el tiempo)", full: true, placeholder: "Ponce · PR-52" },
       { key: "lat", label: "Latitud", type: "number", step: "0.0001", half: true, hint: "Corríjala si el tiro no está donde dice" },
@@ -709,6 +732,61 @@ function formProject() {
       db.project.logos = { contratista: v.logoContratista || "", concretera: v.logoConcretera || "",
                            autoridad: v.logoAutoridad || "" };
       saveDB(); render(); toast("Proyecto actualizado");
+    },
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LAS OBRAS — Q-59, 10 de agosto de 2026
+
+   Cambiar de obra y abrir una nueva. No mueve un solo dato: cada ensayo y cada
+   tiro están sellados con la suya desde que se crearon, así que esto solo
+   decide QUÉ SE ESTÁ MIRANDO.
+
+   Va detrás de `qcVeConfig()` a propósito. Abrir una obra nueva es un acto de
+   quien lleva el contrato, no de quien está midiendo un camión. */
+function formObras() {
+  const hoy = (typeof todayISO === "function") ? todayISO() : "";
+  const lista = (db.proyectos || []).map((p) => {
+    const n = (db.tests || []).filter((t) => (t.proyecto || "pr-52") === p.id && !t.borrado).length;
+    const tiroHoy = Object.entries(db.dayMeta || {})
+      .some(([d, m]) => d === hoy && m && (m.proyecto || "pr-52") === p.id);
+    return { value: p.id,
+             label: `${p.name || p.id}${p.id === db.proyectoActivo ? "  ← abierta" : ""}` +
+                    `  ·  ${n} ensayo${n === 1 ? "" : "s"}${tiroHoy ? "  ·  TIRO HOY" : ""}` };
+  });
+  openForm({
+    title: "Obras",
+    initial: { obra: db.proyectoActivo },
+    fields: [
+      { key: "obra", label: "Obra abierta", type: "select", full: true, options: lista,
+        hint: "Cambiar de obra no mueve nada: cada ensayo queda con la suya." },
+      { type: "label", label: "— o abrir una obra nueva —" },
+      { key: "nuevoId", label: "Identificador", half: true, placeholder: "ac-220037",
+        hint: "Corto, sin espacios. No se puede cambiar después." },
+      { key: "nuevoNombre", label: "Nombre de la obra", half: true,
+        placeholder: "AC-220037 · Puentes 1067@1070" },
+    ],
+    onSave: (v) => {
+      if (v.nuevoId && v.nuevoNombre) {
+        const id = String(v.nuevoId).trim().toLowerCase().replace(/\s+/g, "-");
+        if ((db.proyectos || []).some((p) => p.id === id)) {
+          alert(`Ya hay una obra con el identificador «${id}».`);
+          return;
+        }
+        /* La obra nueva NACE VACÍA. No hereda plan ni límites de la anterior:
+           heredarlos sin decirlo sería juzgar hormigón de una obra con la vara
+           de otra. Se ponen en Plan & Datos, a mano y a la vista. */
+        db.proyectos.push({ id, name: String(v.nuevoNombre).trim() });
+        abrirProyecto(id);
+        render(); toast(`Obra «${v.nuevoNombre}» abierta`);
+        formProject();                       // y se completan sus datos ya
+        return;
+      }
+      if (v.obra && v.obra !== db.proyectoActivo) {
+        abrirProyecto(v.obra);
+        render(); toast(`Obra: ${db.project.name || v.obra}`);
+      }
     },
   });
 }

@@ -127,7 +127,59 @@ function migrarBase(db) {
     if (!t.id && typeof qcIdDe === "function") qcIdDe(t, "t");
   }
   for (const h of db.humidity) if (!h.id && typeof qcIdDe === "function") qcIdDe(h, "h");
-  db.version = 2;
+
+  /* ══════════════════════════════════════════════════════════════════════
+     VARIAS OBRAS A LA VEZ — Q-59, 10 de agosto de 2026
+
+     Hasta hoy QCheck tenía UNA obra: `db.project`, en singular, y los 397
+     ensayos no decían a cuál pertenecían. Eso valía mientras solo existiera
+     la PR-52.
+
+     Ya no: mañana Rubén tira vigas del AC-220037 y el sábado vuelve a tirar
+     losas de la PR-52. **Las dos obras están vivas a la vez.**
+
+     Cambiar `db.project` sin más habría re-etiquetado los 397 ensayos con la
+     obra equivocada. No se habrían borrado — habrían MENTIDO, que es peor y
+     es justo lo que este sistema existe para impedir.
+
+     Así que primero se sella lo que hay, y solo después se abre la puerta:
+     cada ensayo y cada día quedan marcados con la obra a la que pertenecen,
+     y nada vuelve a depender de cuál esté abierta en la pantalla.
+
+     `db.project` NO desaparece: sigue siendo la obra activa, y todo lo que ya
+     la leía sigue funcionando sin enterarse. */
+
+  if (!db.proyectos) {
+    const base = db.project || {};
+    const id = base.id || "pr-52";
+    db.proyectos = [{ ...base, id }];
+    db.proyectoActivo = id;
+    db.project = db.proyectos[0];
+  }
+  if (!db.proyectoActivo) db.proyectoActivo = (db.proyectos[0] || {}).id || "pr-52";
+
+  /* EL SELLADO. Lo que existía antes de que hubiera dos obras es de la
+     primera, por definición: no había otra donde ponerlo. */
+  const primera = (db.proyectos[0] || {}).id || "pr-52";
+  for (const t of db.tests) if (!t.proyecto) t.proyecto = primera;
+  for (const m of Object.values(db.dayMeta)) if (m && !m.proyecto) m.proyecto = primera;
+
+  db.version = 3;
+}
+
+/* La obra abierta ahora mismo. Una sola puerta, como `es934()`. */
+function proyectoActivo() { return db.proyectoActivo || "pr-52"; }
+function proyectoDe(x) { return (x && x.proyecto) || "pr-52"; }
+function esDeLaObra(x) { return proyectoDe(x) === proyectoActivo(); }
+
+/* Cambiar de obra. No mueve un solo dato: cambia lo que se está mirando. */
+function abrirProyecto(id) {
+  const p = (db.proyectos || []).find((x) => x.id === id);
+  if (!p) return false;
+  db.proyectoActivo = id;
+  db.project = p;
+  saveDB();
+  return true;
 }
 /* La compañía sale de la planta cuando no viene declarada (histórico) */
 function plantCompany(plant) {
@@ -906,7 +958,11 @@ function zClass(z) { return z ? ` class="num z-${z}"` : ` class="num"`; }
    retiro viaja a los demás aparatos como cualquier otro cambio — un borrado
    de verdad no tendría cómo. */
 function vivos(lista) { return lista.filter((t) => !t.borrado); }
-function sortedTests() { return vivos(db.tests).sort((a, b) => a.n - b.n); }
+/* Q-59: y de la obra abierta. Todo el sistema mira por aquí, así que filtrar
+   en este punto filtra las diecinueve pantallas de una vez. Los ensayos de la
+   otra obra no se ocultan ni se borran: están, sellados con la suya, y
+   aparecen en cuanto se abre. */
+function sortedTests() { return vivos(db.tests).filter(esDeLaObra).sort((a, b) => a.n - b.n); }
 /* Los días que un tablero puede enseñar — Q-44, 7 ago 2026.
 
    `testDates()` devuelve los días que tienen camiones. Eso deja fuera HOY
@@ -918,7 +974,7 @@ function sortedTests() { return vivos(db.tests).sort((a, b) => a.n - b.n); }
    todavía no haya nada que contar. */
 function diasDelProyecto() {
   const conPlan = Object.entries(db.dayMeta || {})
-    .filter(([, m]) => m && !m.borrado &&
+    .filter(([, m]) => m && !m.borrado && esDeLaObra(m) &&
                        (m.cyPlan != null || m.losas || m.losasPlan != null ||
                         m.horaInicio || m.cerradoA))
     .map(([d]) => d);
@@ -3030,6 +3086,8 @@ function formDayMeta(day) {
            Quien programa un tiro es una persona. Desde ese momento el día es
            de verdad y viaja. */
       db.dayMeta[day] = { ...(db.dayMeta[day] || {}), ...v };
+      /* Q-59: el tiro nace sellado con la obra que está abierta. */
+      if (!db.dayMeta[day].proyecto) db.dayMeta[day].proyecto = proyectoActivo();
       delete db.dayMeta[day].source;
       saveDB(); render(); toast("Datos del día guardados");
     },
@@ -3139,6 +3197,7 @@ function formTest(_ignored, n, opts = {}) {
       else {
         v.n = nextTestN();
         v.id = uid();
+        v.proyecto = proyectoActivo();   /* Q-59 */
         v.uwTarget = db.plan.uw.target;
         db.tests.push(v);
         if (typeof state !== "undefined") state.day = v.date;

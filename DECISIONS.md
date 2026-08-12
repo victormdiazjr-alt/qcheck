@@ -2006,3 +2006,57 @@ tramo deja de ser obligatorio fuera de losas; el nivel de permeabilidad propio
 manda, el vacío hereda del proyecto y el «0» devuelve nulo.
 
 **Falta lo último y no lo puedo hacer yo: abrir sesión y verlo en pantalla.**
+
+---
+
+## Q-59 · Varias obras a la vez — 10 de agosto de 2026
+
+**Víctor:** *«Cierra el tiro de la PR-52 y que se grabe bajo el proyecto, para que
+el sábado Rubén pueda crear otro tiro y seguir con ese proyecto.»*
+
+**Eso obliga a lo que hasta hoy no hacía falta: dos obras vivas a la vez.** Mañana
+son vigas del AC-220037; el sábado, losas de la PR-52.
+
+### El peligro que había, y era grande
+
+`DB_KEY` es uno, `db.project` era **singular**, y **los 397 ensayos no decían a
+qué obra pertenecían**. Cambiar el proyecto para el tiro de mañana **no habría
+borrado nada: habría re-etiquetado el expediente entero de la PR-52** con el
+contrato equivocado.
+
+> **No se pierde el dato. Miente. Y eso es peor, porque no da error.**
+
+### Qué se hizo
+
+**1 · Sellar primero.** Cada ensayo y cada día quedan marcados con su obra. Lo
+que existía antes de que hubiera dos es de la primera **por definición**: no había
+otra donde ponerlo.
+
+**2 · `db.proyectos`, y `db.project` sigue siendo la abierta.** Todo lo que ya
+leía `db.project.name` sigue funcionando sin enterarse.
+
+**3 · Dos filtros, y filtran las diecinueve pantallas.** `sortedTests()` y
+`diasDelProyecto()` son por donde pasa todo. **Los ensayos de la otra obra no se
+ocultan ni se borran: están, y aparecen en cuanto se abre.**
+
+**4 · Los registros nuevos nacen sellados** con la obra abierta.
+
+**5 · La sincronización, una línea por obra.** Iba `project[""]`, en singular:
+con dos obras se escribían en la misma fila del servidor y la última pisaba a la
+otra. **Un aparato podía bajarse el nombre del puente sobre los ensayos de la
+PR-52** — y en un registro que solo añade, eso no tiene vuelta.
+
+**6 · Y una obra nueva NACE VACÍA.** No hereda plan ni límites de la anterior.
+Heredarlos sin decirlo sería **juzgar el hormigón de una obra con la vara de
+otra**.
+
+### Lo que falta y se dice
+
+**Dos obras que tiren el MISMO día** comparten la clave de `dayMeta`, que es la
+fecha. No pasa mañana ni el sábado, pero pasará. **Queda dicho, no tapado.**
+
+### Comprobado
+
+Migración en frío sobre el corpus real: **397 de 397 sellados**, la obra nueva ve
+**0 ensayos** y al volver a la PR-52 vuelven a estar **los 397**. `verificar.js`
+sin fallos y `sp934` en **129 bien · 0 mal**.
