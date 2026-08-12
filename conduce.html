@@ -936,7 +936,10 @@ function render() {
   const rows = testsOfDate(shown);
   const cy = rows.reduce((a, t) => a + (num(t.vol) || 0), 0);
   document.getElementById("hero-day").textContent = shown === day ? "Vaciado de hoy — " + fmtDate(shown) : "Último vaciado — " + fmtDate(shown);
-  document.getElementById("hero-sub").textContent = db.project.name + " · " + db.project.mixId;
+  /* Q-59: una obra recién abierta todavía no tiene mezcla, y sin esto la
+     cabecera de Recepción decía «… · undefined» delante del técnico. */
+  document.getElementById("hero-sub").textContent =
+    [db.project.name, db.project.mixId].filter(Boolean).join(" · ");
   document.getElementById("next-load").textContent = "Camión #" + (testsOfDate(day).length + 1) + " de hoy";
   document.getElementById("day-tot").textContent = `${rows.length} camiones · ${fmt(cy, 1)} CY`;
   sugerirProximo(day);
