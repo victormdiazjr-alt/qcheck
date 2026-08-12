@@ -159,6 +159,13 @@ async function main() {
     const usr = USR || "ruben";
     const clave = CLAVE || await preguntarClave(`  Clave de ${usr} (no se ve al teclear): `);
     if (!clave) morir("sin clave no se puede entrar");
+    /* SE MIDE, NO SE ENSEÑA. Dos intentos dieron 401 con una clave que curl
+       aceptaba, así que el problema estaba en cómo LLEGA, no en cuál es. Esto
+       dice si llegó entera sin decir qué es: la de Rubén tiene 23 caracteres.
+       Un dato que no se puede ver pero sí contar. */
+    console.log(`  Clave   : ${clave.length} caracteres` +
+                (CLAVE ? " (del entorno)" : " (tecleada)") +
+                (clave.length !== 23 ? "  ← ojo: se esperaban 23" : "  ✓"));
     const s = await pedir("/api/sesion", { method: "POST", body: JSON.stringify({ usr, clave }) });
     /* EL PASE VIENE EN `tk`, no en `pase` — y esto costó una vuelta más. El
        servidor contestaba 200, o sea que la clave estaba bien, y este código
