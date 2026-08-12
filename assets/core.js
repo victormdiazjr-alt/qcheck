@@ -2229,9 +2229,15 @@ function chartCS5(sets, rangeN) {
 
 function panelLimites(editable) {
   const p = db.plan;
+  /* Q-62, 10 ago 2026: se VEN siempre —el técnico tiene que saber contra qué
+     mide— pero se CAMBIAN solo con firma. Poner los límites es decidir con qué
+     vara se juzga el hormigón, y eso es un acto del ingeniero de récord, igual
+     que reabrir un tiro o descartar un vaciado (DECISIONS §22). */
+  const puedeEditar = editable && (typeof qcFirma !== "function" || qcFirma());
   return `<div class="panel">
     <div class="panel-head"><h2>Plan de control (límites SPC)</h2><div class="spacer"></div>
-      ${editable ? `<button class="btn small" onclick="formPlan()">Editar</button>` : ""}</div>
+      ${puedeEditar ? `<button class="btn small" onclick="formPlan()">Editar</button>`
+        : editable ? `<span class="muted" style="font-size:12.5px">los cambia el ingeniero de récord</span>` : ""}</div>
     <div class="panel-body flush"><div class="table-wrap"><table class="data">
       <tr><th>Parámetro</th><th class="num">Objetivo</th><th class="num">Acción</th><th class="num">Suspensión</th></tr>
       <tr><td>Slump (in)</td><td class="num mono">${fmtSlump(p.slump.target)}</td><td class="num mono">${fmtSlump(p.slump.actLo)} – ${fmtSlump(p.slump.actHi)}</td><td class="num mono">${fmtSlump(p.slump.suspLo)} – ${fmtSlump(p.slump.suspHi)}</td></tr>
@@ -2271,7 +2277,9 @@ function panelSP934(editable) {
   const g = (x) => x == null ? "—" : x;
   return `<div class="panel">
     <div class="panel-head"><h2>SP-934 · lo que declara esta obra</h2><div class="spacer"></div>
-      ${editable ? `<button class="btn small" onclick="formSP934()">Editar</button>` : ""}</div>
+      ${editable && (typeof qcFirma !== "function" || qcFirma())
+        ? `<button class="btn small" onclick="formSP934()">Editar</button>`
+        : editable ? `<span class="muted" style="font-size:12.5px">los declara el ingeniero de récord</span>` : ""}</div>
     <div class="panel-body flush"><div class="table-wrap"><table class="data">
       <tr><th>Qué</th><th class="num">Declarado</th><th class="num">Lo que fija la 934</th></tr>
       <tr><td>Clase de hormigón</td>
@@ -2302,7 +2310,75 @@ function panelSP934(editable) {
   </div>`;
 }
 
-function formSP934() {
+/* ══════════════════════════════════════════════════════════════════════════
+   LAS OBRAS — Q-59, 10 de agosto de 2026
+
+   Cambiar de obra y abrir una nueva. No mueve un solo dato: cada ensayo y cada
+   tiro están sellados con la suya desde que se crearon, así que esto solo
+   decide QUÉ SE ESTÁ MIRANDO.
+
+   Va detrás de `qcVeConfig()` a propósito. Abrir una obra nueva es un acto de
+   quien lleva el contrato, no de quien está midiendo un camión. */
+function formObras() {
+  const hoy = (typeof todayISO === "function") ? todayISO() : "";
+  const lista = (db.proyectos || []).map((p) => {
+    const n = (db.tests || []).filter((t) => (t.proyecto || "pr-52") === p.id && !t.borrado).length;
+    const tiroHoy = Object.entries(db.dayMeta || {})
+      .some(([d, m]) => d === hoy && m && (m.proyecto || "pr-52") === p.id);
+    return { value: p.id,
+             label: `${p.name || p.id}${p.id === db.proyectoActivo ? "  ← abierta" : ""}` +
+                    `  ·  ${n} ensayo${n === 1 ? "" : "s"}${tiroHoy ? "  ·  TIRO HOY" : ""}` };
+  });
+  openForm({
+    title: "Obras",
+    initial: { obra: db.proyectoActivo },
+    fields: [
+      { key: "obra", label: "Obra abierta", type: "select", full: true, options: lista,
+        hint: "Cambiar de obra no mueve nada: cada ensayo queda con la suya." },
+      { type: "label", label: "— o abrir una obra nueva —" },
+      { key: "nuevoId", label: "Identificador", half: true, placeholder: "ac-220037",
+        hint: "Corto, sin espacios. No se puede cambiar después." },
+      { key: "nuevoNombre", label: "Nombre de la obra", half: true,
+        placeholder: "AC-220037 · Puentes 1067@1070" },
+    ],
+    onSave: (v) => {
+      if (v.nuevoId && v.nuevoNombre) {
+        const id = String(v.nuevoId).trim().toLowerCase().replace(/\s+/g, "-");
+        if ((db.proyectos || []).some((p) => p.id === id)) {
+          alert(`Ya hay una obra con el identificador «${id}».`);
+          return;
+        }
+        /* La obra nueva NACE VACÍA. No hereda plan ni límites de la anterior:
+           heredarlos sin decirlo sería juzgar hormigón de una obra con la vara
+           de otra. Se ponen en Plan & Datos, a mano y a la vista. */
+        db.proyectos.push({ id, name: String(v.nuevoNombre).trim() });
+        abrirProyecto(id);
+        render(); toast(`Obra «${v.nuevoNombre}» abierta`);
+        /* UNA OBRA NO ESTÁ ABIERTA HASTA QUE TIENE CON QUÉ JUZGAR — Q-62.
+
+           Víctor: «se deben especificar límites y especificaciones cuando se
+           está creando el proyecto».
+
+           Y es lo correcto: una obra sin límites no puede decir si un camión
+           está bien. Antes de esto quedaba creada y muda, y el primer camión
+           llegaba sin nada contra qué medirlo. Así que los tres formularios
+           van encadenados: los datos, la 934 si le rige, y los límites. */
+        formProject(() => {
+          const seguirConLimites = () => formPlan();
+          if (db.project.spec === "934" && typeof formSP934 === "function") formSP934(seguirConLimites);
+          else seguirConLimites();
+        });
+        return;
+      }
+      if (v.obra && v.obra !== db.proyectoActivo) {
+        abrirProyecto(v.obra);
+        render(); toast(`Obra: ${db.project.name || v.obra}`);
+      }
+    },
+  });
+}
+
+function formSP934(alGuardar) {
   const pr = db.project || {};
   openForm({
     title: "SP-934 — " + (pr.name || "esta obra"),
@@ -2332,6 +2408,7 @@ function formSP934() {
       if (uw != null) { db.plan.uw = Object.assign({}, db.plan.uw, { target: uw }); }
       saveDB(); if (typeof render === "function") render();
       toast("SP-934 actualizada");
+      if (typeof alGuardar === "function") alGuardar();
     },
   });
 }

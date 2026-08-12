@@ -81,7 +81,7 @@ main { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
 <script src="assets/sync.js?v=59693f27"></script>
 <script src="assets/sp934.js?v=fbe2c96c"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/core.js?v=939a0863"></script>
+<script src="assets/core.js?v=ed366b7e"></script>
 <script>
 /* La nota va con el panel que explica, no con la pantalla: colgada del
    <main> se colaba debajo de todas las pestañas y le decía al lector de
@@ -113,7 +113,16 @@ function panelObras() {
         : `<button class="btn sm" onclick="if (abrirProyecto('${esc(p.id)}')) render()">Abrir</button>`}</td>
     </tr>`;
   }).join("");
-  return `<section class="panel"><div class="panel-head"><h2>Obras</h2></div>
+  /* Q-62, 10 ago 2026 · Víctor: «en el tiro live todo comienza con Rubén
+     creando el proyecto».
+
+     Así que abrir una obra deja de ser cosa de Plan & Datos y pasa a ser un
+     acto del ingeniero de récord, como declarar los límites con los que se va
+     a juzgar. Va por `qcFirma()`: el técnico ve las obras y cambia entre
+     ellas, pero no abre ninguna. */
+  const puedeAbrir = typeof qcFirma !== "function" || qcFirma();
+  return `<section class="panel"><div class="panel-head"><h2>Obras</h2><div class="spacer"></div>${
+    puedeAbrir ? `<button class="btn small" onclick="formObras()">Abrir obra nueva</button>` : ""}</div>
     <div class="panel-body flush"><div class="table-wrap"><table class="data">
       <tr><th>Obra</th><th class="num">Ensayos</th><th class="num"></th></tr>
       ${filas}
@@ -164,7 +173,7 @@ function tabs() {
     { id: "limites", n: "Límites", pinta: () => panelLimites(true) + NOTA_LIMITES },
     ...(typeof es934 === "function" && es934()
       ? [{ id: "sp934", n: "SP-934", pinta: () => panelSP934(true) }] : []),
-    ...(((db && db.proyectos) || []).length > 1
+    ...(((db && db.proyectos) || []).length > 1 || (typeof qcFirma === "function" && qcFirma())
       ? [{ id: "obras", n: "Obras", pinta: () => panelObras() }] : []),
     { id: "descartados", n: "Descartados", pinta: () => panelDescartados() },
   ];

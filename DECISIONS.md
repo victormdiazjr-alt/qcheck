@@ -2159,3 +2159,41 @@ pantalla.
 coordenadas, importaciones— **toca la navegación y los permisos de diecinueve
 pantallas.** Es el cambio grande que nadie revisa, y no se hace de madrugada
 antes de un vaciado. **Se hace con calma y con el banco de pruebas delante.**
+
+---
+
+## Q-62 · El tiro empieza con Rubén creando la obra — 10 de agosto de 2026
+
+**Víctor:** *«En el tiro live todo comienza con Rubén creando el proyecto.»* Y:
+*«Se deben especificar límites y especificaciones cuando se está creando el
+proyecto. Luego en Settings puede verlas y cambiarlas, solo Rubén.»*
+
+### Tres cosas cambian de sitio, y las tres por el mismo motivo
+
+**Abrir una obra, declarar su especificación y poner sus límites son actos del
+ingeniero de récord** — igual que reabrir un tiro o descartar un vaciado
+(§22). Así que van por **`qcFirma()`**, no por `config`.
+
+| Antes | Ahora |
+|---|---|
+| Crear obras: Plan & Datos (`config`, solo Víctor) | **Settings, pestaña Obras, con firma** |
+| Límites: cualquiera con `limites` | **Se VEN siempre, se CAMBIAN con firma** |
+| Nivel de permeabilidad: Plan & Datos | **Settings, pestaña SP-934** |
+
+**El técnico ve contra qué mide —tiene que verlo— y no lo cambia.**
+
+### Una obra no está abierta hasta que tiene con qué juzgar
+
+Al crearla van **tres formularios encadenados**: los datos, la SP-934 si le rige,
+y los límites. Antes quedaba creada y **muda**: el primer camión llegaba sin nada
+contra qué medirlo.
+
+### Lo que esto descubre de las cuentas
+
+`cuentas.js` **exige 12 caracteres** para cuentas de QC, y acepta claves cortas
+**solo en cuentas de consulta con casa** — con su motivo escrito: *«vale porque
+solo ve contratista.html y no escribe nada»*.
+
+> **Clave corta solo para quien no escribe en el expediente.** Los técnicos
+> escriben, y su nombre queda firmado en cada línea. **El sistema se defiende
+> solo, y defiende exactamente lo que vendemos.**

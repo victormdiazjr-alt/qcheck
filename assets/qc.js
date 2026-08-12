@@ -681,7 +681,7 @@ function resetSeed() {
 }
 
 /* ------------------------------------------------------------ meta forms */
-function formProject() {
+function formProject(alGuardar) {
   openForm({
     title: "Proyecto",
     initial: db.project,
@@ -732,64 +732,14 @@ function formProject() {
       db.project.logos = { contratista: v.logoContratista || "", concretera: v.logoConcretera || "",
                            autoridad: v.logoAutoridad || "" };
       saveDB(); render(); toast("Proyecto actualizado");
+      if (typeof alGuardar === "function") alGuardar();
     },
   });
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   LAS OBRAS — Q-59, 10 de agosto de 2026
+/* `formObras()` vive en core.js desde Q-62: Settings también la necesita, y
+   Settings no carga qc.js. */
 
-   Cambiar de obra y abrir una nueva. No mueve un solo dato: cada ensayo y cada
-   tiro están sellados con la suya desde que se crearon, así que esto solo
-   decide QUÉ SE ESTÁ MIRANDO.
-
-   Va detrás de `qcVeConfig()` a propósito. Abrir una obra nueva es un acto de
-   quien lleva el contrato, no de quien está midiendo un camión. */
-function formObras() {
-  const hoy = (typeof todayISO === "function") ? todayISO() : "";
-  const lista = (db.proyectos || []).map((p) => {
-    const n = (db.tests || []).filter((t) => (t.proyecto || "pr-52") === p.id && !t.borrado).length;
-    const tiroHoy = Object.entries(db.dayMeta || {})
-      .some(([d, m]) => d === hoy && m && (m.proyecto || "pr-52") === p.id);
-    return { value: p.id,
-             label: `${p.name || p.id}${p.id === db.proyectoActivo ? "  ← abierta" : ""}` +
-                    `  ·  ${n} ensayo${n === 1 ? "" : "s"}${tiroHoy ? "  ·  TIRO HOY" : ""}` };
-  });
-  openForm({
-    title: "Obras",
-    initial: { obra: db.proyectoActivo },
-    fields: [
-      { key: "obra", label: "Obra abierta", type: "select", full: true, options: lista,
-        hint: "Cambiar de obra no mueve nada: cada ensayo queda con la suya." },
-      { type: "label", label: "— o abrir una obra nueva —" },
-      { key: "nuevoId", label: "Identificador", half: true, placeholder: "ac-220037",
-        hint: "Corto, sin espacios. No se puede cambiar después." },
-      { key: "nuevoNombre", label: "Nombre de la obra", half: true,
-        placeholder: "AC-220037 · Puentes 1067@1070" },
-    ],
-    onSave: (v) => {
-      if (v.nuevoId && v.nuevoNombre) {
-        const id = String(v.nuevoId).trim().toLowerCase().replace(/\s+/g, "-");
-        if ((db.proyectos || []).some((p) => p.id === id)) {
-          alert(`Ya hay una obra con el identificador «${id}».`);
-          return;
-        }
-        /* La obra nueva NACE VACÍA. No hereda plan ni límites de la anterior:
-           heredarlos sin decirlo sería juzgar hormigón de una obra con la vara
-           de otra. Se ponen en Plan & Datos, a mano y a la vista. */
-        db.proyectos.push({ id, name: String(v.nuevoNombre).trim() });
-        abrirProyecto(id);
-        render(); toast(`Obra «${v.nuevoNombre}» abierta`);
-        formProject();                       // y se completan sus datos ya
-        return;
-      }
-      if (v.obra && v.obra !== db.proyectoActivo) {
-        abrirProyecto(v.obra);
-        render(); toast(`Obra: ${db.project.name || v.obra}`);
-      }
-    },
-  });
-}
 /* ------------------------------------------------------------ boot */
 document.getElementById("main-tabs").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-tab]");
