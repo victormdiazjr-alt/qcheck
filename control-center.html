@@ -95,6 +95,9 @@
 .cc-hero .ex-mezcla { font-size: 11px; color: #8ea6bd; margin-top: 7px;
   letter-spacing: .04em; }
 .cc-hero .cc-cuerpo { flex: 1 1 auto; min-width: 0; }
+/* Q-75: la obra abierta, aquí y no bajo el logo. El logo es del producto. */
+.obra-abierta { font-size: 11px; font-weight: 800; letter-spacing: .16em;
+  text-transform: uppercase; color: #8ea6bd; margin-bottom: 12px; }
 /* fila de arriba: progreso · datos · tiempo. Abajo, las losas de lado a lado. */
 .hero-fila { display: flex; align-items: flex-start; gap: 26px; flex-wrap: wrap; }
 .hero-prog { flex: 1 1 260px; min-width: 240px; }
@@ -588,8 +591,19 @@ function render() {
   const meta = db.dayMeta[day] || {};
   const h = lastHumidity(day);
 
-  document.getElementById("brand-subtitle").textContent =
-    (db.project.name || "") + " · " + (db.project.qcFirm || "");
+  /* LA MARCA ES DEL PRODUCTO, NO DE LA OBRA — Q-75, 10 de agosto de 2026.
+
+     Víctor: «QCheck ya no es de un proyecto específico. Quítale en el logo lo
+     que dice PR-52. Habíamos hecho un motto — que diga el motto.»
+
+     Debajo del logo iba «Reconstrucción PR-52 · Segarra Engineering», y eso
+     ataba el producto a una obra. Ahora va el lema (Q-27, 31 jul 2026).
+
+     Y la obra NO se pierde: se muda a la cabecera del tiro, que es donde se
+     mira el trabajo. Con dos obras vivas, saber cuál está abierta importa más
+     que nunca — quitarlo sin ponerlo en otro sitio habría sido cambiar un
+     problema por otro peor. */
+  document.getElementById("brand-subtitle").textContent = "Build Connected";
 
   // Estado del proyecto: lo primero que debe decir un control center
   const graves = alerts.filter((a) => a.level === "susp").length;
@@ -629,6 +643,7 @@ function render() {
   document.getElementById("app").innerHTML = `
     <div class="cc-hero t-${tiro.cls}">
       <div class="cc-cuerpo">
+        <div class="obra-abierta">${esc(db.project.name || "")}${db.project.qcFirm ? " · " + esc(db.project.qcFirm) : ""}</div>
         ${tiro.listo ? `
         <!-- Q-72b: pasados tres días la cabecera no cuenta el tiro viejo. Ni
              yardas, ni camiones, ni losas: eso ya es historia y vive en Results.

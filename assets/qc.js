@@ -753,8 +753,10 @@ enableLiveSync(() => render());
 window.addEventListener("hashchange", () => { const t = tabFromHash(); if (t) switchTab(t, false); });
 const inicial = tabFromHash();
 if (inicial) state.tab = inicial;   // la pestaña se subraya abajo, tras pintar
-document.getElementById("brand-subtitle").textContent =
-  db.project.name + " · " + (db.project.qcFirm || "QC");
+/* Q-75: bajo el logo va el lema del producto, no la obra. Aquí la obra sí
+   sigue estando a la vista — es el panel «Proyecto» de Plan & Datos y la
+   cabecera de cada vista. */
+document.getElementById("brand-subtitle").textContent = "Build Connected";
 render();
 mountStatusBar();
 document.querySelectorAll("#main-tabs button")
