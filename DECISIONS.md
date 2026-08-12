@@ -2060,3 +2060,45 @@ fecha. No pasa mañana ni el sábado, pero pasará. **Queda dicho, no tapado.**
 Migración en frío sobre el corpus real: **397 de 397 sellados**, la obra nueva ve
 **0 ensayos** y al volver a la PR-52 vuelven a estar **los 397**. `verificar.js`
 sin fallos y `sp934` en **129 bien · 0 mal**.
+
+---
+
+## Q-60 · La sesión deja de perderse al abrir otra pantalla — 10 de agosto de 2026
+
+**Víctor:** *«Asegúrate que después que un usuario se logueó a la sesión no le
+vuelva a pedir login en esa sesión.»*
+
+### Qué pasaba, y por qué mañana habría sido constante
+
+**El acceso vivía en `sessionStorage`, que es POR PESTAÑA.** Cuatro claves:
+`qc-auth`, `qc-user`, `qc-sesion` y `qc-ident`.
+
+- Rubén entra en **Recepción** → dentro.
+- Abre **Field Display** en otra pestaña → **vacío. Le pide la clave otra vez.**
+- El teléfono mata una pestaña de fondo → **otra vez.**
+
+**Y mañana son tres pantallas a la vez.** El propio guardián lo hacía sin saberlo:
+`auth.js` no encontraba `qc-auth` y devolvía al portal.
+
+### Qué se hizo
+
+**Las cuatro claves de la sesión pasan a `localStorage`** — 24 sitios. Con eso la
+sesión es **del aparato**, no de la pestaña: se abren las tres pantallas y sigue
+dentro, y sobrevive a que el navegador se cierre.
+
+**Lo que NO se movió, a propósito:** `sim-fwd` y `qc-fwd`, que son la navegación
+de la simulación. **Esas sí tienen que ser por pestaña**, o dos ventanas de la
+demostración se pisarían.
+
+### Quién decide cuándo se acaba
+
+**El servidor, y esto no cambia.** `_echar()` borra las cuatro y devuelve al
+portal en cuanto una petición vuelve sin sesión válida. **Que el cliente recuerde
+más tiempo no alarga el permiso**: alarga la comodidad. El permiso sigue siendo
+del pase que da el servidor.
+
+### Comprobado
+
+En el navegador, contra un servidor de prueba: sesión puesta en una pestaña,
+**abierta otra en `muestras.html` y entró directa**, sin pasar por el portal.
+`verificar.js` sin fallos.

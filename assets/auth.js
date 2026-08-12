@@ -4,7 +4,7 @@
    La autenticación de verdad llega con el backend propio. */
 (function () {
   var aqui = location.pathname.split("/").pop();
-  if (sessionStorage.getItem("qc-auth") !== "1") {
+  if (localStorage.getItem("qc-auth") !== "1") {
     location.replace("index.html?next=" + encodeURIComponent(aqui + location.search + location.hash));
     return;
   }

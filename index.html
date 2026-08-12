@@ -207,7 +207,7 @@ button:active { transform: scale(.98); }
   </div>
 </form>
 
-<script src="assets/usuarios.js?v=03f894c7"></script>
+<script src="assets/usuarios.js?v=74329e69"></script>
 <script>
 "use strict";
 
@@ -273,8 +273,8 @@ async function entrarEnServidor(u, p) {
   if (r.status === 401) return null;         // preguntamos y la respuesta fue que no
   if (!r.ok) return undefined;               // 501 sin cuentas dadas de alta, 500, …
   const s = await r.json();
-  sessionStorage.setItem("qc-sesion", s.tk);
-  sessionStorage.setItem("qc-ident", JSON.stringify(s.usuario));
+  localStorage.setItem("qc-sesion", s.tk);
+  localStorage.setItem("qc-ident", JSON.stringify(s.usuario));
   return s.usuario;
 }
 
@@ -297,8 +297,8 @@ async function entrar(e) {
     || (delServidor === undefined && QC_CUENTAS[u] && QC_CUENTAS[u].clave === p ? QC_CUENTAS[u] : null);
 
   if (cuenta) {
-    sessionStorage.setItem("qc-auth", "1");
-    sessionStorage.setItem("qc-user", u);
+    localStorage.setItem("qc-auth", "1");
+    localStorage.setItem("qc-user", u);
     /* Cada acceso arranca un tiro nuevo de la simulación: quien entra se
        encuentra siempre el mismo punto de partida —yarda 90, último camión
        hace 3 minutos— y no lo que dejó a medias la visita anterior.

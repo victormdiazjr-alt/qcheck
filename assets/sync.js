@@ -133,7 +133,7 @@ function qcCambios(antes, ahora) {
      pase de sesión, el servidor lo pisa con quien de verdad está dentro. Se
      sigue mandando porque un servidor con `exigir_sesion` apagada —o el local
      de la obra sin cuentas dadas de alta— todavía se apoya en ello. */
-  const usr = sessionStorage.getItem("qc-user") || "?";
+  const usr = localStorage.getItem("qc-user") || "?";
   const anota = (ent, id, campo, valor) => ops.push({
     uid: dev + "|" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     ent, id, campo, valor: valor === undefined ? null : valor, ts, dev, usr,
@@ -280,7 +280,7 @@ const QCSync = {
        con el nombre de quien de verdad está dentro, en vez de creerle al
        cuerpo del POST. Sin él, el aparato solo puede escribir mientras
        `exigir_sesion` siga apagada. */
-    const ses = sessionStorage.getItem("qc-sesion");
+    const ses = localStorage.getItem("qc-sesion");
     if (ses) cabeceras["X-QC-Sesion"] = ses;
     const r = await fetch(qcApiURL() + ruta, Object.assign({ headers: cabeceras }, opciones || {}));
     /* Los dos 401 no son el mismo problema y no se arreglan igual: la llave
@@ -361,7 +361,7 @@ const QCSync = {
     const pagina = (location.pathname.split("/").pop() || "index.html");
     this._pedir("/api/latido", {
       method: "POST",
-      body: JSON.stringify({ dev: qcAparato(), usr: sessionStorage.getItem("qc-user") || "?", pagina }),
+      body: JSON.stringify({ dev: qcAparato(), usr: localStorage.getItem("qc-user") || "?", pagina }),
     }).then((r) => { if (r && r.fuera) this._echar(); }).catch(() => {});
   },
 
@@ -389,10 +389,10 @@ const QCSync = {
     this._echado = true;
     localStorage.removeItem(QC_API_URL);
     localStorage.removeItem(QC_API_TOKEN);
-    sessionStorage.removeItem("qc-auth");
-    sessionStorage.removeItem("qc-user");
-    sessionStorage.removeItem("qc-sesion");
-    sessionStorage.removeItem("qc-ident");
+    localStorage.removeItem("qc-auth");
+    localStorage.removeItem("qc-user");
+    localStorage.removeItem("qc-sesion");
+    localStorage.removeItem("qc-ident");
     location.href = "index.html?fuera=1";
   },
 

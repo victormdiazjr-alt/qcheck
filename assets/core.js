@@ -306,7 +306,7 @@ async function cerrarVentana() {
    cambiar un problema por otro peor. */
 function salirDeQCheck() {
   if (!confirm("¿Salir de QCheck?\n\nHabrá que entrar otra vez con usuario y clave.")) return;
-  const pase = sessionStorage.getItem("qc-sesion");
+  const pase = localStorage.getItem("qc-sesion");
   const api = (localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
   if (pase && api) {
     const cab = { "Content-Type": "application/json", "X-QC-Sesion": pase };
@@ -314,10 +314,10 @@ function salirDeQCheck() {
     if (tk) cab["X-QC-Token"] = tk;
     try { fetch(api + "/api/sesion/salir", { method: "POST", headers: cab, keepalive: true }); } catch (_) {}
   }
-  sessionStorage.removeItem("qc-auth");
-  sessionStorage.removeItem("qc-user");
-  sessionStorage.removeItem("qc-sesion");
-  sessionStorage.removeItem("qc-ident");
+  localStorage.removeItem("qc-auth");
+  localStorage.removeItem("qc-user");
+  localStorage.removeItem("qc-sesion");
+  localStorage.removeItem("qc-ident");
   location.href = "index.html";
 }
 const ICONO_SALIR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5H19a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5h-4.5"/><path d="M9.5 16 5.5 12l4-4"/><path d="M5.5 12h9"/></svg>`;
@@ -2258,7 +2258,7 @@ function formPlan(alGuardar) {
         tempMax: v.tMax, maxElapsedMin: v.elMax,
         cs: { target: v.cT, age: v.cAge, action: v.cA, openTarget: v.cOT, openLow: v.cOL },
         maWindow: v.maW,
-      }, (quien && (quien.nombre || quien.usr)) || sessionStorage.getItem("qc-user") || "?");
+      }, (quien && (quien.nombre || quien.usr)) || localStorage.getItem("qc-user") || "?");
       /* Results repinta con `render()`; Settings con lo suyo. Se pasa qué
          hacer en vez de llamar a `render()` a ciegas, que solo existe en
          Results y dejaba la pantalla de Settings sin refrescar. */
@@ -2860,7 +2860,7 @@ function cerrarTiro(day) {
      campo no lo mira nadie, así que aquí hay que ponerlo bien de origen. */
   const quien = qcCuenta();
   db.dayMeta[d].cerradoPor = (quien && (quien.nombre || quien.usr))
-    || sessionStorage.getItem("qc-user") || "?";
+    || localStorage.getItem("qc-user") || "?";
   saveDB();
   return true;
 }
@@ -2925,7 +2925,7 @@ function descartarTiro(day, motivo) {
   db.dayMeta[d].borradoMotivo = String(por).trim();
   const quien = qcCuenta();
   db.dayMeta[d].borradoPor = (quien && (quien.nombre || quien.usr))
-    || sessionStorage.getItem("qc-user") || "?";
+    || localStorage.getItem("qc-user") || "?";
   db.dayMeta[d].borradoA = new Date().toISOString();
   saveDB();
   return true;

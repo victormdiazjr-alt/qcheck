@@ -62,7 +62,7 @@ const QC_CUENTAS = {
 
 /* La ficha que mandó el servidor al entrar, si la hay. */
 function qcIdentidad() {
-  try { return JSON.parse(sessionStorage.getItem("qc-ident")) || null; } catch (_) { return null; }
+  try { return JSON.parse(localStorage.getItem("qc-ident")) || null; } catch (_) { return null; }
 }
 
 /* Quién es el que está dentro. El servidor primero; la lista local solo
@@ -70,7 +70,7 @@ function qcIdentidad() {
 function qcCuenta() {
   const ficha = qcIdentidad();
   if (ficha) return ficha;
-  return QC_CUENTAS[sessionStorage.getItem("qc-user")] || null;
+  return QC_CUENTAS[localStorage.getItem("qc-user")] || null;
 }
 
 /* El papel se deduce del usuario en cada comprobación, no se guarda:
