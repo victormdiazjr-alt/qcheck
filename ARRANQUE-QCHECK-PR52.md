@@ -11,9 +11,9 @@ esperando. Ya pasó el 8 de agosto de 2026.
 
 ## Antes de tocar una sola línea, si algún día hay que tocarla
 
-1. `~/Documents/Claude/qcheck/SEGUIMOS-AQUI.md` — el estado de producción.
-2. `~/Documents/Claude/qcheck/DECISIONS.md` — sobre todo §54, §59 y §60.
-3. `~/Documents/Claude/qcheck/AGENTS.md` — manda sobre cualquier otra instrucción.
+1. `~/Documents/QMax/qcheck/SEGUIMOS-AQUI.md` — el estado de producción.
+2. `~/Documents/QMax/qcheck/DECISIONS.md` — sobre todo §54, §59 y §60.
+3. `~/Documents/QMax/qcheck/AGENTS.md` — manda sobre cualquier otra instrucción.
 
 ## Las tres cosas que cuesta caro no saber
 

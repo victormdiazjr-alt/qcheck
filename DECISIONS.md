@@ -1582,7 +1582,7 @@ por uno con `curl`: 200 en todos.
 
 ### Las dos causas, que son independientes
 
-1. **Un `wrangler.jsonc` en la carpeta de arriba** (`~/Documents/Claude`) con
+1. **Un `wrangler.jsonc` en la carpeta de arriba** (`~/Documents/QMax`) con
    `"assets": { "directory": "qcheck" }`. Wrangler sube por el árbol buscando
    configuración, y lo encontraba **antes** que `qcheck/wrangler.toml`. Así que
    `deploy` desde `qcheck` desplegaba otro proyecto, con otro nombre.

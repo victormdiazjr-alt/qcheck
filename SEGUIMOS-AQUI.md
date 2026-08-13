@@ -78,7 +78,7 @@ urgente.
    aritmética la escribe él (ya tiene la Reed-Solomon del generador), la
    geometría la ponemos aquí. Él avisa cuando cierre lo de separar concreteras.
 4. **El banco**: los 13 conduces por confirmar, el conduce alterado, y meter los
-   del tiro cuando existan. Ver `~/Documents/Claude/qbanco/ESTADO.md`.
+   del tiro cuando existan. Ver `~/Documents/QMax/qbanco/ESTADO.md`.
 5. **Sin demostrar**: que el lector use los nombres del esquema al marcar un
    campo manuscrito. Hace falta un conduce con, por ejemplo, el número de
    conduce escrito a mano.
@@ -127,11 +127,11 @@ Un aviso que nunca salta es peor que no tenerlo, porque da tranquilidad falsa.
 
 ## 7 · Dónde está cada cosa
 
-- `~/Documents/Claude/qcheck` — QCheck. Repo público, `datos/` fuera.
-- `~/Documents/Claude/qbanco` — el banco: corpus, reglas del oficio y la medida.
+- `~/Documents/QMax/qcheck` — QCheck. Repo público, `datos/` fuera.
+- `~/Documents/QMax/qbanco` — el banco: corpus, reglas del oficio y la medida.
   **Repo local sin remoto a propósito**: `datos/` lleva conduces de cliente.
-- `~/Documents/Claude/qticket` — QTicket, otra sesión de Claude lo lleva. Se le
+- `~/Documents/QMax/qticket` — QTicket, otra sesión de Claude lo lleva. Se le
   habla con `send_message`. Hay contrato escrito en
   `qcheck/docs/integracion-qticket.md`.
-- `~/Documents/Claude/wrangler.jsonc.DESACTIVADO` — **no lo reactives sin leer
+- `~/Documents/QMax/wrangler.jsonc.DESACTIVADO` — **no lo reactives sin leer
   el LEEME de al lado.** Publicó la carpeta entera con las llaves dentro.
