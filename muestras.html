@@ -431,12 +431,31 @@ footer .spacer { flex: 1; }
 
 <footer id="foot"></footer>
 
+<!-- ACEPTAR AUNQUE ESTÉ FUERA DE LÍMITE — Q-98, 14 ago 2026.
+
+     Lo pidió Rubén con un camión parado delante: estaba fuera de límite y la
+     pantalla **solo ofrecía rechazar**. No hay ninguna norma que diga que un
+     camión fuera de límite se rechaza siempre; lo que dice la 934 es quién
+     decide. **El que decide es el ingeniero de récord, y estaba mirando una
+     pantalla que no le dejaba decidir.**
+
+     Las tres salidas van juntas y con el mismo peso visual, porque las tres
+     son decisiones de verdad y ninguna es «la buena»:
+       · Cancelar        — todavía no decido; el camión sigue esperando.
+       · Aceptar igual   — lo acepto sabiendo que se salió, y queda escrito.
+       · Sí, rechazar    — se rechaza y se anuncia.
+
+     Lo que NO puede pasar es que aceptar fuera de límite se parezca a aceptar
+     dentro. Por eso no se toca el botón normal de enviar: se acepta desde
+     aquí, después de haber visto en qué se salió. **Un permiso que no deja
+     rastro es peor que no tenerlo.** -->
 <div id="confirm">
   <div class="cbox">
-    <h2>Confirmar rechazo</h2>
+    <h2 id="confirm-tit">Este camión se salió de límite</h2>
     <p id="confirm-txt"></p>
     <div class="row">
       <button class="btn-ghost" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn-sub" onclick="doSubmit(false, true)">Aceptar igual</button>
       <button class="btn-sub rej" onclick="doSubmit(true)">Sí, rechazar</button>
     </div>
   </div>
@@ -467,7 +486,7 @@ footer .spacer { flex: 1; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=286507eb"></script>
-<script src="assets/core.js?v=a3446f4b"></script>
+<script src="assets/core.js?v=48c1896d"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -928,15 +947,38 @@ function askSubmit() {
   if (!v.ready) return;
   if (v.bad) {
     const t = currentTest();
+    /* Se dice EN QUÉ se salió, no solo que se salió. El que decide está de pie
+       al lado del camión y no va a irse a otra pantalla a buscarlo. */
+    const fuera = camposFueraDeLimite();
+    const lista = fuera.length
+      ? `Se salió en <b>${fuera.map((f) => esc(f.label)).join("</b>, <b>")}</b>.`
+      : "";
     document.getElementById("confirm-txt").innerHTML =
       `Camión <b>${esc(t.truck || "—")}</b>, ticket <b>${esc(t.ticket || "—")}</b>.<br>
-       El Field Display anunciará RECHAZADO y se notificará a todas las partes.`;
+       ${lista}<br>
+       <b>Aceptar igual</b> lo da por bueno y deja escrito que lo aceptaste fuera de límite.<br>
+       <b>Sí, rechazar</b> lo anuncia en el Field Display y avisa a todas las partes.`;
     document.getElementById("confirm").classList.add("show");
   } else doSubmit(false);
 }
 function closeConfirm() { document.getElementById("confirm").classList.remove("show"); }
 
-function doSubmit(rejected) {
+/* EN QUÉ se salió este camión — Q-98.
+   Se calcula con las mismas funciones que pintan la pantalla, no con una copia
+   de los límites: si mañana cambia el plan de la obra, esto cambia con él. */
+function camposFueraDeLimite() {
+  const t = currentTest();
+  const uwT = t ? (num(t.uwTarget) ?? db.plan.uw.target) : db.plan.uw.target;
+  const p = { slump: state.buf.slump, uw: state.buf.uw, air: state.buf.air, temp: state.buf.temp, uwTarget: uwT };
+  return [
+    { key: "slump", label: "Slump",       z: zoneSlump(p), v: p.slump },
+    { key: "uw",    label: "Unit Weight", z: zoneUW(p),    v: p.uw },
+    { key: "air",   label: "Aire",        z: zoneAir(p),   v: p.air },
+    { key: "temp",  label: "Temperatura", z: zoneTemp(p),  v: p.temp },
+  ].filter((f) => f.z === "susp");
+}
+
+function doSubmit(rejected, forzado) {
   /* Q-41: un vaciado cerrado no acepta resultados nuevos salvo del ingeniero
      de récord. Se avisa con el motivo, no con un botón que no responde. */
   const _t = currentTest();
@@ -947,10 +989,30 @@ function doSubmit(rejected) {
   t.air = state.buf.air; t.temp = state.buf.temp;
   if (!t.testTime) t.testTime = nowHM();
   t.rejected = !!rejected;
+  /* ACEPTADO FUERA DE LÍMITE — Q-98, 14 ago 2026.
+
+     Cuando el ingeniero acepta un camión que se salió, eso NO puede quedar
+     igual que un camión que entró dentro. Se guarda **en qué se salió y con
+     qué valor**, con la hora. Quién lo hizo no hace falta apuntarlo aquí: cada
+     línea del expediente ya va firmada con la cuenta que está dentro.
+
+     Va como campo del ensayo, así que viaja solo al servidor —`qcProyectar`
+     manda todo lo que no sea derivado— y entra en el expediente como una línea
+     más, que solo añade. **Una decisión así tiene que poder enseñarse dentro de
+     un año**, y para entonces nadie se va a acordar. */
+  if (forzado && !rejected) {
+    const fuera = camposFueraDeLimite();
+    if (fuera.length) {
+      t.aceptadoFuera = fuera.map((f) => `${f.label} ${f.v}`).join(" · ");
+      t.aceptadoFueraAt = nowHM();
+    }
+  }
   t.resultsAt = nowHM();          // dispara el anuncio en el Field Display
   saveDB();
   rejected ? snd.bad() : snd.ok();
-  toast(rejected ? `Camión ${t.truck || ""} RECHAZADO` : `Resultados enviados · camión ${t.truck || ""}`);
+  toast(rejected ? `Camión ${t.truck || ""} RECHAZADO`
+      : forzado ? `Camión ${t.truck || ""} aceptado FUERA DE LÍMITE`
+      : `Resultados enviados · camión ${t.truck || ""}`);
   /* El camión queda cerrado: se sueltan los cuatro campos y la pantalla vuelve
      a la fila. `render()` engancha solo al próximo camión que esté esperando;
      si no hay ninguno, se queda en espera. Lo que NO puede hacer es seguir

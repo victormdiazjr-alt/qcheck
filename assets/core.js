@@ -1293,6 +1293,18 @@ function aMedias(t) {
 
 function estadoBadge(t) {
   if (t.rejected) return `<span class="badge susp">RECHAZADO</span>`;
+  /* ACEPTADO FUERA DE LÍMITE — Q-98, 14 ago 2026.
+
+     Va justo detrás de RECHAZADO y delante de todo lo demás, porque es lo
+     segundo más importante que se puede decir de un camión. Sin esto, un
+     camión que el ingeniero aceptó a sabiendas se vería en la lista **igual
+     que uno que entró dentro de límite**, y la decisión desaparecería de la
+     vista aunque siguiera guardada.
+
+     `title` lleva en qué se salió, para quien pase el ratón sin abrir nada. */
+  if (t.aceptadoFuera) {
+    return `<span class="badge act" title="Aceptado fuera de límite — ${esc(t.aceptadoFuera)}">ACEPTADO FUERA</span>`;
+  }
   /* Va DESPUÉS de rechazado a propósito: los cuatro ensayos del histórico que
      tienen lecturas sueltas están todos rechazados, así que ninguno cambia de
      aspecto por esto. Se comprobó uno a uno. */
