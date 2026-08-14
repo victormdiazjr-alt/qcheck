@@ -233,8 +233,22 @@ body { background: var(--bg); }
              hasta que se cierra el tiro. Ver CAMPOS_CAMION. -->
         <div class="field"><label>Ticket / Conduce *</label><input id="f-ticket" inputmode="numeric" placeholder="66861"></div>
         <div class="field"><label>Camión *</label><input id="f-truck" inputmode="numeric" placeholder="102"></div>
-        <!-- El volumen también recalcula la pista: el reparto se juzga contra él. -->
-        <div class="field"><label>Volumen (CY) *</label><input id="f-vol" inputmode="decimal" value="10" oninput="pistaReparto()"></div>
+        <!-- El volumen también recalcula la pista: el reparto se juzga contra él.
+
+             EMPIEZA VACÍO — Q-91, 14 ago 2026. Traía `value="10"` de fábrica, y
+             el lector NO pisa un campo que ya tiene valor (`leerDeLaFoto`). O
+             sea: **el lector no podía rellenar las yardas nunca.** Un camión
+             entrado por foto se guardaba con 10 aunque el conduce dijera 8.5, y
+             nadie se enteraba — el 10 se ve normal.
+
+             Son las yardas: de ellas salen el avance del tiro, las cantidades
+             que se facturan y el reporte que se firma. 1.5 yardas inventadas
+             por camión, en un tiro de tres, son casi dos yardas y media de
+             ficción.
+
+             Se queda de marcador de posición, que sugiere sin escribir. Un hueco
+             se ve; un dato inventado se firma. -->
+        <div class="field"><label>Volumen (CY) *</label><input id="f-vol" inputmode="decimal" placeholder="10" oninput="pistaReparto()"></div>
         <div class="field"><label>Hora batch (del conduce) *</label><input id="f-batch" type="time">
           <button class="now-btn" onclick="setNow('f-batch')">AHORA</button></div>
         <div class="field"><label>Llegada *</label><input id="f-arrive" type="time">
@@ -290,7 +304,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=286507eb"></script>
-<script src="assets/core.js?v=3152a138"></script>
+<script src="assets/core.js?v=fada8041"></script>
 <!-- Q-89: las tablas de la SP-934. Desde aquí se CREA un tiro, y un tiro de
      la 934 pregunta su clase y su ventana de aceptacion al nacer. Sin esto,
      `formSP934()` reventaba en silencio dentro del `setTimeout` y la pregunta
@@ -1110,7 +1124,9 @@ function saveArrival() {
   document.getElementById("photo-slot").innerHTML = "";
   ["f-ticket", "f-truck", "f-ident", "f-batch", "f-arrive", "f-mix"].forEach((id) => document.getElementById(id).value = "");
   pistaReparto();   // el camión siguiente empieza sin la pista del anterior
-  document.getElementById("f-vol").value = "10";
+  /* Q-91: y al limpiar tampoco se vuelve a poner el 10, que era lo que rearmaba
+     la trampa para el camión siguiente. */
+  document.getElementById("f-vol").value = "";
   render();
   /* Registrado, y si algo entró en blanco se dice AQUÍ y con nombres: es el
      único momento en que el técnico sabe todavía qué camión era. Un aviso al

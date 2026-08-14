@@ -1275,7 +1275,25 @@ function diaPorDefecto() {
 }
 
 
-function testDates() { return [...new Set(vivos(db.tests).map((t) => t.date))].sort().reverse(); }
+/* LOS DÍAS QUE TIENEN CAMIONES — Q-91, 14 ago 2026.
+
+   Dos arreglos, los dos vistos en la simulación del tiro de 25.5 yardas:
+
+   **Sin fecha no es un día.** Esto era `.map((t) => t.date)` a secas, así que un
+   ensayo sin fecha metía `null` en la lista — y `null` ordena ANTES que
+   cualquier fecha, así que se ponía el primero y el reporte lo abría solo:
+   decía «sin camiones registrados» con el tiro entero dentro y la barra de
+   arriba marcando 100 %. Quedó apuntado el 13 de agosto como pendiente y no se
+   había hecho.
+
+   **Y son los días de ESTA obra.** Se leía `db.tests` entero, sin filtrar, así
+   que el reporte del AC-220037 ofrecía los veintinueve días de la PR-52 en su
+   desplegable. `sortedTests()` ya filtra por la obra abierta desde Q-59: aquí
+   faltaba. Mirar los números de una obra bajo el nombre de otra es lo que este
+   sistema existe para impedir. */
+function testDates() {
+  return [...new Set(sortedTests().map((t) => t.date).filter(Boolean))].sort().reverse();
+}
 
 /* Retira todo lo registrado en un día. Es lo que hace falta antes del primer
    tiro de verdad: durante las pruebas se reciben camiones que no son del

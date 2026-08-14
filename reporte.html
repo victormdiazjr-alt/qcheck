@@ -240,7 +240,7 @@ table.rep td.dif { font-weight: 700; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=286507eb"></script>
-<script src="assets/core.js?v=3152a138"></script>
+<script src="assets/core.js?v=fada8041"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -738,9 +738,36 @@ function renderDiario() {
      llegan, así que contarlas daría siempre el 100 %—: vale lo que declararon
      o la estimación del tramo, y en la hoja va con «≈» para que quien firme
      sepa que ese denominador no es un plan declarado losa por losa. */
-  const losasReal = losas.length ? hechas : prog.losasDone;
-  const losasPlan = tramo ? prog.losasPlan : (losas.length || prog.losasPlan);
+  let losasReal = losas.length ? hechas : prog.losasDone;
+  let losasPlan = tramo ? prog.losasPlan : (losas.length || prog.losasPlan);
   const losasAprox = prog.losasPlanEstim ? "≈" : "";
+
+  /* Y SI NO SON LOSAS, SE CUENTA LO QUE SEA — Q-91, 14 ago 2026.
+
+     `losasDelDia()` reconoce códigos de losa (`L3-0.443`) y nada más, así que en
+     un tiro de VIGAS no encontraba ninguna y el informe decía «Se vaciaron 0 de
+     2 losas planificadas» — con las dos vigas hormigonadas, y llamándolas losas.
+     Dos mentiras en una línea de un papel que se firma.
+
+     Fuera de las losas no hay códigos que interpretar: la pieza es lo que el
+     técnico escribió en el camión. Se cuentan las distintas que recibieron
+     hormigón, y el plan es lo que declaró el tiro. Nada se deduce ni se
+     numera solo — eso es la regla dura de AGENTS §4 y vale para todas. */
+  const meta934 = db.dayMeta[day] || {};
+  const estructura = meta934.estructura || "losas";
+  const pieza = (typeof PIEZA_DE !== "undefined" && PIEZA_DE[estructura]) || { plural: "losas" };
+  const Pieza = pieza.plural.charAt(0).toUpperCase() + pieza.plural.slice(1);
+  if (estructura !== "losas") {
+    const puestas = new Set();
+    for (const t of testsOfDate(day)) {
+      if (t.rejected) continue;
+      const id = String(t.ident || "").trim();
+      if (id) puestas.add(id.toUpperCase());
+    }
+    losasReal = puestas.size;
+    const declaradas = String(meta934.losas || "").split(",").map((s) => s.trim()).filter(Boolean);
+    losasPlan = num(meta934.losasPlan) || declaradas.length || 0;
+  }
 
   /* Las cartas van de dos en dos por hoja: cuatro no caben en una página de
      carta. Slump y Unit Weight primero, que es lo que Rubén mira. Una lectura
@@ -784,7 +811,19 @@ function renderDiario() {
   /* El identificador del informe se DEDUCE del proyecto y del día, no se
      inventa ni se lleva un contador: el mismo vaciado emite siempre el mismo
      número, y dos copias del mismo día son la misma copia. */
-  const idInforme = `QC-${(db.project.mixId || "PR52").split("-")[0].replace(/\s+/g, "")}-${day.replace(/-/g, "")}`;
+  /* EL NÚMERO DEL INFORME LLEVA LA OBRA — Q-91, 14 ago 2026.
+
+     Salía de `db.project.mixId`, que es el código de la MEZCLA, y si la obra no
+     tenía una suelta caía en un «PR52» escrito a mano. Resultado: el informe
+     técnico del AC-220037 se emitía numerado **QC-PR52-20260814**, con el
+     número de contrato de otra obra en la cabecera de un papel que se firma.
+
+     Lo que identifica un informe es la obra y el día. La obra ya tiene un
+     identificador corto y único —`pr-52`, `ac-220037`—, que es justamente su
+     número de contrato: se usa ése. */
+  const obraDelInforme = String(db.project.id || "").toUpperCase()
+    || String(db.project.name || "").split(/[·\s]/)[0].toUpperCase() || "OBRA";
+  const idInforme = `QC-${obraDelInforme}-${day.replace(/-/g, "")}`;
 
   const veredicto = enCurso
     ? { cls: "curso", t: "Vaciado en curso", d: "Las cifras son las de este momento. Emítase de nuevo al cerrar el tiro." }
@@ -811,9 +850,9 @@ function renderDiario() {
     plantas.length ? ` desde ${plantas.length === 1 ? "la planta" : "las plantas"} ${esc(plantas.join(" y "))}` : ""}.`);
   if (tramo) {
     trozos.push(`El tramo declarado fue <b>${esc(tramo.carril)}-${tramo.desde.toFixed(3)} a ${tramo.hasta.toFixed(3)}</b>
-      (${tramo.metros} m), sobre el que recibieron hormigón <b>${losasReal}</b> losas.`);
+      (${tramo.metros} m), sobre el que recibieron hormigón <b>${losasReal}</b> ${pieza.plural}.`);
   } else if (losasPlan) {
-    trozos.push(`Se vaciaron <b>${losasReal}</b> de <b>${losasPlan}</b> losas planificadas.`);
+    trozos.push(`Se vaciaron <b>${losasReal}</b> de <b>${losasPlan}</b> ${pieza.plural} planificadas.`);
   }
 
   const ritmo = [];
@@ -927,9 +966,9 @@ function renderDiario() {
         <div class="k">Dentro de límites</div>
         <div class="v">${prog.compliancePct != null ? fmt(prog.compliancePct, 1) + "%" : "—"}</div>
         <div class="s">${prog.conforming} de ${prog.evaluated} evaluados</div></div>
-      <div class="kpi"><div class="k">Losas vaciadas</div>
+      <div class="kpi"><div class="k">${Pieza} vaciadas</div>
         <div class="v">${losasReal}${losasPlan ? ` <span style="font-size:11pt; color:#5a6b7c">/ ${losasAprox}${losasPlan}</span>` : ""}</div>
-        <div class="s">${!losasPlan ? "sin plan de losas" : tramo ? `tramo ${esc(tramo.carril)}-${tramo.desde.toFixed(3)} → ${tramo.hasta.toFixed(3)}` : "de las planificadas"}</div></div>
+        <div class="s">${!losasPlan ? "sin plan de " + pieza.plural : tramo ? `tramo ${esc(tramo.carril)}-${tramo.desde.toFixed(3)} → ${tramo.hasta.toFixed(3)}` : "de las planificadas"}</div></div>
     </div>
 
     <h2 class="sec">Plan contra lo real</h2>
@@ -938,7 +977,7 @@ function renderDiario() {
       <tr><td class="lbl">Yardas (yd³)</td>
         <td class="n">${prog.cyPlan != null ? fmt(prog.cyPlan, 1) : "—"}</td>
         <td class="n">${fmt(prog.placed, 1)}</td>${dif(prog.placed, prog.cyPlan)}</tr>
-      <tr><td class="lbl">Losas${tramo ? ` <span style="font-weight:400; color:#5a6b7c">— tramo ${esc(tramo.carril)}-${tramo.desde.toFixed(3)} → ${tramo.hasta.toFixed(3)}, ${tramo.metros} m</span>` : ""}</td>
+      <tr><td class="lbl">${Pieza}${tramo ? ` <span style="font-weight:400; color:#5a6b7c">— tramo ${esc(tramo.carril)}-${tramo.desde.toFixed(3)} → ${tramo.hasta.toFixed(3)}, ${tramo.metros} m</span>` : ""}</td>
         <td class="n">${losasPlan ? losasAprox + losasPlan : "—"}</td><td class="n">${losasReal}</td>${dif(losasReal, losasPlan || null, 0)}</tr>
       ${losasFuera && losasFuera.length ? `<tr><td class="lbl">Vaciadas fuera del tramo declarado</td>
         <td class="n">—</td><td class="n">${losasFuera.length}</td><td class="n">${losasFuera.map(esc).join(", ")}</td></tr>` : ""}
@@ -973,10 +1012,10 @@ function renderDiario() {
   pg++;
   const hayCompartida = losas.some((l) => l.compartida);
   out.push(`<div class="sheet">
-    ${sheetHead("Losas del vaciado", fmtDate(day))}
-    <h2 class="sec">Losas tiradas</h2>
+    ${sheetHead(Pieza + " del vaciado", fmtDate(day))}
+    <h2 class="sec">${Pieza} tiradas</h2>
     ${losas.length ? `<table class="rep">
-      <tr><th>Losa</th><th class="n">Planificado (yd³)</th><th class="n">Colocado (yd³)</th>
+      <tr><th>${Pieza.replace(/s$/, "")}</th><th class="n">Planificado (yd³)</th><th class="n">Colocado (yd³)</th>
           <th class="n">Cargas</th><th class="n">Avance</th><th>Estado</th></tr>
       ${losas.map((l) => `<tr>
         <td>${esc(l.codigo)}</td>
