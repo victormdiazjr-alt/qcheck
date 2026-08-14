@@ -2500,3 +2500,72 @@ que no.** Se pide cuando de verdad hay algo que decir.
 **Comprobado en pantalla:** con dos aparatos ya dentro, **0 avisos** al abrir; al
 entrar un tercero, **sonido y notificación con quién y en qué pantalla**; y sin
 cambios, **0 avisos**.
+
+---
+
+## Q-86 · Las 397 fichas vacías, y por qué el expediente decía 816 ensayos cuando tenía 419 — 13 de agosto de 2026
+
+**Encontrado auditando el expediente entero a petición de Víctor**, reconstruyéndolo
+desde el registro de cambios. El conteo no cuadraba: **816 ensayos vivos, y solo 419
+con un dato dentro.** Los otros **397 tenían un único campo: la concretera.** Sin
+fecha, sin ticket, sin yardas.
+
+No eran ensayos perdidos. **Eran los 397 del Excel, duplicados** — cada uno con su
+gemelo completo guardado aparte con id `t-seed-N`. Cero huérfanos: se comprobó uno
+por uno antes de tocar nada.
+
+### Cómo llegaron ahí. Tres piezas que por separado están bien
+
+1. **Los 397 ensayos del histórico viven DENTRO del programa**, en `assets/seed.js`.
+   Se cargan solos la primera vez que se abre la app. **Nadie los escribió nunca**, y
+   por eso nunca viajaron al servidor.
+2. **`qcIdDe()` le da a un ensayo del Excel el id `"x" + n`**, a propósito: así sale
+   idéntico en todos los aparatos, que vienen del mismo seed.
+3. **`qcCambios()` compara la foto anterior con la de ahora y manda los campos que
+   cambian, no el ensayo.** Es lo que hace que QCheck funcione sin señal.
+
+El 1 de agosto de 2026 a las 15:38:04, en el aparato «Vik», `migrarBase()` hizo lo
+suyo: vio que a esos 397 ensayos les faltaba `company` y **se lo rellenó**
+(`if (!t.company) t.company = plantCompany(t.plant)`).
+
+Para `qcCambios()` eso fue un cambio de un campo. Subió **397 apuntes sueltos**
+(seq 331–727). **El servidor nunca había visto esos ensayos** —porque venían dentro
+del programa— así que hizo lo único que sabe hacer: **creó 397 fichas nuevas con ese
+único dato dentro.**
+
+Dos de ellas —`x365` y `x366`— alguien las editó después desde el iPhone y les puso
+fecha. Por eso **el 11 de julio salía con quince camiones y solo trece tenían
+ticket**.
+
+> **La foto de «lo que ya estaba sincronizado» incluía datos que nunca se
+> sincronizaron.** Un aparato daba por enviado todo lo que tenía, y lo que tenía de
+> nacimiento no lo había enviado nadie.
+
+### Lo que se hizo
+
+Las 397 se marcaron **descartadas** con el mismo marcado que usa la app —`borrado`,
+`borradoMotivo`, `borradoPor`, `borradoA`— firmadas por Víctor Díaz (admin) desde
+`dev: auditoria-20260813`. **No se borró una sola línea**: quedan en el archivo y se
+pueden devolver. Comprobado bajando el expediente del servidor: **419 vivos, 397
+descartados, cero fichas vacías**, el histórico del Excel entero (403 ensayos,
+2025-11-25 → 2026-08-01) y el 11 de julio con **13 camiones, todos con ticket**.
+
+### Lo que falta para que no pueda repetirse
+
+**Sigue vivo.** Un aparato nuevo que cargue el seed y esté conectado volvería a
+subir esos 397 apuntes. Hoy haría menos daño —las fichas ya existen y siguen
+descartadas— pero la puerta está abierta. Hay dos arreglos y **el bueno es el
+segundo**:
+
+- **Parche:** que `migrarBase()` no escriba valores deducidos sobre ensayos que
+  nunca se han sincronizado. Tapa este caso y deja la puerta entornada.
+- **De raíz, y ya estaba decidido por otro motivo:** **vaciar `assets/seed.js`.**
+  El histórico vive en el servidor desde hace semanas; el seed es una copia
+  redundante que además tiene **datos reales de un cliente en un repositorio
+  público** (ver MUDANZA §6, donde consta como lo más urgente). Sin seed, no hay
+  ensayos que el programa se traiga de nacimiento, y este fallo deja de existir.
+
+**La regla que queda escrita, y vale para cualquier dato que venga dentro del
+programa:** *lo que un aparato no ha enviado nunca no está sincronizado, por mucho
+que lo tenga delante. Antes de mandar el primer cambio de un registro, hay que
+mandar el registro.*
