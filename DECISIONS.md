@@ -2711,3 +2711,196 @@ crear el tiro eligiendo de esa lista, la estructura y su cantidad, y las pregunt
 de la 934 solo si el proyecto se marcó como 934. Está diseñado en
 `qcheck-platform/ASISTENTE-PROYECTO-TIRO.md`. **Esto de aquí hace que lo de hoy
 no vuelva a fallar; el asistente hace que no haya que acordarse de nada.**
+
+---
+
+## Q-89 · Proyecto → Tiro → Recepción · el asistente — 14 de agosto de 2026
+
+**Víctor, dictando el ciclo entero:** *«El proyecto Rubén lo crea. Crea los
+proyectos que lo hayan contratado. Cuando haya tiro, crea un tiro de la lista de
+proyectos que han sido creados. Escoge estructura, pone cantidad de la unidad que
+sea la estructura, pone los detalles necesarios. Y si es 934 —esto si al proyecto
+al ser creado se le dio check a 934— pregunta los detalles necesarios de la 934.
+De ahí entonces puede empezar a recibir camiones en Recepción escaneando el
+conduce, y puede seguir entrando muestras de los camiones que ya han sido
+recibidos.»*
+
+Q-88 hizo que lo del día 12 no vuelva a fallar. **Esto hace que no haya que
+acordarse de nada.**
+
+### La regla que lo ordena
+
+> **Lo que no cambia entre tiros vive en el PROYECTO y no se vuelve a preguntar.
+> Lo que cambia cada día vive en el TIRO. Lo que trae cada camión vive en el
+> CONDUCE y lo lee el lector — y manda sobre lo heredado.**
+
+Lo heredado **solo rellena el hueco que el papel deja.** Nunca lo pisa.
+
+### Lo que se añadió
+
+**En el proyecto:** las **mezclas de diseño**, en lista. Antes solo cabía una
+(`mixId`). Se declara lo que no cambia entre tiros: contratista, concretera,
+mezclas y especificación.
+
+**LA PLANTA NO SE DECLARA.** Víctor, esa misma noche, corrigiéndome: «la planta se
+lleva récord pero no se declara ni tiene importancia; hay hasta concreteras que no
+tienen más de una planta». Llegué a ponerla en el proyecto Y en el tiro, y las dos
+sobran: **la planta es un dato que trae el camión en su conduce.** Se guarda porque
+está en el papel, no porque haya que decidirla. Pedirla de antemano obliga a
+comprometerse con algo que decide la concretera esa mañana, y en la mitad de las
+obras es una casilla de un solo valor que se rellena por inercia.
+
+**En el tiro:** la primera pregunta es ahora **«Obra que se vacía»**, elegida de
+las que existen. Antes no se preguntaba: el tiro nacía sellado con la obra que
+estuviera abierta en la pantalla. Eso es heredar en silencio de un estado que
+cambia solo, y es media causa de Q-87. Debajo, la **mezcla del día**, que baja de
+las mezclas de esa obra y se rehace si se cambia de obra.
+
+**En Recepción:** un camión hereda del tiro la fecha, la obra y los límites, y del
+proyecto la concretera. La planta la trae su propio papel o no la trae nadie.
+Comprobado con los dos casos:
+
+| | El papel no dice nada | El papel lo dice |
+| --- | --- | --- |
+| Concretera | PRETENSADOS DE PR (del proyecto) | la del papel |
+| Planta | en blanco | **JUANA DIAZ** — solo del papel |
+| Mix | 55K30H6K28AC (del tiro) | **4000-PSI-VIGA** — manda el papel |
+
+### Los sub-lotes NO se preguntan: se cuentan
+
+La 934 acepta por lotes de 250 m³ en sub-lotes de 25, y **el PWL no existe con
+menos de tres**. El dato ya está —son las yardas planificadas—, así que
+preguntarlo sería invitar a rellenarlo mal. Se **avisa**, y mientras se teclea:
+
+> ⚠ SP-934: 39 m³ dan 1 sub-lote de 25 m³. **Con menos de 3 NO habrá factor de
+> pago para este lote.**
+
+Con 51 yardas —las del tiro del 12 de agosto— **no habría factor de pago**.
+Enterarse al cerrar el vaciado es enterarse cuando ya no se puede hacer nada.
+
+### Sin tiro no se recibe un camión
+
+Se podía recibir sin que nadie hubiera dicho qué se está vaciando. Ese camión no
+tenía de dónde heredar el día, la obra ni los límites — **y se los inventaba el
+programa**. Ahora se para y se ofrece programarlo ahí mismo. Este freno no está
+para que el dato esté completo, sino **para que exista el sitio donde el camión va
+a caer**: aceptar un camión sin tiro no es tolerancia, es fabricar un huérfano.
+
+### Cuatro fallos que solo salieron probando en pantalla
+
+1. **`openForm` cierra DESPUÉS de llamar a `onSave`.** Un formulario abierto ahí
+   dentro nace y lo barre el `closeForm()` de la línea siguiente: la 934 no salía
+   nunca. Va detrás de un `setTimeout`.
+2. **`conduce.html` y `control-center.html` no cargaban `sp934.js`**, así que
+   `formSP934()` reventaba en silencio. **La pantalla que puede crear un tiro de
+   la 934 tiene que poder preguntar lo de la 934.** Entran en la lista de las que
+   DECLARAN —como Settings— y siguen sin juzgar nada.
+3. **`db.project` no era el mismo objeto que la obra de la lista.** Al guardar, la
+   base serializa `project` y `proyectos` por separado y al cargarlas son dos
+   objetos distintos: declarar la clase de hormigón escribía en una copia suelta,
+   y cambiar de obra y volver **deshacía** lo declarado. `db.plan` se re-enganchaba
+   desde Q-59b y `db.project` no. Declarar la clase decide el 45 % del pago.
+4. **Copié `CY_A_M3` en `core.js` y ya existía en `sp934.js`** — «Identifier
+   'CY_A_M3' has already been declared» tumbó la pantalla entera. Misma familia que
+   el `QC_NULO`/`oNulo` del 8 de agosto: **un número copiado de un sitio a otro es
+   una segunda verdad esperando a separarse de la primera.** Se usa `m3DeCY()`.
+
+Y uno más de arrastre: la cabecera de Recepción decía **«Último vaciado — —»**,
+con la fecha en blanco, cuando el tiro aún no tenía camiones y la obra no tenía
+otros días. Un tiro sin camiones sigue siendo el tiro.
+
+### Lo que NO entra aquí
+
+Crear el proyecto sigue donde estaba (Settings → Obras, encadenado desde Q-62). El
+asistente **no rehace** lo que ya funciona: solo pone lo que faltaba y conecta lo
+que estaba suelto.
+
+---
+
+## Q-90 · La simulación del ciclo entero, y los cuatro fallos que sacó — 14 de agosto de 2026
+
+**Víctor:** *«Haz una verificación y simulación de todo el proceso. Asegura que
+todo sirva debidamente: crea el tiro, entra muestras y reportes, etc.»*
+
+Se corrió el ciclo completo en pantalla, con la base en blanco y contra el
+servidor local: **crear la obra → sus datos → la 934 → los límites → crear el
+tiro → recibir seis camiones → entrar sus muestras → el reporte → cerrar.**
+
+**Pasa entero.** Y por el camino salieron cuatro fallos que leyendo el código no
+se ven. Tres de ellos estaban en producción desde antes.
+
+### 1 · La cadena de crear una obra llevaba tiempo rota
+
+`openForm` hacía `onSave(values); closeForm();` — **cierra después de llamar al
+guardado**. Un formulario encadenado desde ahí dentro nacía y lo borraba el
+`closeForm()` de la línea siguiente.
+
+Eso dejaba sin efecto **la cadena entera de Q-62**: crear una obra tenía que
+pedir sus datos, su 934 y sus límites, y no pedía nada. **La obra quedaba creada
+y muda** — que es literalmente lo que Q-62 se escribió para impedir. Nadie lo
+vio porque no hay error: simplemente no aparece el formulario siguiente.
+
+Ahora se cierra **solo si el modal sigue siendo el suyo**. No se cierra antes de
+guardar: si `onSave` reventara, lo escrito se perdería sin remedio.
+
+### 2 · «Abrir obra nueva» reventaba desde Settings
+
+`formProject()` vivía en `qc.js`, y **`settings.html` no carga ese archivo** —
+pero sí tiene el botón. `formObras()` la llamaba y saltaba un `ReferenceError`
+que se tragaba el manejador del clic.
+
+Se mudó a `core.js`, con sus tres hermanas —`formObras`, `formSP934`,
+`formPlan`—, por la misma razón por la que se movió `formObras` en Q-62: **las
+cuatro se encadenan al crear una obra, así que las cuatro tienen que vivir donde
+estén todas.**
+
+### 3 · Obras fantasma `{id: null}`
+
+Un apunte que dijera «el campo `id` de este registro ahora vale nada» se aplicaba
+tal cual: se buscaba el registro POR su id y acto seguido se le borraba. Quedaban
+fichas vacías en la lista de obras — y en el desplegable de **«¿qué obra se
+vacía?»**. En un ensayo habría sido peor: un camión sin llave no se encuentra
+nunca más.
+
+**El `id` es la llave, no un campo.** Ya no se acepta por sincronización. Es la
+misma familia que las 397 fichas vacías de Q-86: el servidor creando registros a
+partir de un campo suelto.
+
+### 4 · Los límites de una obra nueva no sobrevivían a una recarga
+
+`guardarPlan()` hacía `db.plan = copia` —**reemplaza el objeto**— y no lo volvía a
+atar a la obra. Los dos se guardan, y al recargar `migrarBase()` hace
+`db.plan = act0.plan`: **el viejo.**
+
+Se vio en la simulación: se creó la obra con **8″ de slump objetivo**, y Muestras
+seguía enseñando la ventana **2–4″ de la PR-52** encima de un camión de vigas
+pretensadas. **Juzgar el hormigón de una obra con la vara de otra es exactamente
+Q-59b**, que ya costó un camión bueno rechazado.
+
+> **Es la tercera vez en dos días que un objeto se despega de su dueño al pasar
+> por el disco** —`db.project` en Q-89, y aquí el plan y su historia—. La regla
+> que queda escrita: **lo que se guarda por separado se separa. Si algo tiene
+> dueño, se le vuelve a atar en cuanto se sustituye.**
+
+### Lo que la simulación confirmó que SÍ funciona
+
+- La obra guarda concretera, especificación, clase 934 y mezclas, y **los límites
+  aguantan la recarga**: slump 6.50–9.50, UW 152.9 ± 2.9, temp máx 100.
+- El tiro se crea eligiendo la obra, con su estructura —**«Cuántas vigas», no
+  losas**— y avisa de los sub-lotes mientras se teclean las yardas.
+- Seis camiones entran en su obra, con la concretera del proyecto y **la planta
+  que trae cada papel**. El repetido se caza.
+- Las muestras se juzgan con los límites de SU obra: de seis, cuatro en verde,
+  **uno en acción (9.75″) y uno en suspensión (11″)** — los dos que se metieron
+  fuera a propósito.
+- El reporte se emite y se lee: nombra la obra, la concretera y la planta, y
+  distingue **recibido de colocado** — un camión que no ha terminado de descargar
+  no ha colocado nada, y al cerrar el tiro las yardas aparecen.
+- Al cerrar: arriba **«sin vaciado abierto»**, y la tarjeta con el acta —tiro
+  cerrado, 51/150 CY, y **«Vigas del tiro 3 de 3»**.
+
+**Y una honestidad sobre el método:** en la primera vuelta, el primer camión se
+quedó sin muestra. No era la aplicación — era el arnés, que pinchó el botón de
+guardar de otro formulario que había en la pantalla. Se repitió y guardó a la
+primera. **Una prueba que falla por culpa de la prueba hay que decirlo, o la
+próxima vez se persigue un fantasma en el sitio equivocado.**

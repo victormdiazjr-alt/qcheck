@@ -681,61 +681,18 @@ function resetSeed() {
 }
 
 /* ------------------------------------------------------------ meta forms */
-function formProject(alGuardar) {
-  openForm({
-    title: "Proyecto",
-    initial: db.project,
-    fields: [
-      { key: "name", label: "Proyecto", full: true, required: true },
-      /* La norma bajo la que se acepta el hormigón — Q-57. En blanco, QCheck
-         se comporta como siempre. Ver `docs/SP-934.md`. */
-      { key: "spec", label: "Especificación de aceptación", type: "select", full: true,
-        options: [
-          { value: "", label: "Control de proceso (como hasta ahora)" },
-          { value: "934", label: "SP-934 · Structural Concrete — Autoridad de Carreteras" },
-        ],
-        hint: "La SP-934 acepta por lotes de 250 m³ con evaluación estadística. Enciende pantallas y cálculos aparte; lo demás sigue igual." },
-      /* Q-59, 10 ago 2026: la permeabilidad de la obra. Un tiro suelto puede
-         decir otra cosa (`nivelPermeabilidadDe`), pero lo normal es que la
-         ponga la obra una vez y no se vuelva a tocar. */
-      { key: "nivelPermeabilidad", label: "Permeabilidad", type: "select", full: true,
-        options: [
-          { value: "",  label: "No se inspecciona" },
-          { value: "1", label: "PL#1 — sin techo de carga" },
-          { value: "2", label: "PL#2 — máximo 1950 coulombs" },
-        ],
-        hint: "Solo se usa bajo SP-934. Enciende el campo de permeabilidad en los resultados del laboratorio." },
-      { key: "mixId", label: "Mezcla / Mix ID", full: true },
-      { key: "contractor", label: "Contratista" },
-      /* Q-59: la concretera estaba en cada camión (`company`) pero no en la
-         obra, así que no había dónde decir quién suministra. */
-      { key: "concretera", label: "Concretera" },
-      { key: "qcFirm", label: "Firma QC" },
-      /* LAS ESTRUCTURAS DE LA OBRA — Q-59. Lo que hay que tirar, y cuánto.
-         De aquí sale lo que se ofrece al programar un tiro. Una por línea:
-         «vigas 15» o «losas 132». */
-      { key: "estructuras", label: "Estructuras de la obra", type: "textarea", full: true,
-        placeholder: "vigas 15",
-        hint: "Una por línea: qué y cuántas. Ej. «vigas 15» o «losas 132»." },
-      { key: "notifyEmails", label: "Emails para avisos de rechazo", full: true, placeholder: "a@dvg.com, b@segarra.com, inspector@act.pr.gov" },
-      { key: "place", label: "Sitio del tiro (para el tiempo)", full: true, placeholder: "Ponce · PR-52" },
-      { key: "lat", label: "Latitud", type: "number", step: "0.0001", half: true, hint: "Corríjala si el tiro no está donde dice" },
-      { key: "lon", label: "Longitud", type: "number", step: "0.0001", half: true },
-      { key: "logoContratista", label: "Logo del contratista", full: true,
-        placeholder: "assets/logo-contratista.png",
-        hint: "Archivo del logo oficial. En blanco, se dibuja un monograma con las iniciales." },
-      { key: "logoConcretera", label: "Logo de la concretera", full: true, placeholder: "assets/logo-concretera.png" },
-      { key: "logoAutoridad", label: "Logo de la Autoridad", full: true, placeholder: "assets/logo-act.png" },
-    ],
-    onSave: (v) => {
-      Object.assign(db.project, v);
-      db.project.logos = { contratista: v.logoContratista || "", concretera: v.logoConcretera || "",
-                           autoridad: v.logoAutoridad || "" };
-      saveDB(); render(); toast("Proyecto actualizado");
-      if (typeof alGuardar === "function") alGuardar();
-    },
-  });
-}
+/* `formProject()` se mudó a core.js — Q-90, 14 ago 2026.
+
+   Vivía aquí, y `settings.html` la llamaba a través de `formObras()` sin cargar
+   este archivo: «Abrir obra nueva» reventaba con un ReferenceError y la obra
+   quedaba creada y MUDA, sin datos, sin 934 y sin límites — justo lo que Q-62
+   existe para impedir. Nadie lo vio porque el error se lo tragaba el manejador
+   del botón.
+
+   Se va con sus tres hermanas —`formObras`, `formSP934`, `formPlan`—, por la
+   misma razón que se movió `formObras` en Q-62: las cuatro se encadenan al
+   crear una obra, así que las cuatro tienen que estar donde estén todas. */
+
 
 /* `formObras()` vive en core.js desde Q-62: Settings también la necesita, y
    Settings no carga qc.js. */

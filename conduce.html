@@ -289,8 +289,14 @@ body { background: var(--bg); }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/sync.js?v=59693f27"></script>
-<script src="assets/core.js?v=3562a999"></script>
+<script src="assets/sync.js?v=286507eb"></script>
+<script src="assets/core.js?v=3152a138"></script>
+<!-- Q-89: las tablas de la SP-934. Desde aquí se CREA un tiro, y un tiro de
+     la 934 pregunta su clase y su ventana de aceptacion al nacer. Sin esto,
+     `formSP934()` reventaba en silencio dentro del `setTimeout` y la pregunta
+     no salia nunca: la pantalla que puede crear un tiro de la 934 tiene que
+     poder preguntar lo de la 934. -->
+<script src="assets/sp934.js?v=fbe2c96c"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -861,6 +867,42 @@ const CAMPOS_CAMION = [
 function saveArrival() {
   /* Q-41: no se reciben camiones en un día ya firmado. */
   if (typeof frenoDiaCerrado === "function" && frenoDiaCerrado(diaActivo())) return;
+
+  /* SIN TIRO NO SE RECIBE UN CAMIÓN — Q-89, 14 ago 2026.
+
+     Víctor: «crea el tiro del proyecto que vaya a tirar, de los proyectos que
+     hay creados. Y crea el tiro. Luego Recepción, muestras, cierra el tiro y
+     así sigue.»
+
+     Hasta hoy se podía recibir un camión sin que nadie hubiera dicho qué se
+     está vaciando. Ese camión no tenía de dónde heredar ni el día, ni la obra,
+     ni los límites con los que juzgarlo — y se los inventaba el programa: hoy,
+     la primera obra de la lista, y el plan de la obra abierta. Eso es Q-87
+     entero.
+
+     Este freno es distinto de los otros: no está aquí para que el dato esté
+     completo, sino para que **exista el sitio donde el camión va a caer**.
+     Aceptar un camión sin tiro no es tolerancia, es fabricar un huérfano.
+
+     Y sí se puede seguir: se ofrece programarlo ahí mismo, sin salir. */
+  /* El día del tiro se calcula UNA VEZ, aquí arriba, y de él cuelga todo lo que
+     viene después: la obra, la concretera, la planta, los límites y la fecha con
+     la que se guarda el camión. Estaba repartido en tres sitios y uno de ellos
+     lo usaba antes de declararlo. */
+  const dia = diaActivo();
+  const tiro = (db.dayMeta || {})[dia] || {};
+  const hayTiro = !tiro.borrado &&
+    (tiro.cyPlan != null || tiro.losasPlan != null || tiro.losas || tiro.horaInicio);
+  if (!hayTiro) {
+    if (confirm("Todavía no hay ningún tiro abierto.\n\n" +
+                "Un camión tiene que entrar en un tiro: de él saca el día, la obra y los\n" +
+                "límites con los que se juzga. Sin tiro no hay dónde ponerlo.\n\n" +
+                "¿Programar el tiro ahora?")) {
+      if (typeof programarTiro === "function") programarTiro();
+      else if (typeof formDayMeta === "function") formDayMeta(todayISO());
+    }
+    return;
+  }
   /* Se dice lo que va en blanco y se sigue. El aviso nombra los huecos para que
      el técnico sepa qué tiene que completar luego; no le pide que lo arregle
      ahora, porque ahora tiene un camión delante. */
@@ -942,8 +984,28 @@ function saveArrival() {
      ensuciaba los avisos). El de PRETENSADOS SÍ la trae impresa. Pedírsela es
      tocar el lector —los dos servidores— y desplegar. Mientras no se haga, un
      camión entrado por foto llega sin planta y se rellena en su ficha. */
+  /* Y AHORA BAJAN DEL PROYECTO Y DEL TIRO — Q-89, 14 ago 2026.
+
+     El orden es el del diseño y no es arbitrario:
+
+       · **La concretera** la dice el conduce si viene; si no, la del PROYECTO,
+         que se declara una vez y no cambia entre tiros; y de último recurso, la
+         que se deducía de la planta de siempre, para que una base antigua sin
+         concretera declarada siga comportándose igual.
+       · **La planta** la dice el conduce, y solo el conduce. Si el papel no la
+         trae, queda en blanco. Víctor, 14 ago 2026: «la planta se lleva récord
+         pero no se declara ni tiene importancia». No se hereda de la obra ni del
+         tiro — llegué a heredarla del tiro y sobra: la planta es de la mañana en
+         que se cargó ese camión, no de una decisión de oficina.
+
+     El papel manda sobre lo heredado siempre. Lo heredado solo rellena el hueco
+     que el papel deja.
+
+     `db.project.concretera` — con ese nombre. Escribí `db.project.company`, que
+     no existe, y el camión salía como «Concre-Tech» estando la obra declarada a
+     PRETENSADOS. Se cazó probando el ciclo entero en pantalla, no leyendo. */
   const CONCRETERA_DE_SIEMPRE = plantCompany("01-SAN JUAN");
-  const compania = fichaCompany || (db.project && db.project.company) || CONCRETERA_DE_SIEMPRE;
+  const compania = fichaCompany || (db.project && db.project.concretera) || CONCRETERA_DE_SIEMPRE;
   const planta = fichaPlant || null;
   /* SIN TICKET NO SE BUSCA REPETIDO. Ahora que un conduce ilegible puede entrar
      con el número en blanco, la llave sería `compañía + ""` para todos ellos: el
@@ -969,8 +1031,7 @@ function saveArrival() {
      La obra sale del día al que entra el camión. Si ese día todavía no tiene
      obra —es el primer camión de un tiro recién abierto— manda la obra abierta,
      que es la que el técnico está mirando. */
-  const dia = diaActivo();
-  const obra = ((db.dayMeta || {})[dia] || {}).proyecto || proyectoActivo();
+  const obra = tiro.proyecto || proyectoActivo();
   const t = {
     n: nextTestN(), id: uid(),
     date: dia,
@@ -989,7 +1050,9 @@ function saveArrival() {
     /* Qué hormigón se colocó — D-103. Sale del conduce, lo rellene el lector o
        lo teclee el técnico. Es campo de origen del contrato (§2), así que va
        con el nombre que allí tiene y no hace falta subir la versión. */
-    mix: document.getElementById("f-mix").value.trim() || null,
+    /* Y si el papel no la trae, la del tiro — Q-89. Lo mismo que la planta: lo
+       heredado solo rellena el hueco que deja el conduce, nunca lo pisa. */
+    mix: document.getElementById("f-mix").value.trim() || tiro.mix || null,
     /* De dónde vino este camión, y no es cosmético: un dato que llegó por
        QTicket es un dato certificado por la planta; uno leído de una foto es
        una lectura; uno tecleado es lo que dijo una persona. Dentro de un año
@@ -1089,7 +1152,12 @@ function render() {
   /* Con el plan del día dentro: un tiro programado sin camiones
      también es el tiro de hoy (Q-46). */
   const days = diasDelProyecto();
-  const shown = testsOfDate(day).length ? day : days[0];
+  /* Q-89: `|| day` al final. Si el tiro todavía no tiene camiones se enseñaba el
+     último día de la obra, y una obra recién abierta no tiene ninguno: la
+     cabecera salía «Último vaciado — —», con la fecha en blanco, delante de un
+     técnico esperando el primer camión. Un tiro sin camiones sigue siendo el
+     tiro. */
+  const shown = testsOfDate(day).length ? day : (days[0] || day);
   const rows = testsOfDate(shown);
   const cy = rows.reduce((a, t) => a + (num(t.vol) || 0), 0);
   /* Q-88: «hoy» solo cuando de verdad es hoy. Desde que Recepción trabaja sobre

@@ -178,6 +178,29 @@ function migrarBase(db) {
   if (act0) {
     if (act0.plan) db.plan = act0.plan;
     if (act0.planes) db.planes = act0.planes;
+    /* Y `db.project` VUELVE A SER LA MISMA OBRA DE LA LISTA — Q-89, 14 ago 2026.
+
+       `db.plan` se re-enganchaba aquí desde Q-59b y `db.project` no, y eso no
+       se notaba porque casi todo lee `db.project`. Pero al guardar, la base
+       serializa `project` y `proyectos` por separado, y al volver a cargarlas
+       son **dos objetos distintos con el mismo contenido**. Desde ese momento:
+
+         · `formProject()` y `formSP934()` escriben en `db.project` — la copia
+           suelta. La obra de la lista se queda con lo viejo.
+         · `abrirProyecto()` lee de la lista. Cambiar de obra y volver
+           **deshacía** lo que se acababa de declarar.
+
+       Se vio probando el asistente: se declaró la clase de hormigón de la 934 y
+       al mirar la obra no estaba. Declarar la clase es lo que decide el 45 % del
+       pago, así que perderla no es un detalle.
+
+       Se funde lo suelto DENTRO de la obra —lo recién editado manda, que es lo
+       que el técnico acaba de escribir— y a partir de ahí hay un solo objeto. */
+    if (db.project && db.project !== act0 && (db.project.id || act0.id) &&
+        (db.project.id || db.proyectoActivo) === act0.id) {
+      Object.assign(act0, db.project);
+    }
+    db.project = act0;
   }
 
   /* EL SELLADO. Lo que existía antes de que hubiera dos obras es de la
@@ -1110,6 +1133,24 @@ function guardarPlan(nuevo, autor) {
     db.planes.push({ desde: hoy, plan: copia, autor: autor || "?", ts: new Date().toISOString() });
   }
   db.plan = copia;          // el vigente
+  /* Y SE ANCLA A LA OBRA — Q-90, 14 ago 2026.
+
+     `db.plan = copia` reemplaza el objeto, así que a partir de aquí `db.plan` y
+     el `plan` de la obra son dos cosas distintas. Ambos se guardan, y al volver
+     a cargar `migrarBase()` hace `db.plan = act0.plan` — **el viejo**. Los
+     límites recién puestos desaparecían de la pantalla.
+
+     Se vio en la simulación del ciclo entero: se creó la obra, se le pusieron
+     8″ de slump objetivo, y Muestras seguía enseñando la ventana 2–4″ de la
+     PR-52 encima de un camión de vigas. Juzgar el hormigón de una obra con la
+     vara de otra es exactamente Q-59b.
+
+     Es la tercera vez esta noche que un objeto se despega de su dueño al pasar
+     por el disco: `db.project` (Q-89), y aquí el plan y su historia. La regla
+     que queda: **lo que se guarda por separado se separa. Si algo tiene dueño,
+     se le vuelve a atar en cuanto se sustituye.** */
+  const act = (db.proyectos || []).find((p) => p && p.id === (db.proyectoActivo || ""));
+  if (act) { act.plan = db.plan; act.planes = db.planes; }
   saveDB();
 }
 
@@ -2648,6 +2689,79 @@ function formObras() {
   });
 }
 
+function formProject(alGuardar) {
+  openForm({
+    title: "Proyecto",
+    initial: db.project,
+    fields: [
+      { key: "name", label: "Proyecto", full: true, required: true },
+      /* La norma bajo la que se acepta el hormigón — Q-57. En blanco, QCheck
+         se comporta como siempre. Ver `docs/SP-934.md`. */
+      { key: "spec", label: "Especificación de aceptación", type: "select", full: true,
+        options: [
+          { value: "", label: "Control de proceso (como hasta ahora)" },
+          { value: "934", label: "SP-934 · Structural Concrete — Autoridad de Carreteras" },
+        ],
+        hint: "La SP-934 acepta por lotes de 250 m³ con evaluación estadística. Enciende pantallas y cálculos aparte; lo demás sigue igual." },
+      /* Q-59, 10 ago 2026: la permeabilidad de la obra. Un tiro suelto puede
+         decir otra cosa (`nivelPermeabilidadDe`), pero lo normal es que la
+         ponga la obra una vez y no se vuelva a tocar. */
+      { key: "nivelPermeabilidad", label: "Permeabilidad", type: "select", full: true,
+        options: [
+          { value: "",  label: "No se inspecciona" },
+          { value: "1", label: "PL#1 — sin techo de carga" },
+          { value: "2", label: "PL#2 — máximo 1950 coulombs" },
+        ],
+        hint: "Solo se usa bajo SP-934. Enciende el campo de permeabilidad en los resultados del laboratorio." },
+      { key: "mixId", label: "Mezcla / Mix ID", full: true,
+        hint: "La de siempre. Si la obra tiene varias, se listan abajo y ésta es la primera." },
+      /* LAS MEZCLAS DE LA OBRA — Q-89, 14 ago 2026. Una obra puede tener varias;
+         hasta hoy solo cabía una (`mixId`). Lo que no cambia entre tiros vive en
+         el proyecto y no se vuelve a preguntar.
+
+         LA PLANTA NO SE DECLARA — Víctor, 14 ago 2026: «la planta se lleva
+         récord pero no se declara ni tiene importancia; hay hasta concreteras
+         que no tienen más de una planta».
+
+         Llegué a poner aquí una lista de plantas y sobra. La planta es un dato
+         que TRAE EL CAMIÓN en su conduce: se guarda porque es del papel, no
+         porque haya que decidirla. Declararla de antemano es pedirle a alguien
+         que se comprometa con algo que no decide él — y en la mitad de las obras
+         es una lista de un solo elemento que hay que rellenar igual. */
+      { key: "mezclas", label: "Mezclas de diseño", type: "textarea", full: true,
+        placeholder: "55K30H6K28AC\nAC300503SX",
+        hint: "Una por línea. Al crear un tiro se elige de aquí. Si solo hay una, no se pregunta." },
+      { key: "contractor", label: "Contratista" },
+      /* Q-59: la concretera estaba en cada camión (`company`) pero no en la
+         obra, así que no había dónde decir quién suministra. */
+      { key: "concretera", label: "Concretera" },
+      { key: "qcFirm", label: "Firma QC" },
+      /* LAS ESTRUCTURAS DE LA OBRA — Q-59. Lo que hay que tirar, y cuánto.
+         De aquí sale lo que se ofrece al programar un tiro. Una por línea:
+         «vigas 15» o «losas 132». */
+      { key: "estructuras", label: "Estructuras de la obra", type: "textarea", full: true,
+        placeholder: "vigas 15",
+        hint: "Una por línea: qué y cuántas. Ej. «vigas 15» o «losas 132»." },
+      { key: "notifyEmails", label: "Emails para avisos de rechazo", full: true, placeholder: "a@dvg.com, b@segarra.com, inspector@act.pr.gov" },
+      { key: "place", label: "Sitio del tiro (para el tiempo)", full: true, placeholder: "Ponce · PR-52" },
+      { key: "lat", label: "Latitud", type: "number", step: "0.0001", half: true, hint: "Corríjala si el tiro no está donde dice" },
+      { key: "lon", label: "Longitud", type: "number", step: "0.0001", half: true },
+      { key: "logoContratista", label: "Logo del contratista", full: true,
+        placeholder: "assets/logo-contratista.png",
+        hint: "Archivo del logo oficial. En blanco, se dibuja un monograma con las iniciales." },
+      { key: "logoConcretera", label: "Logo de la concretera", full: true, placeholder: "assets/logo-concretera.png" },
+      { key: "logoAutoridad", label: "Logo de la Autoridad", full: true, placeholder: "assets/logo-act.png" },
+    ],
+    onSave: (v) => {
+      Object.assign(db.project, v);
+      db.project.logos = { contratista: v.logoContratista || "", concretera: v.logoConcretera || "",
+                           autoridad: v.logoAutoridad || "" };
+      saveDB(); render(); toast("Proyecto actualizado");
+      if (typeof alGuardar === "function") alGuardar();
+    },
+  });
+}
+
 function formSP934(alGuardar) {
   const pr = db.project || {};
   openForm({
@@ -3113,7 +3227,22 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
       faltan[0].el.scrollIntoView({ block: "center", behavior: "smooth" });
       return;
     }
-    onSave(values); closeForm();
+    /* CERRAR NO PUEDE BORRAR LO QUE EL GUARDADO ACABA DE ABRIR — Q-90, 14 ago
+       2026.
+
+       Esto era `onSave(values); closeForm();`. Un formulario que se encadena
+       desde su propio guardado —los tres de crear una obra (Q-62), o la 934 al
+       crear un tiro (Q-89)— nacía y lo borraba el `closeForm()` de la línea
+       siguiente. **La cadena de Q-62 llevaba tiempo sin funcionar y nadie lo
+       vio**: una obra nueva quedaba creada y muda, sin datos, sin 934 y sin
+       límites, que es exactamente lo que esa decisión existía para impedir.
+
+       No se cierra antes de guardar —si `onSave` reventara, lo escrito se
+       perdería sin remedio—. Se cierra después, pero **solo si el modal sigue
+       siendo este**. Si el guardado puso otro encima, ése manda. */
+    const mio = document.getElementById(fid);
+    onSave(values);
+    if (document.getElementById(fid) === mio) closeForm();
   };
   if (onDelete) document.getElementById(fid + "-del").onclick = () => { onDelete(); closeForm(); };
   if (liveEval) {
@@ -3157,6 +3286,11 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
     };
     const run = () => alCambiar(form, leer());
     form.addEventListener("change", run);
+    /* Y también mientras se teclea — Q-89. Con solo `change`, un campo de texto
+       no avisa hasta que se sale de él, y un aviso que llega cuando ya has
+       pasado a otra cosa llega tarde: el de los sub-lotes de la 934 existe para
+       decidir CON EL NÚMERO DELANTE si el tiro da para factor de pago. */
+    form.addEventListener("input", run);
     run();
   }
   const first = root.querySelector("input, select, textarea");
@@ -3478,6 +3612,38 @@ const PIEZA_DE = {
            ayuda: "Opcional. Descríbelo como se lo dan en la obra." },
 };
 
+/* CON MENOS DE TRES SUB-LOTES NO HAY FACTOR DE PAGO — Q-89, 14 ago 2026.
+
+   La 934 acepta por lotes de 250 m³ en sub-lotes de 25 m³ (934-6.01(j)), y el
+   PWL **no existe con menos de tres**: `sp934.js` devuelve «menos de 3
+   sub-lotes» y ahí se acaba el cálculo del factor de pago.
+
+   No se pregunta: se CUENTA. El dato ya está — son las yardas planificadas—, y
+   preguntar por algo que se puede deducir es invitar a que alguien lo rellene
+   mal. Lo que sí hace falta es decirlo AL PROGRAMAR el tiro y no al cerrarlo,
+   que es cuando ya no se puede hacer nada.
+
+   Devuelve `null` cuando el tiro no se rige por la 934 —entonces no hay nada
+   que avisar— y también cuando `sp934.js` no está cargado: la conversión y el
+   tamaño del sub-lote son SUYOS y no se copian aquí.
+
+   Escribí una copia de `CY_A_M3` en este archivo y chocó con la de `sp934.js`
+   —«Identifier 'CY_A_M3' has already been declared»— y tumbó la pantalla
+   entera. Es la misma familia que el `QC_NULO`/`oNulo` del 8 de agosto: un
+   número copiado de un sitio a otro es una segunda verdad esperando a
+   separarse de la primera. */
+function avisoSublotes(cyPlan, es934) {
+  if (!es934) return null;
+  if (typeof m3DeCY !== "function" || typeof SP934_SUBLOTE_M3 === "undefined") return null;
+  const cy = num(cyPlan);
+  if (cy == null || cy <= 0) return `SP-934: de las yardas salen los sub-lotes de ${SP934_SUBLOTE_M3} m³. Con menos de 3 no habrá factor de pago.`;
+  const m3 = m3DeCY(cy);
+  const n = Math.floor(m3 / SP934_SUBLOTE_M3);
+  return n < 3
+    ? `⚠ SP-934: ${fmt(m3, 0)} m³ dan ${n} sub-lote${n === 1 ? "" : "s"} de ${SP934_SUBLOTE_M3} m³. Con menos de 3 NO habrá factor de pago para este lote.`
+    : `SP-934: ${fmt(m3, 0)} m³ ≈ ${n} sub-lotes de ${SP934_SUBLOTE_M3} m³. Suficiente para el factor de pago.`;
+}
+
 function formDayMeta(day) {
   /* UN TIRO CERRADO NO SE EDITA — Q-41, ampliado el 7 ago 2026.
 
@@ -3500,10 +3666,43 @@ function formDayMeta(day) {
     return;
   }
   const meta = db.dayMeta[day] || {};
+  /* DE QUÉ OBRA ES ESTE TIRO — Q-89, 14 ago 2026.
+
+     Víctor: «crea el tiro del proyecto que vaya a tirar, de los proyectos que
+     hay creados».
+
+     Hasta hoy no se preguntaba: el tiro nacía sellado con la obra que estuviera
+     abierta en la pantalla (`proyectoActivo()`). Eso es heredar en silencio de
+     un estado que cambia solo, y es media causa de Q-87 — el tiro del 12 de
+     agosto se dio de alta bien en AC-220037, pero el vaciado acabó en la PR-52
+     porque era la que estaba abierta al teclearlo al día siguiente.
+
+     Ahora se elige, y es lo primero que se pregunta: **de qué obra se vacía
+     decide todo lo demás** — los límites contra los que se juzga cada camión,
+     la concretera y las mezclas que se ofrecen. */
+  const obraDelTiro = meta.proyecto || proyectoActivo();
+  /* Una por línea, y si la obra todavía no las ha declarado, lo que haya suelto:
+     `mixId` era el único sitio donde vivía una mezcla hasta hoy. */
+  const enLineas = (t) => String(t || "").split("\n").map((s) => s.trim()).filter(Boolean);
+  const listasDe = (id) => {
+    const p = (db.proyectos || []).find((x) => x.id === id) || {};
+    return { mezclas: enLineas(p.mezclas).length ? enLineas(p.mezclas) : enLineas(p.mixId) };
+  };
+  const opcionesDe = (lista, vacio) => [{ value: "", label: vacio }]
+    .concat(lista.map((x) => ({ value: x, label: x })));
+
   openForm({
     title: `Datos del vaciado — ${fmtDate(day)}`,
-    initial: { ...meta, fecha: day },
+    initial: { ...meta, fecha: day, proyecto: obraDelTiro },
     fields: [
+      /* Q-89: la obra, la primera y a lo ancho. No se teclea nunca — se elige
+         de las que existen. Crear obras es otra cosa y se hace en su sitio. */
+      { key: "proyecto", label: "Obra que se vacía", type: "select", full: true, required: true,
+        /* Sin id no es una obra: se filtra. Una ficha `{id: null}` colada por
+           sincronización no puede ofrecerse para vaciar dentro de ella. */
+        options: (db.proyectos || []).filter((p) => p && p.id)
+          .map((p) => ({ value: p.id, label: p.name || p.id })),
+        hint: "De aquí salen los límites con los que se juzga cada camión, la concretera y sus mezclas." },
       /* LA FECHA, Q-47. Hasta hoy el tiro siempre era el de hoy: no se podía
          dejar programado el de mañana ni corregir el de ayer. Va la primera
          porque es la que decide sobre qué día escribe todo lo demás. */
@@ -3555,7 +3754,8 @@ function formDayMeta(day) {
       { key: "horaInicio", label: "Hora de comienzo", type: "time", half: true, required: true,
         hint: "A qué hora arranca el tiro" },
       { key: "cyPlan", label: "Yardas planificadas (CY)", type: "number", step: "5", half: true, required: true,
-        hint: "Sin esto la barra de estado no puede mostrar el avance del tiro" },
+        hint: avisoSublotes(meta.cyPlan, (meta.spec || specDelProyecto()) === "934")
+          || "Sin esto la barra de estado no puede mostrar el avance del tiro" },
       /* Los dos campos se llamaban igual —«Losas a tirar hoy»— y no había forma
          de saber cuál pedía qué. Uno es el conteo y el otro la lista; si se
          escribe la lista, el conteo sale de ella y este campo sobra.
@@ -3572,6 +3772,21 @@ function formDayMeta(day) {
       { key: "losas", label: PIEZA_DE[meta.estructura || "losas"].tramo, type: "textarea", full: true,
         placeholder: PIEZA_DE[meta.estructura || "losas"].ej,
         hint: PIEZA_DE[meta.estructura || "losas"].ayuda },
+      /* LA MEZCLA DEL DÍA — Q-89. Sale de la lista de la obra y no se teclea: un
+         código de mezcla escrito a mano dos veces distintas son dos mezclas para
+         el expediente. En blanco manda lo que diga el conduce de cada camión.
+
+         LA PLANTA NO SE PREGUNTA (Víctor, 14 ago 2026). Llegué a poner aquí un
+         «Planta del día» y sobra: la planta la trae el camión en su papel. Se
+         lleva récord de ella, no se decide. Preguntarla al programar el tiro
+         obligaba a comprometerse con algo que decide la concretera esa mañana —
+         y en una concretera de una sola planta es una casilla que se rellena por
+         inercia. Va SIEMPRE, aunque la obra no tenga mezclas declaradas: se
+         puede cambiar de obra aquí mismo y las opciones se rehacen en
+         `alCambiar`. */
+      { key: "mix", label: "Mezcla del día", type: "select", half: true,
+        options: opcionesDe(listasDe(obraDelTiro).mezclas, "La que diga el conduce"),
+        hint: "De las mezclas de diseño de la obra." },
       { key: "fase", label: "Fase" },
       { key: "cierre", label: "Cierre" },
       { key: "lane", label: "Carril", placeholder: "L1 / L2 / L3" },
@@ -3584,6 +3799,34 @@ function formDayMeta(day) {
     alCambiar: (form, v) => {
       const e = PIEZA_DE[v.estructura] || PIEZA_DE.losas;
       const campo = (k) => form.querySelector(`[name="${k}"]`)?.closest(".field");
+      /* Q-89: el aviso de los sub-lotes se recalcula mientras se teclean las
+         yardas. Enterarse de que no habrá factor de pago DESPUÉS de guardar no
+         sirve de nada: la decisión —tirar más, o partirlo de otra manera— se
+         toma con el número delante. */
+      const cy = campo("cyPlan");
+      if (cy) {
+        const h = cy.querySelector(".hint");
+        const av = avisoSublotes(v.cyPlan, (v.spec || specDelProyecto()) === "934");
+        if (h) h.textContent = av || "Sin esto la barra de estado no puede mostrar el avance del tiro";
+      }
+      /* Q-89: al cambiar de obra cambian sus mezclas. Sin esto, el formulario
+         seguiría ofreciendo las de la obra anterior — y una mezcla de otra obra
+         en el desplegable es exactamente el error que veníamos a cerrar.
+
+         Solo cuando la obra CAMBIA de verdad: `alCambiar` corre en cada tecla, y
+         rehacer un desplegable bajo los dedos de quien está escribiendo es la
+         clase de detalle que hace que un formulario parezca embrujado. */
+      if (form.dataset.obra !== v.proyecto) {
+        form.dataset.obra = v.proyecto;
+        const lista = listasDe(v.proyecto).mezclas;
+        const sel = form.querySelector('[name="mix"]');
+        if (sel) {
+          const antes = sel.value;
+          sel.innerHTML = opcionesDe(lista, "La que diga el conduce")
+            .map((o) => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join("");
+          sel.value = lista.includes(antes) ? antes : "";
+        }
+      }
       const c1 = campo("losasPlan");
       if (c1) c1.querySelector("label").textContent = `Cuántas ${e.plural}`;
       const c2 = campo("losas");
@@ -3613,10 +3856,34 @@ function formDayMeta(day) {
            Quien programa un tiro es una persona. Desde ese momento el día es
            de verdad y viaja. */
       db.dayMeta[day] = { ...(db.dayMeta[day] || {}), ...v };
-      /* Q-59: el tiro nace sellado con la obra que está abierta. */
+      /* Q-89: el tiro se sella con la obra que se ELIGIÓ. `proyectoActivo()`
+         queda solo de red por si el formulario se abrió sin obras declaradas.
+         Y si la obra elegida no es la que está abierta, se abre: no puede haber
+         un tiro de una obra y otra obra en pantalla (Q-80). */
       if (!db.dayMeta[day].proyecto) db.dayMeta[day].proyecto = proyectoActivo();
       delete db.dayMeta[day].source;
+      const suya = db.dayMeta[day].proyecto;
+      if (suya !== proyectoActivo() && (db.proyectos || []).some((p) => p.id === suya)) abrirProyecto(suya);
       saveDB(); render(); toast("Datos del día guardados");
+
+      /* LA 934 SE PREGUNTA AL CREAR EL TIRO — Q-89, 14 ago 2026.
+
+         Víctor: «si es 934, pregunta los detalles que sean necesarios de la
+         934; esto si al proyecto, al ser creado, se le dio check a 934».
+
+         Al crear una OBRA ya se encadenaba (Q-62). Al crear un TIRO no, y hace
+         falta igual: los lotes y sub-lotes son del tiro, no de la obra, y sin
+         3 sub-lotes NO HAY FACTOR DE PAGO (`sp934.js`). Enterarse de eso al
+         cerrar el vaciado es enterarse tarde.
+
+         Los sub-lotes NO se preguntan: salen de las yardas y se avisan mientras
+         se teclean (`avisoSublotes`). Lo que sí falta preguntar es la clase de
+         hormigón y su ventana de aceptación, y **solo si la obra todavía no las
+         ha declarado**: son de la obra, no del tiro, y volver a sacarlas en cada
+         vaciado es la clase de pregunta repetida que se acaba contestando sin
+         leer. */
+      const es934 = (v.spec || specDelProyecto()) === "934";
+      if (es934 && !(db.project || {}).clase934 && typeof formSP934 === "function") formSP934();
     },
   });
 }

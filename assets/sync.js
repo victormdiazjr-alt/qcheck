@@ -173,6 +173,19 @@ function qcCambios(antes, ahora) {
    un camión recibido en el iPad tiene que aparecer en la PC. */
 function qcAplicarOp(o) {
   if (qcDerivado(o.campo)) return;   // un calculado que llegue de fuera se ignora
+  /* EL `id` ES LA LLAVE, NO UN CAMPO — Q-90, 14 ago 2026.
+
+     Un apunte que diga «el campo `id` de este registro ahora vale nada» se
+     aplicaba tal cual: se buscaba el registro POR su id, y acto seguido se le
+     borraba el id. Quedaban fichas `{id: null}` — obras fantasma en el
+     desplegable de «elegir proyecto», y en un ensayo sería peor: un camión sin
+     llave no se vuelve a encontrar nunca.
+
+     Un apunte así lo genera `qcCambios()` solo si un registro pierde su `id` en
+     la foto local, que ya es un fallo — pero el que recibe no tiene por qué
+     obedecerlo. Es de la misma familia que las 397 fichas vacías (Q-86): el
+     servidor creando registros a partir de un campo suelto. */
+  if (o.campo === "id") return;
   if (o.ent === "test") {
     let t = (db.tests || []).find((x) => x.id === o.id);
     if (!t) { t = { id: o.id }; db.tests.push(t); }

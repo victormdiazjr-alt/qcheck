@@ -162,7 +162,18 @@ const pantallas934 = html.filter((f) => leer(f).includes("sp934.js"));
    y el Unit Weight objetivo de su obra. Sin eso no puede trabajar, porque no
    tiene Plan & Datos. Dejarlo detrás del candado significaba que el ingeniero
    de récord tenía que pedirle a Víctor el dato que decide el 45 % de su pago. */
-const declaran = ["settings.html"];
+/* Y desde Q-89, 14 ago 2026, también las dos pantallas donde SE CREA UN TIRO.
+
+   Un tiro de la 934 tiene que poder preguntar lo de la 934 al nacer —su clase y
+   su ventana de aceptación—, y el tiro se crea desde Recepción y desde el
+   Control Center. Sin cargar las tablas, `formSP934()` reventaba en silencio y
+   la pregunta no salía nunca: la comprobación estaba bien y lo que faltaba era
+   el archivo.
+
+   Siguen sin JUZGAR nada: no calculan PWL, ni lotes, ni factor de pago. Eso vive
+   en 934/lotes/aceptación, que se quedan tras la puerta. Aquí solo se declara,
+   igual que en Settings. */
+const declaran = ["settings.html", "conduce.html", "control-center.html"];
 const problemas = [];
 for (const f of pantallas934) {
   const b = path.basename(f);
