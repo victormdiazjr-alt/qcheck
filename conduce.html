@@ -970,6 +970,42 @@ function saveArrival() {
     sinMirar.forEach((el) => el.classList.remove("sugerido"));
   }
 
+  /* UN CAMIÓN SIN NOMBRE NO ES UN CAMIÓN — Q-101, 14 ago 2026.
+
+     En el tiro de hoy entraron DOS registros con `Ticket —`, sin número de
+     camión, los dos a las 11:18 y los dos con 8.5 CY. Las yardas no las leyó
+     nadie: son las del camión anterior, que la pantalla propone como herencia
+     (Q-93). O sea, **dos camiones fantasma con yardas heredadas**.
+
+     Y ese mismo día Víctor había mandado, con razón, que ningún campo frenara
+     el registro: «cualquier campo que no se reconozca que se quede en blanco
+     pero no pare el proceso; Rubén lo llena luego en el spreadsheet». Eso vale
+     para el slump, la hora, la mezcla — para todo lo que se pueda rellenar
+     después mirando el papel.
+
+     **No vale para la identidad.** Un registro sin conduce y sin camión no se
+     puede completar más tarde, porque no hay forma de saber a qué camión de la
+     fila corresponde. No es un hueco: es un registro que no se puede arreglar.
+     Y encima suma yardas — hoy pusieron el tiro en 51/51, 100 %, con hormigón
+     todavía llegando.
+
+     > Un hueco se rellena luego. Un registro que no se sabe de quién es, no.
+
+     Así que se pide UNA de las dos cosas, no las dos: número de conduce **o**
+     número de camión. Con cualquiera de ellas el camión tiene nombre y todo lo
+     demás se puede completar después. Sin ninguna, no se guarda. */
+  {
+    const tk = document.getElementById("f-ticket").value.trim();
+    const cm = document.getElementById("f-truck").value.trim();
+    if (!tk && !cm) {
+      alert("Este camión no tiene ni número de conduce ni número de camión.\n\n" +
+            "Sin uno de los dos no hay forma de saber cuál es, y luego no se puede " +
+            "corregir.\n\nEscribe el que puedas leer del papel — con uno basta.");
+      document.getElementById(tk ? "f-truck" : "f-ticket").focus();
+      return;
+    }
+  }
+
   const ticket = document.getElementById("f-ticket").value.trim();
 
   /* Un conduce no se registra dos veces. La llave es compañía + ticket, no el
