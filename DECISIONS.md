@@ -2569,3 +2569,65 @@ segundo**:
 programa:** *lo que un aparato no ha enviado nunca no está sincronizado, por mucho
 que lo tenga delante. Antes de mandar el primer cambio de un registro, hay que
 mandar el registro.*
+
+---
+
+## Q-87 · El tiro del 12 estaba archivado en el día y la obra equivocados — 13 de agosto de 2026
+
+**Rubén dio de alta el tiro el 12 de agosto en AC-220037**, con sus vigas y su
+plan. Ese día vació: seis camiones de PRETENSADOS DE PR, 51 yardas, elementos
+401, 402 y 403. **Y lo tecleó al día siguiente.**
+
+QCheck archivó ese trabajo **bajo el día en que se tecleó y bajo la obra que
+estaba abierta en ese momento**, no bajo el tiro que él había dado de alta. El
+resultado, en el expediente:
+
+| | Decía | Es |
+| --- | --- | --- |
+| Fecha | 2026-08-13 | **2026-08-12** |
+| Obra | pr-52 | **ac-220037** |
+| Concretera | Concre-Tech | **PRETENSADOS DE PR** |
+| Objetivo de unit weight | 150.1 | **152.9** |
+
+**El cuarto renglón es el que más duele y no lo habíamos visto.** Al quedar los
+camiones en la PR-52, se les estampó **el límite de unit weight de la PR-52**.
+Seis camiones de hormigón pretensado juzgados con la vara de otra obra. Es la
+misma familia que Q-59b —donde un camión bueno se cantó RECHAZADO por el límite
+de la obra de al lado—, solo que aquí no saltó ningún aviso: **el número
+equivocado se quedó escrito en el expediente, callado.**
+
+Y quedaron **dos días para el mismo vaciado**: el que Rubén abrió el 12, con la
+obra bien pero los datos del plan a medias, y el que la app creó sola el 13, con
+los datos de verdad —los elementos, las yardas del conduce, los límites de la 934
+y el cierre firmado— pero colgando de la obra equivocada.
+
+### Lo que se hizo
+
+Los seis camiones volvieron al **12**, a **AC-220037**, con **PRETENSADOS DE PR**
+y el objetivo de unit weight de su propia obra. Al día 12 se le mudó lo que
+describe el vaciado —elementos, yardas, hora de inicio, los límites de la 934 y el
+cierre de Rubén— y **el día 13 se descartó** como duplicado, con su motivo escrito.
+
+**La fecha de entrada no se tocó ni hacía falta:** cada apunte del expediente lleva
+su propia hora, su aparato y su firma. Que el tiro fuera el 12 y se escribiera el
+13 **ya estaba registrado**, y así se queda. Palabras de Víctor: «el tiro ocurrió
+el doce, se entró el 13, que así esté».
+
+Comprobado bajando el expediente del servidor: **PR-52 con 413 ensayos y 4.041 CY
+(2025-11-25 → 2026-08-01)** y **AC-220037 con 6 ensayos y 51 CY, todos del 12**.
+
+### Lo que NO arregla esto, y muerde mañana
+
+**La causa sigue viva.** QCheck archiva un camión bajo `todayISO()` y bajo la obra
+abierta. Si mañana Rubén entra camiones con la PR-52 abierta, **vuelve a pasar
+exactamente lo mismo**, y otra vez sin que salte nada.
+
+> **Un tiro no es «hoy en la obra que esté abierta». Es el tiro que alguien dio de
+> alta.** Mientras el camión no cuelgue del tiro, colgará de lo que haya puesto la
+> pantalla, y eso cambia solo.
+
+El arreglo está diseñado y decidido —el paso de crear/abrir tiro con obra y fecha,
+del que todo lo demás hereda— y **no entró la noche del 13 a propósito**: cambiaba
+de forma cuatro veces en una tarde y delante había un vaciado de verdad. Hasta que
+entre, la única defensa es de obra: **abrir AC-220037 antes de recibir el primer
+camión y no cambiar de obra durante el tiro.**
