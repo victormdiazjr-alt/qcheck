@@ -911,7 +911,32 @@ function pintarTiro(day) {
   }
   const p = dayProgress(d);
   const hayPlan = p.cyPlan != null && p.cyPlan > 0;
-  const pct = hayPlan ? p.pct : 0;
+  /* LA BARRA ENSEÑA LO RECIBIDO, NO LO COLOCADO — Q-100, 14 ago 2026.
+
+     Víctor, con el tiro corriendo: «no van 0 de 51 si ya vació un camión».
+     Tenía razón, y el motivo estaba escrito en este mismo archivo desde el 1
+     de agosto: aquel tiro acabó con 157 yardas y el tablero decía 147, porque
+     a un camión no se le llegó a marcar «Termina vaciado». **Es el mismo fallo
+     otra vez, y aquella vez se parcheó solo para el cierre.**
+
+     `placed` resta los camiones que llegaron y no tienen sello de fin. Es la
+     definición correcta de COLOCADO y no se toca: los informes la usan.
+     **Pero como número de avance en una pantalla no vale**, porque depende de
+     que alguien se acuerde de dar un toque con las manos sucias — y si no se
+     acuerda, la pantalla dice CERO con hormigón cayendo.
+
+     > Un número que depende de que alguien pulse un botón se separa de la
+     > realidad, y el que mira la pantalla no tiene forma de saberlo.
+
+     Lo RECIBIDO es un hecho del conduce: el camión llegó, trae sus yardas y no
+     se rechazó. Eso es lo que contesta «¿por dónde va el tiro?».
+
+     Y no se pierde el matiz: lo que todavía está cayendo se dice **al lado**,
+     en pequeño, en vez de restarlo en silencio. **Al cerrar el día los dos
+     números son el mismo**, así que esto solo cambia lo que se ve mientras
+     entra hormigón — que es justo cuando se mira. */
+  const avance = p.recibido;
+  const pct = hayPlan ? Math.min(100, avance / p.cyPlan * 100) : 0;
   // Sin plan de yardas no se inventa un total: se muestra lo vaciado y ya.
   const llenos = hayPlan ? Math.round(pct / 100 * QCS_SEGMENTOS) : 0;
   let segs = "";
@@ -920,13 +945,27 @@ function pintarTiro(day) {
   el.className = "qcs-tiro" + (hayPlan ? "" : " sin-plan") + (esHoy ? "" : " pasado");
   el.href = "results.html#daily";
   el.title = esHoy
-    ? (hayPlan ? "Avance del tiro" : "Defina las yardas planificadas del día")
+    ? (hayPlan ? `Recibido y aceptado: ${fmt(p.recibido, 1)} cy de ${fmt(p.cyPlan, 0)} · ${p.loads} camión${p.loads === 1 ? "" : "es"}`
+               : "Defina las yardas planificadas del día")
     : `Último vaciado — ${fmtDate(d)}. Hoy no hay tiro abierto.`;
+  /* NO se enseña «X cayendo» — Víctor, 14 ago 2026, contando cómo se trabaja
+     de verdad: «al camión se le someten los resultados, es aceptado y comienza
+     a vaciar. Ya ahí termina. No hay que darle a un botón de terminar el
+     camión.»
+
+     Con ese flujo, el sello de fin por camión no se pone nunca, así que un
+     aviso de «lo que sigue descargando» saldría **en todos los camiones y
+     siempre** — y un aviso que sale siempre se deja de mirar. Peor: haría
+     creer que falta algo por hacer cuando no falta nada.
+
+     Es la misma lección de esta mañana vista al revés: primero la pantalla
+     restaba por un botón que nadie pulsa, y ahora habría avisado por lo
+     mismo. **El botón no es el problema: dar por hecho que se pulsa, sí.** */
   el.innerHTML = `
     <span class="qcs-lb">${esHoy ? "Tiro" : "Último tiro"}</span>
     ${esHoy ? "" : `<span class="qcs-fecha">${esc(fmtDate(d))}</span>`}
     <span class="qcs-seg">${segs}</span>
-    <span class="qcs-cy">${fmt(p.placed, 1)}${hayPlan ? ` / ${fmt(p.cyPlan, 0)}` : ""} <b>cy</b></span>
+    <span class="qcs-cy">${fmt(avance, 1)}${hayPlan ? ` / ${fmt(p.cyPlan, 0)}` : ""} <b>cy</b></span>
     <span class="qcs-pc">${hayPlan ? Math.round(pct) + "%" : "sin plan"}</span>`;
 }
 

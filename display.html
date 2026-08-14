@@ -369,7 +369,7 @@ footer {
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=286507eb"></script>
-<script src="assets/core.js?v=48c1896d"></script>
+<script src="assets/core.js?v=2009d735"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -464,8 +464,17 @@ function render() {
   if (typeof pintarTiro === "function") pintarTiro(day);   // el tiro sube en vivo
   const rows = day ? testsOfDate(day) : [];
   const last = rows[rows.length - 1];
-  // lo colocado, no lo recibido: el camión que aún descarga no cuenta todavía
-  const cy = dayProgress(day).placed;
+  /* «YARDAS HOY» ES LO RECIBIDO Y ACEPTADO — Q-100, 14 ago 2026.
+
+     Decía `placed`, que resta los camiones sin sello de «Termina vaciado».
+     El 14 de agosto esta pantalla enseñaba **0 CY con un camión ya vaciado**,
+     porque nadie había dado ese toque. En una pantalla que se ve desde la
+     obra, un cero grande con hormigón en el suelo no es prudente: es falso.
+
+     Lo recibido es un hecho del conduce —llegó, trae sus yardas, no se
+     rechazó—. Lo que sigue descargando se dice aparte, en la barra de arriba,
+     en vez de restarse en silencio. Al cerrar el día los dos coinciden. */
+  const cy = dayProgress(day).recibido;
   const nRej = rows.filter((t) => t.rejected).length;
   const meta = (db.dayMeta && db.dayMeta[day]) || {};
 
