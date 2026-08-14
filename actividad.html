@@ -304,6 +304,29 @@ setInterval(mirar, CADA);
 /* Al volver a la pantalla se pregunta ya, sin esperar los cuatro segundos:
    quien vuelve al teléfono quiere ver lo de ahora, no lo de hace un rato. */
 document.addEventListener("visibilitychange", () => { if (!document.hidden) mirar(); });
+
+/* LA FRANJA DECÍA «This device only» EN UN APARATO CONECTADO — Q-96, 14 ago 2026.
+
+   Esta era la ÚNICA pantalla que cargaba `sync.js` y no arrancaba el motor.
+   Sin arrancarlo, `QCSync.estado` se queda en su valor de nacimiento —
+   `"apagado"`— y `pintarConexion()` pinta «This device only» **sin haber
+   comprobado nada**. No es que midiera mal: es que no llegaba a medir.
+
+   Y el aparato estaba conectado. Esta misma pantalla lo demostraba dos dedos
+   más abajo: sin `qc-api` puesto, `mirar()` sale por «sin servidor» y la lista
+   queda vacía — y la lista estaba llena, en vivo, con el expediente por el
+   40145.
+
+   Víctor lo cazó el 14 de agosto entrando desde la MacBook nueva, y estuvo un
+   rato creyendo que había conectado mal el aparato. El comentario de
+   `pintarConexion()` en core.js ya avisaba de que ese estado «ya despistó dos
+   veces». Van tres, y esta se la comió el dueño.
+
+   Arrancar el motor aquí es lo que hacen las demás pantallas, y en una de
+   lectura no empuja nada: la cola solo se llena en `alGuardar()`, o sea al
+   guardar, y aquí no se guarda. Lo que sí hace es MEDIR de verdad, que es lo
+   único que puede convertir ese rótulo en cierto. */
+if (typeof QCSync !== "undefined") QCSync.arrancar();
 </script>
 </body>
 </html>
