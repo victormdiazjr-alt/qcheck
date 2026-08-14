@@ -159,6 +159,29 @@ function qcVeConfig() {
   return !!(c && c.config);
 }
 
+/* ¿QUIÉN PUEDE MIRAR LO QUE HACEN LOS DEMÁS? — Q-96, 14 ago 2026.
+
+   Víctor: «que el botón de actividad del log solo lo vea admin».
+
+   Y hacía falta decirlo, porque `qcVeConfig()` no valía: hoy lo llevan Rubén,
+   los tres técnicos y Yarvier —todos entran a Settings— así que con esa puerta
+   la pantalla de Actividad se la habría encontrado el propio Rubén. Ver el
+   registro de lo que hace la cuadrilla es de quien lleva el contrato, no de la
+   cuadrilla.
+
+   Va como CAPACIDAD y no como `usuario === "admin"` (AGENTS §3): el papel se
+   deduce de la ficha y nunca del nombre. La capacidad que hoy tiene una sola
+   cuenta es `limites` —«Plan & Datos», quien pone los umbrales con los que se
+   juzga el hormigón—, y no es una elección caprichosa: quien decide la vara es
+   quien responde de cómo se usa.
+
+   El día que haga falta separarlo de verdad, esto pasa a ser su propia
+   capacidad en la ficha —`auditoria`— y se cambia SOLO aquí. */
+function qcVeActividad() {
+  const c = qcCuenta();
+  return !!(c && c.limites);
+}
+
 
 /* ¿Esta cuenta vive en una sola pantalla? — Q-37.
 

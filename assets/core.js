@@ -740,7 +740,10 @@ function mountStatusBar(day, opciones) {
             conectado; Actividad dice QUÉ están haciendo. Van juntas porque se
             miran juntas: un aparato encendido que no toca nada y un aparato
             que lleva veinte camiones son cosas distintas. */""}
-      ${veSistema ? `<a class="qcs-sistema" href="actividad.html" title="Actividad — qué está pasando ahora mismo">
+      ${/* Q-96: y ésta NO va por `veSistema`. Ese permiso lo llevan Rubén y los
+            técnicos —todos entran a Settings—, así que el registro de lo que
+            hace la cuadrilla se lo habría encontrado la propia cuadrilla. */""}
+      ${typeof qcVeActividad === "function" && qcVeActividad() ? `<a class="qcs-sistema" href="actividad.html" title="Actividad — qué está pasando ahora mismo">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>
       </a>` : ""}
       <div class="qcs-conn" id="qcs-conn"><i></i><span></span></div>`;
