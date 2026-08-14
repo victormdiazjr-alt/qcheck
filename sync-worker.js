@@ -501,7 +501,61 @@ export default {
         "que firma la Autoridad de Carreteras: un número equivocado que parece bueno hace más",
         "daño que un hueco, porque nadie lo va a mirar dos veces.",
         "",
-        "- `vol` en yardas cúbicas, solo el número.",
+        /* `vol` ES EL CAMPO QUE MULTIPLICA EL DINERO — 14 ago 2026.
+           Tenía una sola línea, y es el que más falla: Rubén no pudo leerlo de
+           los PDF del 12 de agosto y tuvo que teclear las yardas de seis
+           camiones. Lo de abajo sale de mirar un conduce de verdad, no de
+           memoria: en el 1917 conviven entregada 8.50, acumulada 17.00 y
+           ordenada 51.00 en la misma fila. */
+        /* EL PAPEL VIENE CORRIDO MUY A MENUDO — Víctor, 14 ago 2026.
+
+           «Muchos conduces tendrán los campos y la data corrida. Es bien normal
+           que las concreteras no le presten atención a eso. Así que debemos ir
+           preparados siempre.»
+
+           El formulario va preimpreso y los datos los mete encima una matriz de
+           puntos; si el rodillo va medio renglón desviado, **un número acaba
+           debajo de la casilla de al lado**. Y no lo arregla nadie, porque para
+           la planta el papel se entiende igual.
+
+           Esto es peligroso justo por lo contrario de lo que parece: el
+           resultado **no sale borroso, sale limpio y en la casilla equivocada**.
+           Un lector que se fía de la posición devuelve un número perfectamente
+           legible que significa otra cosa. Es la peor forma del fallo de este
+           proyecto: **plausible, firmado, y nadie lo mira dos veces.** */
+        "EL PAPEL VIENE CORRIDO MUY A MENUDO. Léelo por lo que SIGNIFICA, no por dónde CAE.",
+        "",
+        "El formulario va preimpreso y los datos los teclea encima una impresora de matriz",
+        "de puntos. Es normal que salga desviada medio renglón o medio centímetro, y las",
+        "plantas no lo corrigen porque para ellos el papel se entiende igual. Así que",
+        "**un valor puede aparecer pegado a la casilla de al lado, o entre dos casillas**.",
+        "",
+        "Cuando eso pase:",
+        "- **Manda la etiqueta, no la posición.** Sigue el renglón entero de izquierda a",
+        "  derecha y mira qué rótulo le corresponde de verdad, aunque el número esté",
+        "  desplazado. No cojas el valor «que está debajo» de un rótulo si el renglón",
+        "  dice otra cosa.",
+        "- **Compruébalo con algo que ya sepas.** Muchos datos aparecen dos veces en el",
+        "  papel, o se pueden contrastar entre sí: `vol` suele repetirse en el renglón del",
+        "  artículo; `vol` nunca puede ser mayor que `ordenadas`; el número de camión y el",
+        "  de conduce son cosas distintas y de longitud distinta; una hora tiene dos",
+        "  puntos. Si las dos apariciones no coinciden, **ese campo va a `ilegible`**.",
+        "- **Si no puedes decidir a qué casilla pertenece un valor, va a `ilegible`.**",
+        "  Un dato corrido no sale borroso: sale perfectamente legible y en el sitio",
+        "  equivocado. Ese es el peor error posible aquí, porque parece bueno.",
+        "  Prefiere siempre dejarlo vacío antes que asignarlo a la casilla de al lado.",
+        "",
+        "- `vol` son las yardas cúbicas que trae ESTE camión. Solo el número.",
+        "  Va en «Cantidad Entregada», «Servidas» o «Cantidad», y en muchos conduces se",
+        "  imprime TAMBIÉN en el renglón del artículo. Míralo en los dos sitios y",
+        "  compáralos: si no coinciden, uno se leyó mal — devuélvelo en `ilegible`.",
+        "  **NO lo confundas con «Cantidad Acumulada» ni con «Cantidad Ordenada»**, que",
+        "  van en la misma fila: acumulada es lo que lleva el día, ordenada lo que se",
+        "  pidió. En un conduce medido: entregada 8.50 · acumulada 17.00 · ordenada 51.00.",
+        "  Está impreso en matriz de puntos y **el punto decimal es lo primero que se",
+        "  pierde: 8.5 y 85 se parecen mucho**. Si no distingues el decimal con",
+        "  seguridad, NO redondees ni escojas el más probable: va a `ilegible`.",
+        "  Este número multiplica el precio y entra en lo que se cobra.",
         "- `batch` en formato de 24 horas, HH:MM. Es la hora que el CONDUCE trae impresa",
         "  en su cabecera, la que va al lado de la fecha y del número de camión, y que",
         "  suele repetirse abajo en «Salida de Planta». No la de ahora. Si el papel la",
@@ -521,22 +575,50 @@ export default {
         "- El `Slump` impreso es el TEÓRICO de diseño, no el medido en obra. No lo devuelvas.",
         "- `chofer` es el nombre del conductor. Se pide para COMPROBAR, no para",
         "  rellenar: si no se lee, devuélvelo null y no lo deduzcas del camión.",
+        /* ESTE BLOQUE ESTABA PARTIDO POR LA MITAD — 14 ago 2026.
+           La frase «…hay que mirarlo con cuidado: la tinta de» seguía SEIS
+           LÍNEAS más abajo con «bolígrafo, el trazo irregular…». Entre medias
+           se había metido, dentro de la frase, el párrafo de los nombres del
+           esquema. Nadie lo vio porque el bloque se lee como una lista y cada
+           línea suelta tiene sentido: **el fallo solo se ve leyéndolo seguido,
+           que es justo como lo lee el modelo y no como lo lee una persona.**
+           Aquí va entero y en orden. */
         "- `manuscrito` es la lista de campos que venían ESCRITOS A MANO y no impresos",
         "  por la planta. Es importante y hay que mirarlo con cuidado: la tinta de",
-        "  **Si el campo es uno de los del esquema, llámalo EXACTAMENTE como se llama",
-        "  ahí** —ticket, truck, vol, batch, company, mix, ordenadas, chofer— y no con",
-        "  otro nombre: hay un aviso en pantalla que depende de esos nombres, y un aviso",
-        "  que nunca salta es peor que no tenerlo. Lo que no esté en el esquema, dilo",
-        "  como quieras.",
         "  bolígrafo, el trazo irregular y la posición torcida se distinguen del texto",
         "  impreso. Si un campo está impreso, NO lo pongas. Si dudas, no lo pongas",
         "  tampoco: aquí un aviso falso hace que dejen de mirarse los avisos.",
         "  Las casillas del ciclo (horas de salida, llegada, comienzo, fin) se rellenan",
         "  a mano por costumbre y eso es normal; aun así, dilo si las lees.",
+        "  **Si el campo es uno de los del esquema, llámalo EXACTAMENTE como se llama",
+        "  ahí** —ticket, truck, vol, batch, company, mix, ordenadas, chofer— y no con",
+        "  otro nombre: hay un aviso en pantalla que depende de esos nombres, y un aviso",
+        "  que nunca salta es peor que no tenerlo. Lo que no esté en el esquema, dilo",
+        "  como quieras.",
       ].join("\n");
 
-      let r;
-      try {
+      /* SE REINTENTA, PORQUE UN TROPIEZO NO ES UN CONDUCE ILEGIBLE — 14 ago 2026.
+
+         El 14 de agosto, con el primer camión del tiro de las vigas, el lector
+         no leyó el conduce. El segundo entró bien con la misma cámara y el
+         mismo papel. **No había nada roto: fue un tropiezo y no se volvía a
+         intentar.** El técnico se comió teclear un camión entero al lado del
+         chute, y nadie pudo saber por qué, porque la pantalla dice lo mismo
+         para todos los fallos.
+
+         Solo se reintenta lo que se arregla solo esperando —cola llena,
+         sobrecarga, un corte de red—. Un 400 o un 401 no se reintentan: esos
+         no mejoran por insistir y repetirlos solo hace esperar más de pie.
+
+         Las esperas son cortas a propósito. Hay un camión con el chute abierto:
+         más vale volver a mano en tres segundos que acertar en veinte. */
+      const REINTENTABLE = new Set([408, 409, 425, 429, 500, 502, 503, 504, 529]);
+      const ESPERAS = [400, 1200];   // ms; dos reintentos, ~1.6 s en el peor caso
+
+      let r, ultimoFallo = null;
+      for (let intento = 0; intento <= ESPERAS.length; intento++) {
+        if (intento) await new Promise((s) => setTimeout(s, ESPERAS[intento - 1]));
+        try {
         r = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
           headers: {
@@ -566,14 +648,23 @@ export default {
             }],
           }),
         });
-      } catch (_) {
-        return json({ error: "sin-respuesta" }, 502);
+        } catch (_) {
+          /* La red se cayó a mitad. Es de los que se arreglan solos. */
+          r = null; ultimoFallo = { error: "sin-respuesta", codigo: 0 };
+          continue;
+        }
+        if (r.ok) break;
+        ultimoFallo = { error: "lector", codigo: r.status };
+        if (!REINTENTABLE.has(r.status)) break;
+        r = null;
       }
 
-      if (!r.ok) {
+      if (!r || !r.ok) {
         /* Se dice el código y ya. El cuerpo del error puede traer trozos de la
-           petición, y esto va a un aparato en la obra. */
-        return json({ error: "lector", codigo: r.status }, 502);
+           petición, y esto va a un aparato en la obra.
+           Y va `reintentos`: sin él, un fallo que se repitió tres veces se lee
+           igual que uno que pasó una vez, y son dos problemas distintos. */
+        return json({ ...(ultimoFallo || { error: "lector", codigo: 0 }), reintentos: ESPERAS.length }, 502);
       }
 
       const m = await r.json();

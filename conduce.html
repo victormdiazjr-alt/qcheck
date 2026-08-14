@@ -787,13 +787,34 @@ async function leerDeLaFoto(dataUrl) {
     });
     d = await r.json();
   } catch (_) {
-    aviso.textContent = "No se pudo leer la foto. Entra los datos a mano.";
+    aviso.textContent = "Sin señal para leer la foto. Entra los datos a mano.";
     return;
   }
+  /* CADA FALLO SE DICE POR SU NOMBRE — 14 ago 2026.
+
+     Hasta hoy todo salía como «No se pudo leer la foto». El 14 de agosto el
+     primer camión del tiro no se leyó, y con ese mensaje **no había forma de
+     saber si fue la foto, la red o el servidor**: se estuvo un rato a ciegas
+     con un camión esperando. El servidor ya distinguía los casos; era la
+     pantalla la que los juntaba todos en una frase.
+
+     Un aviso que sirve para todos los fallos no ayuda en ninguno. Y los tres
+     se arreglan distinto: la foto la repite el técnico ahí mismo, la señal se
+     espera, y el servidor no lo arregla nadie desde la obra.
+
+     Todos acaban igual —«entra los datos a mano»— porque eso es siempre lo
+     que toca hacer y el camión no espera. */
   if (!r.ok) {
-    aviso.textContent = d && d.error === "sin-lector"
-      ? "Este servidor no tiene lector de conduce. Entra los datos a mano."
-      : "No se pudo leer la foto. Entra los datos a mano.";
+    const e = (d && d.error) || "";
+    aviso.textContent =
+        e === "sin-lector"    ? "Este servidor no tiene lector de conduce. Entra los datos a mano."
+      : e === "sesion"        ? "Tu sesión caducó. Vuelve a entrar y repite la foto."
+      : e === "rol"           ? "Tu cuenta no puede usar el lector. Entra los datos a mano."
+      : e === "rechazado"     ? "El lector no quiso leer esta foto. Repítela más de cerca."
+      : e === "ilegible"      ? "El lector no entendió la foto. Repítela sin reflejo y de frente."
+      : e === "sin-respuesta" ? "El lector no contesta. Vuelve a intentarlo o entra los datos a mano."
+      : e === "imagen"        ? "La foto no llegó entera. Repítela."
+      :                         `El lector falló${d && d.codigo ? ` (${d.codigo})` : ""}. Entra los datos a mano.`;
     return;
   }
 
