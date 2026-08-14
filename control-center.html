@@ -179,6 +179,12 @@
 .losas .lz-fuera { margin-top: 9px; font-size: 12px; color: var(--act);
   border-top: 1px solid rgba(245,184,61,.28); padding-top: 8px; }
 .losas .lz-fuera b { color: var(--act); letter-spacing: .04em; }
+/* Las piezas en columna, una debajo de otra, con aire entre ellas — Víctor,
+   14 ago 2026: «que haya un poquito de espacio de separación entre elementos;
+   bien poco, pero que haya». `lz-fila` no tenía estilo ninguno, así que las
+   tarjetas caían pegadas y las dos vigas se leían como una sola caja partida.
+   Seis píxeles bastan: separan sin abrir un hueco que parezca un fallo. */
+.losas .lz-fila { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .losas .lz-tira { display: flex; gap: 7px; margin-top: 8px; overflow-x: auto;
   -webkit-overflow-scrolling: touch; padding-bottom: 5px; scrollbar-width: thin; }
 .losas .lz { flex: none; min-width: 104px; padding: 7px 10px 8px; border-radius: 11px;
