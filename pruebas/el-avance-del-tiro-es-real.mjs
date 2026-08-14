@@ -70,6 +70,29 @@ console.log("\nSin camiones: cero de verdad, no un número inventado");
   di(dayProgress(HOY).recibido === 0, `recibido = ${dayProgress(HOY).recibido}`);
 }
 
+console.log("\nLOS FANTASMAS DE HOY — sin conduce y sin camión, con yardas heredadas");
+{
+  /* Es el caso literal del 14 de agosto: dos registros a la misma hora, sin
+     ticket y sin truck, con las 8.5 del camión anterior. Pusieron el tiro en
+     51/51 y 100 % con hormigón llegando. */
+  const real = camion(1, 8.5, { ticket: "1923" });
+  const fant = (n) => ({ n, id: "f" + n, date: HOY, proyecto: "p", vol: 8.5,
+                         arrive: "11:18", ticket: "", truck: "" });
+  const { dayProgress } = monta([real, fant(2), fant(3)], 51);
+  const p = dayProgress(HOY);
+  di(p.recibido === 8.5, `recibido = ${p.recibido} — solo el camión con nombre`);
+  di(p.sinNombre === 2, `sinNombre = ${p.sinNombre} — se cuentan para poder avisar`);
+  di(p.sinNombreCY === 17, `sinNombreCY = ${p.sinNombreCY} — las yardas que NO cuentan`);
+  di(Math.round(p.recibido / 51 * 100) === 17, `avance ${Math.round(p.recibido / 51 * 100)} %, no 100 %`);
+}
+
+console.log("\nUno con camión pero SIN conduce: cuenta, porque tiene nombre");
+{
+  const { dayProgress } = monta([camion(1, 8.5, { ticket: "", truck: "209" })], 51);
+  di(dayProgress(HOY).recibido === 8.5, `recibido = ${dayProgress(HOY).recibido}`);
+  di(dayProgress(HOY).sinNombre === 0, `sinNombre = ${dayProgress(HOY).sinNombre}`);
+}
+
 console.log("\nY QUE LA PANTALLA USE ESE NÚMERO — lo otro solo prueba la cuenta");
 {
   /* Sin esto, la prueba se queda verde aunque alguien devuelva la barra a

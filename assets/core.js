@@ -946,8 +946,18 @@ function pintarTiro(day) {
   el.href = "results.html#daily";
   el.title = esHoy
     ? (hayPlan ? `Recibido y aceptado: ${fmt(p.recibido, 1)} cy de ${fmt(p.cyPlan, 0)} · ${p.loads} camión${p.loads === 1 ? "" : "es"}`
+                 + (p.sinNombre
+                    ? `\n\n⚠ ${p.sinNombre} registro${p.sinNombre === 1 ? "" : "s"} sin conduce ni número de camión`
+                      + ` (${fmt(p.sinNombreCY, 1)} cy) NO se cuentan: no se sabe de qué camión son.`
+                      + `\nRevísalos en Recepción.`
+                    : "")
                : "Defina las yardas planificadas del día")
     : `Último vaciado — ${fmtDate(d)}. Hoy no hay tiro abierto.`;
+  /* Si hay registros sin identificar se dice EN LA BARRA, no solo al pasar el
+     ratón: en un teléfono no hay ratón. Es ámbar y va con su número, y solo
+     sale cuando de verdad hay alguno. */
+  const anon = esHoy && p.sinNombre
+    ? `<span class="qcs-cy" style="color:var(--act,#f5b83d)">⚠ ${p.sinNombre} sin identificar</span>` : "";
   /* NO se enseña «X cayendo» — Víctor, 14 ago 2026, contando cómo se trabaja
      de verdad: «al camión se le someten los resultados, es aceptado y comienza
      a vaciar. Ya ahí termina. No hay que darle a un botón de terminar el
@@ -966,6 +976,7 @@ function pintarTiro(day) {
     ${esHoy ? "" : `<span class="qcs-fecha">${esc(fmtDate(d))}</span>`}
     <span class="qcs-seg">${segs}</span>
     <span class="qcs-cy">${fmt(avance, 1)}${hayPlan ? ` / ${fmt(p.cyPlan, 0)}` : ""} <b>cy</b></span>
+    ${anon}
     <span class="qcs-pc">${hayPlan ? Math.round(pct) + "%" : "sin plan"}</span>`;
 }
 
@@ -2156,10 +2167,30 @@ function diasFantasma() {
   return fuera.sort((a, b) => a.dia.localeCompare(b.dia));
 }
 
+/* UN CAMIÓN SIN NOMBRE NO SUMA YARDAS — Q-101 bis, 14 ago 2026.
+
+   Los dos fantasmas de las 11:18 —sin conduce, sin camión, con las 8.5 yardas
+   heredadas del anterior— pusieron el tiro en **51/51, 100 %**, con hormigón
+   todavía llegando. Q-101 impide que entren más; esto arregla el número
+   mientras los que ya entraron sigan ahí.
+
+   **No se ocultan y no se borran.** Siguen en la lista de Recepción, con sus
+   botones, para que quien corresponda los revise o los elimine. Lo único que
+   no hacen es contar como hormigón puesto en la obra.
+
+   Y el motivo es el mismo de Q-101: unas yardas que no se sabe de qué camión
+   son no son unas yardas. **Sumarlas es decirle a quien mira la pantalla que
+   ha llegado hormigón que a lo mejor no ha llegado** — y esa cifra es la que
+   decide si se pide otro camión o se cierra el tiro. */
+function tieneNombre(t) {
+  return !!(String(t.ticket || "").trim() || String(t.truck || "").trim());
+}
+
 function dayProgress(day) {
   const meta = db.dayMeta[day] || {};
   const rows = testsOfDate(day);
-  const recibido = rows.filter((t) => !t.rejected).reduce((a, t) => a + (num(t.vol) || 0), 0);
+  const sinNombre = rows.filter((t) => !t.rejected && !tieneNombre(t));
+  const recibido = rows.filter((t) => !t.rejected && tieneNombre(t)).reduce((a, t) => a + (num(t.vol) || 0), 0);
   /* Un camión que llegó y no ha terminado de descargar todavía no ha colocado
      nada: sus yardas van aparte.
 
@@ -2202,6 +2233,11 @@ function dayProgress(day) {
   const conforming = evaluated.filter((t) => !t.rejected && worstZone(t) !== "susp").length;
   return {
     placed, enCurso, recibido,
+    /* Cuántos hay sin identificar, para que la pantalla lo pueda decir en vez
+       de que el número baje sin explicación. Un total que cambia sin motivo
+       visible es lo que hace que se deje de creer al tablero. */
+    sinNombre: sinNombre.length,
+    sinNombreCY: sinNombre.reduce((a, t) => a + (num(t.vol) || 0), 0),
     cyPlan,
     pending: cyPlan != null ? Math.max(0, cyPlan - placed) : null,
     pct: cyPlan ? Math.min(100, placed / cyPlan * 100) : null,
