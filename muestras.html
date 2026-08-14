@@ -170,26 +170,10 @@ tr.hecho:hover .celda { opacity: 1; }
   transition: border-color .16s, color .16s, box-shadow .18s;
 }
 .a-recepcion:hover { color: var(--text); border-color: var(--logo-navy); box-shadow: 0 0 16px -6px var(--logo-navy); }
-.cerrar-tiro {
-  margin-left: 1.2vw; flex: none;
-  background: var(--surface); border: 1px solid var(--hairline); color: var(--muted);
-  border-radius: 10px; padding: 1vh 1.1vw; font-size: 1.4vh; font-weight: 800;
-  letter-spacing: .14em; text-transform: uppercase; font-family: inherit; cursor: pointer;
-  transition: border-color .16s, color .16s, box-shadow .18s;
-}
-.cerrar-tiro:hover { color: var(--text); border-color: rgba(255,255,255,.28); }
-.cerrar-tiro:active { transform: scale(.97); }
-/* Ya cerrado: verde apagado, que es un estado, no una alarma */
-.cerrar-tiro.hecho { color: var(--ok); border-color: rgba(52,210,123,.45);
-  box-shadow: 0 0 0 2px rgba(52,210,123,.08); }
-/* Con camiones pendientes no se puede cerrar desde aquí: apagado y sin cursor,
-   pero se queda a la vista para que se entienda que existe y por qué no. */
-.cerrar-tiro:disabled { opacity: .32; cursor: not-allowed; }
-.cerrar-tiro:disabled:hover { color: var(--muted); border-color: var(--hairline); }
-/* Ya está todo muestreado: el botón se enciende un punto. Es lo que toca
-   ahora, y el color entra por el resplandor (AGENTS.md §10). */
-.cerrar-tiro.listo { color: var(--text); border-color: rgba(74,99,216,.5);
-  box-shadow: 0 0 0 2px rgba(74,99,216,.10), 0 0 16px -6px rgba(74,99,216,.9); }
+/* Aquí vivían las siete reglas de `.cerrar-tiro`. Se van con el botón (Q-99).
+   El CSS huérfano no da error, no sale en ninguna comprobación y se queda para
+   siempre — y el día que alguien ponga una clase con ese nombre, se encuentra
+   un estilo que no puso nadie. */
 
 /* ---------- cuerpo ---------- */
 .body { flex: 1; display: grid; grid-template-columns: 1fr 30vw; gap: 1.6vw; padding: 1.8vh 2.4vw; min-height: 0; }
@@ -417,13 +401,29 @@ footer .spacer { flex: 1; }
        en dos. El selector sigue estando: para un solo camión es más rápido. -->
   <button class="ver-rejilla" onclick="abrirRejilla()" title="Ver todos los camiones y qué les falta">▦ Camiones</button>
   <select class="truck-pick" id="truck-pick" onchange="pickTruck(this.value)"></select>
-  <!-- Pequeño y aparte del teclado a propósito: cerrar el tiro es la última
-       acción del día, no una que se busque con la mano sucia entre camión y
-       camión. Pide confirmación con los números delante. -->
+  <!-- CERRAR EL TIRO YA NO ESTÁ AQUÍ — Q-99, 14 ago 2026.
+
+       Víctor, en mitad del primer tiro: «¿el botón de cerrar tiro en Muestras
+       es para cerrar el vaciado de ese camión?». **No lo era, y esa pregunta
+       es el fallo.** Cerraba el día entero: firma el informe y congela los
+       límites y la norma sobre ese vaciado.
+
+       Había dos botones con la palabra «cerrar» a un toque de distancia y
+       significaban cosas muy distintas: `⏹ Termina`, en Recepción, cierra la
+       descarga de UN camión; éste firmaba el día. Si la persona que lleva el
+       proyecto duda, el técnico con guante mojado y un camión esperando no
+       tiene ninguna posibilidad.
+
+       Se queda en el Control Center, bajo «Tiro», que es donde se programa y
+       se cierra el vaciado — el sitio donde esa decisión se toma a sabiendas y
+       no entre dos lecturas de slump. **Una acción que se firma no vive en la
+       pantalla que se usa cien veces al día.**
+
+       No se pierde nada: es el mismo `cerrarTiro()` de core.js, con la misma
+       confirmación y los mismos números delante. -->
   <!-- El camino de vuelta a Recepción, que es de donde vienen los camiones.
        Sin esto, desde Muestras solo se podía salir a casa (Q-33). -->
   <a class="a-recepcion" href="conduce.html" onclick="guardarParcial()">⇄ Recepción</a>
-  <button class="cerrar-tiro" id="btn-cerrar" onclick="cerrarDesdeMuestras()"></button>
   </div>
 </header>
 
@@ -834,19 +834,10 @@ function render() {
      rellena. Con camiones pendientes el botón queda apagado y dice cuántos.
      Si de verdad hay que cerrar así, se hace desde el Control Center, que es
      donde se toma esa decisión a sabiendas. */
-  const bc = document.getElementById("btn-cerrar");
-  const cerrado = tiroCerrado(state.day);
-  const pendientes = pend.length;
-  bc.textContent = cerrado ? "Tiro cerrado" : "Cerrar tiro";
-  bc.disabled = !cerrado && pendientes > 0;
-  bc.className = "cerrar-tiro"
-    + (cerrado ? " hecho" : "")
-    + (!cerrado && !pendientes && all.length ? " listo" : "");
-  bc.title = cerrado
-    ? `Cerrado a las ${cerrado} · tocar para reabrir`
-    : pendientes
-      ? `Quedan ${pendientes} camión${pendientes === 1 ? "" : "es"} sin resultados`
-      : "Dar por terminado el vaciado de hoy";
+  /* El botón de cerrar el tiro se fue al Control Center — Q-99. Lo que decía
+     aquí —cuántos camiones quedan sin resultados— no se pierde: lo sigue
+     diciendo `cerrarTiro()` en su confirmación, con los números delante, que
+     es donde de verdad hace falta leerlo. */
 
   const t = currentTest();
   const body = document.getElementById("body");
@@ -1022,23 +1013,10 @@ function doSubmit(rejected, forzado) {
   render();
 }
 
-/* Cerrar o reabrir el tiro desde el iPad. La confirmación con los números
-   delante la pone `cerrarTiro()` en core.js, que la comparte con el Control
-   Center: lo que usan dos pantallas no se duplica. */
-function cerrarDesdeMuestras() {
-  const estaba = tiroCerrado(state.day);
-  /* La misma regla, comprobada también aquí y no solo en el botón: apagar un
-     botón esconde la acción, no la impide. */
-  const pendientes = pendingTrucks(state.day).length;
-  if (!estaba && pendientes) {
-    toast(`Quedan ${pendientes} camión${pendientes === 1 ? "" : "es"} sin resultados`);
-    return;
-  }
-  const ok = estaba ? reabrirTiro(state.day) : cerrarTiro(state.day);
-  if (!ok) return;
-  render();
-  toast(estaba ? "Tiro reabierto" : "Tiro cerrado");
-}
+/* `cerrarDesdeMuestras()` se fue con su botón — Q-99, 14 ago 2026.
+   Se borra la función entera y no se deja apagada: una función que ya no llama
+   nadie es la que alguien vuelve a enganchar dentro de seis meses sin leer por
+   qué se quitó. El motivo está arriba, en el hueco que dejó el botón. */
 
 function toast(msg) {
   const el = document.getElementById("toast");
