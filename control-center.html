@@ -304,7 +304,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=286507eb"></script>
-<script src="assets/core.js?v=bae68a44"></script>
+<script src="assets/core.js?v=072571ea"></script>
 <!-- Q-89: las tablas de la SP-934. Desde aquí se CREA un tiro, y un tiro de
      la 934 pregunta su clase y su ventana de aceptacion al nacer. Sin esto,
      `formSP934()` reventaba en silencio dentro del `setTimeout` y la pregunta
@@ -791,7 +791,7 @@ function render() {
               <b style="font-size:30px">Sin vaciado abierto</b>
             </div>
             <div class="pt-nota" style="margin-top:8px">
-              ${day ? "El último fue el " + esc(fmtDate(day)) : "Todavía no hay vaciados"}
+              ${(() => { const u = ultimoTiroProcesado(); return u ? "El último fue el " + esc(fmtDate(u.dia)) + (u.obra ? " · " + esc(u.obra) : "") : "Todavía no hay vaciados"; })()}
               · <a href="contratista.html" style="color:var(--vc);font-weight:700">programa el próximo</a>
             </div>
           </div>
@@ -846,7 +846,7 @@ function render() {
       <a class="w" href="contratista.html">
         <div class="lbl">Ready para Tirar</div>
         <div class="big" style="font-size:20px; line-height:1.35">Sin vaciado abierto</div>
-        <div class="sub">${day ? "El último fue el " + esc(fmtDate(day)) : "Todavía no hay vaciados"} · programa el próximo</div>
+        <div class="sub">${(() => { const u = ultimoTiroProcesado(); return u ? "El último fue el " + esc(fmtDate(u.dia)) + (u.obra ? " · " + esc(u.obra) : "") : "Todavía no hay vaciados"; })()} · programa el próximo</div>
       </a>`}
       <a class="w ${cumpl != null && cumpl >= 90 ? "ok" : cumpl != null ? "act" : ""}" href="results.html#tests">
         <div class="lbl">Cumplimiento</div>

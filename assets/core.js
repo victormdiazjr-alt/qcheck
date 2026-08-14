@@ -293,6 +293,39 @@ function migrarBase(db) {
    Se mira contra `db.tests` a pelo y no con `testsOfDate()`, que filtra por la
    obra abierta: aquí todavía no sabemos cuál es la buena, que es justo lo que
    se está averiguando. */
+/* EL ÚLTIMO TIRO QUE PROCESÓ QCHECK — Q-94, 14 ago 2026.
+
+   Víctor, entrando a QCheck la mañana del tiro: «entré y dice que el último
+   vaciado fue el 1 de agosto… y la verdad es que fue el 12 de agosto».
+
+   Y tenía razón. La pantalla decía el último vaciado **de la obra abierta**, que
+   era la PR-52. El del 12 fue del AC-220037 y no salía. Media verdad sin decir
+   de quién: quien lo lee entiende «QCheck no ha visto nada desde el 1», y lo que
+   pasa es que está mirando por otra ventana.
+
+   Cuando NO hay tiro abierto, la pregunta que se contesta ya no es «¿qué pasa en
+   esta obra?» sino «¿cuándo fue lo último?». Y eso no tiene obra: es lo último
+   que pasó por aquí. Se devuelve con su obra al lado para que nadie tenga que
+   adivinarlo.
+
+   Se mira `db.tests` a pelo, sin `sortedTests()`, que filtra por la obra
+   abierta — que es justamente lo que sobraba. */
+function ultimoTiroProcesado() {
+  let dia = null;
+  for (const t of db.tests || []) {
+    if (!t || t.borrado || !t.date) continue;
+    if (!dia || t.date > dia) dia = t.date;
+  }
+  if (!dia) return null;
+  const m = (db.dayMeta || {})[dia] || {};
+  const obra = (db.proyectos || []).find((p) => p && p.id === (m.proyecto || "pr-52"));
+  /* Solo el número de contrato: el nombre entero —«AC-220037 · Reemplazo losas
+     puentes 1067 · PR-52 Ponce»— parte la línea en dos y lo que hace falta
+     saber aquí es de qué obra fue, no su descripción. */
+  const nombre = (obra && (obra.name || obra.id)) || null;
+  return { dia, obra: nombre ? String(nombre).split("·")[0].trim() : null };
+}
+
 function tiroActivo() {
   const hoy = todayISO();
   const tienePlan = (m) => m && !m.borrado &&
@@ -857,9 +890,11 @@ function pintarTiro(day) {
   if (cerrado || (!esHoy && !tiroReciente(d))) {
     el.className = "qcs-tiro sin-plan";
     el.href = "results.html#daily";
-    el.title = !d ? "No hay vaciados registrados."
-      : cerrado ? `El tiro del ${fmtDate(d)} está cerrado. No hay ninguno abierto.`
-      : `El último vaciado fue el ${fmtDate(d)}. No hay ninguno abierto.`;
+    /* Q-94: el último que procesó QCheck, sea de la obra que sea. */
+    const ult = ultimoTiroProcesado();
+    el.title = cerrado ? `El tiro del ${fmtDate(d)} está cerrado. No hay ninguno abierto.`
+      : !ult ? "No hay vaciados registrados."
+      : `El último vaciado fue el ${fmtDate(ult.dia)}${ult.obra ? ` · ${ult.obra}` : ""}. No hay ninguno abierto.`;
     el.innerHTML = `<span class="qcs-lb">Ready para Tirar</span>
       <span class="qcs-cy">sin vaciado abierto</span>`;
     return;
