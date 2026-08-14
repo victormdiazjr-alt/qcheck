@@ -243,6 +243,21 @@ body { background: var(--bg); }
           <!-- Q-11: cuando el camión toca más de una losa, aquí se dice que se
                puede declarar el reparto, y si lo declara, si cuadra. -->
           <div id="pista-reparto" class="pista"></div></div>
+        <!-- LA MEZCLA DEL CAMIÓN — D-103, 13 ago 2026.
+
+             El lector la leía desde el primer día y `CAMPOS_QUE_IMPRIME_LA_PLANTA`
+             ya la declaraba dato de la planta, pero no había dónde ponerla: se
+             leía y se tiraba. El 12 de agosto Rubén entró seis conduces por foto
+             y lo dijo con estas palabras: «el campo de mix está en blanco porque
+             no hay un campo de mix habilitado. No pude ni entrarlo manual.»
+
+             Es qué hormigón se colocó. Bajo la SP-934, si un camión trae otra
+             mezcla, sin esto no hay forma de saberlo.
+
+             NO lleva asterisco a propósito: un conduce que no imprima la mezcla
+             legible no puede dejar a un técnico sin poder registrar el camión
+             con el chute esperando. Falta un dato, no se para el tiro. -->
+        <div class="field"><label>Mix (del conduce)</label><input id="f-mix" placeholder="55K30H6K28AC"></div>
       </div>
       <!-- Lo que el lector sacó de la foto, y lo que no pudo (Q-01). -->
       <div id="aviso-lectura"></div>
@@ -554,13 +569,24 @@ function rellenarDelConduce(d, eticketId) {
      imprime en 12 horas y esa es la costumbre del oficio. Lo que no se entienda
      se deja vacío, no se adivina. */
   pon("f-batch", horaDe24(d.batch));
+  pon("f-mix", d.mix);
   document.getElementById("f-arrive").value = nowHM();
   /* El identificador de QTicket viaja con el camión: es lo único que permite
      mandar una corrección del mismo conduce sin duplicarlo (contrato §2). */
   pendingEticket = eticketId || d.eticketId || null;
+  /* El suministrador y la planta viajan con el camión y mandan al guardar
+     (D-79). No se pintan en el formulario porque no hay campo para ellos: no
+     son cosa de la obra, y ponerlos en pantalla invitaría a corregirlos, que
+     es justo lo que el contrato §1 prohíbe. Se guardan y ya.
+     Lo que no venga en la ficha se queda en null, y entonces manda lo de
+     siempre: nada se adivina. */
+  fichaCompany = d.company || null;
+  fichaPlant = d.plant || null;
   toast("Conduce de QTicket — verifique y registre");
 }
 let pendingEticket = null;
+let fichaCompany = null;
+let fichaPlant = null;
 
 /* El conduce a pantalla completa — Q-78.
 
@@ -683,6 +709,9 @@ function pistaReparto() {
    viene impresa en el conduce. */
 const CAMPOS_LEIDOS = [
   ["ticket", "f-ticket"], ["truck", "f-truck"], ["vol", "f-vol"], ["batch", "f-batch"],
+  /* D-103: la mezcla se leía y no tenía dónde caer. Ahora cae en su casilla,
+     marcada como sugerida igual que las demás: el lector propone, no guarda. */
+  ["mix", "f-mix"],
 ];
 
 /* Las yardas ORDENADAS que traía impreso el último conduce leído. No tiene
@@ -730,6 +759,16 @@ async function leerDeLaFoto(dataUrl) {
 
   const c = d.campos || {};
   ordenadasLeidas = (c.ordenadas != null && c.ordenadas !== "") ? Number(c.ordenadas) : null;
+  /* El suministrador que trae impreso el papel manda sobre el que se deduce de
+     la planta — D-103. Esta es la vía por la que entraron los seis camiones del
+     12 de agosto, y es donde se perdió «PRETENSADOS DE PR».
+     La planta no se pide al lector a propósito (Q-56): el conduce de hoy no la
+     imprime. */
+  fichaCompany = (c.company != null && c.company !== "") ? String(c.company).trim() : null;
+  /* Y la planta, el día que se le pida al lector. Hoy no la devuelve nunca
+     (Q-56) y esto se queda en null, que es exactamente lo que tiene que pasar:
+     sin papel que lo diga, el camión entra sin planta. */
+  fichaPlant = (c.plant != null && c.plant !== "") ? String(c.plant).trim() : null;
   let puestos = 0;
   for (const [clave, id] of CAMPOS_LEIDOS) {
     const el = document.getElementById(id);
@@ -782,7 +821,21 @@ function avisarDeLoEscritoAMano(c) {
    lista de buenos deseos: sin cada uno de estos, algo concreto deja de andar,
    y en la columna de al lado está qué. Un dato que falta aquí no se nota hasta
    que se cierra el tiro y el reporte no cuadra — y entonces ya no hay a quién
-   preguntarle a qué hora salió ese camión de planta. */
+   preguntarle a qué hora salió ese camión de planta.
+
+   PERO YA NO FRENAN — 13 ago 2026, dicho por Víctor para el tiro de mañana:
+   «cualquier campo que no se reconozca que se quede en blanco pero no pare el
+   proceso ni cree ningún error; solo se queda en blanco, y Rubén lo llena luego
+   en el spreadsheet.»
+
+   El motivo es de obra, no de programa: **la puerta estricta se inventó para
+   evitar el hueco, y lo que hace de verdad es parar al técnico con el chute
+   esperando.** Un camión registrado con dos huecos es un camión registrado; un
+   camión que no se pudo registrar no existe, y ese sí que no se arregla luego.
+
+   Así que la lista sigue entera y sigue diciendo qué se rompe sin cada dato —
+   pero ahora AVISA y deja pasar. Lo que falte se ve en blanco, se completa
+   después, y cada relleno queda firmado como enmienda. */
 const CAMPOS_CAMION = [
   ["f-ticket", "el número de conduce", "es la llave del registro: sin él no hay expediente"],
   ["f-truck", "el número de camión", "es lo que canta el Field Display al chofer"],
@@ -795,18 +848,10 @@ const CAMPOS_CAMION = [
 function saveArrival() {
   /* Q-41: no se reciben camiones en un día ya firmado. */
   if (typeof frenoDiaCerrado === "function" && frenoDiaCerrado(diaActivo())) return;
-  /* Se avisa del PRIMERO que falta y se lleva el cursor ahí. Enseñar los seis
-     errores de golpe no ayuda a nadie con la mano sucia. */
-  for (const [id, que, porque] of CAMPOS_CAMION) {
-    const el = document.getElementById(id);
-    if (!String(el.value).trim()) {
-      toast(`Falta ${que} — ${porque}`);
-      el.focus();
-      el.classList.add("falta");
-      setTimeout(() => el.classList.remove("falta"), 2000);
-      return;
-    }
-  }
+  /* Se dice lo que va en blanco y se sigue. El aviso nombra los huecos para que
+     el técnico sepa qué tiene que completar luego; no le pide que lo arregle
+     ahora, porque ahora tiene un camión delante. */
+  const enBlanco = CAMPOS_CAMION.filter(([id]) => !String(document.getElementById(id).value).trim());
   /* Un campo leído de la foto que nadie ha mirado no entra al expediente sin
      que alguien lo diga (Q-01). Se enseñan cuáles son y qué dicen: un «¿está
      seguro?» a secas se contesta que sí sin leerlo, y aquí lo que se está
@@ -832,8 +877,67 @@ function saveArrival() {
      vivía en la alta de camión de Muestras; al quitarla de allí —los camiones
      entran por aquí y solo por aquí— se trajo a Recepción, que es donde ahora
      hace falta. Sin ella, un conduce entrado dos veces duplica las yardas. */
-  const planta = "01-SAN JUAN";
-  const repetido = findConduce(plantCompany(planta), ticket);
+  /* EL SUMINISTRADOR Y LA PLANTA LOS DICE EL CONDUCE — D-79 y D-103.
+
+     Antes esto era `plantCompany("01-SAN JUAN")` siempre, también cuando el
+     camión entraba por QTicket o por foto. Es decir: llegaba un conduce
+     certificado por «PRETENSADOS DE PR» y se guardaba como «Concre-Tech». No es
+     hipotético: pasó el 12 de agosto de 2026 con los seis camiones de Rubén.
+     Él corrigió la planta a mano, uno por uno, y la compañía se quedó mal —
+     el expediente decía que el camión salió de la planta de una concretera y lo
+     despachó otra.
+
+     Tres razones, y las tres estaban escritas antes que el fallo:
+
+     · El contrato §2 dice que un conduce y un camión son el MISMO hecho cuando
+       coinciden `company + ticket`. Con la compañía cambiada, la llave no casa:
+       una corrección que mande la planta entra como camión nuevo.
+     · El contrato §1 dice que un dato de la planta no se edita en QCheck.
+     · `CAMPOS_QUE_IMPRIME_LA_PLANTA` —en este mismo archivo— ya declaraba
+       `company` como dato de la planta. La regla estaba bien y se incumplía aquí.
+
+     A mano no cambia nada: sin conduce que preguntar, manda la concretera de
+     siempre.
+
+     OJO AL ORDEN: esto se calcula ANTES de buscar el repetido, porque la
+     búsqueda usa la misma llave. Con la compañía vieja, un conduce repetido de
+     QTicket no se reconocería y el camión entraría dos veces. */
+
+  /* CADA UNO DE SU DUEÑO — 13 ago 2026, aclarado por Víctor:
+     «un mismo tiro puede recibir camiones de distintas plantas de la misma
+     concretera. Hay que leer en el conduce la planta si está; si no, se deja
+     en blanco.»
+
+     De ahí salen las dos reglas, y el código las tenía justo al revés:
+
+     · LA CONCRETERA ES DEL TIRO. No cambia de camión a camión. Si el conduce
+       la trae, manda; si no, es la de la obra.
+     · LA PLANTA ES DE CADA CAMIÓN. Se lee del papel y de ningún otro sitio.
+       Si el papel no la imprime, se queda EN BLANCO.
+
+     Lo que había era `const planta = "01-SAN JUAN"` —que es la planta de
+     Concre-Tech— y de esa constante se deducía la concretera. Con una sola obra
+     no se notaba. Con dos, firmaba cada camión de PRETENSADOS con una planta
+     que no es suya, y encima le cambiaba el suministrador.
+
+     Una planta heredada, adivinada o puesta por defecto es siempre falsa: nadie
+     sabe de qué planta salió un camión salvo el camión. Un hueco se ve; un dato
+     inventado se firma.
+
+     PENDIENTE, y es lo que falta para que esto sirva del todo: al lector no se
+     le pide `plant` (Q-56, cuando el conduce de Concre-Tech no la imprimía y
+     ensuciaba los avisos). El de PRETENSADOS SÍ la trae impresa. Pedírsela es
+     tocar el lector —los dos servidores— y desplegar. Mientras no se haga, un
+     camión entrado por foto llega sin planta y se rellena en su ficha. */
+  const CONCRETERA_DE_SIEMPRE = plantCompany("01-SAN JUAN");
+  const compania = fichaCompany || (db.project && db.project.company) || CONCRETERA_DE_SIEMPRE;
+  const planta = fichaPlant || null;
+  /* SIN TICKET NO SE BUSCA REPETIDO. Ahora que un conduce ilegible puede entrar
+     con el número en blanco, la llave sería `compañía + ""` para todos ellos: el
+     segundo camión sin ticket se rechazaría como repetido del primero, y el
+     técnico se quedaría sin poder registrarlo — justo lo que se quiso evitar.
+     Dos huecos no son el mismo camión: son dos cosas que nadie ha leído aún. */
+  const repetido = ticket ? findConduce(compania, ticket) : null;
   if (repetido) {
     toast(`El ticket ${ticket} ya está registrado — camión ${repetido.truck || "—"}`);
     document.getElementById("f-ticket").focus();
@@ -843,7 +947,9 @@ function saveArrival() {
   const t = {
     n: nextTestN(), id: uid(),
     date: todayISO(),
-    ticket,
+    /* En blanco es `null`, como los demás huecos — no cadena vacía. Un hueco
+       tiene que verse igual mire quien lo mire. */
+    ticket: ticket || null,
     truck: document.getElementById("f-truck").value.trim() || null,
     vol: num(document.getElementById("f-vol").value),
     plant: planta,
@@ -851,7 +957,11 @@ function saveArrival() {
        llave del conduce. Si se dejaba para que la rellenara `migrateDB()` en
        la siguiente carga, dos entradas seguidas del mismo ticket en la misma
        sesión no se reconocían como repetidas. */
-    company: plantCompany(planta),
+    company: compania,
+    /* Qué hormigón se colocó — D-103. Sale del conduce, lo rellene el lector o
+       lo teclee el técnico. Es campo de origen del contrato (§2), así que va
+       con el nombre que allí tiene y no hace falta subir la versión. */
+    mix: document.getElementById("f-mix").value.trim() || null,
     /* De dónde vino este camión, y no es cosmético: un dato que llegó por
        QTicket es un dato certificado por la planta; uno leído de una foto es
        una lectura; uno tecleado es lo que dijo una persona. Dentro de un año
@@ -895,13 +1005,23 @@ function saveArrival() {
   saveDB();
   pendingPhoto = null;
   pendingEticket = null;
+  /* Se limpian con el resto: el camión siguiente puede venir de otra planta, o
+     entrar a mano. Un suministrador que se queda pegado del camión anterior es
+     de la misma familia que el aviso que nunca salta. */
+  fichaCompany = null;
+  fichaPlant = null;
   ordenadasLeidas = null;
   document.getElementById("photo-slot").innerHTML = "";
-  ["f-ticket", "f-truck", "f-ident", "f-batch", "f-arrive"].forEach((id) => document.getElementById(id).value = "");
+  ["f-ticket", "f-truck", "f-ident", "f-batch", "f-arrive", "f-mix"].forEach((id) => document.getElementById(id).value = "");
   pistaReparto();   // el camión siguiente empieza sin la pista del anterior
   document.getElementById("f-vol").value = "10";
   render();
-  toast(`Camión ${t.truck || ""} ticket ${t.ticket} registrado`);
+  /* Registrado, y si algo entró en blanco se dice AQUÍ y con nombres: es el
+     único momento en que el técnico sabe todavía qué camión era. Un aviso al
+     cerrar el tiro llega cuando ya nadie se acuerda. */
+  toast(enBlanco.length
+    ? `Camión ${t.truck || "sin número"} registrado — falta por llenar: ${enBlanco.map(([, que]) => que).join(", ")}`
+    : `Camión ${t.truck || ""} ticket ${t.ticket} registrado`);
 }
 
 /* ---------- one-tap timestamps + results ---------- */
