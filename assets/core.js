@@ -736,6 +736,13 @@ function mountStatusBar(day, opciones) {
       ${veSistema ? `<a class="qcs-sistema" href="estado.html" title="Estado del sistema — qué aparatos están conectados">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3.5" width="18" height="6" rx="1.6"/><rect x="3" y="14.5" width="18" height="6" rx="1.6"/><path d="M6.6 6.5h.01M6.6 17.5h.01"/></svg>
       </a>` : ""}
+      ${/* Q-95: la actividad, al lado del estado. Estado dice QUIÉN está
+            conectado; Actividad dice QUÉ están haciendo. Van juntas porque se
+            miran juntas: un aparato encendido que no toca nada y un aparato
+            que lleva veinte camiones son cosas distintas. */""}
+      ${veSistema ? `<a class="qcs-sistema" href="actividad.html" title="Actividad — qué está pasando ahora mismo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>
+      </a>` : ""}
       <div class="qcs-conn" id="qcs-conn"><i></i><span></span></div>`;
     document.body.appendChild(bar);
     document.documentElement.classList.add("qcs-fija");
