@@ -181,10 +181,27 @@ function migrarBase(db) {
   }
 
   /* EL SELLADO. Lo que existía antes de que hubiera dos obras es de la
-     primera, por definición: no había otra donde ponerlo. */
-  const primera = (db.proyectos[0] || {}).id || "pr-52";
-  for (const t of db.tests) if (!t.proyecto) t.proyecto = primera;
-  for (const m of Object.values(db.dayMeta)) if (m && !m.proyecto) m.proyecto = primera;
+     primera, por definición: no había otra donde ponerlo.
+
+     Y SOLO ESO — Q-88, 14 ago 2026. Esto corría en cada carga, así que no
+     sellaba el pasado: sellaba **todo lo que llegara sin obra**, y lo mandaba
+     a la primera de la lista. Un camión entrado en Recepción no lleva obra, y
+     acababa en la PR-52 aunque en pantalla estuviera abierto el AC-220037.
+     Así fue como los seis camiones de PRETENSADOS del 12 de agosto entraron
+     en la obra de otro (Q-87), y con ellos el límite de unit weight de la
+     PR-52 estampado encima.
+
+     Un registro nuevo sin obra NO es «de la primera»: es un registro al que
+     se le olvidó ponérsela, y sellarlo aquí lo manda en silencio a la obra
+     equivocada. Sin sello, `proyectoDe()` lo sigue enseñando en la PR-52 —se
+     ve igual— pero **el expediente no dice una mentira que nadie escribió**.
+
+     Un hueco se ve; un dato inventado se firma. */
+  if (!db.version || db.version < 3) {
+    const primera = (db.proyectos[0] || {}).id || "pr-52";
+    for (const t of db.tests) if (!t.proyecto) t.proyecto = primera;
+    for (const m of Object.values(db.dayMeta)) if (m && !m.proyecto) m.proyecto = primera;
+  }
 
   db.version = 3;
 }
@@ -207,9 +224,55 @@ function migrarBase(db) {
 
    Se llama al cargar, después de sembrar. Si no hay tiro hoy, no toca nada: se
    queda la última que se estuviera mirando. */
-function abrirLaObraDelTiro() {
+/* EL TIRO EN QUE ESTAMOS — Q-88, 14 ago 2026.
+
+   `abrirLaObraDelTiro()` miraba `todayISO()` y solo eso. El 13 de agosto Rubén
+   abrió QCheck para meter el vaciado del DÍA ANTERIOR: no había tiro «de hoy»,
+   así que no se abrió ninguna obra, se quedó la PR-52 de antes, y los seis
+   camiones de PRETENSADOS acabaron dentro de ella (Q-87).
+
+   Un tiro no se acaba a medianoche. Se acaba cuando alguien lo cierra.
+
+   **El tiro en que estamos es EL ÚLTIMO QUE HUBO, si nadie lo ha cerrado.**
+
+   Y ni uno más atrás. La primera versión de esto decía «el más reciente que
+   siga abierto», y se agarró a un día de julio del histórico: el Excel entró
+   sin cierre, así que centenares de días viejos figuran abiertos para siempre.
+   Un tiro que nadie cerró hace un mes no es el tiro en que estamos — es un
+   papel que quedó sin firmar.
+
+   Un día pasado, planificado y sin un solo camión tampoco cuenta: es un
+   fantasma, se programó y no se vació. Ver `diasFantasma()`.
+
+   Se mira contra `db.tests` a pelo y no con `testsOfDate()`, que filtra por la
+   obra abierta: aquí todavía no sabemos cuál es la buena, que es justo lo que
+   se está averiguando. */
+function tiroActivo() {
   const hoy = todayISO();
-  const m = (db.dayMeta || {})[hoy];
+  const tienePlan = (m) => m && !m.borrado &&
+    (m.cyPlan != null || m.losasPlan != null || m.losas);
+
+  /* El de hoy manda siempre, tenga camiones o no: un tiro programado ES el de
+     hoy desde que se programa (Q-46). */
+  if (tienePlan((db.dayMeta || {})[hoy])) return hoy;
+
+  /* Y si hoy no hay ninguno, EL ÚLTIMO DÍA QUE HUBO — el que tiene los camiones
+     más recientes—, y solo si sigue abierto. */
+  let ultimo = null;
+  for (const t of db.tests || []) {
+    if (!t || t.borrado || !t.date || t.date > hoy) continue;
+    if (!ultimo || t.date > ultimo) ultimo = t.date;
+  }
+  if (!ultimo) return null;
+  const m = (db.dayMeta || {})[ultimo];
+  if (!tienePlan(m) || m.cerradoA) return null;
+  return ultimo;
+}
+
+function abrirLaObraDelTiro() {
+  const dia = tiroActivo();
+  if (!dia) return;
+  const m = (db.dayMeta || {})[dia];
   if (!m || m.borrado) return;
   const suya = m.proyecto;
   if (!suya || suya === db.proyectoActivo) return;
@@ -703,7 +766,12 @@ function pintarConexion() {
 
    Los datos NO se borran: siguen en Results y en el reporte, con su fecha. Lo
    que cambia es qué se enseña arriba. */
-const DIAS_TIRO_RECIENTE = 3;
+/* Bajado de 3 días a 24 horas — Víctor, 14 ago 2026: «había dicho que dijera a
+   los 3 días; cámbialo a 24 horas». Tres días eran demasiados: el tiro del lunes
+   seguía presidiendo la barra el jueves, que es otra vez el dato que se queda
+   quieto y deja de leerse. Con 24 horas, la barra enseña el tiro de hoy y el de
+   ayer —que es el que se está tecleando con un día de retraso— y nada más. */
+const DIAS_TIRO_RECIENTE = 1;
 function tiroReciente(d) {
   if (!d) return false;
   const hoy = parseDate(todayISO()), t = parseDate(d);
@@ -716,11 +784,21 @@ function pintarTiro(day) {
   if (!el) return;
   const d = day || diaActivo();
   const esHoy = d === todayISO();
-  /* Q-72: pasados tres días, la barra deja de contar el tiro viejo. */
-  if (!esHoy && !tiroReciente(d)) {
+  /* UN TIRO CERRADO NO ES UN TIRO ABIERTO — Víctor, 14 ago 2026: «cuando acaba
+     el tiro lo cierra, y arriba en Control Center no hay tiro activo y lo dice».
+
+     Hasta hoy la barra seguía enseñando el avance del tiro después de cerrarlo,
+     con su porcentaje y sus yardas, como si todavía estuviera entrando hormigón.
+     Cerrar es el acto que dice «esto se acabó»: si la pantalla no se entera, el
+     acto no sirve de nada. */
+  const cerrado = !!((db.dayMeta || {})[d] || {}).cerradoA;
+  /* Q-72: y pasadas 24 horas, la barra deja de contar el tiro viejo. */
+  if (cerrado || (!esHoy && !tiroReciente(d))) {
     el.className = "qcs-tiro sin-plan";
     el.href = "results.html#daily";
-    el.title = d ? `El último vaciado fue el ${fmtDate(d)}. No hay ninguno abierto.` : "No hay vaciados registrados.";
+    el.title = !d ? "No hay vaciados registrados."
+      : cerrado ? `El tiro del ${fmtDate(d)} está cerrado. No hay ninguno abierto.`
+      : `El último vaciado fue el ${fmtDate(d)}. No hay ninguno abierto.`;
     el.innerHTML = `<span class="qcs-lb">Ready para Tirar</span>
       <span class="qcs-cy">sin vaciado abierto</span>`;
     return;

@@ -275,7 +275,9 @@ body { background: var(--bg); }
   </div>
 
   <div class="panel">
-    <div class="panel-head"><h2>Camiones de hoy</h2><div class="spacer"></div>
+    <!-- Q-88: «del tiro», no «de hoy». La lista enseña los camiones del tiro en
+         marcha, que puede ser el de ayer si se está tecleando con retraso. -->
+    <div class="panel-head"><h2>Camiones del tiro</h2><div class="spacer"></div>
       <span class="muted" id="day-tot" style="font-size:12.5px">—</span></div>
     <div class="panel-body flush" id="truck-list"></div>
   </div>
@@ -288,11 +290,22 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=59693f27"></script>
-<script src="assets/core.js?v=db25a108"></script>
+<script src="assets/core.js?v=3562a999"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
-const state = { day: todayISO() };
+/* RECEPCIÓN TRABAJA SOBRE EL TIRO, NO SOBRE HOY — Q-88, 14 ago 2026.
+
+   Aquí ponía `day: todayISO()`. Parecía inofensivo y era la raíz de Q-87:
+   `diaActivo()` devuelve `state.day` si está puesto, así que esta línea
+   **clavaba Recepción al día de hoy** y desactivaba, solo en esta pantalla, la
+   elección de día que usa el resto del programa. Por eso el vaciado del 12 se
+   guardó como del 13: se tecleó el 13.
+
+   Dejándolo sin poner, `diaActivo()` cae en `diaPorDefecto()` —que ya sabe de
+   tiros programados, de días fantasma y de la obra abierta— y Recepción pasa a
+   trabajar sobre el tiro que de verdad está en marcha. */
+const state = { day: null };
 let pendingPhoto = null;
 let scanStream = null, scanTimer = null;
 
@@ -944,9 +957,24 @@ function saveArrival() {
     return;
   }
 
+  /* EL CAMIÓN CUELGA DEL TIRO — Q-88, 14 ago 2026.
+
+     La fecha y la obra las pone el tiro en que estamos, no el calendario ni la
+     pantalla que hubiera abierta. Era al revés: `date` salía de `todayISO()` y
+     la obra no se ponía aquí en absoluto —la estampaba después el sellado de
+     `migrarBase()`, con la PRIMERA obra de la lista—. Las dos cosas juntas son
+     Q-87: seis camiones de PRETENSADOS del día 12, guardados como del 13 y
+     dentro de la PR-52.
+
+     La obra sale del día al que entra el camión. Si ese día todavía no tiene
+     obra —es el primer camión de un tiro recién abierto— manda la obra abierta,
+     que es la que el técnico está mirando. */
+  const dia = diaActivo();
+  const obra = ((db.dayMeta || {})[dia] || {}).proyecto || proyectoActivo();
   const t = {
     n: nextTestN(), id: uid(),
-    date: todayISO(),
+    date: dia,
+    proyecto: obra,
     /* En blanco es `null`, como los demás huecos — no cadena vacía. Un hueco
        tiene que verse igual mire quien lo mire. */
     ticket: ticket || null,
@@ -970,7 +998,12 @@ function saveArrival() {
     batch: document.getElementById("f-batch").value || null,
     arrive: document.getElementById("f-arrive").value || nowHM(),
     ident: document.getElementById("f-ident").value.trim() || null,
-    uwTarget: db.plan.uw.target,
+    /* El objetivo con el que se juzga este camión sale de los límites DE SU
+       TIRO, no de los de la obra que hubiera abierta — Q-88. Estampar
+       `db.plan` fue lo que dejó a seis camiones de hormigón pretensado medidos
+       con la vara de la PR-52 (Q-87), y sin que saltara nada: el número
+       equivocado se queda escrito y callado. */
+    uwTarget: ((planDe(dia) || db.plan).uw || {}).target,
     ordenadas: ordenadasLeidas,
     rejected: false,
   };
@@ -1052,14 +1085,22 @@ function sugerirProximo(day) {
 }
 
 function render() {
-  const day = todayISO();
+  const day = diaActivo();   /* el tiro en marcha, no el calendario — Q-88 */
   /* Con el plan del día dentro: un tiro programado sin camiones
      también es el tiro de hoy (Q-46). */
   const days = diasDelProyecto();
   const shown = testsOfDate(day).length ? day : days[0];
   const rows = testsOfDate(shown);
   const cy = rows.reduce((a, t) => a + (num(t.vol) || 0), 0);
-  document.getElementById("hero-day").textContent = shown === day ? "Vaciado de hoy — " + fmtDate(shown) : "Último vaciado — " + fmtDate(shown);
+  /* Q-88: «hoy» solo cuando de verdad es hoy. Desde que Recepción trabaja sobre
+     el tiro y no sobre el calendario, el tiro puede ser el de ayer —se está
+     tecleando con un día de retraso, que es exactamente lo que pasó el 13 de
+     agosto—. Decir «Vaciado de hoy» encima de un tiro de ayer es la mentira que
+     hizo que nadie notara nada. */
+  document.getElementById("hero-day").textContent =
+    shown !== day ? "Último vaciado — " + fmtDate(shown)
+    : shown === todayISO() ? "Vaciado de hoy — " + fmtDate(shown)
+    : "Tiro del " + fmtDate(shown);
   /* Q-59: una obra recién abierta todavía no tiene mezcla, y sin esto la
      cabecera de Recepción decía «… · undefined» delante del técnico. */
   /* Q-78: el campo se llama como lo que se está tirando. En un tiro de vigas
@@ -1073,7 +1114,8 @@ function render() {
   }
   document.getElementById("hero-sub").textContent =
     [db.project.name, db.project.mixId].filter(Boolean).join(" · ");
-  document.getElementById("next-load").textContent = "Camión #" + (testsOfDate(day).length + 1) + " de hoy";
+  document.getElementById("next-load").textContent = "Camión #" + (testsOfDate(day).length + 1) +
+    (day === todayISO() ? " de hoy" : " del tiro");
   document.getElementById("day-tot").textContent = `${rows.length} camiones · ${fmt(cy, 1)} CY`;
   sugerirProximo(day);
 

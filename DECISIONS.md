@@ -2631,3 +2631,83 @@ del que todo lo demás hereda— y **no entró la noche del 13 a propósito**: c
 de forma cuatro veces en una tarde y delante había un vaciado de verdad. Hasta que
 entre, la única defensa es de obra: **abrir AC-220037 antes de recibir el primer
 camión y no cambiar de obra durante el tiro.**
+
+---
+
+## Q-88 · Un camión cuelga del TIRO, no del calendario — 14 de agosto de 2026
+
+**Esto es la causa de Q-87, arreglada en la raíz.** Víctor: *«vamos a arreglar
+todo bien ahora desde la causa. No workarounds. Siempre vamos a fix.»*
+
+El fallo era uno solo visto desde tres sitios:
+
+> **El programa preguntaba «¿qué día es hoy?» cuando la pregunta buena es «¿en
+> qué tiro estamos?».**
+
+### Las tres piezas
+
+**1 · Recepción estaba clavada a hoy.** `conduce.html` abría con
+`const state = { day: todayISO() }`. Parece inofensivo y no lo es: `diaActivo()`
+devuelve `state.day` si está puesto, así que esa línea **desactivaba, solo en esa
+pantalla, la elección de día que usa el resto del programa**. Por eso el vaciado
+del 12 se guardó como del 13 — se tecleó el 13. Ahora `state.day` nace vacío y
+`diaActivo()` cae en `diaPorDefecto()`, que ya sabe de tiros programados, de días
+fantasma y de la obra abierta.
+
+**2 · El sellado de obra corría en cada carga.** `migrarBase()` hacía
+`if (!t.proyecto) t.proyecto = primera` **siempre**, así que no sellaba el pasado:
+mandaba **todo lo que llegara sin obra a la primera de la lista**. Un camión de
+Recepción no llevaba obra, así que acababa en la PR-52 aunque en pantalla
+estuviera abierto el AC-220037. Ahora solo corre para bases anteriores a la
+versión 3, y **Recepción estampa la obra al guardar**. Un registro nuevo sin obra
+no es «de la primera»: es un registro al que se le olvidó ponérsela.
+
+**3 · Al arrancar solo se miraba si HOY hay tiro.** `abrirLaObraDelTiro()` leía
+`db.dayMeta[todayISO()]`. El 13 de agosto Rubén abrió QCheck para meter el
+vaciado del día anterior: no había tiro «de hoy», no se abrió ninguna obra, se
+quedó la PR-52 de antes. Ahora existe `tiroActivo()`:
+
+> **El tiro en que estamos es el de hoy si hoy hay uno; y si no, EL ÚLTIMO QUE
+> HUBO, si nadie lo ha cerrado.**
+
+Y ni uno más atrás. La primera versión decía «el más reciente que siga abierto» y
+se agarró a un día de julio: **el histórico del Excel entró sin cierre**, así que
+centenares de días viejos figuran abiertos para siempre. Un tiro que nadie cerró
+hace un mes no es el tiro en que estamos — es un papel sin firmar.
+
+### Y el límite con el que se juzga
+
+`uwTarget` salía de `db.plan`, la obra abierta. Ahora sale de `planDe(dia)`, los
+límites **del tiro**. Estampar el de la obra de al lado fue lo que dejó a seis
+camiones de hormigón pretensado medidos con la vara de la PR-52, **sin que saltara
+nada**: el número equivocado se queda escrito y callado.
+
+### Lo que ya no miente en pantalla
+
+- «Vaciado de hoy» solo cuando de verdad es hoy. Si el tiro es de ayer,
+  **«Tiro del 11 ago 2026»**, con el nombre de su obra debajo.
+- «Camión #2 **del tiro**», no «de hoy». Y la lista, «Camiones del tiro».
+
+### Dos ajustes de Víctor de la misma noche
+
+- **De tres días a 24 horas** (`DIAS_TIRO_RECIENTE`). Tres días eran demasiados:
+  el tiro del lunes seguía presidiendo la barra el jueves, que es otra vez el dato
+  que se queda quieto y deja de leerse.
+- **Un tiro cerrado no es un tiro abierto.** *«Cuando acaba el tiro lo cierra, y
+  arriba en Control Center no hay tiro activo y lo dice.»* La barra y la casilla
+  seguían enseñando el avance después de cerrarlo, con su porcentaje, como si aún
+  entrara hormigón. **Cerrar es el acto que dice «esto se acabó»; si la pantalla
+  no se entera, el acto no sirve de nada.** La tarjeta grande sí deja constancia:
+  «Tiro cerrado · 10:30», con lo que se vació.
+
+**Comprobado en pantalla, con el escenario exacto que falló** —tiro de ayer, de
+otra obra, tecleado hoy—: la obra se abrió sola, y el camión se guardó en el día
+**11**, en **su** obra, con **su** límite (152.9). Antes: hoy, PR-52 y 150.1.
+
+### Lo que esto NO es
+
+**No es el asistente.** Sigue faltando lo que Víctor describió: crear proyectos,
+crear el tiro eligiendo de esa lista, la estructura y su cantidad, y las preguntas
+de la 934 solo si el proyecto se marcó como 934. Está diseñado en
+`qcheck-platform/ASISTENTE-PROYECTO-TIRO.md`. **Esto de aquí hace que lo de hoy
+no vuelva a fallar; el asistente hace que no haya que acordarse de nada.**
