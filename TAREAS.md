@@ -26,6 +26,7 @@ _(vacío — reclama una tarea moviéndola aquí con tu nombre y la fecha)_
 | Q-31 | **Que el aparato perdido no enseñe nada** — cifrar la base local contra la clave del usuario | Lo que quedó abierto de Q-07: sin señal, cualquiera con el iPad ve las pantallas. Es deliberado —dejar al técnico fuera en obra es peor— pero sigue siendo un hueco. Ver `DECISIONS.md` §17 | grande |
 | Q-32 | **Encender el lector de conduce y probarlo en obra** — llave de API en `QC_ANTHROPIC` y probarlo con conduces de verdad | El código de Q-01 está escrito y dormido. Lo que hay que medir no es si lee, sino **si deja campos vacíos cuando no está seguro**. **Es de Víctor**: hace falta la llave | pequeño |
 | Q-10 | **Integración con ArcGIS** | La inspección ya georreferencia losas ahí; evaluar el enlace | investigación |
+| Q-92 | **Las mezclas de diseño, declaradas en la obra** — que el proyecto liste sus mezclas y el tiro elija de ahí, en vez de que cada camión la traiga suelta | Víctor, 14 ago 2026: «el tema de mezclas registradas lo tengo pensado para el próximo build; hoy que lo lea del conduce». Hoy funciona: el lector la saca del papel y el técnico la puede teclear en la casilla Mix. Esto es el paso siguiente — con la lista declarada, una mezcla escrita de dos maneras distintas deja de ser dos mezclas para el expediente. El hueco ya está hecho en `formProject` (campo `mezclas`) y en el tiro (`Mezcla del día`) | pequeño |
 
 **El detalle de cada tarea está en [`TODO.md`](TODO.md).** Aquí solo se reclama.
 
