@@ -140,6 +140,13 @@ body { background: var(--bg); }
   border-color: var(--act);
   box-shadow: 0 0 0 3px rgba(245,184,61,.14), 0 0 20px -6px var(--act);
 }
+/* HEREDADO DEL CAMIÓN ANTERIOR — Q-93, 14 ago 2026. Es más flojo que `sugerido`
+   a propósito: el ámbar del lector quiere decir «esto lo leyó una máquina de un
+   papel, míralo». Esto solo quiere decir «lo puso la pantalla porque el camión
+   de antes traía lo mismo». Se ve que no lo escribió nadie, y no pide revisión.
+   Por eso no dispara el aviso de Q-01 — un aviso que salta siempre se deja de
+   leer, y entonces el día que avise de verdad tampoco se lee. */
+.field input.heredado { border-style: dashed; color: var(--muted); }
 #aviso-lectura {
   display: none; margin-top: 12px; font-size: 13px; font-weight: 600;
   color: var(--act); border: 1px solid var(--line); border-left: 3px solid var(--act);
@@ -304,7 +311,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=286507eb"></script>
-<script src="assets/core.js?v=fada8041"></script>
+<script src="assets/core.js?v=bae68a44"></script>
 <!-- Q-89: las tablas de la SP-934. Desde aquí se CREA un tiro, y un tiro de
      la 934 pregunta su clase y su ventana de aceptacion al nacer. Sin esto,
      `formSP934()` reventaba en silencio dentro del `setTimeout` y la pregunta
@@ -805,7 +812,10 @@ async function leerDeLaFoto(dataUrl) {
   let puestos = 0;
   for (const [clave, id] of CAMPOS_LEIDOS) {
     const el = document.getElementById(id);
-    if (!el || el.value || c[clave] == null || c[clave] === "") continue;
+    /* Q-93: un valor SUGERIDO por la pantalla —el volumen del camión anterior—
+       sí se pisa. Lo que no se pisa nunca es lo que escribió una persona. */
+    if (!el || (el.value && !el.classList.contains("heredado")) ||
+        c[clave] == null || c[clave] === "") continue;
     el.value = c[clave];
     el.classList.add("sugerido");
     el.addEventListener("input", () => el.classList.remove("sugerido"), { once: true });
@@ -1156,7 +1166,26 @@ function sugerirProximo(day) {
   const ult = hoy[hoy.length - 1];
   const tk = document.getElementById("f-ticket");
   if (ult && +ult.ticket) tk.placeholder = String(+ult.ticket + 1);
-  if (ult && ult.vol) document.getElementById("f-vol").value = document.getElementById("f-vol").value || ult.vol;
+  /* El volumen del camión anterior se SUGIERE, y se marca como tal — Q-93,
+     14 ago 2026. Se rellenaba a secas, y el lector no pisa un campo con valor:
+     del segundo camión en adelante volvía a no poder leer las yardas del papel.
+     Es el mismo agujero que el `value="10"` de fábrica (Q-91), por otra puerta.
+
+     Marcado como sugerido, el lector sí lo pisa y el técnico ve en ámbar que
+     ese número lo puso la pantalla, no él. */
+  if (ult && ult.vol) {
+    const v = document.getElementById("f-vol");
+    if (!v.value) {
+      v.value = ult.vol;
+      /* Clase propia, NO `sugerido`: `sugerido` es del LECTOR y dispara el aviso
+         de Q-01 «esto lo leyó la foto y nadie lo ha mirado». Un volumen que
+         viene del camión anterior no lo leyó nadie de un papel — es una
+         comodidad de la pantalla, y sacar ese aviso por ella sería el aviso que
+         salta siempre y se deja de leer. */
+      v.classList.add("heredado");
+      v.addEventListener("input", () => v.classList.remove("heredado"), { once: true });
+    }
+  }
 
   const L = losasDelDia(day);
   const pend = L.lista.find((l) => l.estado !== "vaciada");

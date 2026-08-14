@@ -203,6 +203,29 @@ function migrarBase(db) {
     db.project = act0;
   }
 
+  /* Y SE LIMPIA LA HISTORIA INVENTADA — Q-93, 14 ago 2026.
+
+     Hasta hoy, abrir una obra le creaba una versión del plan fechada en 1970 y
+     firmada «obra nueva», con una copia de los límites que hubiera en ese
+     instante. `planDe(dia)` mira el historial ANTES que el plan vivo, así que
+     esa copia mandaba sobre todo lo que llegara después — y en un aparato que
+     abrió la obra antes de que bajaran sus límites, la copia era de los valores
+     de fábrica, los de la PR-52.
+
+     Ya no se crea (ver `abrirProyecto`), pero **los aparatos que la tienen la
+     siguen teniendo**, y ahí es donde muerde: se vio corriendo el tiro como
+     Rubén, con la obra declarada a 152.9 y el camión juzgado contra 150.1.
+
+     Una versión que nadie guardó no es historia. Se quita, y `planDe()` cae en
+     el plan vivo de la obra, que es lo que de verdad rige. Lo que sí guardó
+     alguien —con su fecha y su autor— no se toca. */
+  for (const p of db.proyectos || []) {
+    if (!p || !Array.isArray(p.planes)) continue;
+    if (p.planes.length === 1 && p.planes[0] && p.planes[0].autor === "obra nueva") p.planes = [];
+  }
+  if (Array.isArray(db.planes) && db.planes.length === 1 &&
+      db.planes[0] && db.planes[0].autor === "obra nueva") db.planes = [];
+
   /* EL SELLADO. Lo que existía antes de que hubiera dos obras es de la
      primera, por definición: no había otra donde ponerlo.
 
@@ -325,10 +348,25 @@ function abrirProyecto(id) {
      el hormigón de una obra con la vara de otra es lo que hizo que el Field
      Display rechazara un camión bueno. */
   if (!p.plan) p.plan = JSON.parse(JSON.stringify((typeof QC_SEED !== "undefined" && QC_SEED.plan) || {}));
-  if (!Array.isArray(p.planes) || !p.planes.length) {
-    p.planes = [{ desde: "1970-01-01", plan: JSON.parse(JSON.stringify(p.plan)),
-                  autor: "obra nueva", ts: new Date().toISOString() }];
-  }
+  /* Y NO SE INVENTA UNA HISTORIA — Q-93, 14 ago 2026.
+
+     Aquí se creaba una versión inicial del plan, fechada en 1970, con una COPIA
+     de los límites que hubiera en ese instante. Y `planDe(dia)` mira el
+     historial ANTES que el plan vivo, así que esa copia mandaba sobre todo lo
+     que llegara después.
+
+     En un aparato que abre la obra antes de que sus límites hayan bajado del
+     servidor, la copia se hacía de los valores de fábrica —los de la PR-52— y
+     ahí se quedaba. Se vio corriendo el tiro como Rubén: la obra tenía slump
+     6.5–9.5 y unit weight 152.9, y el Control Center juzgaba el camión con
+     **2–4 y 150.1**, y lo cantaba RECHAZADO al chofer. Es Q-59b otra vez, por
+     una puerta nueva.
+
+     Sin historial, `planDe()` cae en `db.plan` —los límites vivos de la obra—
+     que es lo correcto. La historia empieza cuando alguien guarda límites de
+     verdad: `guardarPlan()` apunta su versión con su fecha y su autor. Una obra
+     recién abierta no tiene historia que contar, y fingirla es escribir un dato
+     que nadie declaró. */
   db.plan = p.plan;
   db.planes = p.planes;
   saveDB();
@@ -1751,6 +1789,26 @@ function vigasDelDia(day) {
   });
   return { lista, hechas: lista.filter((x) => x.cargas > 0).length,
            fuera: [...new Set(fuera)] };
+}
+
+/* LAS MEZCLAS QUE DE VERDAD SE VACIARON — Q-93, 14 ago 2026.
+
+   El informe ponía `db.project.mixId`, la mezcla declarada en la ficha de la
+   obra. En el AC-220037 esa ficha no la trae —Víctor lo dejó para el próximo
+   build: hoy la mezcla la dice el conduce— así que el papel firmado salía con
+   «Mezcla: —» teniendo los tres camiones su código impreso dentro.
+
+   Se leen de los camiones del día, que es donde está el dato. Si entraron con
+   dos mezclas distintas se dicen las dos: eso no es un detalle de formato — un
+   lote de la 934 solo puede tener una clase de hormigón, y ver dos nombres en
+   la cabecera es justo el aviso que hace falta. */
+function mezclasDelDia(day) {
+  const vistas = [];
+  for (const t of testsOfDate(day)) {
+    const m = String((t && t.mix) || "").trim();
+    if (m && !vistas.includes(m)) vistas.push(m);
+  }
+  return vistas.join(" · ");
 }
 
 function losasDelDia(day) {
