@@ -872,13 +872,39 @@ async function leerDeLaFoto(dataUrl) {
      (Q-56) y esto se queda en null, que es exactamente lo que tiene que pasar:
      sin papel que lo diga, el camión entra sin planta. */
   fichaPlant = (c.plant != null && c.plant !== "") ? String(c.plant).trim() : null;
+  /* «NO SE PUDO LEER» DECÍA DOS COSAS MUY DISTINTAS — Q-118, 16 ago 2026.
+
+     El técnico llevaba tres camiones bien y en el cuarto le salió «no se pudo
+     leer ningún campo». El servidor estaba sano y la foto era buena: lo que
+     pasó es que **los campos ya tenían valor**, así que el lector no pisó
+     ninguno, `puestos` se quedó en 0 y la pantalla lo contó como una lectura
+     fallida. No falló nada. Le dijimos que sí.
+
+     Y hay algo peor debajo. Si la casilla ya trae un número y la foto trae otro
+     distinto, hasta hoy se callaba: se quedaba el de la casilla y el del papel
+     se tiraba sin decir nada. Ese es justo el momento en que hay que hablar
+     —uno de los dos está mal, y el papel es el que manda—, y era el único en
+     que la pantalla no decía ni pío.
+
+     > Un contador que baja por dos motivos distintos no cuenta nada: solo
+     > sabes que el número es cero, no por qué.
+
+     Así que se llevan tres cuentas separadas: los que se pusieron, los que ya
+     estaban igual, y los que ya estaban DISTINTOS. Cada una se dice con sus
+     palabras. */
   let puestos = 0;
+  const yaIguales = [], enConflicto = [];
   for (const [clave, id] of CAMPOS_LEIDOS) {
     const el = document.getElementById(id);
     /* Q-93: un valor SUGERIDO por la pantalla —el volumen del camión anterior—
        sí se pisa. Lo que no se pisa nunca es lo que escribió una persona. */
-    if (!el || (el.value && !el.classList.contains("heredado")) ||
-        c[clave] == null || c[clave] === "") continue;
+    if (!el || c[clave] == null || c[clave] === "") continue;
+    if (el.value) {
+      const nombre = QC_NOMBRE_CAMPO[clave] || clave;
+      if (String(el.value).trim() === String(c[clave]).trim()) yaIguales.push(nombre);
+      else enConflicto.push({ id, nombre, mio: String(el.value).trim(), papel: String(c[clave]).trim() });
+      continue;                       // lo que escribió una persona no se pisa
+    }
     el.value = c[clave];
     leidoDeLaFoto[id] = c[clave];
     el.classList.add("sugerido");
@@ -889,11 +915,22 @@ async function leerDeLaFoto(dataUrl) {
   /* Q-117: aquí ya no se pide revisar. Se dice lo que hay y punto — la
      comprobación contra el papel se hace al dar a Registrar, que es cuando el
      técnico decide, y no ahora, que todavía está encuadrando la foto. */
-  aviso.textContent = puestos
-    ? `Leídos ${puestos} campo${puestos === 1 ? "" : "s"}`
-      + (faltan ? `, ${faltan} no se leyeron y quedan vacíos` : "")
-      + ". Al dar a Registrar te los enseño para compararlos con el papel."
-    : "No se pudo leer ningún campo con seguridad. Entra los datos a mano.";
+  const trozos = [];
+  if (puestos) trozos.push(`Leídos ${puestos} campo${puestos === 1 ? "" : "s"}`);
+  if (yaIguales.length) trozos.push(`${yaIguales.length} ya estaban puestos y coinciden con la foto`);
+  if (faltan) trozos.push(`${faltan} no se leyeron y quedan vacíos`);
+  aviso.textContent =
+      enConflicto.length
+        ? "OJO — la foto dice otra cosa en " +
+          enConflicto.map((x) => `${x.nombre} (papel ${x.papel}, aquí ${x.mio})`).join("; ") +
+          ". No he tocado lo tuyo. Mira el papel y decide."
+    : trozos.length
+        ? trozos.join(", ") + ". Al dar a Registrar te los enseño para compararlos con el papel."
+    /* Solo AQUÍ es verdad que no se leyó nada: la foto no trajo un solo campo. */
+        : "No se pudo leer ningún campo con seguridad. Entra los datos a mano.";
+  /* El conflicto se mira, no se cuenta como revisado: al registrar vuelve a
+     salir la lista entera para compararla con el papel. */
+  if (enConflicto.length) { leidoDeLaFoto = leidoDeLaFoto || {}; enConflicto.forEach((x) => { leidoDeLaFoto[x.id] = x.papel; }); }
 
   avisarDeLoEscritoAMano(c);
 }
@@ -1050,9 +1087,13 @@ function saveArrival() {
       const et = el.closest(".field").querySelector("label");
       const nombre = et ? et.textContent.replace(" *", "") : id;
       const v = String(el.value).trim();
-      const cambiado = leidoDeLaFoto[id] != null && v !== String(leidoDeLaFoto[id]).trim();
+      /* Q-118: si lo que hay no es lo que traía la foto, se dice QUÉ traía la
+         foto. «Corregido a mano» a secas no sirve para comparar: el técnico
+         tiene el papel delante y lo que necesita ver es el otro número. */
+      const dePapel = leidoDeLaFoto[id] == null ? null : String(leidoDeLaFoto[id]).trim();
+      const cambiado = dePapel != null && v !== dePapel;
       return `<div class="rl-fila"><span class="rl-et">${esc(nombre)}` +
-             (cambiado ? " · corregido a mano" : "") + `</span>` +
+             (cambiado ? ` · la foto decía ${esc(dePapel)}` : "") + `</span>` +
              (v ? `<span class="rl-v">${esc(v)}</span>`
                 : `<span class="rl-v vacio">en blanco</span>`) + `</div>`;
     }).join("");
