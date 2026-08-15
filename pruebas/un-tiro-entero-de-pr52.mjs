@@ -38,7 +38,8 @@ function app() {
     db.project = db.proyectos.find(p=>p.id==="ac-220037");
     saveDB = function(){};
     return { db, dayProgress, worstZone, tiroCerrado, abrirProyecto, proyectoActivo,
-             testsOfDate, sortedTests, estadoBadge, qcCuenta, zoneSlump, zoneUW, zoneAir };`);
+             testsOfDate, sortedTests, estadoBadge, qcCuenta, zoneSlump, zoneUW, zoneAir,
+             hayTiroActivo, estadoTiro };`);
   return f(...Object.values(ctx));
 }
 
@@ -64,12 +65,15 @@ di(A.dayProgress(HOY).recibido === 60, "yardas = " + A.dayProgress(HOY).recibido
 di(Math.round(A.dayProgress(HOY).pct ?? 0) === 100, "y el avance llega al 100 %");
 
 console.log("\n③ SE MIDEN — uno bueno, uno en zona de acción, uno FUERA");
-db.tests[0].slump=4;   db.tests[0].uw=145; db.tests[0].air=5;
+/* `resultsAt` lo pone la aplicación al pulsar Enviar. Sin él la prueba medía
+   camiones que el sistema seguía considerando sin medir — no reproducía el
+   flujo real, y por eso el monitor parecía no apagarse. */
+db.tests[0].slump=4;   db.tests[0].uw=145; db.tests[0].air=5;   db.tests[0].resultsAt="09:20";
 /* Zona de ACCIÓN es entre el límite de acción y el de suspensión: con 5.4 el
    slump seguía DENTRO (acción hasta 5.5) y la prueba pedía un aviso que no
    tocaba. El error era mío, no del código. */
-db.tests[1].slump=6.0; db.tests[1].uw=146; db.tests[1].air=6.2;
-db.tests[2].slump=7.0; db.tests[2].uw=145; db.tests[2].air=5;
+db.tests[1].slump=6.0; db.tests[1].uw=146; db.tests[1].air=6.2; db.tests[1].resultsAt="09:35";
+db.tests[2].slump=7.0; db.tests[2].uw=145; db.tests[2].air=5;   db.tests[2].resultsAt="09:50";
 di(A.worstZone(db.tests[0]) === "ok",   "el bueno sale OK");
 di(A.worstZone(db.tests[1]) === "act",  "el segundo, zona de acción");
 di(A.worstZone(db.tests[2]) === "susp", "el tercero, FUERA de límite");
@@ -85,10 +89,50 @@ di(A.dayProgress(HOY).recibido === 60, "las yardas NO suben: " + A.dayProgress(H
 di(A.dayProgress(HOY).sinNombre === 1, "y se avisa de 1 sin identificar");
 db.tests.pop();
 
+console.log("\n⑤bis EL MONITOR NO SE QUEDA EN «VACIANDO» PARA SIEMPRE");
+{
+  /* El caso literal de la foto de Víctor: 21:00, el tiro acabado hacía horas,
+     y el monitor todavía decía VACIANDO por un camión de las 9:15. Pasaba
+     porque el sello de fin, que es el único que apagaba ese estado, no se pone
+     nunca en el trabajo real. */
+  const c = db.tests[0];
+  c.start = "09:10";
+  di(A.dayProgress(HOY).discharging.length === 0,
+     "con resultados puestos, deja de contar como descargando");
+  const sinMedir = { n:99, id:"t99", date:HOY, proyecto:"pr-52", ticket:"5199",
+                     truck:"399", vol:10, arrive:"09:00", start:"09:05" };
+  db.tests.push(sinMedir);
+  di(A.dayProgress(HOY).discharging.length === 1,
+     "y uno que AÚN no se ha medido sí cuenta: " + A.dayProgress(HOY).discharging.length);
+  db.tests.pop();
+}
+
+console.log("\n⑤ter LA CIFRA GRANDE Y SU PORCENTAJE DICEN LO MISMO");
+{
+  const cc = readFileSync("control-center.html","utf8");
+  const mv = readFileSync("movil.html","utf8");
+  di(/<b>\$\{fmt\(p\.recibido, 1\)\}<\/b>/.test(cc), "Control Center: la cifra grande es lo recibido");
+  di(/<b>\$\{fmt\(p\.recibido, 1\)\}<\/b>/.test(mv), "Móvil: igual, y no discute con el Control Center");
+}
+
 console.log("\n⑥ SE CIERRA EL TIRO");
 db.dayMeta[HOY].cerradoA = "16:20";
 di(A.tiroCerrado(HOY) === "16:20", "cerrado a las " + A.tiroCerrado(HOY));
 di(A.dayProgress(HOY).placed === 60, "cerrado, lo recibido ES lo colocado: " + A.dayProgress(HOY).placed);
+
+console.log("\n⑥bis SIN TIRO ACTIVO NO HAY PROGRESO — Víctor, la noche del 14");
+{
+  /* Con el tiro cerrado ya no hay tiro activo, aunque sea de hoy. */
+  di(A.hayTiroActivo(HOY) === false, "cerrado, deja de ser tiro activo");
+  di(/Ready para Tirar|Tiro cerrado/.test(A.estadoTiro(HOY).txt),
+     "y el monitor lo dice: «" + A.estadoTiro(HOY).txt + "»");
+  /* Y el de ayer no ocupa la pantalla de hoy: se acabó la ventana de horas. */
+  const ayer = (() => { const d=new Date(); d.setDate(d.getDate()-1);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })();
+  di(A.hayTiroActivo(ayer) === false, "el de ayer tampoco es tiro activo");
+  di(A.estadoTiro(ayer).txt === "Ready para Tirar",
+     "y sale «" + A.estadoTiro(ayer).txt + "», sin cifras de un tiro que ya pasó");
+}
 
 console.log("\n⑦ Y NADA DE LA OTRA OBRA SE HA COLADO EN TODO EL DÍA");
 di(A.sortedTests().every((t)=>t.proyecto==="pr-52"), "todos los ensayos son de la PR-52");

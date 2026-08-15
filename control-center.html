@@ -310,7 +310,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=286507eb"></script>
-<script src="assets/core.js?v=3fae60b7"></script>
+<script src="assets/core.js?v=1cde24ec"></script>
 <!-- Q-89: las tablas de la SP-934. Desde aquí se CREA un tiro, y un tiro de
      la 934 pregunta su clase y su ventana de aceptacion al nacer. Sin esto,
      `formSP934()` reventaba en silencio dentro del `setTimeout` y la pregunta
@@ -361,7 +361,15 @@ function progresoHTML(p) {
   const hayPlan = p.cyPlan != null && p.cyPlan > 0;
   return `<div class="prog-tiro">
     <div class="pt-cifra">
-      <b>${fmt(p.placed, 1)}</b>${hayPlan ? `<span class="pt-de">/ ${fmt(p.cyPlan, 0)}</span>` : ""}
+      <!-- LA CIFRA GRANDE DISCUTÍA CON SU PROPIO PORCENTAJE — Q-103, 14 ago 2026.
+           Víctor mandó una foto del monitor: «0 / 51 CY  17 %», y debajo
+           «1 camión recibido · 8.5 CY en el camión · faltan 42.5 CY». Tres
+           números de la misma pantalla contando cosas distintas.
+           Pasó porque por la tarde se pasaron `pct` y `pending` a lo recibido
+           y esta cifra se quedó en `placed`. **Arreglar la mitad de una
+           pantalla es peor que no arreglarla**: sin tocar nada era coherente
+           y falsa; a medias, se contradice a la vista. -->
+      <b>${fmt(p.recibido, 1)}</b>${hayPlan ? `<span class="pt-de">/ ${fmt(p.cyPlan, 0)}</span>` : ""}
       <span class="pt-u">CY</span>
       ${hayPlan ? `<span class="pt-pc">${Math.round(p.pct)}%</span>` : ""}
     </div>
@@ -843,7 +851,7 @@ function render() {
            Y un tiro CERRADO tampoco ocupa esta casilla, por reciente que sea
            (Víctor, 14 ago 2026). Cerrar es el acto que dice «esto se acabó»; si
            la casilla sigue enseñando el avance, el acto no sirve de nada. -->
-      ${!((db.dayMeta || {})[day] || {}).cerradoA && (day === todayISO() || tiroReciente(day)) ? `
+      ${hayTiroActivo(day) ? `
       <a class="w" href="results.html#daily">
         <div class="lbl">${day === todayISO() ? "Vaciado de hoy" : "Último vaciado · " + esc(fmtDate(day))}</div>
         <div class="big">${fmt(prog.placed, 1)} <span style="font-size:14px">CY</span></div>

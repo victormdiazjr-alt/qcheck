@@ -875,12 +875,28 @@ function pintarConexion() {
    seguía presidiendo la barra el jueves, que es otra vez el dato que se queda
    quieto y deja de leerse. Con 24 horas, la barra enseña el tiro de hoy y el de
    ayer —que es el que se está tecleando con un día de retraso— y nada más. */
-const DIAS_TIRO_RECIENTE = 1;
-function tiroReciente(d) {
-  if (!d) return false;
-  const hoy = parseDate(todayISO()), t = parseDate(d);
-  if (!hoy || !t) return false;
-  return Math.round((hoy - t) / 86400000) <= DIAS_TIRO_RECIENTE;
+/* FUERA LA VENTANA DE HORAS — Q-104, 14 ago 2026.
+
+   Víctor, mirando el monitor de noche: «olvida lo de horas para enseñar info de
+   tiros; si no hay tiro corriendo que lo diga. Que solo haya progreso en el
+   monitor cuando hay tiro activo».
+
+   Había una ventana de 24 horas para que el tiro de ayer siguiera presidiendo
+   la pantalla. La idea era buena —se teclea con un día de retraso— pero el
+   efecto es el contrario del que se buscaba: **un monitor que enseña un avance
+   cuando no hay nada vaciándose enseña un número que no se puede mirar dos
+   veces sin dudar.** Y de noche, con el tiro acabado, decía «VACIANDO».
+
+   Ahora es binario y no hay que interpretarlo: **o hay tiro hoy y sin cerrar, o
+   no hay tiro y se dice con esas palabras.** Los números del tiro de ayer no se
+   pierden — siguen en Results y en el informe, que es donde se van a buscar.
+
+   `hayTiroActivo` sustituye a `tiroReciente`, y el nombre importa: uno decía
+   «hace poco» y el otro dice lo que de verdad se está preguntando. */
+function hayTiroActivo(d) {
+  const dia = d || diaActivo();
+  if (!dia || dia !== todayISO()) return false;
+  return !tiroCerrado(dia);
 }
 
 function pintarTiro(day) {
@@ -896,8 +912,8 @@ function pintarTiro(day) {
      Cerrar es el acto que dice «esto se acabó»: si la pantalla no se entera, el
      acto no sirve de nada. */
   const cerrado = !!((db.dayMeta || {})[d] || {}).cerradoA;
-  /* Q-72: y pasadas 24 horas, la barra deja de contar el tiro viejo. */
-  if (cerrado || (!esHoy && !tiroReciente(d))) {
+  /* Q-104: o hay tiro hoy y sin cerrar, o no hay tiro. Sin termómetro de horas. */
+  if (!hayTiroActivo(d)) {
     el.className = "qcs-tiro sin-plan";
     el.href = "results.html#daily";
     /* Q-94: el último que procesó QCheck, sea de la obra que sea. */
@@ -1990,8 +2006,22 @@ function losasDelDia(day) {
 function trucksWaiting(day) {
   return testsOfDate(day).filter((t) => t.arrive && !t.end && !t.rejected);
 }
+/* UN CAMIÓN CON RESULTADOS YA TERMINÓ — Q-103, 14 ago 2026.
+
+   Esto miraba solo el sello de fin: `t.start && !t.end`. Y ese sello **no se
+   pone nunca**, porque el trabajo de verdad no lo incluye. Víctor, contándolo:
+   «al camión se le someten los resultados, es aceptado y comienza a vaciar; ya
+   ahí termina, no hay que darle a un botón de terminar el camión».
+
+   Consecuencia: a las nueve de la noche, con el tiro acabado hacía horas, el
+   monitor segu&iacute;a diciendo **VACIANDO** por un camión de las 9:15. Un estado
+   que no puede apagarse solo deja de ser un estado y pasa a ser un adorno.
+
+   Ahora un camión deja de estar descargando cuando **tiene resultados** —que es
+   el momento en que de verdad se le suelta— o cuando lleva su sello de fin, si
+   alguien lo puso. Lo apaga el trabajo, no la memoria de nadie. */
 function trucksDischarging(day) {
-  return testsOfDate(day).filter((t) => t.start && !t.end && !t.rejected);
+  return testsOfDate(day).filter((t) => t.start && !t.end && !t.resultsAt && !t.rejected);
 }
 
 /* ------------------------------------------------------------ estado del tiro
@@ -2104,12 +2134,10 @@ function estadoTiro(day) {
      letras y con su fecha — Q-50. */
   /* Q-72b: pasados tres días deja de ser «el último tiro» y pasa a ser «no hay
      ninguno». La cabecera entera cambia con esto, no solo la etiqueta. */
-  if (day !== todayISO() && !tiroReciente(day))
-    return { cls: "quieto", icono: "raya", txt: "Ready para Tirar", listo: true };
-
+  /* Q-104: cualquier día que no sea hoy es «no hay tiro», con esas palabras.
+     El de ayer se mira en Results y en el informe, no aquí. */
   if (day !== todayISO())
-    return { cls: "fin", icono: "check",
-             txt: (completo || p.loads ? "Último tiro" : "Sin actividad") + ` · ${fmtDate(day)}` };
+    return { cls: "quieto", icono: "raya", txt: "Ready para Tirar", listo: true };
 
   if (cerradoA) return { cls: "fin", icono: "check", txt: `Tiro cerrado · ${cerradoA}` };
   if (p.discharging.length) return { cls: "vaciando", icono: "flujo", txt: "Vaciando" };
@@ -2206,8 +2234,13 @@ function dayProgress(day) {
      avisa de cuántos camiones quedan sin descarga cerrada, para que nadie las
      dé por buenas sin saberlo. */
   const abierto = day === todayISO() && !tiroCerrado(day);
+  /* Y aquí lo mismo que en `trucksDischarging()` — Q-103. Esto restaba de lo
+     colocado todo camión sin sello de fin, o sea TODOS, siempre. Por eso
+     `placed` valía cero durante el tiro entero. Un camión con resultados ya se
+     soltó: cuenta como colocado. */
   const enCurso = abierto
-    ? rows.filter((t) => !t.rejected && t.arrive && !t.end).reduce((a, t) => a + (num(t.vol) || 0), 0)
+    ? rows.filter((t) => !t.rejected && t.arrive && !t.end && !t.resultsAt)
+          .reduce((a, t) => a + (num(t.vol) || 0), 0)
     : 0;
   const placed = recibido - enCurso;
   const cyPlan = num(meta.cyPlan);
