@@ -200,16 +200,26 @@ function qcVeConfig() {
    cuadrilla.
 
    Va como CAPACIDAD y no como `usuario === "admin"` (AGENTS §3): el papel se
-   deduce de la ficha y nunca del nombre. La capacidad que hoy tiene una sola
-   cuenta es `limites` —«Plan & Datos», quien pone los umbrales con los que se
-   juzga el hormigón—, y no es una elección caprichosa: quien decide la vara es
-   quien responde de cómo se usa.
+   deduce de la ficha y nunca del nombre.
 
-   El día que haga falta separarlo de verdad, esto pasa a ser su propia
-   capacidad en la ficha —`auditoria`— y se cambia SOLO aquí. */
+   ESTO SE ELIGIÓ MAL, Y SE VIO EN LA AUDITORÍA — Q-113, 15 ago 2026.
+
+   Se colgó de `limites` con este argumento: «la capacidad que hoy tiene una
+   sola cuenta». **Era cierto el día que se escribió y dejó de serlo sin que
+   nadie lo tocara**: Rubén y los cuatro técnicos fueron recibiendo `limites`
+   —ven los umbrales contra los que miden, y eso está bien— y con cada uno se
+   les abría también el registro de lo que hacen ellos mismos. Seis cuentas
+   mirando un registro pensado para una.
+
+   > Una puerta que se cuelga de otra hereda a quien entre por aquella, y nadie
+   > se entera el día que entra alguien más.
+
+   Víctor, al leerlo: «Actividad solo la puede ver admin». Así que ahora va por
+   `config` —la sala de máquinas, que es de una sola cuenta a propósito— y no
+   por una capacidad que se reparte según quién mida hormigón esta semana. */
 function qcVeActividad() {
   const c = qcCuenta();
-  return !!(c && c.limites);
+  return !!(c && c.config);
 }
 
 

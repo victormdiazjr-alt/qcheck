@@ -233,15 +233,22 @@ seccion("D2 · UN VACIADO FIRMADO NO SE REESCRIBE SOLO");
 }
 
 /* ── Cosas que no rompen nada pero conviene mirar ────────────────────────── */
+seccion("D3 · EL REGISTRO DE QUIÉN HACE QUÉ ES DE UNA SOLA CUENTA");
+{
+  /* Víctor, 15 ago: «Actividad solo la puede ver admin». Antes colgaba de la
+     llave de Settings y la veían seis: los técnicos podían mirar el registro de
+     lo que hacen ellos mismos. */
+  const conActividad = Object.keys(CUENTAS).filter((u) => comoQuien(u).qcVeActividad());
+  di(conActividad.length === 1 && conActividad[0] === "admin",
+     `la ve ${conActividad.join(", ") || "nadie"} — y solo esa`);
+  for (const u of ["ruben", "tecnico1", "yarvier"]) {
+    di(!comoQuien(u).qcVeActividad(), `${u.padEnd(10)} no ve el registro de la cuadrilla`);
+  }
+}
+
 seccion("AVISOS — no son fallos, son decisiones que conviene revisar");
 {
-  const conActividad = Object.keys(CUENTAS).filter((u) => comoQuien(u).qcVeActividad());
-  if (conActividad.length > 1) {
-    ojo(`«Actividad» —el registro de quién hace qué— la ven ${conActividad.length} cuentas: ${conActividad.join(", ")}.`);
-    ojo(`  Su propio comentario dice que es de quien lleva el contrato y que «hoy es una sola cuenta»,`);
-    ojo(`  pero la llave que usa es la de Settings, y esa la llevan los seis. Los técnicos pueden`);
-    ojo(`  ver el registro de lo que hacen ellos mismos.`);
-  }
+  if (!avisos) console.log("  (ninguno)");
 }
 
 /* ── Resumen ─────────────────────────────────────────────────────────────── */
