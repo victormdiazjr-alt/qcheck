@@ -48,8 +48,10 @@ di(conObra("934", "").es934(HOY) === true, "spec en blanco sigue heredando, como
 console.log("\nY EL FORMULARIO PREGUNTA CON UN INTERRUPTOR, NO CON DOS OPCIONES IGUALES");
 {
   const c = readFileSync("assets/core.js","utf8");
-  di(/key: "es934".*type: "checkbox"/s.test(c.slice(c.indexOf("Este tiro va bajo la SP-934")-400, c.indexOf("Este tiro va bajo la SP-934")+300)),
-     "es un checkbox");
+  di(/\{ key: "es934", label: "SP-934", type: "checkbox"/.test(c),
+     "es un interruptor y el rótulo es solo «SP-934»");
+  di(/\.\.\.\(specDelDia\(day\) === "934" \? \[\{\s*\n\s*key: "nivelPermeabilidad"/.test(c),
+     "la permeabilidad SOLO se pregunta si la 934 está encendida");
   di(!/Como el proyecto \(\$\{QC_SPECS/.test(c), "y ya no existe la opción que decía lo mismo dos veces");
   di(/db\.dayMeta\[day\]\.spec = db\.dayMeta\[day\]\.es934 \? "934" : "no"/.test(c),
      "apagado se guarda como «no», no en blanco");

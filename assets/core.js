@@ -4006,7 +4006,7 @@ function formDayMeta(day) {
 
          El interruptor **nace como está el proyecto**, así que en una obra 934
          se abre encendido y no hay que acordarse de nada. */
-      { key: "es934", label: "Este tiro va bajo la SP-934", type: "checkbox", full: true,
+      { key: "es934", label: "SP-934", type: "checkbox", full: true,
         hint: "Encendido: aplica permeabilidad, lotes y límites de la 934. Apagado: límites normales." },
       /* LA ESTRUCTURA — Víctor, 10 ago 2026. Hasta hoy el sistema solo sabía de
          losas: los dos campos de abajo lo daban por hecho y el del tramo era
@@ -4020,19 +4020,28 @@ function formDayMeta(day) {
           { value: "vigas", label: "Vigas" },
           { value: "otra",  label: "Otra estructura" },
         ] },
-      /* LA PERMEABILIDAD, POR TIRO — Q-58, 10 ago 2026. Estaba solo en el
-         proyecto (`db.project.nivelPermeabilidad`), y eso vale para una obra
-         entera de una clase. No vale para una obra mixta: unas vigas de la 934
-         y unas losas de control de proceso, que es el caso de mañana.
+      /* LA PERMEABILIDAD SOLO EXISTE BAJO LA 934 — Q-105 bis, 14 ago 2026.
 
-         En blanco manda el proyecto. Se lee siempre por `nivelCP()`. */
-      { key: "nivelPermeabilidad", label: "Permeabilidad de este tiro", type: "select", half: true,
+         Víctor, creando el tiro: «escogí que no es 934 y me está preguntando la
+         permeabilidad del tiro». La casilla salía SIEMPRE, y fuera de la 934 no
+         significa nada: se estaba preguntando algo que no se va a usar.
+
+         **Una pregunta que no se va a usar no es inofensiva.** Enseña que este
+         formulario pregunta cosas que dan igual, y el día que pregunte algo que
+         importa se contesta con la misma prisa.
+
+         Va por `spec` porque el interruptor todavía no se ha guardado cuando se
+         arma el formulario: se mira lo que hay puesto —el tiro o, en blanco, la
+         obra—. Si alguien enciende la 934 aquí en una obra que no la tenía, la
+         permeabilidad la pregunta `formSP934()` justo después. */
+      ...(specDelDia(day) === "934" ? [{
+        key: "nivelPermeabilidad", label: "Permeabilidad de este tiro", type: "select", half: true,
         options: [
           { value: "",  label: "Como el proyecto" },
           { value: "0", label: "No se inspecciona" },
           { value: "1", label: "PL#1 — sin techo de carga" },
           { value: "2", label: "PL#2 — máx. 1950 coulombs" },
-        ] },
+        ] }] : []),
       { key: "fecha", label: "Día del vaciado", type: "date", half: true, required: true,
         hint: "Se puede dejar programado un tiro para otro día" },
       /* Obligatorios los tres que el sistema NECESITA. Sin la hora no hay plan
