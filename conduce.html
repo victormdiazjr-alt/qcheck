@@ -1251,15 +1251,28 @@ function sugerirProximo(day) {
 
 function render() {
   const day = diaActivo();   /* el tiro en marcha, no el calendario — Q-88 */
-  /* Con el plan del día dentro: un tiro programado sin camiones
-     también es el tiro de hoy (Q-46). */
-  const days = diasDelProyecto();
-  /* Q-89: `|| day` al final. Si el tiro todavía no tiene camiones se enseñaba el
-     último día de la obra, y una obra recién abierta no tiene ninguno: la
-     cabecera salía «Último vaciado — —», con la fecha en blanco, delante de un
-     técnico esperando el primer camión. Un tiro sin camiones sigue siendo el
-     tiro. */
-  const shown = testsOfDate(day).length ? day : (days[0] || day);
+  /* RECEPCIÓN ENSEÑA EL TIRO DE HOY, VACÍO SI ESTÁ VACÍO — Q-107, 15 ago 2026.
+
+     Víctor, con el tiro de hoy abierto: «está saliendo un camión en el tiro de
+     hoy en Recepción, de 8.5, del tiro de ayer».
+
+     Esta línea decía: si el tiro de hoy no tiene camiones, enseña los del
+     último día que tenga. Se escribió para no dejar la cabecera en blanco
+     (Q-89) — y el precio es mucho peor que el problema: **delante del técnico,
+     esperando el primer camión del día, aparecía un camión de ayer** con sus
+     yardas y sus botones de sellar horas. Tocar cualquiera de ellos habría
+     escrito en el vaciado de ayer.
+
+     > Rellenar un hueco con datos de otro sitio no es enseñar más: es enseñar
+     > otra cosa con el rótulo de esta.
+
+     El hueco ya tiene su texto —«Ningún camión registrado hoy. Escanee el
+     primer conduce al llegar»—, que dice exactamente lo que pasa y lo que hay
+     que hacer. Eso no es una cabecera en blanco: es la verdad.
+
+     Y encaja con lo de anoche (Q-104): o hay tiro hoy, o no hay tiro. Aquí
+     igual: o son los camiones de este tiro, o no hay camiones. */
+  const shown = day;
   const rows = testsOfDate(shown);
   const cy = rows.reduce((a, t) => a + (num(t.vol) || 0), 0);
   /* Q-88: «hoy» solo cuando de verdad es hoy. Desde que Recepción trabaja sobre
