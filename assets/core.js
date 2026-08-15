@@ -1495,9 +1495,21 @@ const QC_SPECS = {
 
 function specDelProyecto() { return String((db.project || {}).spec || ""); }
 
+/* «NO» TIENE QUE PODER DECIRSE — Q-105, 14 ago 2026.
+
+   El tiro podía decir «934» o dejarlo en blanco, y en blanco significaba
+   «lo que diga el proyecto». No había forma de decir **«este tiro NO es 934»**
+   en una obra que sí lo es — y eso es justo lo que Víctor necesita: la PR-52
+   tiene la 934 puesta, y el tiro de hoy va con los límites normales.
+
+   `spec: "no"` es esa tercera respuesta. No es una norma: es la ausencia
+   declarada de una, y por eso se dice y no se calla. En blanco sigue
+   significando lo de siempre —hereda del proyecto—, así que ningún tiro
+   guardado hasta hoy cambia de veredicto. */
 function specDelDia(dia) {
   const d = dia || diaActivo();
   const propia = (db.dayMeta || {})[d] || {};
+  if (propia.spec === "no") return "";
   if (propia.spec != null && propia.spec !== "") return String(propia.spec);
   /* Un vaciado CERRADO conserva la especificación con la que se juzgó, igual
      que conserva sus límites (Q-40/Q-41). Cambiar de norma no puede volver a
@@ -3951,7 +3963,13 @@ function formDayMeta(day) {
 
   openForm({
     title: `Datos del vaciado — ${fmtDate(day)}`,
-    initial: { ...meta, fecha: day, proyecto: obraDelTiro },
+    /* El interruptor de la 934 nace con la respuesta correcta ya puesta —Q-105:
+       si el tiro ya dijo lo suyo, eso; si no, lo que diga la obra. Así en la
+       PR-52 se abre encendido y en una obra normal, apagado. */
+    initial: { ...meta, fecha: day, proyecto: obraDelTiro,
+               es934: meta.spec === "no" ? false
+                    : meta.spec === "934" ? true
+                    : specDelProyecto() === "934" },
     fields: [
       /* Q-89: la obra, la primera y a lo ancho. No se teclea nunca — se elige
          de las que existen. Crear obras es otra cosa y se hace en su sitio. */
@@ -3972,11 +3990,24 @@ function formDayMeta(day) {
          desde el 8 de agosto con una nota que decía: «el día que se termine, se
          quita esta línea y ya está». Ese día es hoy: Rubén tiene mañana un tiro
          de vigas bajo SP-934 y necesita poder marcarlo él. */
-      { key: "spec", label: "Especificación de este tiro", type: "select", half: true,
-        options: [
-          { value: "", label: `Como el proyecto (${QC_SPECS[specDelProyecto()] ? QC_SPECS[specDelProyecto()].n : "control de proceso"})` },
-          { value: "934", label: "SP-934 · Structural Concrete" },
-        ] },
+      /* UN INTERRUPTOR, NO UNA LISTA — Q-105, 14 ago 2026.
+
+         Víctor, creando el tiro de hoy: «me sale para escoger entre SP-934 y
+         otra opción que dice "como el proyecto SP-934"». **Las dos decían lo
+         mismo**, porque la PR-52 lleva la 934 puesta: elegir entre dos opciones
+         idénticas es una pregunta sin respuesta.
+
+         Y faltaba la que de verdad hacía falta: **decir que este tiro NO es
+         934** en una obra que sí lo es.
+
+         Ahora es lo que es — sí o no:
+           encendido  → la 934 manda: permeabilidad, lotes y sus límites.
+           apagado    → los límites normales, los de siempre en la PR-52.
+
+         El interruptor **nace como está el proyecto**, así que en una obra 934
+         se abre encendido y no hay que acordarse de nada. */
+      { key: "es934", label: "Este tiro va bajo la SP-934", type: "checkbox", full: true,
+        hint: "Encendido: aplica permeabilidad, lotes y límites de la 934. Apagado: límites normales." },
       /* LA ESTRUCTURA — Víctor, 10 ago 2026. Hasta hoy el sistema solo sabía de
          losas: los dos campos de abajo lo daban por hecho y el del tramo era
          OBLIGATORIO. Un tiro de vigas no se podía ni guardar.
@@ -4118,6 +4149,12 @@ function formDayMeta(day) {
          queda solo de red por si el formulario se abrió sin obras declaradas.
          Y si la obra elegida no es la que está abierta, se abre: no puede haber
          un tiro de una obra y otra obra en pantalla (Q-80). */
+      /* Q-105: el interruptor se guarda como especificación, y «apagado» se
+         escribe con todas las letras (`"no"`). Callarlo haría que el tiro
+         heredara la 934 de la obra, que es justo lo que se estaba diciendo
+         que no. `es934` no se guarda: es la pregunta, no el dato. */
+      db.dayMeta[day].spec = db.dayMeta[day].es934 ? "934" : "no";
+      delete db.dayMeta[day].es934;
       if (!db.dayMeta[day].proyecto) db.dayMeta[day].proyecto = proyectoActivo();
       delete db.dayMeta[day].source;
       const suya = db.dayMeta[day].proyecto;
@@ -4140,8 +4177,10 @@ function formDayMeta(day) {
          ha declarado**: son de la obra, no del tiro, y volver a sacarlas en cada
          vaciado es la clase de pregunta repetida que se acaba contestando sin
          leer. */
-      const es934 = (v.spec || specDelProyecto()) === "934";
-      if (es934 && !(db.project || {}).clase934 && typeof formSP934 === "function") formSP934();
+      /* Q-105: se pregunta por la 934 solo si el interruptor quedó encendido.
+         Antes se miraba `v.spec || specDelProyecto()`, o sea que en una obra
+         934 preguntaba SIEMPRE, aunque el tiro fuera de hormigón normal. */
+      if (v.es934 && !(db.project || {}).clase934 && typeof formSP934 === "function") formSP934();
     },
   });
 }
