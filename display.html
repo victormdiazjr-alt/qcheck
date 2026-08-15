@@ -369,7 +369,7 @@ footer {
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=286507eb"></script>
-<script src="assets/core.js?v=5f1598f4"></script>
+<script src="assets/core.js?v=594c23ed"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -565,22 +565,21 @@ function tickClock() {
     d.toLocaleDateString("es-PR", { weekday: "long", day: "numeric", month: "long" });
 }
 
-/* Fullscreen seguro: en iPhone no existe la API — no debe romper nada */
-function goFullscreen() {
-  const el = document.documentElement;
-  const fn = el.requestFullscreen || el.webkitRequestFullscreen;
-  if (!fn) return;
-  try { const p = fn.call(el); if (p && p.catch) p.catch(() => {}); } catch (_) {}
-}
-function exitFullscreenSafe() {
-  const fn = document.exitFullscreen || document.webkitExitFullscreen;
-  if (!fn) return;
-  try { const p = fn.call(document); if (p && p.catch) p.catch(() => {}); } catch (_) {}
-}
+/* TOCAR LA PANTALLA YA NO ENTRA NI SALE DE PANTALLA COMPLETA — Q-106.
+
+   Esto era lo más molesto de los tres sitios: **un toque en CUALQUIER punto del
+   Field Display** metía en pantalla completa, y el siguiente sacaba. En una
+   pantalla que cuelga en la obra y que la gente roza al pasar, eso es entrar y
+   salir sin que nadie lo haya pedido.
+
+   Se escribió cuando la aplicación se abría dentro del navegador. Guardada en
+   la pantalla de inicio ya arranca sin barras, así que sobra.
+
+   El toque sigue haciendo lo único que de verdad hacía falta: **desbloquear el
+   sonido**. Los navegadores no dejan sonar nada hasta que el usuario toca algo,
+   y esta pantalla avisa por sonido cuando un camión llega o se rechaza. */
 document.body.addEventListener("click", () => {
-  ensureAudio(); // silent unlock, no banner
-  if (document.fullscreenElement || document.webkitFullscreenElement) exitFullscreenSafe();
-  else goFullscreen();
+  ensureAudio();   // desbloqueo silencioso, sin cartel
 });
 
 /* ============================================================
@@ -779,13 +778,9 @@ function startSim() {
 function montarAcostar() {
   if (!new URLSearchParams(location.search).has("acostar")) return;
 
-  /* el navegador solo concede pantalla completa dentro de un gesto */
-  const alTocar = () => {
-    document.removeEventListener("pointerdown", alTocar, true);
-    acostarPantalla();
-  };
-  document.addEventListener("pointerdown", alTocar, true);
-  acostarPantalla();   // por si el navegador ya lo permite sin gesto
+  /* Q-106: aquí se pedía pantalla completa con el primer toque. Se quitó: la
+     aplicación ya arranca sin barras desde la pantalla de inicio, y ese toque
+     hacía falta para otra cosa. El aviso de girar el teléfono se queda. */
 
   const ol = document.createElement("div");
   ol.id = "gire";
@@ -813,7 +808,6 @@ loadDB();
 initTheme("dark"); /* the field display defaults to dark */
 mountThemeToggle();
 mountStatusBar();
-pantallaCompletaAlTocar();
 montarAcostar();
 mountSoundToggle();
 enableLiveSync(render);

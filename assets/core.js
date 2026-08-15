@@ -658,37 +658,32 @@ function esTelefono() {
   return /iPhone|iPod/.test(ua) || (/Android/.test(ua) && /Mobile/.test(ua));
 }
 
-/* ------------------------------------------------------------ acostar la pantalla
-   Pantalla completa y orientación horizontal. Funciona en Android y en el
-   escritorio; en el iPhone NO: Safari de iPhone no implementa requestFullscreen
-   ni el bloqueo de orientación. Por eso quien llame a esto tiene que tener un
-   plan B visible — en el Field Display, el aviso de girar el teléfono. */
-async function acostarPantalla() {
-  const el = document.documentElement;
-  const pedirFS = el.requestFullscreen || el.webkitRequestFullscreen;
-  if (pedirFS && !document.fullscreenElement) {
-    try { await pedirFS.call(el); } catch (_) { return false; }
-  }
-  const o = screen.orientation;
-  if (o && o.lock) { try { await o.lock("landscape"); return true; } catch (_) {} }
-  return !!document.fullscreenElement;
-}
+/* PANTALLA COMPLETA AL TOCAR: SE QUITA — Q-106, 14 ago 2026.
 
-/* ------------------------------------------------------------ pantalla completa
-   Las pantallas de campo entran a pantalla completa con el primer toque: el
-   navegador solo lo permite dentro de un gesto del usuario, nunca al cargar.
-   iOS Safari no implementa la API — ahí simplemente no pasa nada.        */
-function pantallaCompletaAlTocar() {
-  const el = document.documentElement;
-  const pedir = el.requestFullscreen || el.webkitRequestFullscreen;
-  if (!pedir) return;
-  const alTocar = () => {
-    document.removeEventListener("pointerdown", alTocar, true);
-    if (document.fullscreenElement || document.webkitFullscreenElement) return;
-    try { const p = pedir.call(el); if (p && p.catch) p.catch(() => {}); } catch (_) {}
-  };
-  document.addEventListener("pointerdown", alTocar, true);
-}
+   Víctor: «yo había dado esa instrucción al principio, pero eso era cuando aún
+   no sabíamos que añadiendo a la pantalla de inicio en iOS se abre a pantalla
+   completa. Deshabilítala, especialmente en el Field Display y en Muestras.»
+
+   Aquí vivían `acostarPantalla()` y `pantallaCompletaAlTocar()`. Las dos pedían
+   pantalla completa dentro del primer gesto del usuario, que es la única forma
+   que da el navegador. Se escribieron para tapar un hueco que **ya no existe**:
+   la aplicación guardada en la pantalla de inicio arranca sin barras, y las
+   veinte pantallas llevan sus etiquetas y el manifiesto en `standalone`.
+
+   Y no eran gratis: el PRIMER toque de la pantalla se lo comía la petición de
+   pantalla completa en vez de hacer lo que el técnico quería hacer. En Muestras
+   ese primer toque suele ser una lectura, y en el Field Display, girar el
+   teléfono.
+
+   > **Una solución que sobrevive al problema que resolvía se cobra un peaje
+   > todos los días y ya no paga nada.**
+
+   Lo que SÍ se queda es el aviso de «Gire el teléfono» del Field Display: eso
+   no era pantalla completa, era decirle a una persona lo que tiene que hacer, y
+   sigue haciendo falta.
+
+   Se pierde el bloqueo de orientación en Android, que solo funcionaba allí. Si
+   algún día hace falta, vuelve — pero con su motivo, no de arrastre. */
 
 /* ------------------------------------------------------------ barra de estado
    Vive arriba a la derecha en TODAS las pantallas, como la barra de estado de
