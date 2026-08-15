@@ -2,7 +2,13 @@
    verdad— tiene que contar en el avance del tiro. Se carga `core.js` entero. */
 import { readFileSync } from "node:fs";
 
-const HOY = new Date().toISOString().slice(0, 10);
+/* EL DÍA SE LE PREGUNTA A LA APLICACIÓN, NO A UTC — 14 ago 2026.
+   Esta prueba usaba `toISOString()`, que da la fecha en Londres, y `core.js`
+   usa la local. Pasaba todo el día y **empezó a fallar sola al cruzar la
+   medianoche UTC**, señalando a un código que estaba bien. Una prueba que
+   falla por la hora a la que se ejecuta es peor que no tenerla. */
+const HOY = (() => { const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })();
 function monta(tests, cyPlan) {
   const almacen = new Map();
   const ctx = {

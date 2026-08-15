@@ -3,7 +3,9 @@
 import { readFileSync } from "node:fs";
 
 function comoQuien(usr) {
-  const alm = new Map([["qc-usuario", usr]]);
+  /* La llave es `qc-user`. Con `qc-usuario` la prueba daba a todo el mundo por
+   desconocido y parecía que el fallo era de los permisos. */
+const alm = new Map([["qc-user", usr]]);
   const ctx = {
     localStorage: { getItem: (k) => alm.get(k) ?? null, setItem: (k,v)=>alm.set(k,String(v)), removeItem:(k)=>alm.delete(k) },
     document: { getElementById: () => null, addEventListener(){}, querySelectorAll: () => [],
