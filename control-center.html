@@ -365,8 +365,8 @@ function progresoHTML(p) {
            Víctor mandó una foto del monitor: «0 / 51 CY  17 %», y debajo
            «1 camión recibido · 8.5 CY en el camión · faltan 42.5 CY». Tres
            números de la misma pantalla contando cosas distintas.
-           Pasó porque por la tarde se pasaron `pct` y `pending` a lo recibido
-           y esta cifra se quedó en `placed`. **Arreglar la mitad de una
+           Pasó porque por la tarde se pasaron el porcentaje y el «faltan» a lo
+           recibido y esta cifra se quedó en lo colocado. **Arreglar la mitad de una
            pantalla es peor que no arreglarla**: sin tocar nada era coherente
            y falsa; a medias, se contradice a la vista. -->
       <b>${fmt(p.recibido, 1)}</b>${hayPlan ? `<span class="pt-de">/ ${fmt(p.cyPlan, 0)}</span>` : ""}
