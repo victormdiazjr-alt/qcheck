@@ -721,7 +721,27 @@ function render() {
   /* Con el plan del día dentro: un tiro programado sin camiones
      también es el tiro de hoy (Q-46). */
   const days = diasDelProyecto();
-  const day = diaPorDefecto();
+  /* SIN TIRO ABIERTO, EL CONTROL CENTER NO HABLA DE OTRO DÍA — Q-110, 15 ago.
+
+     Víctor, tres veces seguidas y siempre por otra casilla: el avance del
+     tiro, el aviso de yardas, y ahora «Último camión 209 · Ticket 1917 · En
+     pruebas». Las tres eran del vaciado de otro día, enseñadas como si
+     estuvieran pasando.
+
+     La causa es una sola y está aquí: `diaPorDefecto()` cae en el último día
+     con datos cuando hoy no hay tiro, y de ese día beben **las nueve casillas
+     de esta pantalla**. Ir tapándolas de una en una es lo que hemos estado
+     haciendo, y por eso volvía por otro sitio cada vez.
+
+     > Cuando el mismo fallo sale por tres agujeros distintos, el agujero no
+     > son los tres: es lo que los alimenta.
+
+     Sin tiro abierto, el día es HOY —vacío—, y las nueve casillas se quedan
+     calladas solas. La tarjeta de arriba ya dice con todas las letras que no
+     hay vaciado abierto y cuándo fue el último; eso es lo que hay que saber.
+
+     `days` no cambia: la lista de días sigue entera para elegir a mano. */
+  const day = hayTiroActivo() ? diaActivo() : todayISO();
   state.day = day;
   const rows = testsOfDate(day);
   const prog = dayProgress(day);
@@ -735,7 +755,6 @@ function render() {
   const cumpl = evaluated.length ? conf / evaluated.length * 100 : null;
   const last = rows[rows.length - 1];
   const meta = db.dayMeta[day] || {};
-  const h = lastHumidity(day);
 
   /* LA MARCA ES DEL PRODUCTO, NO DE LA OBRA — Q-75, 10 de agosto de 2026.
 
@@ -894,16 +913,16 @@ function render() {
       </a>
     </div>
 
-    <!-- fila 3: humedad + último camión. Los avisos se fueron abajo (Q-52);
-         la humedad se queda arriba porque es del día en curso y se actúa
-         sobre ella, no se contempla. -->
+    <!-- LA HUMEDAD DE PLANTA SE VA — Q-111, 15 ago 2026.
+         Víctor: «el widget de humedad de planta en Control Center lo puedes
+         borrar, no se va a usar».
+         Enseñaba «sin registro hoy» en ámbar todos los días desde que existe,
+         porque nadie la apunta — y un aviso que sale siempre y del que nadie
+         hace nada enseña a no mirar los avisos de al lado.
+         La humedad de los áridos sigue siendo una pregunta viva del oficio
+         (P-11, por qué se imprimen a 0.00 %), pero eso se resuelve leyendo el
+         papel de la planta, no con una casilla que nadie rellena. -->
     <div class="grid cols-2">
-      <div class="w" style="cursor:default; align-content:start">
-        <div class="lbl">Humedad de planta</div>
-        <div class="num" style="font-size:22px">${h ? esc(h.time) : "—"}</div>
-        <div class="sub">${h ? "última lectura de hoy" : "<b style='color:var(--act)'>sin registro hoy</b>"}</div>
-      </div>
-
       <a class="w lastruck ${lt.cls}" href="display.html" target="_blank" style="align-content:start">
         <div>
           <div class="lbl">Último camión</div>
