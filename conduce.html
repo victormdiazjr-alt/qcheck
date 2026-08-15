@@ -55,6 +55,7 @@ body { background: var(--bg); }
 .now-btn {
   border: 1px solid var(--line); background: var(--panel-2); border-radius: 7px;
   font-size: 12px; font-weight: 700; padding: 4px 10px; cursor: pointer; margin-top: 4px;
+  color: var(--ink); font-family: inherit;   /* Q-115 */
 }
 .now-btn:hover { background: var(--hover); }
 .truck-row {
@@ -65,8 +66,25 @@ body { background: var(--bg); }
 .truck-row .tinfo { min-width: 130px; flex: 1 1 130px; }
 @media (max-width: 520px) { .truck-row .tinfo { min-width: 0; } .truck-row { padding: 12px 12px; } }
 .truck-row .meta { font-size: 12.5px; color: var(--ink-soft); }
+/* UN BOTÓN NO HEREDA EL COLOR DEL TEXTO — Q-115, 15 ago 2026.
+
+   Víctor mandó la foto: «Comienza — AHORA», «Muestra», «Termina», los tres
+   ilegibles. Estos botones no fijaban `color`, y un `<button>` **no hereda** el
+   del texto de alrededor: se queda con el negro que le pone el navegador. Sobre
+   el panel oscuro, negro sobre negro.
+
+   No se veía en el tema claro, que es donde se dibujó. Y no lo caza ninguna
+   comprobación de las que hay: el botón existe, está donde toca y responde al
+   toque. Lo único que falla es que no se lee.
+
+   > Un color que no se pide no se hereda: se recibe, y lo que se recibe por
+   > defecto casi nunca es lo que hacía falta.
+
+   `font-family: inherit` por lo mismo: sin él, el botón usa la del sistema y
+   canta al lado del resto. */
 .tstep {
   border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+  color: var(--ink); font-family: inherit;
   font-size: 12.5px; font-weight: 700; padding: 8px 12px; cursor: pointer;
 }
 .tstep:hover { background: var(--hover); }

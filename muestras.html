@@ -197,6 +197,7 @@ tr.hecho:hover .celda { opacity: 1; }
   background: var(--surface); border: 3px solid var(--hairline); border-radius: 18px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   cursor: pointer; position: relative; transition: border-color .15s, background .15s;
+  color: var(--text); font-family: inherit;   /* Q-115: un botón no hereda el color */
 }
 .val.active { border-color: var(--idle); background: var(--surface-2); }
 .val .k { font-size: 1.7vh; font-weight: 800; letter-spacing: .26em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: .5vw; }
