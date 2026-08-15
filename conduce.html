@@ -158,27 +158,6 @@ body { background: var(--bg); }
   border-color: var(--act);
   box-shadow: 0 0 0 3px rgba(245,184,61,.14), 0 0 20px -6px var(--act);
 }
-/* LA REVISIÓN ES AL REGISTRAR — Q-117, 15 ago 2026.
-
-   Antes la pantalla decía «revísalos antes de registrar» y luego, al registrar,
-   sacaba un `confirm()` del navegador con los valores en texto pelado. Dos
-   pegas: pedía la revisión en el momento en que el técnico todavía está
-   mirando el papel y la foto —no cuando decide—, y el `confirm()` solo listaba
-   los campos que nadie había tocado, así que **si corregías uno, desaparecía de
-   la revisión**. Justo el que más falta hacía comprobar.
-
-   Ahora se enseña TODO lo que salió de la foto, en la propia pantalla, en el
-   único momento en que la pregunta significa algo: cuando le das a Registrar. */
-#revisar-lectura { display: none; margin-top: 12px; border: 1px solid var(--act);
-  border-radius: 10px; background: var(--panel-2); padding: 13px 15px; }
-#revisar-lectura h4 { font-size: 13.5px; margin: 0 0 4px; color: var(--act); }
-#revisar-lectura .rl-sub { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 10px; }
-#revisar-lectura .rl-fila { display: flex; justify-content: space-between; gap: 14px;
-  padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; }
-#revisar-lectura .rl-et { color: var(--ink-soft); }
-#revisar-lectura .rl-v { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
-#revisar-lectura .rl-v.vacio { font-weight: 500; font-style: italic; color: var(--ink-soft); }
-#revisar-lectura .rl-btns { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 #aviso-lectura {
   display: none; margin-top: 12px; font-size: 13px; font-weight: 600;
   color: var(--act); border: 1px solid var(--line); border-left: 3px solid var(--act);
@@ -317,8 +296,6 @@ body { background: var(--bg); }
       <!-- Q-84: un campo impreso que llega a bolígrafo. Rojo, no ámbar: no es
            una tendencia que vigilar, es un papel que alguien tocó. -->
       <div id="aviso-mano" class="aviso-mano" style="display:none"></div>
-      <!-- Q-117: la revisión de lo que leyó la foto, al dar a Registrar. -->
-      <div id="revisar-lectura"></div>
       <div style="display:flex; gap:10px; margin-top:14px; align-items:center">
         <span id="photo-slot"></span>
         <div style="flex:1"></div>
@@ -722,9 +699,28 @@ function reducir(img, ancho, calidad) {
   return c.toDataURL("image/jpeg", calidad);
 }
 
+/* Q-120, 16 ago 2026. Víctor: «cuando le dé escanear conduce, antes q se
+   limpien los fields y asegurarse q se escriban los leídos del conduce.»
+
+   Se vacían AQUÍ, al escoger la foto, y no solo dentro del lector: el técnico
+   ve las casillas quedarse en blanco y sabe que va una lectura nueva. Si las
+   dejáramos puestas hasta que contesta el servidor, durante esos segundos la
+   pantalla enseña los números del intento anterior como si fueran los de éste.
+
+   Solo las del lector. La llegada y la losa no se tocan: el lector no las trae
+   y borrarlas sería quitarle al técnico algo que no le vamos a devolver. */
+function limpiarCasillasDelLector() {
+  valoresAntesDeEscanear = {};
+  for (const [, id] of CAMPOS_LEIDOS) {
+    const el = document.getElementById(id);
+    if (el) { valoresAntesDeEscanear[id] = el.value; el.value = ""; el.classList.remove("sugerido"); }
+  }
+}
+
 function photoCapture(input) {
   const file = input.files && input.files[0];
   if (!file) return;
+  limpiarCasillasDelLector();
   const img = new Image();
   img.onload = () => {
     pendingPhoto = reducir(img, 900, 0.6);          // la que se guarda
@@ -793,18 +789,12 @@ const CAMPOS_LEIDOS = [
    el camión al expediente para poder contrastarlas con el tiro (Q-55). */
 let ordenadasLeidas = null;
 
-/* Lo que salió de la FOTO, para poder enseñarlo al registrar (Q-117). Se guarda
-   aparte de la clase `sugerido` porque esa se borra en cuanto el técnico toca
-   el campo, y un campo corregido a mano es precisamente el que hay que volver a
-   comparar con el papel. `null` = de esta llegada no se leyó ninguna foto. */
-let leidoDeLaFoto = null;
-let lecturaRevisada = false;
-/* Lo que la foto leyó DISTINTO de lo que ya había escrito en la casilla — el
-   único caso que todavía frena al registrar (Q-119). Cada entrada es
-   `{id, papel}`: si el técnico deja la casilla como estaba, se le pregunta una
-   vez; si la cambia para que cuadre con el papel, deja de haber conflicto solo
-   y no se le pregunta nada. */
-let conflictoLectura = [];
+/* Lo que había en las casillas del lector justo ANTES de vaciarlas para
+   escanear — Q-120. Es la red: lo que el papel no traiga vuelve de aquí. Se
+   guarda al vaciar y no al leer, porque cuando el lector contesta las casillas
+   llevan ya un rato en blanco y no hay nada que copiar. */
+let valoresAntesDeEscanear = {};
+
 
 /* El lector PROPONE. Nunca guarda.
 
@@ -866,7 +856,6 @@ async function leerDeLaFoto(dataUrl) {
   }
 
   const c = d.campos || {};
-  leidoDeLaFoto = {}; lecturaRevisada = false; conflictoLectura = [];
   ordenadasLeidas = (c.ordenadas != null && c.ordenadas !== "") ? Number(c.ordenadas) : null;
   /* El suministrador que trae impreso el papel manda sobre el que se deduce de
      la planta — D-103. Esta es la vía por la que entraron los seis camiones del
@@ -898,21 +887,41 @@ async function leerDeLaFoto(dataUrl) {
      Así que se llevan tres cuentas separadas: los que se pusieron, los que ya
      estaban igual, y los que ya estaban DISTINTOS. Cada una se dice con sus
      palabras. */
+  /* Q-120: las casillas del lector van vacías —las vació `photoCapture` al
+     escoger la foto—, así que lo que traiga el papel entra siempre. Si se llega
+     aquí por otra puerta, se vacían ahora, que la garantía es de esta función y
+     no de quien la llame. */
+  const yaVacias = CAMPOS_LEIDOS.every(([, id]) => {
+    const el = document.getElementById(id);
+    return !el || !el.value;
+  });
+  if (!yaVacias) limpiarCasillasDelLector();
+  const previos = valoresAntesDeEscanear || {};
+  valoresAntesDeEscanear = {};
   let puestos = 0;
-  const yaIguales = [], enConflicto = [];
+  const reemplazados = [], devueltos = [];
   for (const [clave, id] of CAMPOS_LEIDOS) {
     const el = document.getElementById(id);
     /* Q-93: un valor SUGERIDO por la pantalla —el volumen del camión anterior—
        sí se pisa. Lo que no se pisa nunca es lo que escribió una persona. */
-    if (!el || c[clave] == null || c[clave] === "") continue;
-    if (el.value) {
-      const nombre = QC_NOMBRE_CAMPO[clave] || clave;
-      if (String(el.value).trim() === String(c[clave]).trim()) yaIguales.push(nombre);
-      else enConflicto.push({ id, nombre, mio: String(el.value).trim(), papel: String(c[clave]).trim() });
-      continue;                       // lo que escribió una persona no se pisa
+    if (!el) continue;
+    const nombre = QC_NOMBRE_CAMPO[clave] || clave;
+    /* LO QUE EL PAPEL NO TRAE, NO SE PIERDE — Q-120.
+
+       Vaciar antes de leer tiene un filo: si la lectura falla, o falla solo en
+       un campo, se llevaría por delante lo que el técnico hubiera tecleado a
+       mano — que es justo lo que teclea CUANDO un escaneo anterior falló. Se
+       quedaría sin lo poco que tenía por haber vuelto a intentarlo, y eso
+       convierte reintentar en un riesgo. Así que lo que el papel no trae se
+       devuelve a su sitio. */
+    if (c[clave] == null || c[clave] === "") {
+      if (previos[id]) { el.value = previos[id]; devueltos.push(nombre); }
+      continue;
+    }
+    if (previos[id] && String(previos[id]).trim() !== String(c[clave]).trim()) {
+      reemplazados.push(`${nombre} (tenías ${String(previos[id]).trim()}, el papel dice ${String(c[clave]).trim()})`);
     }
     el.value = c[clave];
-    leidoDeLaFoto[id] = c[clave];
     el.classList.add("sugerido");
     el.addEventListener("input", () => el.classList.remove("sugerido"), { once: true });
     puestos++;
@@ -921,26 +930,24 @@ async function leerDeLaFoto(dataUrl) {
   /* Q-117: aquí ya no se pide revisar. Se dice lo que hay y punto — la
      comprobación contra el papel se hace al dar a Registrar, que es cuando el
      técnico decide, y no ahora, que todavía está encuadrando la foto. */
+  /* Q-120: tres cosas que decir, y ninguna frena nada. Lo que se escribió, lo
+     que el papel no traía y se devolvió tal como estaba, y —lo único que hay
+     que mirar de verdad— lo que el papel cambió respecto a lo que había. */
   const trozos = [];
-  if (puestos) trozos.push(`Leídos ${puestos} campo${puestos === 1 ? "" : "s"}`);
-  if (yaIguales.length) trozos.push(`${yaIguales.length} ya estaban puestos y coinciden con la foto`);
-  if (faltan) trozos.push(`${faltan} no se leyeron y quedan vacíos`);
+  if (puestos) trozos.push(`Escritos ${puestos} campo${puestos === 1 ? "" : "s"} del conduce`);
+  if (faltan) trozos.push(`${faltan} no se leyeron`);
+  if (devueltos.length) trozos.push(`${devueltos.join(", ")} no ven\u00eda${devueltos.length === 1 ? "" : "n"} en la foto y se qued\u00f3 lo que hab\u00eda`);
+  /* Si no entró NADA, eso es lo primero que hay que decir — y pegado, que lo
+     suyo sigue donde estaba. Si no, el técnico ve su ticket en la casilla, lee
+     «no venía en la foto» y no sabe si lo que está mirando es lo que él escribió
+     o algo que se inventó la pantalla. */
   aviso.textContent =
-      enConflicto.length
-        ? "OJO — la foto dice otra cosa en " +
-          enConflicto.map((x) => `${x.nombre} (papel ${x.papel}, aquí ${x.mio})`).join("; ") +
-          ". No he tocado lo tuyo. Mira el papel y decide."
-    : trozos.length
-        ? trozos.join(", ") + ". Compruébalos con el papel y dale a Registrar."
-    /* Solo AQUÍ es verdad que no se leyó nada: la foto no trajo un solo campo. */
-        : "No se pudo leer ningún campo con seguridad. Entra los datos a mano.";
-  /* El conflicto se mira, no se cuenta como revisado: al registrar vuelve a
-     salir la lista entera para compararla con el papel. */
-  if (enConflicto.length) {
-    leidoDeLaFoto = leidoDeLaFoto || {};
-    enConflicto.forEach((x) => { leidoDeLaFoto[x.id] = x.papel; });
-    conflictoLectura = enConflicto.map((x) => ({ id: x.id, papel: x.papel }));
-  }
+      (reemplazados.length ? "OJO \u2014 el papel cambi\u00f3 " + reemplazados.join("; ") + ". " : "")
+    + (puestos === 0
+        ? "No se pudo leer ning\u00fan campo con seguridad"
+          + (devueltos.length ? ". Lo que ten\u00edas escrito sigue ah\u00ed, sin tocar" : "")
+          + ". Entra los datos a mano."
+        : trozos.join(", ") + ". Comprueba con el papel y dale a Registrar.");
 
   avisarDeLoEscritoAMano(c);
 }
@@ -1019,17 +1026,7 @@ const CAMPOS_CAMION = [
 
    Ahora, además del cartel, el motivo se escribe en el aviso de la pantalla y
    se queda ahí hasta el intento siguiente. */
-/* Q-117: «Corregir» cierra la revisión y devuelve el mando. No se registra
-   nada y no se pierde lo escrito — el técnico arregla el campo y vuelve a dar
-   a Registrar, que le enseñará la lista otra vez, ya con la corrección. */
-function cerrarRevision() {
-  const c = document.getElementById("revisar-lectura");
-  if (c) { c.style.display = "none"; c.innerHTML = ""; }
-  lecturaRevisada = false;
-}
-
 function noSeRegistra(motivo, campo) {
-  lecturaRevisada = false;   // Q-117: lo que se revisó ya no es lo que hay
   const a = document.getElementById("aviso-lectura");
   if (a) { a.textContent = motivo; a.className = "aviso-lectura pendiente"; a.style.display = "block"; }
   if (campo) { const el = document.getElementById(campo); if (el) el.focus(); }
@@ -1089,63 +1086,7 @@ function saveArrival() {
      comparación con el papel sea de la fila completa y no de lo que quedó sin
      tocar. Nada de `confirm()`: en un iPad esa caja sale pegada arriba, con el
      teclado abierto por delante, y se contesta que sí sin leerla. */
-  /* REGISTRAR REGISTRA — Q-119, 16 ago 2026.
-
-     Víctor: «si la lectura la hace bien que la escriba en los campos y al
-     presionar registrar quede registrado.»
-
-     Ayer la revisión de lo leído (Q-117) salía SIEMPRE que hubiera habido foto,
-     y eso son dos toques para el caso normal, que es el que pasa veinte veces
-     en un tiro. Cuando el lector acierta no hay nada que decidir: los números
-     están en las casillas, a la vista, y el técnico tiene el papel en la mano
-     mientras los mira. Pedirle que confirme lo que ya está viendo no añade una
-     comprobación — añade un toque que se hace sin mirar, y un paso que se
-     contesta sin leer es peor que no tenerlo, porque parece que hubo revisión.
-
-     Queda un solo caso en que sí se para: cuando la casilla dice una cosa y el
-     papel dice otra (Q-118). Ahí no es que el lector acierte o falle — es que
-     los dos datos no pueden ser ciertos a la vez, y el que decide es el
-     técnico con el papel delante. Y se resuelve solo: si corrige la casilla
-     para que cuadre con el papel, ya no hay conflicto y registra de una.
-
-     > Un paso de más en lo que sale bien se paga veinte veces por tiro. Un paso
-     > de más en lo que sale mal se paga una, y evita un dato falso. */
-  const sigueEnConflicto = conflictoLectura.filter((x) => {
-    const el = document.getElementById(x.id);
-    return el && String(el.value).trim() !== String(x.papel).trim();
-  });
-  if (sigueEnConflicto.length && !lecturaRevisada) {
-    const caja = document.getElementById("revisar-lectura");
-    const filas = sigueEnConflicto.map(({ id }) => {
-      const el = document.getElementById(id);
-      if (!el) return "";
-      const et = el.closest(".field").querySelector("label");
-      const nombre = et ? et.textContent.replace(" *", "") : id;
-      const v = String(el.value).trim();
-      /* Q-118: si lo que hay no es lo que traía la foto, se dice QUÉ traía la
-         foto. «Corregido a mano» a secas no sirve para comparar: el técnico
-         tiene el papel delante y lo que necesita ver es el otro número. */
-      const dePapel = leidoDeLaFoto[id] == null ? null : String(leidoDeLaFoto[id]).trim();
-      const cambiado = dePapel != null && v !== dePapel;
-      return `<div class="rl-fila"><span class="rl-et">${esc(nombre)}` +
-             (cambiado ? ` · la foto decía ${esc(dePapel)}` : "") + `</span>` +
-             (v ? `<span class="rl-v">${esc(v)}</span>`
-                : `<span class="rl-v vacio">en blanco</span>`) + `</div>`;
-    }).join("");
-    caja.innerHTML =
-      `<h4>Esto no cuadra con la foto del conduce</h4>` +
-      `<div class="rl-sub">Mira el papel. Si lo de la casilla es lo correcto, registra.</div>` +
-      filas +
-      `<div class="rl-btns">` +
-        `<button class="btn primary" onclick="lecturaRevisada = true; saveArrival()">` +
-          `\u2714 Lo de la casilla es lo bueno \u2014 registrar</button>` +
-        `<button class="btn" onclick="cerrarRevision()">\u2715 Voy a corregirlo</button>` +
-      `</div>`;
-    caja.style.display = "block";
-    caja.scrollIntoView({ behavior: "smooth", block: "center" });
-    return;
-  }
-
+  
   /* UN CAMIÓN SIN NOMBRE NO ES UN CAMIÓN — Q-101, 14 ago 2026.
 
      En el tiro de hoy entraron DOS registros con `Ticket —`, sin número de
@@ -1354,8 +1295,10 @@ function saveArrival() {
   if (typeof puedeSometer === "function" && !puedeSometer()) {
     avisarSinConexion();
     /* Q-114: y también en pantalla, con el motivo que da la propia barra. */
-    return noSeRegistra("No se registró: " + (typeof porQueNoSeSomete === "function"
-      ? porQueNoSeSomete() : "el aparato no puede firmar en el servidor ahora mismo."));
+    /* El `||` no es de adorno: `porQueNoSeSomete()` puede devolver null, y
+       entonces el técnico leía «No se registró: null», que no es un motivo. */
+    return noSeRegistra("No se registró: " + ((typeof porQueNoSeSomete === "function"
+      && porQueNoSeSomete()) || "el aparato no puede firmar en el servidor ahora mismo."));
   }
   db.tests.push(t);
   saveDB();
@@ -1367,9 +1310,6 @@ function saveArrival() {
   fichaCompany = null;
   fichaPlant = null;
   ordenadasLeidas = null;
-  leidoDeLaFoto = null;          // Q-117: el camión siguiente empieza sin lectura
-  conflictoLectura = [];
-  cerrarRevision();
   /* Y el aviso de la lectura se va con el camión que lo produjo — Q-119. Un
      «OJO, la foto dice otra cosa» que se queda en pantalla después de haber
      registrado se lee como si fuera del camión siguiente. */

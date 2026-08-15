@@ -20,10 +20,7 @@ console.log("\nNINGUNA SALIDA DEJA LA PANTALLA MUDA");
   lineas.forEach((l, i) => {
     if (!/^\s*return;\s*$/.test(l)) return;
     const antes = lineas.slice(Math.max(0, i - 6), i).join("\n");
-    /* Q-117: la revisión de lo leído también es una salida que HABLA — no
-       escribe un motivo porque no ha pasado nada malo: enseña en pantalla lo
-       que salió de la foto y espera a que el técnico diga que está bien. */
-    if (/noSeRegistra|toast\(|frenoDiaCerrado|programarTiro|formDayMeta|caja\.style\.display = "block"/.test(antes)) return;
+    if (/noSeRegistra|toast\(|frenoDiaCerrado|programarTiro|formDayMeta/.test(antes)) return;
     mudas.push(i + 1);
   });
   di(mudas.length === 0, mudas.length ? `salidas mudas en las líneas ${mudas.join(", ")}` : "todas explican o avisan");
@@ -38,15 +35,21 @@ di(/No se registró: falta el número de conduce o el del camión/.test(html), "
 /* Q-117: lo leído ya no se acepta con un `confirm()` del navegador — se enseña
    entero en la pantalla al dar a Registrar, y hasta que no se diga que está
    bien no se guarda nada. */
-/* Q-119: y solo cuando hay algo que decidir. Si el lector acertó, Registrar
-   registra y ya está — el paso de confirmación se pagaba veinte veces por tiro
-   y se contestaba sin mirar. */
-di(/if \(sigueEnConflicto\.length && !lecturaRevisada\)/.test(html), "solo frena si el papel contradice a la casilla");
-di(/Esto no cuadra con la foto del conduce/.test(html), "y dice exactamente qué no cuadra");
-di(/function cerrarRevision\(\)/.test(html) && /onclick="cerrarRevision\(\)"/.test(html),
-   "con salida para corregir sin perder lo escrito");
-di(!/confirm\(`Estos datos los leyó el sistema/.test(html), "y sin el confirm() del navegador");
-di(/No se registró: " \+ \(typeof porQueNoSeSomete/.test(html), "y sin poder firmar en el servidor, con su motivo");
+/* Q-120: ya no hay paso de confirmación que comprobar. El lector escribe en
+   las casillas y Registrar registra — Víctor, 16 ago: «si la lectura la hace
+   bien que la escriba en los campos y al presionar registrar quede
+   registrado». Lo que queda por comprobar es que no volvió a colarse ninguno. */
+di(!/revisar-lectura/.test(html), "no hay ventana de confirmación en medio");
+/* Los `confirm()` que quedan son de obra y se quedan: no hay tiro abierto, y
+   el camión va fuera de límites. Lo que no puede volver es uno para aceptar lo
+   que leyó la foto. */
+/* Literal, y no una regla ancha: `/confirm\([^)]*leíd/` enganchaba
+   `ordenadasLeidas` dentro del aviso de que el conduce no cuadra con el tiro
+   —que es de obra y se queda—, y daba el fallo por bueno donde no lo había. */
+di(!/Estos datos los leyó el sistema/.test(html) && !/Compara con el papel antes de registrar/.test(html),
+   "ni una ventana para aceptar lo que leyó la foto");
+
+di(/No se registró: " \+ \(\(typeof porQueNoSeSomete/.test(html), "y sin poder firmar en el servidor, con su motivo");
 
 console.log(fallos ? `\n  ${fallos} FALLO(S)\n` : "\n  sin fallos\n");
 process.exit(fallos ? 1 : 0);
