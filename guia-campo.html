@@ -1,0 +1,319 @@
+<title>Tiro PR-52</title>
+<style>
+/* ── Paleta ────────────────────────────────────────────────────────────────
+   Los neutros son de hormigón: gris con sesgo frío, no gris puro. El azul
+   marino sale del logotipo de Segarra. Y los tres colores de veredicto son
+   EXACTAMENTE los que el técnico va a ver dentro de QCheck — no se eligieron
+   por estética: se eligieron para que la guía y la aplicación hablen igual. */
+:root{
+  --ground:#eef1f5; --panel:#ffffff; --panel-2:#f5f7fa;
+  --ink:#141c26; --ink-2:#4a5766; --ink-3:#7d8895;
+  --rule:#dde3ea; --rule-2:#c7d0da;
+  --navy:#2b3a8c; --navy-soft:#e7ebf7;
+  --ok:#0e7a45; --act:#a8730a; --susp:#c62f28;
+  --ok-bg:#e6f4ec; --act-bg:#fbf2de; --susp-bg:#fbe9e8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0a0e14; --panel:#131923; --panel-2:#1a212c;
+  --ink:#e9eef4; --ink-2:#a3aebc; --ink-3:#6d7986;
+  --rule:#232c38; --rule-2:#33404f;
+  --navy:#8fa2ff; --navy-soft:#1b2340;
+  --ok:#41d986; --act:#f5b83d; --susp:#ff6259;
+  --ok-bg:#0f2419; --act-bg:#2a2008; --susp-bg:#2b1210;
+}}
+:root[data-theme="dark"]{
+  --ground:#0a0e14; --panel:#131923; --panel-2:#1a212c;
+  --ink:#e9eef4; --ink-2:#a3aebc; --ink-3:#6d7986;
+  --rule:#232c38; --rule-2:#33404f;
+  --navy:#8fa2ff; --navy-soft:#1b2340;
+  --ok:#41d986; --act:#f5b83d; --susp:#ff6259;
+  --ok-bg:#0f2419; --act-bg:#2a2008; --susp-bg:#2b1210;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--ink); margin:0;
+  font:16.5px/1.6 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding:0 0 90px;
+  -webkit-text-size-adjust:100%;
+}
+.w{max-width:640px;margin:0 auto;padding:0 18px}
+
+/* ── Cabecera ─────────────────────────────────────────────────────────── */
+header{padding:38px 0 26px}
+.eyebrow{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11.5px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-3); margin:0 0 12px;
+}
+h1{
+  font-size:clamp(31px,8.4vw,42px); line-height:1.04; margin:0;
+  letter-spacing:-.03em; font-weight:800; text-wrap:balance;
+}
+.dek{color:var(--ink-2); font-size:16px; margin:12px 0 0; max-width:38ch}
+.ficha{
+  display:flex; flex-wrap:wrap; gap:0; margin-top:24px;
+  border:1px solid var(--rule); border-radius:12px; overflow:hidden;
+  background:var(--panel);
+}
+.ficha div{flex:1 1 50%; padding:12px 15px; border-right:1px solid var(--rule)}
+.ficha div:last-child{border-right:0}
+.ficha dt{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-3); margin:0 0 3px;
+}
+.ficha dd{margin:0; font-weight:750; font-size:16.5px; letter-spacing:-.01em}
+
+/* ── La secuencia del día ─────────────────────────────────────────────────
+   Va numerada porque el tiro ES una secuencia: cada paso solo tiene sentido
+   después del anterior. El filete vertical es la línea de tiempo. */
+.paso{position:relative; padding:0 0 4px 46px; margin-top:30px}
+.paso::before{
+  content:""; position:absolute; left:14px; top:34px; bottom:-30px;
+  width:2px; background:var(--rule);
+}
+.paso:last-of-type::before{display:none}
+.marca{
+  position:absolute; left:0; top:0;
+  width:30px; height:30px; border-radius:50%;
+  background:var(--navy); color:var(--ground);
+  display:flex; align-items:center; justify-content:center;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:13.5px; font-weight:700; z-index:1;
+}
+:root[data-theme="dark"] .marca,
+:root:not([data-theme="light"]) .marca{color:#0a0e14}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .marca{color:#fff}}
+h2{font-size:20.5px; line-height:1.2; margin:2px 0 10px; letter-spacing:-.02em; font-weight:750; text-wrap:balance}
+.paso p{color:var(--ink-2); margin:0 0 12px; font-size:15.5px}
+.paso p:last-child{margin-bottom:0}
+b{color:var(--ink); font-weight:700}
+ol.pasos,ul.lista{color:var(--ink-2); font-size:15.5px; margin:0 0 12px; padding-left:20px}
+ol.pasos li,ul.lista li{margin-bottom:8px}
+ol.pasos li::marker{color:var(--ink-3); font-family:ui-monospace,monospace; font-size:13px}
+
+/* ── Pieza de campo: rótulo mono + valor ─────────────────────────────────── */
+.campo{
+  background:var(--panel); border:1px solid var(--rule); border-radius:11px;
+  padding:13px 15px; margin:0 0 11px;
+}
+.campo .k{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-3); display:block; margin-bottom:4px;
+}
+.campo .v{font-size:15.5px; color:var(--ink-2)}
+.campo .v b{color:var(--ink)}
+
+/* ── Los tres veredictos ─────────────────────────────────────────────────── */
+.verdictos{display:grid; gap:9px; margin:2px 0 13px}
+.v{border-radius:11px; padding:12px 15px; border:1px solid transparent}
+.v .t{font-weight:800; font-size:15px; letter-spacing:-.01em}
+.v .d{font-size:14.5px; margin-top:3px}
+.v-cancel{background:var(--panel); border-color:var(--rule); color:var(--ink-2)}
+.v-cancel .t{color:var(--ink)}
+.v-act{background:var(--act-bg); border-color:var(--act); color:var(--ink-2)}
+.v-act .t{color:var(--act)}
+.v-susp{background:var(--susp-bg); border-color:var(--susp); color:var(--ink-2)}
+.v-susp .t{color:var(--susp)}
+
+/* ── Regla de oficio ─────────────────────────────────────────────────────── */
+.regla{
+  border-left:3px solid var(--navy); padding:3px 0 3px 15px; margin:15px 0;
+  font-size:15.5px; font-weight:650; color:var(--ink);
+}
+
+/* ── Franja de estado, como la de la aplicación ──────────────────────────── */
+.franja{
+  display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+  background:var(--panel-2); border:1px solid var(--rule); border-radius:11px;
+  padding:12px 15px; margin:0 0 12px; font-size:14.5px; color:var(--ink-2);
+}
+.pt{width:9px;height:9px;border-radius:50%;background:var(--ok);flex:none}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13.5px;
+      color:var(--ink); font-weight:600}
+
+/* ── Tabla de averías ────────────────────────────────────────────────────── */
+.averias{width:100%; border-collapse:collapse; font-size:15px; margin:0 0 12px}
+.averias th{
+  text-align:left; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:600; padding:0 10px 7px 0; border-bottom:1px solid var(--rule-2);
+}
+.averias td{padding:11px 10px 11px 0; border-bottom:1px solid var(--rule); color:var(--ink-2); vertical-align:top}
+.averias td:first-child{color:var(--ink); font-weight:650; width:38%}
+.averias tr:last-child td{border-bottom:0}
+
+/* ── Cierre ──────────────────────────────────────────────────────────────── */
+.cierre{
+  margin-top:40px; padding:22px 20px; border-radius:14px;
+  background:var(--navy-soft); border:1px solid var(--rule);
+}
+.cierre p{margin:0 0 9px; font-size:15.5px; color:var(--ink-2)}
+.cierre p:last-child{margin-bottom:0}
+.sep{height:1px;background:var(--rule);margin:36px 0 0}
+.pie{color:var(--ink-3); font-size:13px; margin-top:20px; line-height:1.7}
+</style>
+
+<div class="w">
+
+<header>
+  <p class="eyebrow">Segarra Engineering &middot; Gu&iacute;a de campo</p>
+  <h1>El tiro, de principio a fin</h1>
+  <p class="dek">Los seis pasos del d&iacute;a en orden, y qu&eacute; hacer cuando algo no sale como toca.</p>
+  <dl class="ficha">
+    <div><dt>Obra</dt><dd>PR-52</dd></div>
+    <div><dt>Hormig&oacute;n</dt><dd>Concre-Tech</dd></div>
+  </dl>
+</header>
+
+<section class="paso">
+  <span class="marca">1</span>
+  <h2>Conectar el tel&eacute;fono</h2>
+  <p>Se hace <b>una sola vez</b> por tel&eacute;fono. V&iacute;ctor te manda un enlace aparte:
+     &aacute;brelo, ponle nombre al aparato &mdash; <b>Tel&eacute;fono T&eacute;cnico 1</b> vale &mdash;
+     y dale a <b>Probar y conectar</b>.</p>
+  <p>Tu <b>usuario</b> y tu <b>clave</b> tambi&eacute;n te los manda &eacute;l. No van en esta
+     p&aacute;gina a prop&oacute;sito: una p&aacute;gina se reenv&iacute;a y se queda en un chat.</p>
+</section>
+
+<section class="paso">
+  <span class="marca">2</span>
+  <h2>Entrar y dejarlo a mano</h2>
+  <p>Entra con tu usuario y tu clave. Despu&eacute;s, <b>a&ntilde;ade la p&aacute;gina a la pantalla
+     de inicio</b>: se abre como una aplicaci&oacute;n, a pantalla completa, y no te vuelve
+     a pedir la clave.</p>
+  <div class="franja">
+    <span class="pt"></span>
+    <span>Arriba del todo hay una franja. Tiene que poner <span class="mono">Online</span>.</span>
+  </div>
+  <p>Si pone otra cosa, <b>l&eacute;ela</b>: est&aacute; escrita para decirte exactamente qu&eacute;
+     pasa y qu&eacute; hacer.</p>
+</section>
+
+<section class="paso">
+  <span class="marca">3</span>
+  <h2>Abrir el tiro</h2>
+  <p>Antes del primer cami&oacute;n. El tiro es la caja donde caen los camiones del d&iacute;a:
+     <b>sin tiro abierto no se puede registrar nada</b>.</p>
+  <p>Entra por <b>Control Center &rarr; Tiro &rarr; Programar tiro</b>. O ve a
+     <b>Recepci&oacute;n</b> e intenta registrar: si no hay tiro, te lo pregunta solo.</p>
+  <div class="campo">
+    <span class="k">Obra que se vac&iacute;a</span>
+    <span class="v"><b>PR-52.</b> Es lo primero que pregunta y lo m&aacute;s importante del d&iacute;a.</span>
+  </div>
+  <div class="campo">
+    <span class="k">Yardas planificadas</span>
+    <span class="v">Las del d&iacute;a. De ah&iacute; salen el porcentaje y el &laquo;faltan&raquo;.</span>
+  </div>
+  <div class="campo">
+    <span class="k">Losas o elementos</span>
+    <span class="v">Si los sabes. Se pueden a&ntilde;adir despu&eacute;s.</span>
+  </div>
+  <p class="regla">Si te equivocas de obra al abrirlo, avisa antes de meter camiones.
+     Despu&eacute;s cuesta mucho m&aacute;s.</p>
+</section>
+
+<section class="paso">
+  <span class="marca">4</span>
+  <h2>Cada cami&oacute;n que llega</h2>
+  <p>En <b>Recepci&oacute;n</b>, escanea el conduce con la c&aacute;mara.</p>
+  <ol class="pasos">
+    <li>Lo que el sistema lee sale <b>en gris</b>: son sugerencias, no verdades.
+        <b>Comp&aacute;ralas con el papel</b> antes de registrar.</li>
+    <li><b>Registrar.</b> Hace falta el n&uacute;mero de conduce <b>o</b> el del cami&oacute;n
+        &mdash; con uno basta. Lo dem&aacute;s puede ir vac&iacute;o y se completa luego.</li>
+    <li>En la fila del cami&oacute;n, sella <b>Comienza</b> cuando empieza a descargar y
+        <b>Muestra</b> cuando tomas la muestra.</li>
+    <li>En <b>Muestras</b>, las cuatro lecturas: <b>slump</b>, <b>unit weight</b>,
+        <b>aire</b> y <b>temperatura</b>. Y <b>Enviar</b>.</li>
+  </ol>
+  <p class="regla">Un dato que no se lee se deja EN BLANCO. Nunca se pone el que
+     parezca. Un hueco se arregla luego; un n&uacute;mero inventado se queda firmado.</p>
+</section>
+
+<section class="paso">
+  <span class="marca">5</span>
+  <h2>Si un cami&oacute;n sale fuera de l&iacute;mite</h2>
+  <p>Al enviar sale un aviso que dice <b>en qu&eacute; se sali&oacute; y con qu&eacute; valor</b>, y te
+     da tres salidas. Ninguna pasa sola: <b>decides t&uacute;</b>.</p>
+  <div class="verdictos">
+    <div class="v v-cancel">
+      <div class="t">Cancelar</div>
+      <div class="d">Todav&iacute;a no decido. El cami&oacute;n sigue esperando.</div>
+    </div>
+    <div class="v v-act">
+      <div class="t">Aceptar igual</div>
+      <div class="d">Lo doy por bueno sabiendo que se sali&oacute;. Queda escrito en qu&eacute;
+        se sali&oacute; y con qu&eacute; valor.</div>
+    </div>
+    <div class="v v-susp">
+      <div class="t">S&iacute;, rechazar</div>
+      <div class="d">Se rechaza, sale en la pantalla grande y se avisa a todas las partes.</div>
+    </div>
+  </div>
+  <p class="regla">Si dudas, llama antes de tocar. El cami&oacute;n puede esperar unos
+     minutos; la decisi&oacute;n se queda firmada para siempre.</p>
+</section>
+
+<section class="paso">
+  <span class="marca">6</span>
+  <h2>Cerrar el d&iacute;a</h2>
+  <p><b>Control Center &rarr; Tiro &rarr; Cerrar tiro.</b> Antes de cerrar te ense&ntilde;a
+     el resumen y te avisa si queda alg&uacute;n cami&oacute;n sin resultados. <b>L&eacute;elo.</b></p>
+  <p>Ese bot&oacute;n <b>firma el d&iacute;a</b>: congela los l&iacute;mites y da el vaciado por
+     terminado. <b>No lo toques hasta que se haya ido el &uacute;ltimo cami&oacute;n.</b></p>
+  <p>No es el mismo que <b>Termina</b>, que est&aacute; en la fila de cada cami&oacute;n y solo
+     cierra la descarga de ese.</p>
+</section>
+
+<div class="sep"></div>
+
+<section style="margin-top:34px">
+  <p class="eyebrow">Si algo no va</p>
+  <table class="averias">
+    <tr><th>Qu&eacute; pasa</th><th>Qu&eacute; hacer</th></tr>
+    <tr>
+      <td>No lee el conduce</td>
+      <td>Rep&iacute;telo de frente, sin reflejo y m&aacute;s cerca. Si sigue sin leer,
+          <b>tec&eacute;alo a mano y sigue</b>: no pares el cami&oacute;n por esto.</td>
+    </tr>
+    <tr>
+      <td>No deja registrar</td>
+      <td>Sale un aviso <b>con el motivo</b>. Si dice que caduc&oacute; la sesi&oacute;n:
+          sal, entra otra vez con tu clave y sigue donde estabas. No se pierde nada.</td>
+    </tr>
+    <tr>
+      <td>Arriba no pone <span class="mono">Online</span></td>
+      <td><span class="mono">This device only</span>: no est&aacute; conectado, vuelve al
+          paso&nbsp;1. <span class="mono">Offline</span>: sin se&ntilde;al, sube solo cuando vuelva.</td>
+    </tr>
+    <tr>
+      <td>La pantalla grande va atrasada</td>
+      <td>Lee del servidor. Si tu tel&eacute;fono tiene cosas sin subir, tardan en
+          aparecer. Mira tu franja de arriba.</td>
+    </tr>
+    <tr>
+      <td>Se fue la se&ntilde;al</td>
+      <td>Sigue trabajando. Queda todo guardado en el tel&eacute;fono y sube solo.</td>
+    </tr>
+  </table>
+</section>
+
+<section class="cierre">
+  <p class="eyebrow" style="margin-bottom:10px">Lo que no hay que hacer</p>
+  <ul class="lista" style="margin-bottom:0">
+    <li><b>No cerrar el tiro</b> hasta que se vaya el &uacute;ltimo cami&oacute;n: firma el d&iacute;a.</li>
+    <li><b>No inventar</b> un dato que no se lea bien. En blanco.</li>
+    <li><b>No registrar</b> un cami&oacute;n sin conduce ni n&uacute;mero de cami&oacute;n.</li>
+    <li><b>No entrar dos personas</b> los resultados del mismo cami&oacute;n. Repartidlo
+        por cami&oacute;n, no por campo.</li>
+    <li><b>No cerrar sesi&oacute;n ni borrar la aplicaci&oacute;n</b> con trabajo sin subir.</li>
+  </ul>
+</section>
+
+<p class="pie">Cualquier duda, llama a V&iacute;ctor.<br>
+   Todo lo que entres queda guardado en el tel&eacute;fono aunque se caiga la se&ntilde;al.</p>
+
+</div>
