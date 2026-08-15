@@ -14,7 +14,11 @@ console.log("\nNADIE PIDE PANTALLA COMPLETA AL TOCAR");
       /* Los comentarios cuentan la historia y NO son código: si contaran, esta
          prueba se pondría roja por el propio texto que explica el arreglo. */
       .replace(/\/\*[\s\S]*?\*\//g, "").replace(/<!--[\s\S]*?-->/g, "");
-    if (/requestFullscreen|webkitRequestFullscreen/.test(s)) culpables.push(f);
+    /* Se buscan las DOS cosas: la API y los nombres de las funciones que la
+       envolvían. Con solo la API, esta prueba dio verde con un `goFullscreen()`
+       vivo apuntando a una función ya borrada — verde por mirar donde no era. */
+    if (/requestFullscreen|webkitRequestFullscreen|goFullscreen|pantallaCompletaAlTocar|acostarPantalla/.test(s))
+      culpables.push(f);
   }
   di(culpables.length === 0, culpables.length ? `todavía piden: ${culpables.join(", ")}` : "ninguna pantalla lo pide");
   const core = readFileSync("assets/core.js", "utf8");

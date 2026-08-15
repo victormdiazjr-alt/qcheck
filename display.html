@@ -764,7 +764,8 @@ function startSim() {
     ensureAudio();                                            // gesto: desbloquea el audio
     ol.remove();
     simStep();                                                // arranca la secuencia
-    goFullscreen();                                           // en iPhone no existe: se omite sin error
+    /* Q-106: aquí también se pedía pantalla completa. Se fue con las otras, y
+       esta llamada se quedó viva un rato apuntando a una función borrada. */
   });
   document.body.appendChild(ol);
 }
