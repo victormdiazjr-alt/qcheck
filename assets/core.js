@@ -3474,12 +3474,12 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
                  valor y la que lee el formulario. */
               ctrl = `<div class="qc-sw">
                 <input type="checkbox" name="${f.key}" ${val ? "checked" : ""} hidden>
-                <button type="button" class="qc-sw-b" role="switch" aria-checked="${val ? "true" : "false"}"><span></span></button>
-                <span class="qc-sw-x">${val ? "Sí" : "No"}</span>
+                <button type="button" class="qc-sw-b" role="switch" aria-checked="${val ? "true" : "false"}"
+                        aria-label="${esc(f.label)}"><span></span></button>
               </div>`;
             else
               ctrl = `<input name="${f.key}" type="${f.type || "text"}" value="${esc(val)}" ${f.step != null ? `step="${f.step}"` : ""} ${f.placeholder ? `placeholder="${esc(f.placeholder)}"` : ""} ${f.required ? "required" : ""}>`;
-            return `<div class="field ${f.full ? "full" : ""} ${f.half ? "half" : ""}"><label>${esc(f.label)}${f.required ? " *" : ""}</label>${ctrl}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ""}</div>`;
+            return `<div class="field ${f.type === "checkbox" ? "en-linea" : ""} ${f.full ? "full" : ""} ${f.half ? "half" : ""}"><label>${esc(f.label)}${f.required ? " *" : ""}</label>${ctrl}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ""}</div>`;
           }).join("")}
         </div></form></div>
         <style>
@@ -3488,7 +3488,14 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
              Los selectores llevan .qc-sw delante para ganarle a .field label
              y a .field input, que son de la hoja de estilos y llegan hasta
              aqui dentro. */
-          .field .qc-sw{display:flex;align-items:center;gap:12px;margin:2px 0 0}
+          /* EL RÓTULO A LA IZQUIERDA Y EL INTERRUPTOR AL LADO — Víctor, 14 ago.
+             Un interruptor no necesita que le digan «Sí» al lado: la posición
+             ya lo dice, y el texto competía con el propio rótulo del campo. */
+          .field.en-linea{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+          .field.en-linea > label{display:inline;margin:0;font-size:12.5px;
+            text-transform:uppercase;letter-spacing:.06em;font-weight:800}
+          .field.en-linea .hint{flex-basis:100%;margin-top:2px}
+          .field .qc-sw{display:flex;align-items:center;margin:0}
           .field .qc-sw .qc-sw-b{
             appearance:none;-webkit-appearance:none;border:0;padding:0;margin:0;
             width:56px;height:32px;border-radius:999px;cursor:pointer;flex:none;
@@ -3612,11 +3619,10 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
   root.querySelectorAll(".qc-sw").forEach((sw) => {
     const caja = sw.querySelector("input[type=checkbox]");
     const bot  = sw.querySelector(".qc-sw-b");
-    const rot  = sw.querySelector(".qc-sw-x");
+
     bot.addEventListener("click", () => {
       caja.checked = !caja.checked;
       bot.setAttribute("aria-checked", caja.checked ? "true" : "false");
-      rot.textContent = caja.checked ? "Sí" : "No";
       caja.dispatchEvent(new Event("change", { bubbles: true }));
     });
   });
