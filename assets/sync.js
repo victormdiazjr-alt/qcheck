@@ -40,6 +40,8 @@ const QC_SYNC_SEQ = "qc-sync-seq";  /* hasta qué número de cambio hemos leído
 const QC_SYNC_BASE = "qc-sync-base";
 const QC_SYNC_COLA = "qc-sync-cola";
 const QC_SYNC_DEV = "qc-dev";       /* nombre del aparato, para el expediente */
+/* Si este aparato ha llegado a BAJAR algo del servidor alguna vez — Q-108. */
+const QC_SYNC_VISTO = "qc-sync-visto";
 
 /* Cada aparato se bautiza solo la primera vez. Sirve para saber quién
    entró qué: "iPad · 3f2a". Se puede cambiar desde Plan & Datos. */
@@ -290,7 +292,38 @@ const QCSync = {
     if (!qcSyncActivo()) return;
     this._estrenarBase();
     const ahora = qcProyectar(db);
-    const ops = qcCambios(this._base(), ahora);
+    let ops = qcCambios(this._base(), ahora);
+
+    /* UN APARATO RECIÉN CONECTADO NO PUEDE BORRAR NADA — Q-108, 15 ago 2026.
+
+       Hoy a las 12:11, el teléfono de tecnico1 se conectó por primera vez y
+       **escribió `null` en 1.801 campos de 408 registros**: casi todo el
+       histórico. No fue malicia ni un fallo de red. Fue esto:
+
+         · la base de referencia se estrena con `seed.js`,
+         · la base local de un aparato recién conectado estaba más vacía,
+         · y la diferencia entre las dos se lee como «alguien borró esto».
+
+       El aparato dijo la verdad sobre lo que él tenía. **El problema es que se
+       le creyó sobre algo que nunca había visto.**
+
+       > Un aparato que no ha bajado nada del servidor no sabe qué hay en él.
+       > Puede añadir lo suyo; no puede decir que algo se borró.
+
+       Así que hasta la primera bajada buena, **lo que se AÑADE sube y lo que
+       BORRA no**. No se pierde nada: lo borrado de verdad, si lo fuera, vuelve
+       a salir en el siguiente guardado, ya con el servidor conocido.
+
+       Nada de esto se perdió —el expediente solo añade y cada valor sigue ahí—,
+       pero durante horas lo que se veía encima era un hueco. */
+    if (!localStorage.getItem(QC_SYNC_VISTO)) {
+      const borrados = ops.filter((o) => o.valor === null || o.valor === undefined).length;
+      if (borrados) {
+        ops = ops.filter((o) => o.valor !== null && o.valor !== undefined);
+        try { console.warn(`QCheck: aparato sin estrenar — no se suben ${borrados} borrados`); } catch (_) {}
+      }
+    }
+
     if (!ops.length) return;
     this._guardarBase(ahora);
     this._guardarCola(this._cola().concat(ops));
@@ -362,6 +395,10 @@ const QCSync = {
       } else if (r.seq != null && this._seq() === 0) {
         this._guardarSeq(r.seq);
       }
+      /* Q-108: a partir de aquí este aparato ya sabe lo que hay en el servidor,
+         así que sus borrados valen. Se marca DESPUÉS de una bajada buena, no al
+         conectar: conectar no es haber visto nada. */
+      localStorage.setItem(QC_SYNC_VISTO, "1");
       this.estado = "al-dia";
       this.ultimo = new Date();
     } catch (e) {
