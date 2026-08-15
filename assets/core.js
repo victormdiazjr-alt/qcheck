@@ -3458,11 +3458,25 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
             else if (f.type === "textarea")
               ctrl = `<textarea name="${f.key}" rows="2">${esc(val)}</textarea>`;
             else if (f.type === "checkbox")
-              /* UN INTERRUPTOR, NO UNA LISTA DE DOS — Q-105 ter, 14 ago 2026.
+              /* UN INTERRUPTOR, Y QUE NO SE LO PISE LA HOJA DE ESTILOS — Q-105 ter.
+
                  Víctor pidió que la 934 fuera «un botón que se prende y se
-                 apaga», y salía como un desplegable de Sí/No: dos toques y una
-                 lectura para algo que es una sola cosa encendida o apagada. */
-              ctrl = `<label class="qc-sw"><input type="checkbox" name="${f.key}" ${val ? "checked" : ""}><i></i><b>${val ? "Sí" : "No"}</b></label>`;
+                 apaga», y salía como un desplegable de Sí/No.
+
+                 El primer intento lo montó sobre un `<label>`, y `qc.css` tiene
+                 `.field label { display:block; text-transform:uppercase }` para
+                 los rótulos: el interruptor heredó eso y el «No» acabó encima
+                 del botón. **Una pieza nueva dentro de un sitio con estilos
+                 propios hereda lo que no pidió.**
+
+                 Ahora es un `<button role="switch">` —al que esas reglas no
+                 llegan— con la casilla escondida detrás, que es la que guarda el
+                 valor y la que lee el formulario. */
+              ctrl = `<div class="qc-sw">
+                <input type="checkbox" name="${f.key}" ${val ? "checked" : ""} hidden>
+                <button type="button" class="qc-sw-b" role="switch" aria-checked="${val ? "true" : "false"}"><span></span></button>
+                <span class="qc-sw-x">${val ? "Sí" : "No"}</span>
+              </div>`;
             else
               ctrl = `<input name="${f.key}" type="${f.type || "text"}" value="${esc(val)}" ${f.step != null ? `step="${f.step}"` : ""} ${f.placeholder ? `placeholder="${esc(f.placeholder)}"` : ""} ${f.required ? "required" : ""}>`;
             return `<div class="field ${f.full ? "full" : ""} ${f.half ? "half" : ""}"><label>${esc(f.label)}${f.required ? " *" : ""}</label>${ctrl}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ""}</div>`;
@@ -3470,17 +3484,26 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
         </div></form></div>
         <style>
           /* El interruptor. Va aqui y no en la hoja de estilos porque las
-             pantallas de campo no cargan qc.css y el formulario es el mismo. */
-          .qc-sw{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;padding:4px 0}
-          .qc-sw input{position:absolute;opacity:0;width:0;height:0}
-          .qc-sw i{width:52px;height:30px;border-radius:999px;background:var(--line,#2a3441);
-                   border:1px solid var(--line,#2a3441);position:relative;transition:background .15s;flex:none}
-          .qc-sw i::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;
-                          border-radius:50%;background:#8b96a3;transition:transform .15s,background .15s}
-          .qc-sw input:checked + i{background:#2f7d52;border-color:#3d9c68}
-          .qc-sw input:checked + i::after{transform:translateX(22px);background:#eafff2}
-          .qc-sw input:focus-visible + i{outline:2px solid var(--acc,#4a63d8);outline-offset:2px}
-          .qc-sw b{font-size:15px;font-weight:700;min-width:2.2em}
+             pantallas de campo no cargan qc.css y el formulario es el mismo.
+             Los selectores llevan .qc-sw delante para ganarle a .field label
+             y a .field input, que son de la hoja de estilos y llegan hasta
+             aqui dentro. */
+          .field .qc-sw{display:flex;align-items:center;gap:12px;margin:2px 0 0}
+          .field .qc-sw .qc-sw-b{
+            appearance:none;-webkit-appearance:none;border:0;padding:0;margin:0;
+            width:56px;height:32px;border-radius:999px;cursor:pointer;flex:none;
+            background:#3a4553;position:relative;transition:background .16s;
+            box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);font:inherit}
+          .field .qc-sw .qc-sw-b span{
+            position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;
+            background:#c4ccd6;transition:transform .16s,background .16s;
+            box-shadow:0 1px 3px rgba(0,0,0,.45)}
+          .field .qc-sw .qc-sw-b[aria-checked="true"]{background:#2f8f5b}
+          .field .qc-sw .qc-sw-b[aria-checked="true"] span{transform:translateX(24px);background:#f2fff7}
+          .field .qc-sw .qc-sw-b:focus-visible{outline:2px solid var(--accent,#4a63d8);outline-offset:3px}
+          .field .qc-sw .qc-sw-x{
+            font-size:15px;font-weight:750;letter-spacing:0;text-transform:none;
+            color:var(--ink,inherit);min-width:2.4em}
         </style>
         ${liveEval ? `<div id="${fid}-live" style="padding:10px 20px; border-top:1px solid var(--line)"></div>` : ""}
         <div class="modal-foot">
@@ -3584,7 +3607,20 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
     form.addEventListener("input", run);
     run();
   }
-  const first = root.querySelector("input, select, textarea");
+  /* El botón del interruptor mueve la casilla escondida y avisa al formulario,
+     que es quien decide si hay que rearmar la ventana. */
+  root.querySelectorAll(".qc-sw").forEach((sw) => {
+    const caja = sw.querySelector("input[type=checkbox]");
+    const bot  = sw.querySelector(".qc-sw-b");
+    const rot  = sw.querySelector(".qc-sw-x");
+    bot.addEventListener("click", () => {
+      caja.checked = !caja.checked;
+      bot.setAttribute("aria-checked", caja.checked ? "true" : "false");
+      rot.textContent = caja.checked ? "Sí" : "No";
+      caja.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  });
+  const first = root.querySelector("input:not([hidden]), select, textarea");
   if (first) first.focus();
 }
 function closeForm() { const r = document.getElementById("modal-root"); if (r) r.innerHTML = ""; }
