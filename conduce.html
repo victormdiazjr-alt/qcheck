@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <meta name="theme-color" content="#0a0d12">
 <title>Conduce — QCheck V1.0</title>
-<link rel="stylesheet" href="assets/qc.css?v=9258dfa5">
+<link rel="stylesheet" href="assets/qc.css?v=2c2a8dc8">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0d12'/><text x='50' y='70' font-size='52' text-anchor='middle' fill='white'>▤</text></svg>">
 <style>
 /* Conduce entry — field data-entry person. Mobile-first, glove-friendly. */
@@ -158,13 +158,27 @@ body { background: var(--bg); }
   border-color: var(--act);
   box-shadow: 0 0 0 3px rgba(245,184,61,.14), 0 0 20px -6px var(--act);
 }
-/* HEREDADO DEL CAMIÓN ANTERIOR — Q-93, 14 ago 2026. Es más flojo que `sugerido`
-   a propósito: el ámbar del lector quiere decir «esto lo leyó una máquina de un
-   papel, míralo». Esto solo quiere decir «lo puso la pantalla porque el camión
-   de antes traía lo mismo». Se ve que no lo escribió nadie, y no pide revisión.
-   Por eso no dispara el aviso de Q-01 — un aviso que salta siempre se deja de
-   leer, y entonces el día que avise de verdad tampoco se lee. */
-.field input.heredado { border-style: dashed; color: var(--muted); }
+/* LA REVISIÓN ES AL REGISTRAR — Q-117, 15 ago 2026.
+
+   Antes la pantalla decía «revísalos antes de registrar» y luego, al registrar,
+   sacaba un `confirm()` del navegador con los valores en texto pelado. Dos
+   pegas: pedía la revisión en el momento en que el técnico todavía está
+   mirando el papel y la foto —no cuando decide—, y el `confirm()` solo listaba
+   los campos que nadie había tocado, así que **si corregías uno, desaparecía de
+   la revisión**. Justo el que más falta hacía comprobar.
+
+   Ahora se enseña TODO lo que salió de la foto, en la propia pantalla, en el
+   único momento en que la pregunta significa algo: cuando le das a Registrar. */
+#revisar-lectura { display: none; margin-top: 12px; border: 1px solid var(--act);
+  border-radius: 10px; background: var(--panel-2); padding: 13px 15px; }
+#revisar-lectura h4 { font-size: 13.5px; margin: 0 0 4px; color: var(--act); }
+#revisar-lectura .rl-sub { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 10px; }
+#revisar-lectura .rl-fila { display: flex; justify-content: space-between; gap: 14px;
+  padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; }
+#revisar-lectura .rl-et { color: var(--ink-soft); }
+#revisar-lectura .rl-v { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+#revisar-lectura .rl-v.vacio { font-weight: 500; font-style: italic; color: var(--ink-soft); }
+#revisar-lectura .rl-btns { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 #aviso-lectura {
   display: none; margin-top: 12px; font-size: 13px; font-weight: 600;
   color: var(--act); border: 1px solid var(--line); border-left: 3px solid var(--act);
@@ -256,8 +270,8 @@ body { background: var(--bg); }
         <!-- Los seis hacen falta. No es rigor de oficina: sin cualquiera de
              ellos algo del sistema deja de funcionar, y el hueco no se nota
              hasta que se cierra el tiro. Ver CAMPOS_CAMION. -->
-        <div class="field"><label>Ticket / Conduce *</label><input id="f-ticket" inputmode="numeric" placeholder="66861"></div>
-        <div class="field"><label>Camión *</label><input id="f-truck" inputmode="numeric" placeholder="102"></div>
+        <div class="field"><label>Ticket / Conduce *</label><input id="f-ticket" inputmode="numeric" placeholder="ej. 66861"></div>
+        <div class="field"><label>Camión *</label><input id="f-truck" inputmode="numeric" placeholder="ej. 102"></div>
         <!-- El volumen también recalcula la pista: el reparto se juzga contra él.
 
              EMPIEZA VACÍO — Q-91, 14 ago 2026. Traía `value="10"` de fábrica, y
@@ -273,12 +287,12 @@ body { background: var(--bg); }
 
              Se queda de marcador de posición, que sugiere sin escribir. Un hueco
              se ve; un dato inventado se firma. -->
-        <div class="field"><label>Volumen (CY) *</label><input id="f-vol" inputmode="decimal" placeholder="10" oninput="pistaReparto()"></div>
+        <div class="field"><label>Volumen (CY) *</label><input id="f-vol" inputmode="decimal" placeholder="ej. 10" oninput="pistaReparto()"></div>
         <div class="field"><label>Hora batch (del conduce) *</label><input id="f-batch" type="time">
           <button class="now-btn" onclick="setNow('f-batch')">AHORA</button></div>
         <div class="field"><label>Llegada *</label><input id="f-arrive" type="time">
           <button class="now-btn" onclick="setNow('f-arrive')">AHORA</button></div>
-        <div class="field"><label id="lbl-ident">Losa / Identificación *</label><input id="f-ident" placeholder="L3-0.443" oninput="pistaReparto()">
+        <div class="field"><label id="lbl-ident">Losa / Identificación *</label><input id="f-ident" placeholder="ej. L3-0.443" oninput="pistaReparto()">
           <!-- Q-11: cuando el camión toca más de una losa, aquí se dice que se
                puede declarar el reparto, y si lo declara, si cuadra. -->
           <div id="pista-reparto" class="pista"></div></div>
@@ -296,13 +310,15 @@ body { background: var(--bg); }
              NO lleva asterisco a propósito: un conduce que no imprima la mezcla
              legible no puede dejar a un técnico sin poder registrar el camión
              con el chute esperando. Falta un dato, no se para el tiro. -->
-        <div class="field"><label>Mix (del conduce)</label><input id="f-mix" placeholder="55K30H6K28AC"></div>
+        <div class="field"><label>Mix (del conduce)</label><input id="f-mix" placeholder="ej. 55K30H6K28AC"></div>
       </div>
       <!-- Lo que el lector sacó de la foto, y lo que no pudo (Q-01). -->
       <div id="aviso-lectura"></div>
       <!-- Q-84: un campo impreso que llega a bolígrafo. Rojo, no ámbar: no es
            una tendencia que vigilar, es un papel que alguien tocó. -->
       <div id="aviso-mano" class="aviso-mano" style="display:none"></div>
+      <!-- Q-117: la revisión de lo que leyó la foto, al dar a Registrar. -->
+      <div id="revisar-lectura"></div>
       <div style="display:flex; gap:10px; margin-top:14px; align-items:center">
         <span id="photo-slot"></span>
         <div style="flex:1"></div>
@@ -329,7 +345,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=42223427"></script>
-<script src="assets/core.js?v=727b1c48"></script>
+<script src="assets/core.js?v=00b6c3fc"></script>
 <!-- Q-89: las tablas de la SP-934. Desde aquí se CREA un tiro, y un tiro de
      la 934 pregunta su clase y su ventana de aceptacion al nacer. Sin esto,
      `formSP934()` reventaba en silencio dentro del `setTimeout` y la pregunta
@@ -777,6 +793,13 @@ const CAMPOS_LEIDOS = [
    el camión al expediente para poder contrastarlas con el tiro (Q-55). */
 let ordenadasLeidas = null;
 
+/* Lo que salió de la FOTO, para poder enseñarlo al registrar (Q-117). Se guarda
+   aparte de la clase `sugerido` porque esa se borra en cuanto el técnico toca
+   el campo, y un campo corregido a mano es precisamente el que hay que volver a
+   comparar con el papel. `null` = de esta llegada no se leyó ninguna foto. */
+let leidoDeLaFoto = null;
+let lecturaRevisada = false;
+
 /* El lector PROPONE. Nunca guarda.
 
    Lo que entra queda marcado como sugerido —resplandor ámbar, que es la zona de
@@ -837,6 +860,7 @@ async function leerDeLaFoto(dataUrl) {
   }
 
   const c = d.campos || {};
+  leidoDeLaFoto = {}; lecturaRevisada = false;
   ordenadasLeidas = (c.ordenadas != null && c.ordenadas !== "") ? Number(c.ordenadas) : null;
   /* El suministrador que trae impreso el papel manda sobre el que se deduce de
      la planta — D-103. Esta es la vía por la que entraron los seis camiones del
@@ -856,14 +880,19 @@ async function leerDeLaFoto(dataUrl) {
     if (!el || (el.value && !el.classList.contains("heredado")) ||
         c[clave] == null || c[clave] === "") continue;
     el.value = c[clave];
+    leidoDeLaFoto[id] = c[clave];
     el.classList.add("sugerido");
     el.addEventListener("input", () => el.classList.remove("sugerido"), { once: true });
     puestos++;
   }
   const faltan = (c.ilegible || []).length;
+  /* Q-117: aquí ya no se pide revisar. Se dice lo que hay y punto — la
+     comprobación contra el papel se hace al dar a Registrar, que es cuando el
+     técnico decide, y no ahora, que todavía está encuadrando la foto. */
   aviso.textContent = puestos
-    ? `Leídos ${puestos} campo${puestos === 1 ? "" : "s"} — revísalos antes de registrar.`
-      + (faltan ? ` ${faltan} no se leyeron y quedan vacíos.` : "")
+    ? `Leídos ${puestos} campo${puestos === 1 ? "" : "s"}`
+      + (faltan ? `, ${faltan} no se leyeron y quedan vacíos` : "")
+      + ". Al dar a Registrar te los enseño para compararlos con el papel."
     : "No se pudo leer ningún campo con seguridad. Entra los datos a mano.";
 
   avisarDeLoEscritoAMano(c);
@@ -943,7 +972,17 @@ const CAMPOS_CAMION = [
 
    Ahora, además del cartel, el motivo se escribe en el aviso de la pantalla y
    se queda ahí hasta el intento siguiente. */
+/* Q-117: «Corregir» cierra la revisión y devuelve el mando. No se registra
+   nada y no se pierde lo escrito — el técnico arregla el campo y vuelve a dar
+   a Registrar, que le enseñará la lista otra vez, ya con la corrección. */
+function cerrarRevision() {
+  const c = document.getElementById("revisar-lectura");
+  if (c) { c.style.display = "none"; c.innerHTML = ""; }
+  lecturaRevisada = false;
+}
+
 function noSeRegistra(motivo, campo) {
+  lecturaRevisada = false;   // Q-117: lo que se revisó ya no es lo que hay
   const a = document.getElementById("aviso-lectura");
   if (a) { a.textContent = motivo; a.className = "aviso-lectura pendiente"; a.style.display = "block"; }
   if (campo) { const el = document.getElementById(campo); if (el) el.focus(); }
@@ -997,20 +1036,38 @@ function saveArrival() {
      que alguien lo diga (Q-01). Se enseñan cuáles son y qué dicen: un «¿está
      seguro?» a secas se contesta que sí sin leerlo, y aquí lo que se está
      confirmando es justamente el número. Tocar el campo lo saca de la lista. */
-  const sinMirar = [...document.querySelectorAll(".field input.sugerido")];
-  if (sinMirar.length) {
-    const lista = sinMirar.map((el) => {
+  /* Q-117: lo que leyó la foto se enseña AQUÍ, entero, en la pantalla. Se
+     listan todos los campos que salieron de la foto —incluidos los que el
+     técnico ya corrigió, marcados— y los que el lector dejó vacíos, para que la
+     comparación con el papel sea de la fila completa y no de lo que quedó sin
+     tocar. Nada de `confirm()`: en un iPad esa caja sale pegada arriba, con el
+     teclado abierto por delante, y se contesta que sí sin leerla. */
+  if (leidoDeLaFoto && !lecturaRevisada) {
+    const caja = document.getElementById("revisar-lectura");
+    const filas = CAMPOS_LEIDOS.map(([, id]) => {
+      const el = document.getElementById(id);
+      if (!el) return "";
       const et = el.closest(".field").querySelector("label");
-      return `  · ${et ? et.textContent.replace(" *", "") : el.id}: ${el.value}`;
-    }).join("\n");
-    if (!confirm(`Estos datos los leyó el sistema de la foto y todavía no los ha revisado nadie:\n\n${lista}\n\n`
-                 + "Compáralos con el papel. ¿Están bien?")) {
-      /* Q-114: dijo que no están bien. Se le lleva al primero, y se deja
-         escrito por qué no se guardó — el cartel ya no está. */
-      return noSeRegistra("No se registró: dijiste que los datos leídos de la foto no están bien. "
-                        + "Corrígelos y vuelve a dar a Registrar.", sinMirar[0].id);
-    }
-    sinMirar.forEach((el) => el.classList.remove("sugerido"));
+      const nombre = et ? et.textContent.replace(" *", "") : id;
+      const v = String(el.value).trim();
+      const cambiado = leidoDeLaFoto[id] != null && v !== String(leidoDeLaFoto[id]).trim();
+      return `<div class="rl-fila"><span class="rl-et">${esc(nombre)}` +
+             (cambiado ? " · corregido a mano" : "") + `</span>` +
+             (v ? `<span class="rl-v">${esc(v)}</span>`
+                : `<span class="rl-v vacio">en blanco</span>`) + `</div>`;
+    }).join("");
+    caja.innerHTML =
+      `<h4>Compara con el papel antes de registrar</h4>` +
+      `<div class="rl-sub">Esto es lo que va a quedar guardado del conduce.</div>` +
+      filas +
+      `<div class="rl-btns">` +
+        `<button class="btn primary" onclick="lecturaRevisada = true; saveArrival()">` +
+          `\u2714 Est\u00e1 bien \u2014 registrar</button>` +
+        `<button class="btn" onclick="cerrarRevision()">\u2715 Corregir</button>` +
+      `</div>`;
+    caja.style.display = "block";
+    caja.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
   }
 
   /* UN CAMIÓN SIN NOMBRE NO ES UN CAMIÓN — Q-101, 14 ago 2026.
@@ -1234,6 +1291,8 @@ function saveArrival() {
   fichaCompany = null;
   fichaPlant = null;
   ordenadasLeidas = null;
+  leidoDeLaFoto = null;          // Q-117: el camión siguiente empieza sin lectura
+  cerrarRevision();
   document.getElementById("photo-slot").innerHTML = "";
   ["f-ticket", "f-truck", "f-ident", "f-batch", "f-arrive", "f-mix"].forEach((id) => document.getElementById(id).value = "");
   pistaReparto();   // el camión siguiente empieza sin la pista del anterior
@@ -1268,7 +1327,11 @@ function sugerirProximo(day) {
   const hoy = testsOfDate(day);
   const ult = hoy[hoy.length - 1];
   const tk = document.getElementById("f-ticket");
-  if (ult && +ult.ticket) tk.placeholder = String(+ult.ticket + 1);
+  /* Q-116: el número que sigue al del último camión se SUGIERE, y se dice que
+     es una sugerencia. Suelto en la casilla era la peor de todas: un número de
+     conduce con la pinta exacta de un número de conduce, en el campo del número
+     de conduce. Nadie mira dos veces eso. */
+  if (ult && +ult.ticket) tk.placeholder = `ej. ${+ult.ticket + 1} \u2014 sigue al anterior`;
   /* El volumen del camión anterior se SUGIERE, y se marca como tal — Q-93,
      14 ago 2026. Se rellenaba a secas, y el lector no pisa un campo con valor:
      del segundo camión en adelante volvía a no poder leer las yardas del papel.
@@ -1276,23 +1339,27 @@ function sugerirProximo(day) {
 
      Marcado como sugerido, el lector sí lo pisa y el técnico ve en ámbar que
      ese número lo puso la pantalla, no él. */
+  /* EL ANTERIOR SE SUGIERE, NO SE ESCRIBE — Q-116, 15 ago 2026.
+
+     Hasta hoy el volumen del camión de antes entraba como VALOR de verdad,
+     en gris y con el borde de puntos, y si nadie lo tocaba se guardaba tal
+     cual. Eso ya nos costó dos camiones fantasma con yardas prestadas (Q-101),
+     y el borde de puntos no lo salvó: a plena luz, en un iPad, un número
+     puesto es un número puesto.
+
+     Víctor lo zanjó: «los campos cuando estén en blanco q estén realmente
+     vacíos». Así que baja a pista. Se sigue viendo —la comodidad era buena y
+     casi siempre acierta— pero ahora no se puede guardar sin haberlo tecleado.
+     Un camión sin volumen sale en blanco, que es la verdad, y el aviso de
+     huecos al registrar ya lo nombra. */
   if (ult && ult.vol) {
     const v = document.getElementById("f-vol");
-    if (!v.value) {
-      v.value = ult.vol;
-      /* Clase propia, NO `sugerido`: `sugerido` es del LECTOR y dispara el aviso
-         de Q-01 «esto lo leyó la foto y nadie lo ha mirado». Un volumen que
-         viene del camión anterior no lo leyó nadie de un papel — es una
-         comodidad de la pantalla, y sacar ese aviso por ella sería el aviso que
-         salta siempre y se deja de leer. */
-      v.classList.add("heredado");
-      v.addEventListener("input", () => v.classList.remove("heredado"), { once: true });
-    }
+    if (!v.value) v.placeholder = `ej. ${ult.vol} \u2014 como el anterior`;
   }
 
   const L = losasDelDia(day);
   const pend = L.lista.find((l) => l.estado !== "vaciada");
-  if (pend) document.getElementById("f-ident").placeholder = pend.codigo;
+  if (pend) document.getElementById("f-ident").placeholder = `ej. ${pend.codigo} \u2014 la losa que toca`;
 }
 
 function render() {
@@ -1339,7 +1406,7 @@ function render() {
     const p = typeof nombrePieza === "function" ? nombrePieza(day) : "Losa";
     if (l) l.textContent = `${p} / Identificación *`;
     const c = document.getElementById("f-ident");
-    if (c) c.placeholder = p === "Viga" ? "V-1" : p === "Losa" ? "L3-0.443" : "";
+    if (c) c.placeholder = p === "Viga" ? "ej. V-1" : p === "Losa" ? "ej. L3-0.443" : "";   /* Q-116 */
   }
   document.getElementById("hero-sub").textContent =
     [db.project.name, db.project.mixId].filter(Boolean).join(" · ");

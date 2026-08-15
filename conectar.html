@@ -51,6 +51,10 @@
   --text: #eef2f6; --muted: #77848f; --hairline: rgba(255,255,255,.11);
   --ok: #34d27b; --act: #f5b83d; --susp: #ff5a52; --navy: #4a63d8;
 }
+/* Q-116: una pista no se puede parecer a un valor. Ver assets/qc.css. */
+input::placeholder, textarea::placeholder {
+  color: var(--muted); opacity: .62; font-style: italic; font-weight: 500;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { min-height: 100%; }
 body {
@@ -138,13 +142,13 @@ button.esperando { color: var(--muted); border-color: var(--hairline); box-shado
        almacenamiento con Safari, así que conectar desde Safari no conecta el
        icono. Desde dentro del icono no se puede pegar un URL — se entra aquí. -->
   <label for="srv">Servidor</label>
-  <input id="srv" placeholder="https://qcheck-api.qcheck.workers.dev" spellcheck="false" autocapitalize="off" autocorrect="off">
+  <input id="srv" placeholder="ej. https://qcheck-api.qcheck.workers.dev" spellcheck="false" autocapitalize="off" autocorrect="off">
 
   <label for="key">Llave del proyecto</label>
-  <input id="key" placeholder="—" spellcheck="false" autocapitalize="off" autocorrect="off">
+  <input id="key" placeholder="pega aquí la llave" spellcheck="false" autocapitalize="off" autocorrect="off">
 
   <label for="dev">Nombre de este aparato</label>
-  <input id="dev" placeholder="iPad de Rubén" autocapitalize="words">
+  <input id="dev" placeholder="ej. iPad de Rubén" autocapitalize="words">
 
   <button id="btn" onclick="guardar()">Probar y conectar</button>
   <a class="ir" id="ir" href="index.html">Entrar sin conectar</a>

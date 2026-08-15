@@ -20,7 +20,10 @@ console.log("\nNINGUNA SALIDA DEJA LA PANTALLA MUDA");
   lineas.forEach((l, i) => {
     if (!/^\s*return;\s*$/.test(l)) return;
     const antes = lineas.slice(Math.max(0, i - 6), i).join("\n");
-    if (/noSeRegistra|toast\(|frenoDiaCerrado|programarTiro|formDayMeta/.test(antes)) return;
+    /* Q-117: la revisión de lo leído también es una salida que HABLA — no
+       escribe un motivo porque no ha pasado nada malo: enseña en pantalla lo
+       que salió de la foto y espera a que el técnico diga que está bien. */
+    if (/noSeRegistra|toast\(|frenoDiaCerrado|programarTiro|formDayMeta|caja\.style\.display = "block"/.test(antes)) return;
     mudas.push(i + 1);
   });
   di(mudas.length === 0, mudas.length ? `salidas mudas en las líneas ${mudas.join(", ")}` : "todas explican o avisan");
@@ -32,7 +35,14 @@ di(/a\.style\.display = "block"/.test(html), "y lo deja visible en la pantalla, 
 
 console.log("\nLOS TRES MOTIVOS ESTÁN DICHOS CON PALABRAS");
 di(/No se registró: falta el número de conduce o el del camión/.test(html), "sin conduce ni camión");
-di(/No se registró: dijiste que los datos leídos de la foto no están bien/.test(html), "datos leídos rechazados");
+/* Q-117: lo leído ya no se acepta con un `confirm()` del navegador — se enseña
+   entero en la pantalla al dar a Registrar, y hasta que no se diga que está
+   bien no se guarda nada. */
+di(/if \(leidoDeLaFoto && !lecturaRevisada\)/.test(html), "la revisión salta al registrar, no antes");
+di(/Compara con el papel antes de registrar/.test(html), "y dice contra qué se compara");
+di(/function cerrarRevision\(\)/.test(html) && /onclick="cerrarRevision\(\)"/.test(html),
+   "con salida para corregir sin perder lo escrito");
+di(!/confirm\(`Estos datos los leyó el sistema/.test(html), "y sin el confirm() del navegador");
 di(/No se registró: " \+ \(typeof porQueNoSeSomete/.test(html), "y sin poder firmar en el servidor, con su motivo");
 
 console.log(fallos ? `\n  ${fallos} FALLO(S)\n` : "\n  sin fallos\n");

@@ -31,6 +31,10 @@
      tocarlo: sobre fondo oscuro se lee bien como viene. */
   --segarra-azul: #586ad0; --segarra-gris: #81808a;
 }
+/* Q-116: una pista no se puede parecer a un valor. Ver assets/qc.css. */
+input::placeholder, textarea::placeholder {
+  color: var(--muted); opacity: .62; font-style: italic; font-weight: 500;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {

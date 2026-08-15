@@ -944,3 +944,28 @@ body.con-sim-bar { padding-top: 40px; }
   color: var(--susp); border-radius: 10px; padding: 10px 13px;
   font-size: 13px; font-weight: 650; line-height: 1.4;
 }
+
+/* UNA PISTA NO ES UN VALOR — Q-116, 15 de agosto de 2026.
+
+   Víctor: «los campos en toda el app cuando estén en blanco q estén realmente
+   vacíos. y los q sean códigos o nomenclaturas que tengan una sugerencia pero
+   bien clarito.»
+
+   El gris de fábrica del navegador para el placeholder queda a un pelo del
+   texto escrito de verdad. Con `66861` de pista en la casilla del conduce, un
+   campo VACÍO se lee como un campo relleno: el técnico pasa de largo dándolo
+   por puesto, y el camión entra sin número. El hueco no se ve porque va
+   disfrazado del dato que falta.
+
+   > Lo que sugiere la pantalla y lo que escribió una persona no se pueden
+   > parecer. En cuanto se parecen, el hueco desaparece de la vista sin
+   > desaparecer del expediente.
+
+   Tres marcas a la vez —cursiva, más apagada, y «ej.» delante en el texto—
+   porque en un iPad a pleno sol, con gafas de seguridad, una sola no llega.
+   Y las que son códigos o nomenclaturas (`ej. L3-0.443`, `ej. 55K30H6K28AC`)
+   se quedan: ahí la pista enseña la FORMA, que no se adivina y no se pregunta
+   con un camión esperando. */
+input::placeholder, textarea::placeholder {
+  color: var(--ink-soft); opacity: .62; font-style: italic; font-weight: 500;
+}

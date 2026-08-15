@@ -555,12 +555,12 @@ function panelSync() {
       <div class="grid cols-2" style="gap:12px">
         <label style="display:block">
           <span class="muted" style="font-size:11px; font-weight:800; letter-spacing:.2em; text-transform:uppercase">Servidor</span>
-          <input id="sync-url" value="${esc(qcApiURL())}" placeholder="https://qcheck-api.workers.dev"
+          <input id="sync-url" value="${esc(qcApiURL())}" placeholder="ej. https://qcheck-api.workers.dev"
             style="width:100%; margin-top:6px" spellcheck="false" autocapitalize="off">
         </label>
         <label style="display:block">
           <span class="muted" style="font-size:11px; font-weight:800; letter-spacing:.2em; text-transform:uppercase">Llave del proyecto</span>
-          <input id="sync-token" value="${esc(qcApiToken())}" placeholder="—"
+          <input id="sync-token" value="${esc(qcApiToken())}" placeholder="sin llave"
             style="width:100%; margin-top:6px" spellcheck="false" autocapitalize="off">
         </label>
         <label style="display:block">

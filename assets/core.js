@@ -4246,7 +4246,9 @@ function formDayMeta(day, borrador) {
       if (c2) {
         c2.querySelector("label").textContent = e.tramo;
         const t = c2.querySelector("textarea");
-        if (t) { t.placeholder = e.ej; t.required = false; }
+        /* Q-116: «ej.» delante, siempre. Es un ejemplo de la FORMA que se
+           espera, no algo que esté ya escrito en la casilla. */
+        if (t) { t.placeholder = String(e.ej).startsWith("ej.") ? e.ej : `ej. ${e.ej}`; t.required = false; }
         const h = c2.querySelector(".hint");
         if (h) h.textContent = e.ayuda;
       }
