@@ -378,8 +378,32 @@ const QCSync = {
   },
 
   /* Baja lo que hicieron los demás y lo mete en `db`. */
+  /* UN APARATO NUEVO SE PONE AL DÍA DE UNA VEZ — Q-108 ter, 15 ago 2026.
+
+     El servidor entrega los cambios de 2.000 en 2.000 y el expediente tiene
+     52.000. Con una página por vuelta y una vuelta cada tres segundos, un
+     aparato recién conectado tardaba **más de un minuto** en tenerlo todo — y
+     durante ese minuto trabaja con un récord a medias: le falta la ficha de una
+     obra, le faltan camiones, le faltan límites.
+
+     Hoy le pasó al iPad del técnico: el desplegable de obras enseñaba una sola,
+     porque la otra vivía en una página que aún no había llegado.
+
+     Ahora, mientras quede algo por bajar, sigue pidiendo en la misma vuelta.
+     El tope de 60 páginas es un freno de mano, no un límite de trabajo: son
+     120.000 apuntes, muy por encima de lo que hay. Si algún día se alcanza, la
+     vuelta siguiente sigue donde quedó — como antes, pero desde mucho más
+     cerca. */
   async _bajar() {
     if (!qcSyncActivo()) return;
+    for (let pagina = 0; pagina < 60; pagina++) {
+      const quedaMas = await this._bajarUna();
+      if (!quedaMas) return;
+    }
+  },
+
+  /* Devuelve `true` si el servidor tiene todavía más de lo que se ha traído. */
+  async _bajarUna() {
     try {
       const r = await this._pedir("/api/cambios?desde=" + this._seq());
       if (r.ops && r.ops.length) {
@@ -395,12 +419,29 @@ const QCSync = {
       } else if (r.seq != null && this._seq() === 0) {
         this._guardarSeq(r.seq);
       }
-      /* Q-108: a partir de aquí este aparato ya sabe lo que hay en el servidor,
-         así que sus borrados valen. Se marca DESPUÉS de una bajada buena, no al
-         conectar: conectar no es haber visto nada. */
-      localStorage.setItem(QC_SYNC_VISTO, "1");
+      /* NO BASTA CON HABER BAJADO ALGO: HAY QUE ESTAR AL DÍA — Q-108 bis.
+
+         La primera versión marcaba el aparato como estrenado tras la primera
+         bajada buena. **No es suficiente, y se vio hoy mismo:** el servidor
+         entrega los cambios de 2.000 en 2.000 y el expediente tiene 52.000, así
+         que la primera bajada trae el 4 % — un aparato con el 4 % del récord
+         seguía siendo un aparato que no sabe lo que hay.
+
+         De ahí salían las dos cosas de esta tarde: el borrado de las 12:11 y el
+         desplegable con una sola obra, porque la ficha de la otra vive en una
+         página que todavía no había llegado.
+
+         Ahora se marca cuando de verdad se ha llegado al final: `r.seq` es el
+         último número del servidor, y hasta alcanzarlo este aparato mira pero
+         no opina.
+
+         > Estar conectado no es estar al día, y a medio camino se parecen. */
+      if (r.seq != null && this._seq() >= r.seq) localStorage.setItem(QC_SYNC_VISTO, "1");
       this.estado = "al-dia";
       this.ultimo = new Date();
+      /* ¿Queda más? Solo si el servidor dice que su último número es mayor que
+         el nuestro. Sin ops en esta página no queda nada por definición. */
+      return r.ops && r.ops.length > 0 && r.seq != null && this._seq() < r.seq;
     } catch (e) {
       this.estado = e.message === "token" ? "sin-llave"
         : e.message === "sesion" ? "sin-sesion"

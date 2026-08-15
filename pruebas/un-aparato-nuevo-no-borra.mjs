@@ -69,5 +69,47 @@ console.log("\nY UN APARATO SIN ESTRENAR SIGUE PUDIENDO AÑADIR");
   di(cola.every((o)=>o.valor!==null), "y ninguno es un borrado");
 }
 
+console.log("\nY A MEDIO BAJAR TAMPOCO — el servidor da 2.000 de 52.000 por vuelta");
+{
+  const c = readFileSync("assets/sync.js", "utf8");
+  di(/if \(r\.seq != null && this\._seq\(\) >= r\.seq\) localStorage\.setItem\(QC_SYNC_VISTO/.test(c),
+     "solo se marca estrenado al alcanzar el ultimo numero del servidor");
+  di(!/^\s*localStorage\.setItem\(QC_SYNC_VISTO, "1"\);\s*$/m.test(c),
+     "y ya no se marca por haber bajado una pagina cualquiera");
+}
+
+console.log("\nY SE PONE AL DIA DE UNA VEZ, no una pagina por vuelta");
+{
+  /* Un servidor con cinco paginas: se comprueba que las pide todas seguidas. */
+  const alm = new Map([["qc-api","https://x"],["qc-token","t"]]);
+  let pedidas = 0;
+  const ctx = {
+    localStorage:{ getItem:(k)=>alm.get(k)??null, setItem:(k,v)=>alm.set(k,String(v)), removeItem:(k)=>alm.delete(k) },
+    document:{ addEventListener(){}, hidden:false }, window:{ addEventListener(){} },
+    navigator:{ onLine:true }, location:{ pathname:"/x.html" },
+    setInterval:()=>0, clearInterval(){}, setTimeout:()=>0,
+    crypto:{ randomUUID:()=>"u"+Math.random() }, console:{ ...console, warn(){} },
+    fetch: async (url) => {
+      const desde = Number(String(url).split("desde=")[1] || 0);
+      pedidas++;
+      const hasta = Math.min(desde + 2000, 10000);
+      const ops = desde >= 10000 ? []
+        : [{ uid:"o"+hasta, ent:"config", id:"", campo:"demo", valor:false, seq:hasta, ts:"x" }];
+      return { ok:true, json: async () => ({ ops, seq: 10000 }) };
+    },
+  };
+  /* `DB_KEY` vive en core.js y sync.js lo usa. Sin declararlo aquí, la bajada
+     reventaba en silencio dentro del try y el bucle paraba a la primera página:
+     la prueba culpaba al código de un hueco del banco. */
+  const src = "var DB_KEY = 'qc-db';\n"
+            + "var db = { tests:[], dayMeta:{}, humidity:[], plan:{}, project:{}, proyectos:[] };\n"
+            + readFileSync("assets/sync.js","utf8");
+  const f = new Function(...Object.keys(ctx), src + "\n;return { QCSync };");
+  const { QCSync } = f(...Object.values(ctx));
+  await QCSync._bajar();
+  di(pedidas >= 5, `pidio ${pedidas} paginas en una sola vuelta`);
+  di(alm.get("qc-sync-visto") === "1", "y al llegar al final se marca estrenado");
+}
+
 console.log(fallos ? `\n  ${fallos} FALLO(S)\n` : "\n  sin fallos\n");
 process.exit(fallos ? 1 : 0);
