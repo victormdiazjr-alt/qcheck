@@ -1562,6 +1562,23 @@ function nivelPermeabilidadDe(dia) {
    día que tenga razón tampoco lo mira nadie. */
 function discrepanciaDeOrden(day) {
   const d = day || diaActivo();
+  /* SOLO SI HAY TIRO HOY — Q-109, 15 ago 2026.
+
+     Víctor: «¿por qué dice esto?». El Control Center enseñaba «Programado 60
+     CY → dice el último conduce 170 CY» sin tiro abierto: el aviso era del
+     vaciado del 13 de agosto, del camión 115, y salía como si fuera de ahora.
+
+     Pasa porque cuando hoy no hay tiro, la pantalla cae en el último día que
+     tuvo — y este panel no se enteró de la regla que él mismo dio anoche para
+     el monitor: **si no hay tiro corriendo, que lo diga**.
+
+     > Una regla que se aplica a la pantalla donde se vio el fallo, y no a las
+     > demás que hacen lo mismo, vuelve por otro sitio al día siguiente.
+
+     Y este aviso es de los que se resuelven con una llamada mientras el camión
+     está en la obra. Fuera de su día no hay nada que llamar: es ruido con
+     aspecto de urgencia. */
+  if (typeof hayTiroActivo === "function" && !hayTiroActivo(d)) return null;
   const plan = num((db.dayMeta[d] || {}).cyPlan);
   if (plan == null) return null;
   const delDia = testsOfDate(d);

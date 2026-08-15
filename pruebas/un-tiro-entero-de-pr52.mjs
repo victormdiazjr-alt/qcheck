@@ -39,7 +39,7 @@ function app() {
     saveDB = function(){};
     return { db, dayProgress, worstZone, tiroCerrado, abrirProyecto, proyectoActivo,
              testsOfDate, sortedTests, estadoBadge, qcCuenta, zoneSlump, zoneUW, zoneAir,
-             hayTiroActivo, estadoTiro };`);
+             hayTiroActivo, estadoTiro, discrepanciaDeOrden };`);
   return f(...Object.values(ctx));
 }
 
@@ -132,6 +132,20 @@ console.log("\n⑥bis SIN TIRO ACTIVO NO HAY PROGRESO — Víctor, la noche del 
   di(A.hayTiroActivo(ayer) === false, "el de ayer tampoco es tiro activo");
   di(A.estadoTiro(ayer).txt === "Ready para Tirar",
      "y sale «" + A.estadoTiro(ayer).txt + "», sin cifras de un tiro que ya pasó");
+}
+
+console.log("\n⑥ter SIN TIRO ACTIVO, NINGUN AVISO DE OTRO DIA");
+{
+  /* El caso de Víctor: el Control Center enseñaba el desajuste de yardas del
+     tiro del 13 con el de hoy cerrado. */
+  db.tests[0].ordenadas = 170;                 // su conduce dice otra cosa
+  di(A.discrepanciaDeOrden(HOY) === null,
+     "con el tiro cerrado, el aviso de yardas no sale");
+  delete db.dayMeta[HOY].cerradoA;             // se reabre
+  di(A.discrepanciaDeOrden(HOY) !== null,
+     "y con el tiro abierto sí sale, que para eso está");
+  db.dayMeta[HOY].cerradoA = "16:20";
+  delete db.tests[0].ordenadas;
 }
 
 console.log("\n⑦ Y NADA DE LA OTRA OBRA SE HA COLADO EN TODO EL DÍA");
