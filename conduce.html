@@ -909,6 +909,29 @@ const CAMPOS_CAMION = [
   ["f-ident", "la losa", "sin ella no se sabe dónde cayó el hormigón"],
 ];
 
+/* CUANDO NO SE REGISTRA, LA PANTALLA LO DICE — Q-114, 15 ago 2026.
+
+   Víctor: «el técnico escaneó un conduce, le da a registrar, no hace nada, y se
+   abre el teclado del iPad».
+
+   No estaba roto: `saveArrival()` tenía **tres salidas silenciosas**. Todas
+   enseñaban un cartel del sistema —un `confirm` o un `alert`— y, al cerrarse,
+   mandaban el cursor a un campo. En un iPad, eso abre el teclado y no queda
+   nada en pantalla: se ve exactamente como si el botón no funcionara.
+
+   > Un cartel que se cierra no deja rastro. Si lo único que explica por qué no
+   > se guardó desaparece al tocarlo, el usuario no ve un motivo: ve un botón
+   > roto.
+
+   Ahora, además del cartel, el motivo se escribe en el aviso de la pantalla y
+   se queda ahí hasta el intento siguiente. */
+function noSeRegistra(motivo, campo) {
+  const a = document.getElementById("aviso-lectura");
+  if (a) { a.textContent = motivo; a.className = "aviso-lectura pendiente"; a.style.display = "block"; }
+  if (campo) { const el = document.getElementById(campo); if (el) el.focus(); }
+  return false;
+}
+
 function saveArrival() {
   /* Q-41: no se reciben camiones en un día ya firmado. */
   if (typeof frenoDiaCerrado === "function" && frenoDiaCerrado(diaActivo())) return;
@@ -964,8 +987,10 @@ function saveArrival() {
     }).join("\n");
     if (!confirm(`Estos datos los leyó el sistema de la foto y todavía no los ha revisado nadie:\n\n${lista}\n\n`
                  + "Compáralos con el papel. ¿Están bien?")) {
-      sinMirar[0].focus();
-      return;
+      /* Q-114: dijo que no están bien. Se le lleva al primero, y se deja
+         escrito por qué no se guardó — el cartel ya no está. */
+      return noSeRegistra("No se registró: dijiste que los datos leídos de la foto no están bien. "
+                        + "Corrígelos y vuelve a dar a Registrar.", sinMirar[0].id);
     }
     sinMirar.forEach((el) => el.classList.remove("sugerido"));
   }
@@ -998,11 +1023,9 @@ function saveArrival() {
     const tk = document.getElementById("f-ticket").value.trim();
     const cm = document.getElementById("f-truck").value.trim();
     if (!tk && !cm) {
-      alert("Este camión no tiene ni número de conduce ni número de camión.\n\n" +
-            "Sin uno de los dos no hay forma de saber cuál es, y luego no se puede " +
-            "corregir.\n\nEscribe el que puedas leer del papel — con uno basta.");
-      document.getElementById(tk ? "f-truck" : "f-ticket").focus();
-      return;
+      return noSeRegistra("No se registró: falta el número de conduce o el del camión. "
+                        + "Con uno de los dos basta — sin ninguno no hay forma de saber cuál es después.",
+                          "f-ticket");
     }
   }
 
@@ -1177,7 +1200,12 @@ function saveArrival() {
   /* Q-67: sin conexión no se somete. Aquí, justo antes de escribir, porque
      entre abrir la pantalla y darle al botón se pasa por el escaneo y por un
      par de avisos, y ahí se puede haber ido la señal. */
-  if (typeof puedeSometer === "function" && !puedeSometer()) { avisarSinConexion(); return; }
+  if (typeof puedeSometer === "function" && !puedeSometer()) {
+    avisarSinConexion();
+    /* Q-114: y también en pantalla, con el motivo que da la propia barra. */
+    return noSeRegistra("No se registró: " + (typeof porQueNoSeSomete === "function"
+      ? porQueNoSeSomete() : "el aparato no puede firmar en el servidor ahora mismo."));
+  }
   db.tests.push(t);
   saveDB();
   pendingPhoto = null;
