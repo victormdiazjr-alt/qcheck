@@ -84,9 +84,34 @@ const QC_CUENTAS = {
      Son PROVISIONALES, para las pruebas. Cuando la puerta pase al servidor
      (Q-07 con `exigir_sesion`), se dan de alta con `cuentas.js`, que exige doce
      caracteres a todo el que escriba en el expediente. */
-  yarvier:  { rol: "qc", nombre: "Yarvier", limites: true },
-  tecnico1: { rol: "qc", nombre: "Técnico 1", limites: true },
-  tecnico2: { rol: "qc", nombre: "Técnico 2", limites: true },
+  /* `tablero` — Q-102, 14 ago 2026, la víspera del tiro de la PR-52.
+
+     Víctor: «mañana va a haber tiro de Concre-Tech / PR-52, Rubén no es el que
+     va a estar; estará tecnico1. Necesito que tecnico1 pueda entrar y trabajar
+     un tiro completo.»
+
+     Un tiro completo son cuatro cosas: **abrirlo, recibir camiones, medirlos y
+     cerrarlo.** Las tres primeras las tenían ya. La cuarta no: hoy mismo se
+     movió «Cerrar tiro» de Muestras al Control Center (Q-99) — con razón,
+     porque firma el día y no puede vivir en la pantalla que se usa cien veces—
+     **y sin `tablero` no hay forma de llegar hasta allí desde el teléfono.**
+
+     O sea que el arreglo de esta mañana dejaba a quien no fuera Rubén sin
+     poder cerrar su propio tiro. Se ve al juntar las dos cosas, no al hacer
+     cada una.
+
+     Esto NO les da más poder sobre el expediente: `cerrarTiro()` nunca ha
+     exigido `firma`, y lo que sí la exige —reabrir un tiro cerrado, descartar
+     un vaciado, devolverlo— la sigue exigiendo y sigue siendo de Rubén.
+     `config` tampoco: la llave del servidor y los límites no se tocan desde
+     aquí.
+
+     Lo llevan los tres, y no solo tecnico1: el que cubre un tiro mañana puede
+     ser otro pasado mañana, y una capacidad que se da por persona y no por
+     puesto se queda vieja el primer día que alguien falta. */
+  yarvier:  { rol: "qc", nombre: "Yarvier", limites: true, tablero: true },
+  tecnico1: { rol: "qc", nombre: "Técnico 1", limites: true, tablero: true },
+  tecnico2: { rol: "qc", nombre: "Técnico 2", limites: true, tablero: true },
 
   /* Las tres de fuera — Q-37, 6 ago 2026. Cada una entra y aparece en SU
      tablero, sin portal y sin navegación: no vienen a recorrer QCheck, vienen
