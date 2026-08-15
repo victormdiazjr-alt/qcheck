@@ -50,8 +50,13 @@ console.log("\nY EL FORMULARIO PREGUNTA CON UN INTERRUPTOR, NO CON DOS OPCIONES 
   const c = readFileSync("assets/core.js","utf8");
   di(/\{ key: "es934", label: "SP-934", type: "checkbox"/.test(c),
      "es un interruptor y el rótulo es solo «SP-934»");
-  di(/\.\.\.\(specDelDia\(day\) === "934" \? \[\{\s*\n\s*key: "nivelPermeabilidad"/.test(c),
-     "la permeabilidad SOLO se pregunta si la 934 está encendida");
+  di(/\.\.\.\(ahora934 \? \[\{\s*\n\s*key: "nivelPermeabilidad"/.test(c),
+     "la permeabilidad depende del interruptor, no de lo guardado");
+  di(/if \(!!v\.es934 !== ahora934\) \{ formDayMeta\(day, v\); return; \}/.test(c),
+     "y la ventana SE REHACE al tocarlo, conservando lo escrito");
+  di(/formDayMeta\(day, borrador\)/.test(c), "formDayMeta acepta el borrador de lo tecleado");
+  di(/\(f\.type === "checkbox"\) \? !!el\.checked : el\.value/.test(c),
+     "y el interruptor se lee por su estado, no por su value");
   di(!/Como el proyecto \(\$\{QC_SPECS/.test(c), "y ya no existe la opción que decía lo mismo dos veces");
   di(/db\.dayMeta\[day\]\.spec = db\.dayMeta\[day\]\.es934 \? "934" : "no"/.test(c),
      "apagado se guarda como «no», no en blanco");

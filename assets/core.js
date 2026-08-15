@@ -3458,12 +3458,30 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
             else if (f.type === "textarea")
               ctrl = `<textarea name="${f.key}" rows="2">${esc(val)}</textarea>`;
             else if (f.type === "checkbox")
-              ctrl = `<select name="${f.key}"><option value="" ${!val ? "selected" : ""}>No</option><option value="1" ${val ? "selected" : ""}>Sí</option></select>`;
+              /* UN INTERRUPTOR, NO UNA LISTA DE DOS — Q-105 ter, 14 ago 2026.
+                 Víctor pidió que la 934 fuera «un botón que se prende y se
+                 apaga», y salía como un desplegable de Sí/No: dos toques y una
+                 lectura para algo que es una sola cosa encendida o apagada. */
+              ctrl = `<label class="qc-sw"><input type="checkbox" name="${f.key}" ${val ? "checked" : ""}><i></i><b>${val ? "Sí" : "No"}</b></label>`;
             else
               ctrl = `<input name="${f.key}" type="${f.type || "text"}" value="${esc(val)}" ${f.step != null ? `step="${f.step}"` : ""} ${f.placeholder ? `placeholder="${esc(f.placeholder)}"` : ""} ${f.required ? "required" : ""}>`;
             return `<div class="field ${f.full ? "full" : ""} ${f.half ? "half" : ""}"><label>${esc(f.label)}${f.required ? " *" : ""}</label>${ctrl}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ""}</div>`;
           }).join("")}
         </div></form></div>
+        <style>
+          /* El interruptor. Va aqui y no en la hoja de estilos porque las
+             pantallas de campo no cargan qc.css y el formulario es el mismo. */
+          .qc-sw{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;padding:4px 0}
+          .qc-sw input{position:absolute;opacity:0;width:0;height:0}
+          .qc-sw i{width:52px;height:30px;border-radius:999px;background:var(--line,#2a3441);
+                   border:1px solid var(--line,#2a3441);position:relative;transition:background .15s;flex:none}
+          .qc-sw i::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;
+                          border-radius:50%;background:#8b96a3;transition:transform .15s,background .15s}
+          .qc-sw input:checked + i{background:#2f7d52;border-color:#3d9c68}
+          .qc-sw input:checked + i::after{transform:translateX(22px);background:#eafff2}
+          .qc-sw input:focus-visible + i{outline:2px solid var(--acc,#4a63d8);outline-offset:2px}
+          .qc-sw b{font-size:15px;font-weight:700;min-width:2.2em}
+        </style>
         ${liveEval ? `<div id="${fid}-live" style="padding:10px 20px; border-top:1px solid var(--line)"></div>` : ""}
         <div class="modal-foot">
           ${onDelete ? `<button class="btn danger" id="${fid}-del">Eliminar</button><div style="flex:1"></div>` : ""}
@@ -3482,7 +3500,7 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
       el.closest(".field").classList.remove("invalid");
       if (f.required && !v) { el.closest(".field").classList.add("invalid"); faltan.push({ f, el }); continue; }
       if (f.type === "number") values[f.key] = v === "" ? null : Number(v);
-      else if (f.type === "checkbox") values[f.key] = v === "1";
+      else if (f.type === "checkbox") values[f.key] = !!el.checked;
       else values[f.key] = v;
     }
     /* Se nombra el que falta y se lleva el cursor ahí. «Complete los campos
@@ -3526,7 +3544,7 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
         if (!el) continue;
         const v = el.value.trim();
         if (f.type === "number") values[f.key] = v === "" ? null : Number(v);
-        else if (f.type === "checkbox") values[f.key] = v === "1";
+        else if (f.type === "checkbox") values[f.key] = !!el.checked;
         else values[f.key] = v;
       }
       liveEl.innerHTML = liveEval(values);
@@ -3550,7 +3568,10 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
       for (const f of fields) {
         if (f.type === "label") continue;
         const el = form.elements[f.key];
-        if (el) v[f.key] = el.value;
+        /* Un interruptor vale por si está marcado, no por su `value`: el value
+           de una casilla es siempre el mismo, marcada o no. Sin esto el
+           formulario creía que la 934 estaba encendida siempre. */
+        if (el) v[f.key] = (f.type === "checkbox") ? !!el.checked : el.value;
       }
       return v;
     };
@@ -3914,7 +3935,20 @@ function avisoSublotes(cyPlan, es934) {
     : `SP-934: ${fmt(m3, 0)} m³ ≈ ${n} sub-lotes de ${SP934_SUBLOTE_M3} m³. Suficiente para el factor de pago.`;
 }
 
-function formDayMeta(day) {
+/* ESTA VENTANA SE REHACE AL TOCAR LA 934 — Q-105 ter, 14 ago 2026.
+
+   Víctor: «la ventana de crear el tiro tiene que ser interactiva, porque si es
+   934 pregunta unas cosas y si no pregunta otras».
+
+   El formulario se armaba una vez y se quedaba quieto, así que apagar la 934
+   no quitaba sus preguntas. Ahora el interruptor **vuelve a abrir la ventana**
+   con lo que ya estuviera escrito —eso es `borrador`— y con los campos que
+   toquen. Se ve como si cambiara sola; por dentro es la misma ventana otra vez,
+   que es lo único que este constructor de formularios sabe hacer.
+
+   `borrador` NO toca la base: son las respuestas a medias, en memoria, hasta
+   que alguien le da a Guardar. */
+function formDayMeta(day, borrador) {
   /* UN TIRO CERRADO NO SE EDITA — Q-41, ampliado el 7 ago 2026.
 
      El guardián estaba en Muestras y en Recepción, pero no aquí: se podía
@@ -3951,6 +3985,12 @@ function formDayMeta(day) {
      decide todo lo demás** — los límites contra los que se juzga cada camión,
      la concretera y las mezclas que se ofrecen. */
   const obraDelTiro = meta.proyecto || proyectoActivo();
+  /* Lo que dice el interruptor AHORA: lo que se esté editando, o lo guardado,
+     o lo que diga la obra. De aquí salen los campos que se preguntan. */
+  const ahora934 = borrador && "es934" in borrador ? !!borrador.es934
+    : meta.spec === "no" ? false
+    : meta.spec === "934" ? true
+    : specDelProyecto() === "934";
   /* Una por línea, y si la obra todavía no las ha declarado, lo que haya suelto:
      `mixId` era el único sitio donde vivía una mezcla hasta hoy. */
   const enLineas = (t) => String(t || "").split("\n").map((s) => s.trim()).filter(Boolean);
@@ -3966,10 +4006,7 @@ function formDayMeta(day) {
     /* El interruptor de la 934 nace con la respuesta correcta ya puesta —Q-105:
        si el tiro ya dijo lo suyo, eso; si no, lo que diga la obra. Así en la
        PR-52 se abre encendido y en una obra normal, apagado. */
-    initial: { ...meta, fecha: day, proyecto: obraDelTiro,
-               es934: meta.spec === "no" ? false
-                    : meta.spec === "934" ? true
-                    : specDelProyecto() === "934" },
+    initial: { ...meta, fecha: day, proyecto: obraDelTiro, es934: ahora934, ...(borrador || {}) },
     fields: [
       /* Q-89: la obra, la primera y a lo ancho. No se teclea nunca — se elige
          de las que existen. Crear obras es otra cosa y se hace en su sitio. */
@@ -4020,21 +4057,16 @@ function formDayMeta(day) {
           { value: "vigas", label: "Vigas" },
           { value: "otra",  label: "Otra estructura" },
         ] },
-      /* LA PERMEABILIDAD SOLO EXISTE BAJO LA 934 — Q-105 bis, 14 ago 2026.
+      /* LA PERMEABILIDAD, SOLO BAJO LA 934 — Q-105 ter, 14 ago 2026.
 
-         Víctor, creando el tiro: «escogí que no es 934 y me está preguntando la
-         permeabilidad del tiro». La casilla salía SIEMPRE, y fuera de la 934 no
-         significa nada: se estaba preguntando algo que no se va a usar.
+         Víctor lo dijo dos veces: «escogí que no es 934 y me está preguntando
+         la permeabilidad». Fuera de la 934 esa casilla no significa nada, y una
+         pregunta que no se va a usar enseña que este formulario pregunta cosas
+         que dan igual — y el día que pregunte algo que importa se contesta con
+         la misma prisa.
 
-         **Una pregunta que no se va a usar no es inofensiva.** Enseña que este
-         formulario pregunta cosas que dan igual, y el día que pregunte algo que
-         importa se contesta con la misma prisa.
-
-         Va por `spec` porque el interruptor todavía no se ha guardado cuando se
-         arma el formulario: se mira lo que hay puesto —el tiro o, en blanco, la
-         obra—. Si alguien enciende la 934 aquí en una obra que no la tenía, la
-         permeabilidad la pregunta `formSP934()` justo después. */
-      ...(specDelDia(day) === "934" ? [{
+         Ahora depende del interruptor EN VIVO: se apaga la 934 y desaparece. */
+      ...(ahora934 ? [{
         key: "nivelPermeabilidad", label: "Permeabilidad de este tiro", type: "select", half: true,
         options: [
           { value: "",  label: "Como el proyecto" },
@@ -4095,6 +4127,16 @@ function formDayMeta(day) {
        decidían al abrir —con lo ya guardado— y en un tiro nuevo eso era
        siempre «losas». */
     alCambiar: (form, v) => {
+      /* LA VENTANA SE REHACE AL TOCAR LA 934 — Q-105 ter, 14 ago 2026.
+
+         Víctor: «tiene que ser interactiva, porque si es 934 pregunta unas
+         cosas y si no pregunta otras». Los campos se deciden al armarla, así
+         que la única forma de cambiarlos es volver a armarla — con lo que ya
+         estuviera escrito, que es lo que viaja en `v`.
+
+         Se compara contra `ahora934`, el estado con el que se armó ESTA
+         ventana: sin eso se rearmaría en cada tecla y el cursor saltaría. */
+      if (!!v.es934 !== ahora934) { formDayMeta(day, v); return; }
       const e = PIEZA_DE[v.estructura] || PIEZA_DE.losas;
       const campo = (k) => form.querySelector(`[name="${k}"]`)?.closest(".field");
       /* Q-89: el aviso de los sub-lotes se recalcula mientras se teclean las
@@ -4104,7 +4146,7 @@ function formDayMeta(day) {
       const cy = campo("cyPlan");
       if (cy) {
         const h = cy.querySelector(".hint");
-        const av = avisoSublotes(v.cyPlan, (v.spec || specDelProyecto()) === "934");
+        const av = avisoSublotes(v.cyPlan, !!v.es934);   // Q-105: manda el interruptor
         if (h) h.textContent = av || "Sin esto la barra de estado no puede mostrar el avance del tiro";
       }
       /* Q-89: al cambiar de obra cambian sus mezclas. Sin esto, el formulario
