@@ -35,6 +35,18 @@ console.log("\nTECNICO1 — lo que necesita para correr un tiro entero");
   di(q.qcCuenta().limites === true, "3 · ve los límites contra los que mide");
 }
 
+console.log("\nCREAR TIROS DE LAS OBRAS QUE YA EXISTEN — Víctor, 14 ago");
+{
+  /* No hacía falta darle nada nuevo: `limites` ya le abre Settings, y el
+     formulario del tiro pregunta «Obra que se vacía» y la abre al guardar.
+     Se comprueba en vez de suponerlo — que es como se descubrió hoy que sí
+     le faltaba llegar al Control Center. */
+  const q = comoQuien("tecnico1");
+  di(q.qcCuenta().limites === true, "abre Settings y el plan de límites (limites)");
+  di(q.qcVeTablero(), "y el Control Center, donde está «Programar tiro»");
+  di(!q.qcVeConfig(), "sin entrar en la sala de máquinas");
+}
+
 console.log("\nY lo que NO puede, que también hay que comprobar");
 {
   const q = comoQuien("tecnico1");
