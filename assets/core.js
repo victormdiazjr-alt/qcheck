@@ -2239,8 +2239,25 @@ function dayProgress(day) {
     sinNombre: sinNombre.length,
     sinNombreCY: sinNombre.reduce((a, t) => a + (num(t.vol) || 0), 0),
     cyPlan,
-    pending: cyPlan != null ? Math.max(0, cyPlan - placed) : null,
-    pct: cyPlan ? Math.min(100, placed / cyPlan * 100) : null,
+    /* EL PORCENTAJE Y LO QUE FALTA VAN CON LO RECIBIDO — Q-100 bis, 14 ago 2026.
+
+       Por la tarde se cambió la barra del tiro para que contara lo recibido
+       (Q-100), porque `placed` descuenta los camiones sin sello de fin y ese
+       sello no se pone nunca en el flujo real. **Pero `pct` y `pending` se
+       quedaron atrás**, y de ahí beben el Control Center, el móvil y el panel
+       del contratista: los tres habrían enseñado `0 %` y «faltan 60 de 60» con
+       el tiro al completo.
+
+       No lo encontró nadie leyendo. Lo encontró la simulación del tiro entero
+       de mañana, que es lo único que recorre el día de principio a fin.
+
+       > Arreglar una pantalla y no la cuenta que la alimenta deja el fallo
+       > vivo en las otras tres, y encima parece arreglado.
+
+       `placed` no se toca: es lo colocado y lo usan los informes. Al cerrar el
+       día los dos números coinciden. */
+    pending: cyPlan != null ? Math.max(0, cyPlan - recibido) : null,
+    pct: cyPlan ? Math.min(100, recibido / cyPlan * 100) : null,
     losasPlan, losasDone, losasPlanEstim, rango: L.rango, losasFuera: L.fuera,
     losasPct: losasPlan ? Math.min(100, losasDone / losasPlan * 100) : null,
     waiting, waitingCY: waiting.reduce((a, t) => a + (num(t.vol) || 0), 0),
