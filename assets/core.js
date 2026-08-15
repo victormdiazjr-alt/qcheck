@@ -655,7 +655,26 @@ function logoDeParte(parte) {
    que por aquí no cuela. */
 function esTelefono() {
   const ua = navigator.userAgent || "";
-  return /iPhone|iPod/.test(ua) || (/Android/.test(ua) && /Mobile/.test(ua));
+  /* UN IPAD NO ES UN TELÉFONO AUNQUE LO DIGA — Q-112, 15 ago 2026.
+
+     Víctor: «haz que en iPad se vea el Control Center con todos los botones que
+     se ven en PC».
+
+     Esto miraba solo el nombre del navegador, y el nombre miente: Safari del
+     iPad tiene «Solicitar sitio web para móvil», y con eso se anuncia como un
+     iPhone. Un iPad así caía en el portal de cuatro puertas en vez de en el
+     Control Center — con la pantalla de sobra para enseñarlo entero.
+
+     > Cuando el nombre y la medida no coinciden, manda la medida.
+
+     Así que además del nombre se mira el lado corto de la pantalla. Un teléfono
+     de verdad no pasa de unos 500 puntos ni girándolo; un iPad empieza en 744.
+     Se usa `screen` y no la ventana, porque una ventana pequeña en un iPad
+     sigue siendo un iPad. */
+  const esNombreDeTelefono = /iPhone|iPod/.test(ua) || (/Android/.test(ua) && /Mobile/.test(ua));
+  if (!esNombreDeTelefono) return false;
+  const lado = Math.min(screen.width || 0, screen.height || 0);
+  return lado === 0 || lado < 600;
 }
 
 /* PANTALLA COMPLETA AL TOCAR: SE QUITA — Q-106, 14 ago 2026.

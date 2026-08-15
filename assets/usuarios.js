@@ -66,7 +66,12 @@ const QC_CUENTAS = {
      del expediente son actos del ingeniero de récord, y eso es Rubén en
      persona, no su puesto (DECISIONS §22). Tampoco `config`, que es la sala de
      máquinas. */
-  tecnico:  { rol: "qc",       nombre: "Técnico de campo", limites: true },
+  /* Q-112: `tablero` también, como los demás técnicos. Era la única cuenta de
+     control de calidad que caía en el portal de cuatro puertas, y desde un iPad
+     eso es enseñar un resumen con la pantalla de sobra para el Control Center
+     entero. Una capacidad que llevan cinco de seis cuentas del mismo oficio no
+     es una decisión: es la que se olvidó. */
+  tecnico:  { rol: "qc",       nombre: "Técnico de campo", limites: true, tablero: true },
 
   /* EL EQUIPO DE RUBÉN — Q-63, 10 de agosto de 2026.
 
