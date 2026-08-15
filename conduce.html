@@ -799,6 +799,12 @@ let ordenadasLeidas = null;
    comparar con el papel. `null` = de esta llegada no se leyó ninguna foto. */
 let leidoDeLaFoto = null;
 let lecturaRevisada = false;
+/* Lo que la foto leyó DISTINTO de lo que ya había escrito en la casilla — el
+   único caso que todavía frena al registrar (Q-119). Cada entrada es
+   `{id, papel}`: si el técnico deja la casilla como estaba, se le pregunta una
+   vez; si la cambia para que cuadre con el papel, deja de haber conflicto solo
+   y no se le pregunta nada. */
+let conflictoLectura = [];
 
 /* El lector PROPONE. Nunca guarda.
 
@@ -860,7 +866,7 @@ async function leerDeLaFoto(dataUrl) {
   }
 
   const c = d.campos || {};
-  leidoDeLaFoto = {}; lecturaRevisada = false;
+  leidoDeLaFoto = {}; lecturaRevisada = false; conflictoLectura = [];
   ordenadasLeidas = (c.ordenadas != null && c.ordenadas !== "") ? Number(c.ordenadas) : null;
   /* El suministrador que trae impreso el papel manda sobre el que se deduce de
      la planta — D-103. Esta es la vía por la que entraron los seis camiones del
@@ -925,12 +931,16 @@ async function leerDeLaFoto(dataUrl) {
           enConflicto.map((x) => `${x.nombre} (papel ${x.papel}, aquí ${x.mio})`).join("; ") +
           ". No he tocado lo tuyo. Mira el papel y decide."
     : trozos.length
-        ? trozos.join(", ") + ". Al dar a Registrar te los enseño para compararlos con el papel."
+        ? trozos.join(", ") + ". Compruébalos con el papel y dale a Registrar."
     /* Solo AQUÍ es verdad que no se leyó nada: la foto no trajo un solo campo. */
         : "No se pudo leer ningún campo con seguridad. Entra los datos a mano.";
   /* El conflicto se mira, no se cuenta como revisado: al registrar vuelve a
      salir la lista entera para compararla con el papel. */
-  if (enConflicto.length) { leidoDeLaFoto = leidoDeLaFoto || {}; enConflicto.forEach((x) => { leidoDeLaFoto[x.id] = x.papel; }); }
+  if (enConflicto.length) {
+    leidoDeLaFoto = leidoDeLaFoto || {};
+    enConflicto.forEach((x) => { leidoDeLaFoto[x.id] = x.papel; });
+    conflictoLectura = enConflicto.map((x) => ({ id: x.id, papel: x.papel }));
+  }
 
   avisarDeLoEscritoAMano(c);
 }
@@ -1079,9 +1089,34 @@ function saveArrival() {
      comparación con el papel sea de la fila completa y no de lo que quedó sin
      tocar. Nada de `confirm()`: en un iPad esa caja sale pegada arriba, con el
      teclado abierto por delante, y se contesta que sí sin leerla. */
-  if (leidoDeLaFoto && !lecturaRevisada) {
+  /* REGISTRAR REGISTRA — Q-119, 16 ago 2026.
+
+     Víctor: «si la lectura la hace bien que la escriba en los campos y al
+     presionar registrar quede registrado.»
+
+     Ayer la revisión de lo leído (Q-117) salía SIEMPRE que hubiera habido foto,
+     y eso son dos toques para el caso normal, que es el que pasa veinte veces
+     en un tiro. Cuando el lector acierta no hay nada que decidir: los números
+     están en las casillas, a la vista, y el técnico tiene el papel en la mano
+     mientras los mira. Pedirle que confirme lo que ya está viendo no añade una
+     comprobación — añade un toque que se hace sin mirar, y un paso que se
+     contesta sin leer es peor que no tenerlo, porque parece que hubo revisión.
+
+     Queda un solo caso en que sí se para: cuando la casilla dice una cosa y el
+     papel dice otra (Q-118). Ahí no es que el lector acierte o falle — es que
+     los dos datos no pueden ser ciertos a la vez, y el que decide es el
+     técnico con el papel delante. Y se resuelve solo: si corrige la casilla
+     para que cuadre con el papel, ya no hay conflicto y registra de una.
+
+     > Un paso de más en lo que sale bien se paga veinte veces por tiro. Un paso
+     > de más en lo que sale mal se paga una, y evita un dato falso. */
+  const sigueEnConflicto = conflictoLectura.filter((x) => {
+    const el = document.getElementById(x.id);
+    return el && String(el.value).trim() !== String(x.papel).trim();
+  });
+  if (sigueEnConflicto.length && !lecturaRevisada) {
     const caja = document.getElementById("revisar-lectura");
-    const filas = CAMPOS_LEIDOS.map(([, id]) => {
+    const filas = sigueEnConflicto.map(({ id }) => {
       const el = document.getElementById(id);
       if (!el) return "";
       const et = el.closest(".field").querySelector("label");
@@ -1098,13 +1133,13 @@ function saveArrival() {
                 : `<span class="rl-v vacio">en blanco</span>`) + `</div>`;
     }).join("");
     caja.innerHTML =
-      `<h4>Compara con el papel antes de registrar</h4>` +
-      `<div class="rl-sub">Esto es lo que va a quedar guardado del conduce.</div>` +
+      `<h4>Esto no cuadra con la foto del conduce</h4>` +
+      `<div class="rl-sub">Mira el papel. Si lo de la casilla es lo correcto, registra.</div>` +
       filas +
       `<div class="rl-btns">` +
         `<button class="btn primary" onclick="lecturaRevisada = true; saveArrival()">` +
-          `\u2714 Est\u00e1 bien \u2014 registrar</button>` +
-        `<button class="btn" onclick="cerrarRevision()">\u2715 Corregir</button>` +
+          `\u2714 Lo de la casilla es lo bueno \u2014 registrar</button>` +
+        `<button class="btn" onclick="cerrarRevision()">\u2715 Voy a corregirlo</button>` +
       `</div>`;
     caja.style.display = "block";
     caja.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1333,7 +1368,12 @@ function saveArrival() {
   fichaPlant = null;
   ordenadasLeidas = null;
   leidoDeLaFoto = null;          // Q-117: el camión siguiente empieza sin lectura
+  conflictoLectura = [];
   cerrarRevision();
+  /* Y el aviso de la lectura se va con el camión que lo produjo — Q-119. Un
+     «OJO, la foto dice otra cosa» que se queda en pantalla después de haber
+     registrado se lee como si fuera del camión siguiente. */
+  { const a = document.getElementById("aviso-lectura"); if (a) { a.textContent = ""; a.style.display = "none"; } }
   document.getElementById("photo-slot").innerHTML = "";
   ["f-ticket", "f-truck", "f-ident", "f-batch", "f-arrive", "f-mix"].forEach((id) => document.getElementById(id).value = "");
   pistaReparto();   // el camión siguiente empieza sin la pista del anterior

@@ -26,8 +26,11 @@ di(/No he tocado lo tuyo\. Mira el papel y decide/.test(html), "sin pisarlo, y d
 di(/Solo AQUÍ es verdad que no se leyó nada/.test(html), "y el «no se pudo leer», solo cuando es verdad");
 
 console.log("\nEL CONFLICTO LLEGA HASTA LA REVISIÓN DE REGISTRAR");
-di(/enConflicto\.forEach\(\(x\) => \{ leidoDeLaFoto\[x\.id\] = x\.papel; \}\)/.test(html),
-   "lo que decía el papel se guarda para enseñarlo");
+di(/conflictoLectura = enConflicto\.map/.test(html), "lo que decía el papel se guarda para enseñarlo");
+/* Q-119: y se resuelve solo. Si el técnico pone en la casilla lo que dice el
+   papel, deja de haber conflicto sin que nadie tenga que descartarlo a mano. */
+di(/String\(el\.value\)\.trim\(\) !== String\(x\.papel\)\.trim\(\)/.test(html),
+   "y deja de estorbar en cuanto la casilla cuadra con el papel");
 di(/` · la foto decía \$\{esc\(dePapel\)\}`/.test(html), "y el panel dice qué decía la foto, no solo que cambió");
 
 console.log(fallos ? `\n  ${fallos} FALLO(S)\n` : "\n  sin fallos\n");

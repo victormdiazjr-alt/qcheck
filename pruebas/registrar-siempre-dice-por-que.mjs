@@ -38,8 +38,11 @@ di(/No se registró: falta el número de conduce o el del camión/.test(html), "
 /* Q-117: lo leído ya no se acepta con un `confirm()` del navegador — se enseña
    entero en la pantalla al dar a Registrar, y hasta que no se diga que está
    bien no se guarda nada. */
-di(/if \(leidoDeLaFoto && !lecturaRevisada\)/.test(html), "la revisión salta al registrar, no antes");
-di(/Compara con el papel antes de registrar/.test(html), "y dice contra qué se compara");
+/* Q-119: y solo cuando hay algo que decidir. Si el lector acertó, Registrar
+   registra y ya está — el paso de confirmación se pagaba veinte veces por tiro
+   y se contestaba sin mirar. */
+di(/if \(sigueEnConflicto\.length && !lecturaRevisada\)/.test(html), "solo frena si el papel contradice a la casilla");
+di(/Esto no cuadra con la foto del conduce/.test(html), "y dice exactamente qué no cuadra");
 di(/function cerrarRevision\(\)/.test(html) && /onclick="cerrarRevision\(\)"/.test(html),
    "con salida para corregir sin perder lo escrito");
 di(!/confirm\(`Estos datos los leyó el sistema/.test(html), "y sin el confirm() del navegador");
