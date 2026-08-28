@@ -309,8 +309,8 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/sync.js?v=42223427"></script>
-<script src="assets/core.js?v=80eaa9d8"></script>
+<script src="assets/sync.js?v=6c4808e8"></script>
+<script src="assets/core.js?v=1b8c1e5e"></script>
 <!-- Q-89: las tablas de la SP-934. Desde aquí se CREA un tiro, y un tiro de
      la 934 pregunta su clase y su ventana de aceptacion al nacer. Sin esto,
      `formSP934()` reventaba en silencio dentro del `setTimeout` y la pregunta
@@ -741,7 +741,10 @@ function render() {
      hay vaciado abierto y cuándo fue el último; eso es lo que hay que saber.
 
      `days` no cambia: la lista de días sigue entera para elegir a mano. */
-  const day = hayTiroActivo() ? diaActivo() : todayISO();
+  /* Q-98: si hay un tiro abierto —sea de hoy o de un dia que quedo sin
+     cerrar— es ESE el que hay que estar mirando. Sin ninguno abierto, el dia
+     por defecto; `todayISO()` a pelo dejaba la pantalla en un dia vacio. */
+  const day = hayTiroActivo() ? tiroActivo() : diaPorDefecto();
   state.day = day;
   const rows = testsOfDate(day);
   const prog = dayProgress(day);
@@ -872,7 +875,9 @@ function render() {
            la casilla sigue enseñando el avance, el acto no sirve de nada. -->
       ${hayTiroActivo(day) ? `
       <a class="w" href="results.html#daily">
-        <div class="lbl">${day === todayISO() ? "Vaciado de hoy" : "Último vaciado · " + esc(fmtDate(day))}</div>
+        <div class="lbl">${day === todayISO() ? "Vaciado de hoy"
+             : hayTiroActivo(day) ? "Tiro del " + esc(fmtDate(day))
+             : "Último vaciado · " + esc(fmtDate(day))}</div>
         <div class="big">${fmt(prog.placed, 1)} <span style="font-size:14px">CY</span></div>
         <div class="sub">${prog.loads} camiones${prog.rejected ? " · " + prog.rejected + " rechazado(s)" : ""}</div>
       </a>` : `

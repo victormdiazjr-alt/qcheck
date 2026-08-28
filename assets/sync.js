@@ -232,13 +232,33 @@ function qcAplicarOp(o) {
    de `id` menor se queda con el número y el otro coge el siguiente libre.
    Todos los aparatos aplican la misma regla sobre las mismas líneas, así
    que todos llegan al mismo reparto. */
+/* UN ENSAYO RETIRADO NO OCUPA NÚMERO — Q-99, 28 ago 2026.
+
+   Esto repartía números entre TODOS los ensayos, vivos y retirados por igual.
+   Con el expediente limpio —donde cada camión bueno tiene detrás su versión
+   vieja descartada— el retirado le ganaba el número al vivo y lo empujaba al
+   final de la cuenta: el camión 452 del tiro del 22 de agosto salía como
+   ensayo 4909. Y ese número es el que va al informe y el que tiene que cuadrar
+   con el Control Chart.
+
+   Dos reglas, y las dos dicen lo mismo: **el que cuenta es el que está vivo.**
+   Los vivos reparten primero y se quedan con su número; los retirados van
+   detrás y ceden. Y el techo de la cuenta sale solo de los vivos, para que el
+   camión siguiente sea el 466 y no el 4906.
+
+   El reparto sigue siendo el mismo en todos los aparatos —mismas líneas, mismo
+   orden, misma regla—, así que todos llegan al mismo resultado sin
+   preguntárselo a nadie. */
 function qcReconciliarN() {
   const porN = new Map();
   let mayor = 0;
   for (const t of db.tests) {
-    if (t.n != null && t.n > mayor) mayor = t.n;
+    if (!t.borrado && t.n != null && t.n > mayor) mayor = t.n;
   }
-  for (const t of [...db.tests].sort((a, b) => String(a.id) < String(b.id) ? -1 : 1)) {
+  const vive = (t) => (t && t.borrado) ? 1 : 0;
+  for (const t of [...db.tests].sort((a, b) =>
+        vive(a) !== vive(b) ? vive(a) - vive(b)
+      : String(a.id) < String(b.id) ? -1 : 1)) {
     if (t.n == null) { t.n = ++mayor; continue; }
     const duena = porN.get(t.n);
     if (duena && duena !== t) t.n = ++mayor;

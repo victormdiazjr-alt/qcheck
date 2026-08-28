@@ -930,9 +930,25 @@ function pintarConexion() {
 
    `hayTiroActivo` sustituye a `tiroReciente`, y el nombre importa: uno decía
    «hace poco» y el otro dice lo que de verdad se está preguntando. */
+/* HAY TIRO ABIERTO CUANDO HAY TIRO ABIERTO — Q-98, 28 ago 2026.
+
+   Esto exigía `dia === todayISO()`: un vaciado seguía abierto, con camiones
+   dentro y uno esperando muestras, y en cuanto pasaba la medianoche el
+   programa contestaba que no había ninguno. Recepción se negaba a recibir y
+   el Control Center presidía con «0 CY · sin comenzar».
+
+   No es un caso raro: un tiro que empieza a las seis y se alarga, o el lunes
+   por la mañana con el del sábado sin cerrar. La pregunta correcta no es «¿es
+   de hoy?» sino «¿está abierto?», y quién es el abierto ya lo sabe
+   `tiroActivo()` — que además respeta que el de hoy manda cuando hoy hay uno.
+
+   Se sigue pudiendo preguntar por un día concreto: si ese día no es el tiro
+   abierto, la respuesta es no. */
 function hayTiroActivo(d) {
-  const dia = d || diaActivo();
-  if (!dia || dia !== todayISO()) return false;
+  const abierto = tiroActivo();
+  if (!abierto) return false;
+  const dia = d || abierto;
+  if (dia !== abierto) return false;
   return !tiroCerrado(dia);
 }
 
@@ -1025,7 +1041,7 @@ function pintarTiro(day) {
      restaba por un botón que nadie pulsa, y ahora habría avisado por lo
      mismo. **El botón no es el problema: dar por hecho que se pulsa, sí.** */
   el.innerHTML = `
-    <span class="qcs-lb">${esHoy ? "Tiro" : "Último tiro"}</span>
+    <span class="qcs-lb">${esHoy || hayTiroActivo(d) ? "Tiro" : "Último tiro"}</span>
     ${esHoy ? "" : `<span class="qcs-fecha">${esc(fmtDate(d))}</span>`}
     <span class="qcs-seg">${segs}</span>
     <span class="qcs-cy">${fmt(avance, 1)}${hayPlan ? ` / ${fmt(p.cyPlan, 0)}` : ""} <b>cy</b></span>
@@ -1462,6 +1478,22 @@ function diasDelProyecto() {
      · un tiro futuro se ve eligiéndolo, no solo. */
 function diaPorDefecto() {
   const hoy = todayISO();
+  /* UN TIRO ABIERTO MANDA SOBRE EL CALENDARIO — Q-98, 28 ago 2026.
+
+     Visto montando el tiro del sábado 22: el vaciado estaba abierto, con
+     cuatro camiones dentro y el cuarto esperando muestras, y el Control
+     Center presidía con «0 CY · sin comenzar» — porque hoy es día 28 y hoy
+     tenía ficha de día, aunque esa ficha no tuviera ni plan ni un camión.
+
+     Es el mismo error que Víctor señaló el 12 de agosto con otra cara: la
+     pantalla enseñaba un día que no era el que se estaba trabajando. Si hay
+     un tiro abierto, ESE es el día que hay que estar mirando — un vaciado sin
+     cerrar no es historia, es lo que está pasando. `tiroActivo()` ya sabe
+     cuál es y ya respeta que el de hoy manda cuando hoy hay tiro; aquí solo
+     faltaba preguntárselo. */
+  const abierto = (typeof tiroActivo === "function") ? tiroActivo() : null;
+  if (abierto) return abierto;
+
   /* Un día que el propio programa señala como fantasma —plan, ni un camión, y
      ya pasado— no puede ser la pantalla de arranque. Se ve en su aviso y se
      alcanza eligiéndolo; presidir el Control Center con «0 / 260 CY» de un
@@ -2202,7 +2234,12 @@ function estadoTiro(day) {
      ninguno». La cabecera entera cambia con esto, no solo la etiqueta. */
   /* Q-104: cualquier día que no sea hoy es «no hay tiro», con esas palabras.
      El de ayer se mira en Results y en el informe, no aquí. */
-  if (day !== todayISO())
+  /* Q-98, 28 ago 2026: «cualquier día que no sea hoy» daba por historia un
+     tiro que seguía ABIERTO, con un camión esperando muestras dentro. Un
+     vaciado sin cerrar no es el vaciado de ayer: es el que se está
+     trabajando, aunque el reloj haya pasado de medianoche. Si sigue abierto,
+     se cae hasta abajo y se dice lo que de verdad está pasando. */
+  if (day !== todayISO() && !hayTiroActivo(day))
     return { cls: "quieto", icono: "raya", txt: "Ready para Tirar", listo: true };
 
   if (cerradoA) return { cls: "fin", icono: "check", txt: `Tiro cerrado · ${cerradoA}` };
