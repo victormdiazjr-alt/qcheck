@@ -11,7 +11,30 @@ name = "qcheck-api"
 main = "sync-worker.js"
 compatibility_date = "2026-01-01"
 
+# EL ENLACE DE SIEMPRE SIGUE VIVO - Q-103, 28 ago 2026.
+#
+# Anadir un dominio propio apaga el enlace de workers.dev por omision. Los
+# aparatos que ya estan en obra lo llevan guardado dentro: apagarlo los deja
+# sin senal en mitad de un tiro, sin que nadie toque nada. Se enciende a mano
+# y queda escrito por que.
+workers_dev = true
+
 [[d1_databases]]
 binding = "DB"
 database_name = "qcheck"
 database_id = "506c7a22-b75c-427a-8448-42b2a6aa1d7a"
+
+# LA APP Y SU SERVIDOR, EN EL MISMO SITIO — Q-103, 28 ago 2026.
+#
+# QCheck vive oficialmente en qterapr.com. El worker atiende `/api/*` y todo
+# lo demás son los archivos de `publico/`: el aparato que abre el enlace ya
+# está conectado, sin llaves ni pasos previos. Mañana se estrenan varios
+# aparatos en obra y cada paso de menos es un fallo de menos.
+[assets]
+directory = "./publico"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[routes]]
+pattern = "qterapr.com"
+custom_domain = true

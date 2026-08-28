@@ -55,7 +55,22 @@ function qcAparato() {
   }
   return d;
 }
-function qcApiURL() { return (localStorage.getItem(QC_API_URL) || "").replace(/\/+$/, ""); }
+/* DÓNDE VIVE EL SERVIDOR — Q-103, 28 ago 2026.
+
+   En qterapr.com la app y el servidor son el mismo sitio: un aparato nuevo
+   abre el enlace, entra con su cuenta y ya está sincronizando. Mañana se
+   estrenan varios aparatos en obra a la vez, y cada paso que se le pida a
+   alguien con las manos sucias es un paso que se hace mal o no se hace.
+
+   En GitHub Pages no vale: allí la app es solo el papel y el servidor está en
+   otra parte, así que se sigue pidiendo la llave por Conectar, como siempre.
+   Y desde un archivo suelto, tampoco: no hay servidor al que apuntar. */
+function qcApiURL() {
+  const puesto = (localStorage.getItem(QC_API_URL) || "").replace(/\/+$/, "");
+  if (puesto) return puesto;
+  if (location.protocol === "file:" || location.hostname.endsWith("github.io")) return "";
+  return location.origin;
+}
 function qcApiToken() { return localStorage.getItem(QC_API_TOKEN) || ""; }
 function qcSyncActivo() { return !!qcApiURL(); }
 

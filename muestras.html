@@ -490,7 +490,7 @@ footer .spacer { flex: 1; }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/sync.js?v=6c4808e8"></script>
+<script src="assets/sync.js?v=775254cd"></script>
 <script src="assets/core.js?v=24563ffa"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
@@ -774,7 +774,22 @@ function clearField() { snd.clear(); /* Q-91: borrar es un acto y se apunta, par
 /* Limpia los cuatro resultados de este camión */
 function clearAll() {
   snd.clear();
-  state.buf = {}; state._typing = null; state._str = ""; state.field = "slump"; state.borrados = new Set();
+  state.buf = {}; state._typing = null; state._str = ""; state.field = "slump";
+  /* BORRAR LOS CUATRO TAMBIÉN ES UN ACTO — Q-101, 28 ago 2026.
+
+     Esto ponía `state.borrados` a CERO justo antes de guardar, así que el
+     guardado automático —que solo escribe el hueco de lo que se apuntó como
+     borrado a propósito (Q-91)— no escribía nada. El borrado se quedaba en
+     este aparato y no salía de él.
+
+     Se vio con el proyector delante: el técnico borró la lectura en el iPad y
+     el Field Display siguió cantando **RECHAZADO** con el slump que acababa de
+     desaparecer de la pantalla del que lo midió. Un veredicto que sigue en el
+     aire cuando el dato que lo sostenía ya no existe.
+
+     Los cuatro se apuntan, uno por uno, igual que hace el botón de borrar de
+     un campo suelto. */
+  state.borrados = new Set(["slump", "uw", "air", "temp"]);
   guardarParcial();          // borrar también es un cambio que hay que guardar
   render();
   toast("Resultados borrados");

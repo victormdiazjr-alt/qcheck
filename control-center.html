@@ -187,6 +187,18 @@
 .losas .lz-fila { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .losas .lz-tira { display: flex; gap: 7px; margin-top: 8px; overflow-x: auto;
   -webkit-overflow-scrolling: touch; padding-bottom: 5px; scrollbar-width: thin; }
+/* TODAS LAS LOSAS A LA VISTA CUANDO HAY SITIO — Q-102, 28 ago 2026.
+
+   La tira se desplazaba en horizontal siempre. En un teléfono está bien: no
+   hay ancho y se arrastra con el dedo. En una pantalla grande no: con nueve
+   losas, la novena quedaba cortada por el borde y **parecía que el tiro tenía
+   ocho**. Se vio en una captura para enseñar el vaciado del sábado.
+
+   Una losa que existe y no se ve es una losa que no está. Con ancho de sobra
+   se envuelven a la línea siguiente; sin él, se sigue arrastrando. */
+@media (min-width: 900px) {
+  .losas .lz-tira { flex-wrap: wrap; overflow-x: visible; }
+}
 .losas .lz { flex: none; min-width: 104px; padding: 7px 10px 8px; border-radius: 11px;
   border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.045); }
 .losas .lz-c { font-size: 11.5px; font-weight: 800; letter-spacing: .02em;
@@ -309,7 +321,7 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/sync.js?v=6c4808e8"></script>
+<script src="assets/sync.js?v=775254cd"></script>
 <script src="assets/core.js?v=24563ffa"></script>
 <!-- Q-89: las tablas de la SP-934. Desde aquí se CREA un tiro, y un tiro de
      la 934 pregunta su clase y su ventana de aceptacion al nacer. Sin esto,

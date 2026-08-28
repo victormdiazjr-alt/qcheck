@@ -174,7 +174,14 @@ const elEstado = document.getElementById("estado");
    enlace sin llave y la pantalla salía en blanco pidiendo datos. Con el
    servidor puesto de fábrica, el enlace lleva un solo parámetro y no hay nada
    que partir. Sigue pudiéndose escribir otro a mano. Q-54, 7 ago 2026. */
-const SERVIDOR_DEL_PROYECTO = "https://qcheck-api.qcheck.workers.dev";
+/* Q-103, 28 ago 2026: desde que QCheck vive en qterapr.com, el servidor del
+   proyecto es EL SITIO DONDE ESTA ESTA PAGINA. Asi el enlace de conexion lleva
+   un solo dato -la llave- y el aparato queda listo de una vez. En GitHub Pages
+   no hay servidor detras, y ahi se sigue apuntando al de siempre. */
+const SERVIDOR_DEL_PROYECTO =
+  (location.protocol !== "file:" && !location.hostname.endsWith("github.io"))
+    ? location.origin
+    : "https://qcheck-api.qcheck.workers.dev";
 elSrv.value = (par.get("api") || localStorage.getItem("qc-api") || SERVIDOR_DEL_PROYECTO).replace(/\/+$/, "");
 elKey.value = par.get("llave") || par.get("k") || localStorage.getItem("qc-token") || "";
 elDev.value = localStorage.getItem("qc-dev") || "";

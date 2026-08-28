@@ -11,3 +11,4 @@ datos/
 
 # Caché de wrangler (Cloudflare)
 .wrangler/
+publico/
