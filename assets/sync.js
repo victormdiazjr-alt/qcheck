@@ -467,6 +467,11 @@ const QCSync = {
         for (const o of r.ops) qcAplicarOp(o);
         qcReconciliarN();
         this._guardarSeq(r.ops[r.ops.length - 1].seq);
+        /* Q-110: por donde va el servidor, para que la pantalla de carga pueda
+           enseñar cuanto falta DE VERDAD en vez de una barra que se llena sola.
+           Una barra que finge es peor que ninguna: cuando algo se atasca, sigue
+           llenandose igual y nadie se entera. */
+        if (r.seq != null) localStorage.setItem("qc-sync-tope", String(r.seq));
         /* La base se actualiza ANTES de guardar: si no, lo que acaba de
            llegar de fuera se leería como un cambio nuestro y volvería a
            subir en un bucle. */

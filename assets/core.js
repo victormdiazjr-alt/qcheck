@@ -4619,16 +4619,36 @@ function tapaDeCarga() {
   const capa = document.createElement("div");
   capa.id = QCS_CARGA;
   capa.innerHTML = `
-    <svg viewBox="0 0 713.95 855" aria-hidden="true">
-      <path fill="var(--logo-blue, #4a7ef0)" fill-rule="evenodd" d="M377,0h-.1C190.82.03,39.98,150.87,39.95,336.95c-.01,52.38,11.94,101.98,33.26,146.21,20.24,41.99,48.94,79.15,83.89,109.26,1.49,1.28,2.99,2.56,4.51,3.81,13.53,11.26,27.96,21.47,43.16,30.51,8.69-1.93,18.15-.12,25.74,5.77,2.05,1.59,3.9,3.44,5.49,5.49l44-36c-3.38-4.07-7.07-7.74-10.99-11.01l63.57-32.37c-28.6-5.7-55.25-16.8-78.85-32.21-61.81-40.31-102.66-110.06-102.68-189.36-.03-124.82,101.13-226.02,225.95-226.05h.1c124.78.03,225.92,101.17,225.95,225.95.03,105.88-72.77,194.77-171.05,219.31v.74l-177.07,94.22c25.93,10.08,53.41,17.04,82,20.42l95.07-53.64v49l-6.22,3.48c2.08-.29,4.15-.61,6.22-.96,3.83-.62,7.65-1.32,11.44-2.08,50.02-10.01,96.05-31.09,135.41-60.59,82.01-61.46,135.08-159.43,135.1-269.8C713.98,150.93,563.12.03,377,0Z"/>
-      <polygon fill="var(--logo-blue, #4a7ef0)" points="690 718 592 816 432 656 432 644 524 552 578.85 606.85 690 718">
-        <animateTransform attributeName="transform" type="rotate"
-          from="0 377 337" to="360 377 337" dur="1.5s" repeatCount="indefinite"/>
-      </polygon>
-    </svg>
+    <div class="qc-carga-marca"><svg viewBox="0 0 713.95 855">
+  <path class="st0" d="M377,0h-.1C190.82.03,39.98,150.87,39.95,336.95c-.01,52.38,11.94,101.98,33.26,146.21,20.24,41.99,48.94,79.15,83.89,109.26,1.49,1.28,2.99,2.56,4.51,3.81,13.53,11.26,27.96,21.47,43.16,30.51,8.69-1.93,18.15-.12,25.74,5.77,2.05,1.59,3.9,3.44,5.49,5.49l44-36c-3.38-4.07-7.07-7.74-10.99-11.01l63.57-32.37c-28.6-5.7-55.25-16.8-78.85-32.21-61.81-40.31-102.66-110.06-102.68-189.36-.03-124.82,101.13-226.02,225.95-226.05h.1c124.78.03,225.92,101.17,225.95,225.95.03,105.88-72.77,194.77-171.05,219.31v.74l-177.07,94.22c25.93,10.08,53.41,17.04,82,20.42l95.07-53.64v49l-6.22,3.48c2.08-.29,4.15-.61,6.22-.96,3.83-.62,7.65-1.32,11.44-2.08,50.02-10.01,96.05-31.09,135.41-60.59,82.01-61.46,135.08-159.43,135.1-269.8C713.98,150.93,563.12.03,377,0Z"/>
+  <polygon class="st1" points="690 718 592 816 432 656 432 644 524 552 578.85 606.85 690 718"/>
+  <polygon class="st5" points="432 443 432 508 332.58 558.62 269.01 590.99 214 619 161.61 596.23 155.72 593.67 0 526 0 451 73.21 483.16 214 545 253.73 526.41 432 443"/>
+  <path class="st2" d="M280,602l-44,36c-1.59-2.05-3.44-3.9-5.49-5.49-7.59-5.89-17.05-7.7-25.74-5.77-6.81,1.51-13.15,5.31-17.76,11.26-4.67,6.03-6.78,13.23-6.47,20.3l-50.13-22.02c3.94-15.91,12.44-30.82,25.31-42.61l5.89,2.56,52.39,22.77,55.01-28.01c3.92,3.27,7.61,6.94,10.99,11.01Z"/>
+  <polygon class="st3" points="432 557 432 618 336.93 671.64 274.04 707.12 214 741 145.3 708.9 0 641 0 579 130.41 636.28 180.54 658.3 214 673 254.93 651.22 432 557"/>
+  <path class="st2" d="M274.04,707.12l5.96,4.88c-3.36,4.04-7.08,7.76-11.11,11.11-36.52,30.38-90.74,25.4-121.12-11.11-.85-1.02-1.67-2.05-2.47-3.1l68.7,32.1,60.04-33.88Z"/>
+  <polygon class="st4" points="432 667 432 732 214 855 0 753 0 692 214 789 425.78 670.48 432 667"/>
+  <path class="st1" d="M274.04,707.12l5.96,4.88c-3.36,4.04-7.08,7.76-11.11,11.11-36.52,30.38-90.74,25.4-121.12-11.11-.85-1.02-1.67-2.05-2.47-3.1-16.2-21.39-20.93-48.17-14.89-72.62,3.94-15.91,12.44-30.82,25.31-42.61.45-.43.91-.84,1.38-1.25.59-.52,1.18-1.03,1.79-1.53,32.44-27,78.87-26.07,110.12.1,3.92,3.27,7.61,6.94,10.99,11.01l-44,36c-1.59-2.05-3.44-3.9-5.49-5.49-7.59-5.89-17.05-7.7-25.74-5.77-6.81,1.51-13.15,5.31-17.76,11.26-4.67,6.03-6.78,13.23-6.47,20.3.37,8.79,4.47,17.37,11.97,23.19,13.52,10.5,33,8.04,43.49-5.49l38.04,31.12Z"/>
+</svg></div>
     <b>Loading</b>
-    <span>Trayendo el expediente del servidor</span>`;
+    <div class="qc-carga-riel"><i></i></div>`;
   document.body.appendChild(capa);
+
+  /* LA BARRA DICE CUANTO FALTA DE VERDAD — Q-110, 28 ago 2026.
+
+     Sale de dos numeros que el propio sincronizador deja escritos: por que
+     linea va este aparato y cual es la ultima del servidor. Una barra que se
+     llena sola es peor que ninguna — el dia que algo se atasque seguiria
+     llenandose igual, y quien mire se queda esperando a una pantalla que
+     miente. Mientras no se sepa el tope, se queda quieta en un dedo: hay
+     movimiento en la marca, pero no se afirma cuanto queda. */
+  const riel = capa.querySelector(".qc-carga-riel i");
+  const pintarAvance = () => {
+    const voy = Number(localStorage.getItem("qc-sync-seq") || 0);
+    const tope = Number(localStorage.getItem("qc-sync-tope") || 0);
+    if (!(tope > 0)) { riel.style.width = "6%"; return; }
+    riel.style.width = Math.max(4, Math.min(100, (voy / tope) * 100)).toFixed(1) + "%";
+  };
+  pintarAvance();
 
   const listo = () => {
     if (localStorage.getItem("qc-sync-visto") !== "1") return false;
@@ -4636,7 +4656,7 @@ function tapaDeCarga() {
     setTimeout(() => capa.remove(), 420);
     return true;
   };
-  const reloj = setInterval(() => { if (listo()) clearInterval(reloj); }, 200);
+  const reloj = setInterval(() => { pintarAvance(); if (listo()) clearInterval(reloj); }, 200);
   /* Si la señal esta tan mal que no acaba, la tapa NO se queda para siempre:
      mas vale una pantalla a medias, que se puede leer y avisa arriba de que
      no hay conexion, que una puerta cerrada. */
@@ -4650,19 +4670,33 @@ function inyectarEstilosCarga() {
   e.textContent = `
 #${QCS_CARGA} {
   position: fixed; inset: 0; z-index: 9999;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
   background: var(--bg, #0a0d12);
   opacity: 1; transition: opacity .38s ease;
 }
 #${QCS_CARGA}.fuera { opacity: 0; pointer-events: none; }
-#${QCS_CARGA} svg { width: 92px; height: auto; }
+#${QCS_CARGA} .qc-carga-marca svg { width: 60px; height: auto; display: block; }
+/* El logo trae sus colores dentro; aqui se le dan los del tema. Los blancos
+   del original son recortes: sobre fondo oscuro se verian como astillas, asi
+   que se pintan del color del fondo, sea el que sea. */
+#${QCS_CARGA} .st0, #${QCS_CARGA} .st1 { fill: var(--logo-blue, #4a7ef0); }
+#${QCS_CARGA} .st5 { fill: var(--logo-green, #57c94f); }
+#${QCS_CARGA} .st3 { fill: var(--logo-g1, #8a95a3); }
+#${QCS_CARGA} .st4 { fill: var(--logo-g2, #6b7683); }
+#${QCS_CARGA} .st2 { fill: var(--bg, #0a0d12); }
 #${QCS_CARGA} b {
-  font: 800 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  letter-spacing: .30em; text-transform: uppercase; color: var(--text, #eef2f6);
+  font: 300 11.5px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: .34em; text-transform: uppercase; color: var(--text, #eef2f6);
 }
-#${QCS_CARGA} span {
-  font: 500 12.5px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: var(--muted, #77848f); text-align: center; max-width: 26ch;
+/* La linea de carga, al borde de abajo. Fina y sin brillo: es un dato, no un
+   adorno — la misma regla que el resto de QCheck. */
+#${QCS_CARGA} .qc-carga-riel {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: rgba(127,140,155,.20);
+}
+#${QCS_CARGA} .qc-carga-riel i {
+  position: absolute; inset: 0 auto 0 0; display: block; width: 6%;
+  background: var(--logo-blue, #4a7ef0); transition: width .35s ease;
 }`;
   document.head.appendChild(e);
 }
