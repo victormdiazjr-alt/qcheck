@@ -241,6 +241,20 @@ body { background: var(--bg); }
     </button>
   </div>
 
+  <!-- SIN TIRO ABIERTO NO SE ENSEÑA UN FORMULARIO DE LLEGADA — Q-112, 28 ago 2026.
+       Victor: «por que si no hay tiro abierto en Recepcion pareciera que esta
+       en un tiro abierto». Y tenia razon: la pantalla ofrecia teclear un camion
+       encima del ultimo vaciado, que esta CERRADO Y FIRMADO. El guardado lo
+       paraba —`frenoDiaCerrado`—, pero eso es tarde: uno se entera despues de
+       teclear el camion entero, con el mixer esperando. -->
+  <div class="panel" id="sin-tiro" hidden>
+    <div class="panel-body" style="text-align:center; padding:26px 20px 28px">
+      <div style="font-size:19px; font-weight:750; margin-bottom:6px">No hay ningún tiro abierto</div>
+      <div class="muted" id="sin-tiro-nota" style="font-size:13.5px; max-width:46ch; margin:0 auto 18px"></div>
+      <button class="btn primary" onclick="abrirTiroDesdeRecepcion()">Programar el tiro de hoy</button>
+    </div>
+  </div>
+
   <div class="panel" id="manual-card">
     <div class="panel-head"><h2>Registrar llegada de camión</h2><div class="spacer"></div>
       <span class="badge info" id="next-load">—</span></div>
@@ -1383,6 +1397,13 @@ function sugerirProximo(day) {
   if (pend) document.getElementById("f-ident").placeholder = `ej. ${pend.codigo} \u2014 la losa que toca`;
 }
 
+/* Programar el tiro sin salir de Recepcion. Si el proyecto tiene su propia
+   puerta para esto, se usa esa; si no, el formulario del dia de hoy. */
+function abrirTiroDesdeRecepcion() {
+  if (typeof programarTiro === "function") programarTiro();
+  else if (typeof formDayMeta === "function") formDayMeta(todayISO());
+}
+
 function render() {
   const day = diaActivo();   /* el tiro en marcha, no el calendario — Q-88 */
   /* RECEPCIÓN ENSEÑA EL TIRO DE HOY, VACÍO SI ESTÁ VACÍO — Q-107, 15 ago 2026.
@@ -1414,8 +1435,11 @@ function render() {
      tecleando con un día de retraso, que es exactamente lo que pasó el 13 de
      agosto—. Decir «Vaciado de hoy» encima de un tiro de ayer es la mentira que
      hizo que nadie notara nada. */
+  /* Q-112: y la cabecera tampoco puede llamarlo «el tiro» si esta cerrado.
+     «Tiro del 22 ago» encima de un vaciado firmado se lee como el de ahora. */
+  const _abierto = typeof hayTiroActivo === "function" ? hayTiroActivo(day) : true;
   document.getElementById("hero-day").textContent =
-    shown !== day ? "Último vaciado — " + fmtDate(shown)
+    !_abierto ? "Último tiro — " + fmtDate(shown)
     : shown === todayISO() ? "Vaciado de hoy — " + fmtDate(shown)
     : "Tiro del " + fmtDate(shown);
   /* Q-59: una obra recién abierta todavía no tiene mezcla, y sin esto la
@@ -1431,6 +1455,29 @@ function render() {
   }
   document.getElementById("hero-sub").textContent =
     [db.project.name, db.project.mixId].filter(Boolean).join(" · ");
+
+  /* O HAY TIRO ABIERTO, O NO SE OFRECE RECIBIR — Q-112, 28 de agosto de 2026.
+
+     Sin esto, Recepcion caia en el ultimo vaciado —cerrado y firmado— y
+     enseñaba el formulario de llegada como si estuviera vivo, con su «Camion
+     #18 del tiro» y todo. Guardar no habria dejado, pero uno se entera al
+     final, con el camion delante y las manos sucias.
+
+     Los camiones del tiro se siguen viendo: son la referencia de lo ultimo que
+     paso. Lo que se retira es la INVITACION a escribir. */
+  const abierto = _abierto;
+  const captura = document.querySelector(".capture-row");
+  if (captura) captura.hidden = !abierto;
+  document.getElementById("manual-card").hidden = !abierto;
+  const sinTiro = document.getElementById("sin-tiro");
+  sinTiro.hidden = abierto;
+  if (!abierto) {
+    const u = typeof ultimoTiroProcesado === "function" ? ultimoTiroProcesado() : null;
+    sinTiro.querySelector("#sin-tiro-nota").textContent = u
+      ? `El último fue el ${fmtDate(u.dia)}${u.obra ? " · " + u.obra : ""}, y está cerrado. `
+        + "Un camión tiene que entrar en un tiro abierto: de él saca el día, la obra y los límites."
+      : "Todavía no hay ningún vaciado registrado.";
+  }
   document.getElementById("next-load").textContent = "Camión #" + (testsOfDate(day).length + 1) +
     (day === todayISO() ? " de hoy" : " del tiro");
   document.getElementById("day-tot").textContent = `${rows.length} camiones · ${fmt(cy, 1)} CY`;
