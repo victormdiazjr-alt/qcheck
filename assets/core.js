@@ -249,6 +249,14 @@ function migrarBase(db) {
     for (const m of Object.values(db.dayMeta)) if (m && !m.proyecto) m.proyecto = primera;
   }
 
+  /* Si la obra que quedó abierta es una obra retirada, no se puede seguir
+     mirando por ella: se pasa a la primera viva. Los datos de la retirada
+     siguen donde estaban — lo que cambia es dónde está uno parado. */
+  const viva = obrasVivas();
+  if (viva.length && !viva.some((p) => p.id === db.proyectoActivo)) {
+    abrirProyecto(viva[0].id);
+  }
+
   db.version = 3;
 }
 
@@ -363,6 +371,21 @@ function abrirLaObraDelTiro() {
 function proyectoActivo() { return db.proyectoActivo || "pr-52"; }
 function proyectoDe(x) { return (x && x.proyecto) || "pr-52"; }
 function esDeLaObra(x) { return proyectoDe(x) === proyectoActivo(); }
+
+/* LAS OBRAS QUE SIGUEN VIVAS — Q-97, 28 ago 2026.
+
+   Una obra retirada no se borra: sus ensayos, sus tiros y su plan siguen en el
+   archivo exactamente como estaban, porque son evidencia firmada. Lo que se
+   retira es la OFERTA: deja de aparecer donde se elige sobre qué obra vaciar.
+   Es el mismo criterio que un ensayo retirado (`vivos()`) o un tiro descartado
+   (`borrado` en dayMeta): el expediente no pierde memoria, solo deja de
+   proponer lo que ya no se trabaja.
+
+   Sin id no es una obra: una ficha `{id: null}` colada por sincronización no
+   puede ofrecerse para vaciar dentro de ella. */
+function obrasVivas() {
+  return (db.proyectos || []).filter((p) => p && p.id && !p.borrado);
+}
 
 /* Cambiar de obra. No mueve un solo dato: cambia lo que se está mirando. */
 function abrirProyecto(id) {
@@ -2933,7 +2956,7 @@ function panelSP934(editable) {
    quien lleva el contrato, no de quien está midiendo un camión. */
 function formObras() {
   const hoy = (typeof todayISO === "function") ? todayISO() : "";
-  const lista = (db.proyectos || []).map((p) => {
+  const lista = obrasVivas().map((p) => {
     const n = (db.tests || []).filter((t) => (t.proyecto || "pr-52") === p.id && !t.borrado).length;
     const tiroHoy = Object.entries(db.dayMeta || {})
       .some(([d, m]) => d === hoy && m && (m.proyecto || "pr-52") === p.id);
@@ -4086,8 +4109,7 @@ function formDayMeta(day, borrador) {
       { key: "proyecto", label: "Obra que se vacía", type: "select", full: true, required: true,
         /* Sin id no es una obra: se filtra. Una ficha `{id: null}` colada por
            sincronización no puede ofrecerse para vaciar dentro de ella. */
-        options: (db.proyectos || []).filter((p) => p && p.id)
-          .map((p) => ({ value: p.id, label: p.name || p.id })),
+        options: obrasVivas().map((p) => ({ value: p.id, label: p.name || p.id })),
         hint: "De aquí salen los límites con los que se juzga cada camión, la concretera y sus mezclas." },
       /* LA FECHA, Q-47. Hasta hoy el tiro siempre era el de hoy: no se podía
          dejar programado el de mañana ni corregir el de ayer. Va la primera
