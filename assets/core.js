@@ -372,6 +372,56 @@ function proyectoActivo() { return db.proyectoActivo || "pr-52"; }
 function proyectoDe(x) { return (x && x.proyecto) || "pr-52"; }
 function esDeLaObra(x) { return proyectoDe(x) === proyectoActivo(); }
 
+/* LO QUE SE TIRA EN ESTA OBRA — Q-104, 28 de agosto de 2026.
+
+   Victor: «los tiros de la PR-52 son de losas; solo deben salir vigas si el
+   proyecto tiene vigas».
+
+   El selector de estructura ofrecia siempre las tres. En la PR-52 —una obra de
+   losas de punta a punta— «Vigas» estaba ahi para que alguien la escogiera por
+   error a las seis de la manana, y ese error no se ve luego: cambia las
+   palabras del informe, el conteo de piezas y hasta si el tramo es obligatorio.
+
+   El proyecto YA tenia donde decirlo, en «Estructuras de la obra», y su propio
+   comentario prometia que de ahi salia lo que se ofrece al programar un tiro.
+   La promesa nunca se cumplio. Aqui se cumple.
+
+   Tres escalones, del mas fiable al menos:
+
+     1. lo que la obra DECLARO al crearse,
+     2. si no declaro nada, lo que de verdad ha tirado en su historia,
+     3. y si es nueva y no ha tirado nada, las tres — porque no se sabe aun.
+
+   «Otra estructura» se ofrece siempre. No es una afirmacion sobre la obra: es
+   la salida para lo que no estaba previsto, y quedarse sin ella en obra, con
+   un camion esperando, es peor que ofrecerla de mas. */
+const ESTRUCTURAS = [
+  { value: "losas", label: "Losas" },
+  { value: "vigas", label: "Vigas" },
+  { value: "otra",  label: "Otra estructura" },
+];
+
+function estructurasDeLaObra(obra) {
+  const p = obra || db.project || {};
+  const suyas = new Set();
+
+  for (const linea of String(p.estructuras || "").toLowerCase().split(/[\n,;]+/)) {
+    const e = ESTRUCTURAS.find((x) => linea.trim().startsWith(x.value));
+    if (e) suyas.add(e.value);
+  }
+
+  if (!suyas.size) {
+    const id = p.id || proyectoActivo();
+    for (const m of Object.values(db.dayMeta || {})) {
+      if (m && !m.borrado && (m.proyecto || "pr-52") === id && m.estructura) suyas.add(m.estructura);
+    }
+  }
+
+  if (!suyas.size) return ESTRUCTURAS.slice();
+  suyas.add("otra");
+  return ESTRUCTURAS.filter((e) => suyas.has(e.value));
+}
+
 /* LAS OBRAS QUE SIGUEN VIVAS — Q-97, 28 ago 2026.
 
    Una obra retirada no se borra: sus ensayos, sus tiros y su plan siguen en el
@@ -4204,11 +4254,7 @@ function formDayMeta(day, borrador) {
          Manda lo que se elija aquí: de ella salen las etiquetas de abajo y de
          ella depende que el tramo sea obligatorio o no. */
       { key: "estructura", label: "Estructura", type: "select", half: true,
-        options: [
-          { value: "losas", label: "Losas" },
-          { value: "vigas", label: "Vigas" },
-          { value: "otra",  label: "Otra estructura" },
-        ] },
+        options: estructurasDeLaObra((db.proyectos || []).find((x) => x.id === obraDelTiro)) },
       /* LA PERMEABILIDAD, SOLO BAJO LA 934 — Q-105 ter, 14 ago 2026.
 
          Víctor lo dijo dos veces: «escogí que no es 934 y me está preguntando

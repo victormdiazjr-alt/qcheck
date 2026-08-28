@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Preparando el aparato — QCheck</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="QCheck">
+<link rel="apple-touch-icon" href="assets/icono-180.png">
+<meta name="theme-color" content="#0a0d12">
+<style>
+  html, body { margin: 0; height: 100%; background: #0a0d12; color: #eef2f6;
+               font: 500 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { height: 100%; display: grid; place-content: center; text-align: center; gap: 12px; padding: 24px; }
+  h1 { font-size: 21px; font-weight: 750; margin: 0; letter-spacing: .01em; }
+  p  { margin: 0; color: #77848f; font-size: 14px; max-width: 30ch; }
+  .ok { color: #34d27b; }
+  .mal { color: #ff5a52; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="t">Preparando el aparato…</h1>
+  <p id="s">Un momento.</p>
+</main>
+<script>
+/* ESTRENAR UN APARATO, DE UN SOLO TOQUE — Q-105, 28 de agosto de 2026.
+ *
+ * Mañana entran varios aparatos a la vez en obra. Dos cosas los rompían:
+ *
+ *   · uno recién llegado no tenía la llave del proyecto, así que se quedaba
+ *     mirando la copia de arranque del programa sin bajarse nada;
+ *   · y uno que YA había entrado alguna vez podía traer dentro una copia
+ *     vieja — la sincronización solo TRAE líneas nuevas, nunca vacía lo que
+ *     un aparato ya tiene, así que una copia a medias no se corrige sola.
+ *
+ * Esta página hace las dos: vacía lo guardado y deja puestos el servidor y la
+ * llave. Después, usuario y clave, y a trabajar. Sin menús ni pasos.
+ *
+ * No es una puerta trasera: no entra a ningún sitio. Deja el aparato como
+ * recién sacado de la caja y lo manda a la pantalla de acceso, donde sigue
+ * haciendo falta la cuenta de cada quien.
+ */
+(function () {
+  /* Nada entra al HTML: el texto va como texto y el color va por la clase del
+     propio elemento. Aqui las dos cosas son constantes mias, pero un `innerHTML`
+     con una variable dentro es el patron que hay que no tener — el dia que esa
+     variable venga de fuera, ya es tarde. */
+  const di = (titulo, nota, clase) => {
+    const t = document.getElementById("t");
+    t.textContent = titulo;
+    t.className = clase || "";
+    document.getElementById("s").textContent = nota;
+  };
+  const llave = (new URLSearchParams(location.search).get("k") || "").trim();
+  if (!llave) {
+    di("Falta la llave", "Este enlace tiene que traer la llave del proyecto. Pídesela a Víctor.", "mal");
+    return;
+  }
+  try { localStorage.clear(); } catch (e) {}
+  try { sessionStorage.clear(); } catch (e) {}
+  try {
+    localStorage.setItem("qc-api", location.origin);
+    localStorage.setItem("qc-token", llave);
+  } catch (e) {
+    di("No se pudo guardar", "El navegador está en un modo que no deja guardar nada. Prueba fuera de navegación privada.", "mal");
+    return;
+  }
+  di("Aparato listo", "Entrando…", "ok");
+  setTimeout(function () { location.replace("index.html"); }, 800);
+})();
+</script>
+</body>
+</html>
