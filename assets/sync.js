@@ -351,12 +351,34 @@ const QCSync = {
 
        Nada de esto se perdió —el expediente solo añade y cada valor sigue ahí—,
        pero durante horas lo que se veía encima era un hueco. */
+    /* Y TAMPOCO PUEDE AÑADIR — Q-106, 28 de agosto de 2026.
+     *
+     * Lo de arriba tapaba media gotera. Hoy, preparando la salida a obra,
+     * cuatro aparatos de prueba recien conectados escribieron 4.154 lineas en
+     * el expediente de verdad: 4.072 ensayos que ya existian, subidos otra vez
+     * como si fueran nuevos. Nadie tecleo un solo dato.
+     *
+     * Es el mismo error del 15 de agosto visto por el otro lado. La base de
+     * referencia se estrena con `seed.js`; un aparato que todavia no ha bajado
+     * nada compara ESO con lo suyo y la diferencia se lee como trabajo nuevo.
+     *
+     *   > Un aparato que no ha bajado nada del servidor no sabe que hay en el.
+     *   > Ni puede decir que algo se borro, ni puede decir que algo es nuevo.
+     *
+     * Asi que hasta la primera bajada completa no sube NADA. Son unos segundos
+     * —siete en la prueba de hoy, con el expediente entero—, y la pantalla dice
+     * que esta cargando mientras tanto. Lo que se haga despues sube igual que
+     * siempre, tambien sin señal: `visto` se enciende una vez y para siempre,
+     * asi que un aparato que ya se estreno puede trabajar todo el dia sin
+     * cobertura y subir al volver.
+     *
+     * Manana entran varios aparatos nuevos a la vez. Sin esto, cada uno de
+     * ellos habria vaciado su copia de arranque encima del expediente firmado. */
     if (!localStorage.getItem(QC_SYNC_VISTO)) {
-      const borrados = ops.filter((o) => o.valor === null || o.valor === undefined).length;
-      if (borrados) {
-        ops = ops.filter((o) => o.valor !== null && o.valor !== undefined);
-        try { console.warn(`QCheck: aparato sin estrenar — no se suben ${borrados} borrados`); } catch (_) {}
+      if (ops.length) {
+        try { console.warn(`QCheck: aparato sin estrenar — no se sube nada todavia (${ops.length} cambios en espera del primer bajado)`); } catch (_) {}
       }
+      return;
     }
 
     if (!ops.length) return;

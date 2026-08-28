@@ -13,11 +13,42 @@ function loadDB() {
     const raw = localStorage.getItem(DB_KEY);
     if (raw) { db = JSON.parse(raw); migrateDB(); sembrarDia(); abrirLaObraDelTiro(); return; }
   } catch (e) { console.error(e); }
+  /* UN APARATO CON SERVIDOR ARRANCA VACIO — Q-107, 28 de agosto de 2026.
+   *
+   * Victor: «necesito que cualquiera se pueda loggear de cualquier dispositivo
+   * y no tener problemas de sincronizacion ni de limpiar el dispositivo; nunca
+   * habia tenido estos problemas en otra aplicacion». Tiene razon, y la culpa
+   * era de esta linea.
+   *
+   * QCheck arrancaba CADA aparato con 397 ensayos metidos dentro del propio
+   * programa —el Excel de Segarra de noviembre a julio—. De ahi salian los tres
+   * problemas de hoy, y son el mismo:
+   *
+   *   · un aparato que aun no habia bajado nada ENSEÑABA esa copia, y decia
+   *     «ultimo tiro 18 jul» con el expediente entero en el servidor;
+   *   · al guardar, comparaba esa copia con lo que tenia y subia la diferencia
+   *     COMO SI FUERA TRABAJO NUEVO — hoy, cuatro aparatos de prueba metieron
+   *     4.154 lineas en el expediente de verdad sin que nadie tecleara nada;
+   *   · y una copia a medias no se corregia sola, porque la sincronizacion solo
+   *     trae lineas nuevas y nunca vacia lo que un aparato ya tiene.
+   *
+   * Con servidor, la verdad esta en el servidor y punto: el aparato empieza sin
+   * un solo ensayo y se lo baja todo. Son unos segundos. Asi entrar desde
+   * cualquier aparato es entrar y ya, como en cualquier aplicacion.
+   *
+   * Sin servidor —una copia suelta, un archivo abierto a mano— la semilla
+   * sigue siendo lo unico que hay, y ahi si se usa: mejor enseñar el historico
+   * de Segarra que una pantalla en blanco que no lleva a ninguna parte.
+   *
+   * La ficha de la obra y los limites de fabrica se quedan en los dos casos:
+   * no son datos medidos, son con que arrancar, y la sincronizacion los pisa
+   * con los de verdad en cuanto llegan. */
+  const hayServidor = typeof qcSyncActivo === "function" && qcSyncActivo();
   db = {
     version: 2,
     project: structuredClone(QC_SEED.project),
     plan: structuredClone(QC_SEED.plan),
-    tests: structuredClone(QC_SEED.tests),
+    tests: hayServidor ? [] : structuredClone(QC_SEED.tests),
     dayMeta: {},
     humidity: [],
   };
