@@ -4588,3 +4588,87 @@ function formTest(_ignored, n, opts = {}) {
     },
   });
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LA PANTALLA DE CARGA — Q-109, 28 de agosto de 2026.
+
+   Un aparato recien estrenado tarda un par de segundos en bajarse el
+   expediente, y durante esos segundos enseñaba las pantallas a medias: el
+   Control Center vacio, «0 CY», ningun camion. No estaba roto —estaba
+   cargando—, pero eso no lo sabe quien lo mira, y manana lo van a mirar
+   varios aparatos nuevos a la vez en una obra.
+
+   > Una pantalla que aun no sabe lo que hay no debe afirmar que no hay nada.
+
+   Asi que mientras no ha terminado la primera bajada, se tapa y se dice. Solo
+   la PRIMERA vez de cada aparato: `visto` se enciende una vez y para siempre,
+   asi que a partir de la segunda no vuelve a aparecer.
+
+   El palito diagonal de la Q gira mientras tanto — Victor, 28 ago 2026. Va con
+   `animateTransform` y no con CSS a proposito: es lo que mejor aguanta en el
+   Safari de un iPad viejo, que es donde tiene que funcionar. */
+const QCS_CARGA = "qc-carga";
+
+function tapaDeCarga() {
+  if (document.getElementById(QCS_CARGA)) return;
+  /* Sin servidor no hay nada que esperar, y si el aparato ya se estreno
+     tampoco: lo que tenga guardado ya es bueno. */
+  if (typeof qcSyncActivo !== "function" || !qcSyncActivo()) return;
+  if (localStorage.getItem("qc-sync-visto") === "1") return;
+
+  const capa = document.createElement("div");
+  capa.id = QCS_CARGA;
+  capa.innerHTML = `
+    <svg viewBox="0 0 713.95 855" aria-hidden="true">
+      <path fill="var(--logo-blue, #4a7ef0)" fill-rule="evenodd" d="M377,0h-.1C190.82.03,39.98,150.87,39.95,336.95c-.01,52.38,11.94,101.98,33.26,146.21,20.24,41.99,48.94,79.15,83.89,109.26,1.49,1.28,2.99,2.56,4.51,3.81,13.53,11.26,27.96,21.47,43.16,30.51,8.69-1.93,18.15-.12,25.74,5.77,2.05,1.59,3.9,3.44,5.49,5.49l44-36c-3.38-4.07-7.07-7.74-10.99-11.01l63.57-32.37c-28.6-5.7-55.25-16.8-78.85-32.21-61.81-40.31-102.66-110.06-102.68-189.36-.03-124.82,101.13-226.02,225.95-226.05h.1c124.78.03,225.92,101.17,225.95,225.95.03,105.88-72.77,194.77-171.05,219.31v.74l-177.07,94.22c25.93,10.08,53.41,17.04,82,20.42l95.07-53.64v49l-6.22,3.48c2.08-.29,4.15-.61,6.22-.96,3.83-.62,7.65-1.32,11.44-2.08,50.02-10.01,96.05-31.09,135.41-60.59,82.01-61.46,135.08-159.43,135.1-269.8C713.98,150.93,563.12.03,377,0Z"/>
+      <polygon fill="var(--logo-blue, #4a7ef0)" points="690 718 592 816 432 656 432 644 524 552 578.85 606.85 690 718">
+        <animateTransform attributeName="transform" type="rotate"
+          from="0 377 337" to="360 377 337" dur="1.5s" repeatCount="indefinite"/>
+      </polygon>
+    </svg>
+    <b>Loading</b>
+    <span>Trayendo el expediente del servidor</span>`;
+  document.body.appendChild(capa);
+
+  const listo = () => {
+    if (localStorage.getItem("qc-sync-visto") !== "1") return false;
+    capa.classList.add("fuera");
+    setTimeout(() => capa.remove(), 420);
+    return true;
+  };
+  const reloj = setInterval(() => { if (listo()) clearInterval(reloj); }, 200);
+  /* Si la señal esta tan mal que no acaba, la tapa NO se queda para siempre:
+     mas vale una pantalla a medias, que se puede leer y avisa arriba de que
+     no hay conexion, que una puerta cerrada. */
+  setTimeout(() => { clearInterval(reloj); if (document.getElementById(QCS_CARGA)) { capa.classList.add("fuera"); setTimeout(() => capa.remove(), 420); } }, 25000);
+}
+
+function inyectarEstilosCarga() {
+  if (document.getElementById("qc-carga-css")) return;
+  const e = document.createElement("style");
+  e.id = "qc-carga-css";
+  e.textContent = `
+#${QCS_CARGA} {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  background: var(--bg, #0a0d12);
+  opacity: 1; transition: opacity .38s ease;
+}
+#${QCS_CARGA}.fuera { opacity: 0; pointer-events: none; }
+#${QCS_CARGA} svg { width: 92px; height: auto; }
+#${QCS_CARGA} b {
+  font: 800 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: .30em; text-transform: uppercase; color: var(--text, #eef2f6);
+}
+#${QCS_CARGA} span {
+  font: 500 12.5px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--muted, #77848f); text-align: center; max-width: 26ch;
+}`;
+  document.head.appendChild(e);
+}
+
+if (typeof document !== "undefined") {
+  const arrancar = () => { inyectarEstilosCarga(); tapaDeCarga(); };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", arrancar);
+  else arrancar();
+}
