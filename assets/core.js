@@ -2581,23 +2581,19 @@ function trendAlerts(day) {
         action: "Verificar tiempo de viaje y dosificación." });
   }
 
-  // --- Humedades de planta vencidas ---
-  const h = lastHumidity(day);
-  const ref = rows.length ? (rows[rows.length - 1].testTime || rows[rows.length - 1].arrive) : null;
-  if (rows.length >= 3) {
-    if (!h) {
-      out.push({ level: "act", icon: "🌡", title: "Sin prueba de humedad registrada hoy",
-        text: "No hay registro de humedades de agregados en este vaciado.",
-        action: `Pedir a la planta una humedad (máx. cada ${db.plan.humidityMaxHours} h).` });
-    } else if (ref) {
-      const mins = minutesBetween(h.time, ref);
-      if (mins != null && mins > db.plan.humidityMaxHours * 60) {
-        out.push({ level: "act", icon: "🌡", title: "Humedad vencida",
-          text: `Última humedad a las ${h.time} — hace ${fmt(mins / 60, 1)} h.`,
-          action: `Solicitar nueva humedad (límite ${db.plan.humidityMaxHours} h).` });
-      }
-    }
-  }
+  /* LAS HUMEDADES YA NO AVISAN — Q-111, 28 de agosto de 2026.
+
+     Aqui vivian dos avisos: «sin prueba de humedad registrada hoy» y «humedad
+     vencida». Victor los quito la vispera de salir a obra.
+
+     Y es lo correcto: la humedad de los agregados la mide la PLANTA, no el
+     tecnico que esta al pie del camion. Un aviso ambar en la pantalla de quien
+     no puede resolverlo no es informacion — es ruido. Y el ruido tiene un
+     precio: el dia que salga un aviso que SI importa, se lee con la misma
+     prisa con la que se lleva ignorando este.
+
+     Lo que NO se ha quitado: las humedades se siguen registrando y siguen
+     saliendo en el informe. Se deja de dar la lata con ellas, no de llevarlas. */
 
   // --- Racha en zona de acción ---
   const recent = rows.slice(-5).filter((t) => worstZone(t) === "act");
