@@ -1292,12 +1292,32 @@ function migrarPlanes() {
 
 /* Los límites que regían un día concreto.
    Orden de mando: lo congelado al cerrar > la versión vigente ese día. */
+/* LOS LÍMITES SON DE LA OBRA DEL DÍA — Q-100, 28 ago 2026.
+
+   Esto leía `db.planes`: el historial de la obra ABIERTA, no el de la obra del
+   vaciado. Con una sola obra daba igual; con dos, no.
+
+   Se vio en el tiro del 22 de agosto: Muestras enseñaba slump 2.00–4.00 y
+   Results marcaba los mismos tres camiones «FUERA DE LÍMITE» con 6.5–9.5, los
+   de las vigas. Dos pantallas juzgando el mismo hormigón con dos varas
+   distintas es exactamente lo que este sistema existe para impedir.
+
+   Los límites van con la obra del día. No con lo que se esté mirando. */
 function planDe(dia) {
   if (!dia) return db.plan;
   const meta = (db.dayMeta || {})[dia];
   if (meta && meta.plan) return meta.plan;          // tiro cerrado: intocable
-  const vs = db.planes;
-  if (!Array.isArray(vs) || !vs.length) return db.plan;
+
+  /* La obra abierta lleva sus límites en `db.plan`/`db.planes` —son el objeto
+     vivo, con el último retoque dentro—; cualquier otra, en su propia ficha. */
+  const suya = proyectoDe(meta || {});
+  const otra = suya !== proyectoActivo()
+    ? (db.proyectos || []).find((p) => p && p.id === suya)
+    : null;
+  const base = otra ? (otra.plan || db.plan) : db.plan;
+  const vs = otra ? otra.planes : db.planes;
+
+  if (!Array.isArray(vs) || !vs.length) return base;
   let elegido = vs[0].plan;
   for (const v of vs) { if (v.desde <= dia) elegido = v.plan; else break; }
   return elegido;
