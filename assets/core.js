@@ -4648,6 +4648,19 @@ function tapaDeCarga() {
 
   const listo = () => {
     if (localStorage.getItem("qc-sync-visto") !== "1") return false;
+    /* AL DESTAPAR, SE VUELVE A PINTAR — Q-113 bis, 28 ago 2026.
+
+       Las pantallas se dibujan una vez, al cargar. Si eso pasa a los dos
+       segundos de haber entrado, se dibujan con lo poco que habia bajado —y
+       ahi se quedan—. Se vio en el Field Display: la barra de arriba decia
+       «TIRO 14 ago 2026 · 0/51 CY», un vaciado RETIRADO, porque se pinto antes
+       de que llegara la linea que lo retira y nadie la volvio a pintar.
+
+       Destapar sin repintar es enseñar una foto vieja detras de la tapa. */
+    try {
+      if (typeof render === "function") render();
+      else if (typeof pintarTiro === "function") pintarTiro();
+    } catch (_) {}
     capa.classList.add("fuera");
     setTimeout(() => capa.remove(), 420);
     return true;

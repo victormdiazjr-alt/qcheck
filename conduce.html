@@ -320,7 +320,7 @@ body { background: var(--bg); }
     </div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="lista-camiones">
     <!-- Q-88: «del tiro», no «de hoy». La lista enseña los camiones del tiro en
          marcha, que puede ser el de ayer si se está tecleando con retraso. -->
     <div class="panel-head"><h2>Camiones del tiro</h2><div class="spacer"></div>
@@ -336,7 +336,7 @@ body { background: var(--bg); }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=aff83867"></script>
-<script src="assets/core.js?v=7b04b5aa"></script>
+<script src="assets/core.js?v=96b1c928"></script>
 <!-- Q-89: las tablas de la SP-934. Desde aquí se CREA un tiro, y un tiro de
      la 934 pregunta su clase y su ventana de aceptacion al nacer. Sin esto,
      `formSP934()` reventaba en silencio dentro del `setTimeout` y la pregunta
@@ -1469,6 +1469,16 @@ function render() {
   const captura = document.querySelector(".capture-row");
   if (captura) captura.hidden = !abierto;
   document.getElementById("manual-card").hidden = !abierto;
+  /* Y LOS CAMIONES TAMPOCO — Victor, 28 ago 2026: «si no hay tiro abierto no se
+     deben ver camiones del tiro».
+
+     Los habia dejado a la vista como referencia y se equivocaba: cada fila
+     sigue enseñando sus botones —«Muestra — AHORA»— con toda la pinta de que
+     se pueden pulsar, y el rotulo dice «Camiones del tiro», que se lee como el
+     de ahora. Recepcion es una pantalla de TRABAJAR: si no se puede trabajar,
+     no se enseña trabajo. Lo pasado se mira en Results y en el informe, que es
+     donde vive. */
+  document.getElementById("lista-camiones").hidden = !abierto;
   const sinTiro = document.getElementById("sin-tiro");
   sinTiro.hidden = abierto;
   if (!abierto) {

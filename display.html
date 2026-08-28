@@ -373,7 +373,7 @@ footer {
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=aff83867"></script>
-<script src="assets/core.js?v=7b04b5aa"></script>
+<script src="assets/core.js?v=96b1c928"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -462,10 +462,30 @@ function render() {
   if (SIM.active) return; // simulation drives the screen
   /* Con el plan del día dentro: un tiro programado sin camiones
      también es el tiro de hoy (Q-46). */
-  const days = diasDelProyecto();
+  /* O HAY TIRO ABIERTO, O ESTA PANTALLA NO HABLA DE NINGUN TIRO — Q-113,
+     28 de agosto de 2026.
+
+     Victor: «si no hay tiro abierto no debe decir nada de tiro de hoy».
+
+     Esta linea caia en el ultimo dia con datos cuando hoy no habia nada. Con
+     los cuatro vaciados cerrados, el proyector cantaba el camion 96 EN PRUEBAS
+     y «YARDAS HOY 152 · CAMIONES 17 · RECHAZADOS 1» — todo del 22 de agosto,
+     cerrado y firmado— mientras la barra de arriba decia «sin vaciado
+     abierto». Dos cosas contrarias en la misma pantalla, y la grande es la
+     mentira.
+
+     Esta pantalla se ve desde la obra, a veces desde un proyector y con la
+     Autoridad delante. Es la que menos se puede permitir enseñar cifras de
+     ayer con el rotulo de hoy. Sin tiro abierto no hay dia del que hablar:
+     `day` va en nulo y todo lo de abajo se queda en cero solo. */
   const today = todayISO();
-  const day = days.includes(today) ? today : days[0];
-  if (typeof pintarTiro === "function") pintarTiro(day);   // el tiro sube en vivo
+  const abierto = typeof hayTiroActivo === "function" ? hayTiroActivo() : true;
+  const day = abierto ? (typeof tiroActivo === "function" ? tiroActivo() : today) : null;
+  /* La barra se pinta SIEMPRE, tambien sin tiro: es la que dice «Ready para
+     tirar · sin vaciado abierto». Condicionarla a que hubiera dia la dejaba
+     con lo que hubiera pintado al arrancar — y al arrancar, antes de que baje
+     el expediente, eso puede ser un vaciado retirado. */
+  if (typeof pintarTiro === "function") pintarTiro(day || undefined);
   const rows = day ? testsOfDate(day) : [];
   const last = rows[rows.length - 1];
   /* «YARDAS HOY» ES LO RECIBIDO Y ACEPTADO — Q-100, 14 ago 2026.
@@ -478,7 +498,7 @@ function render() {
      Lo recibido es un hecho del conduce —llegó, trae sus yardas, no se
      rechazó—. Lo que sigue descargando se dice aparte, en la barra de arriba,
      en vez de restarse en silencio. Al cerrar el día los dos coinciden. */
-  const cy = dayProgress(day).recibido;
+  const cy = day ? dayProgress(day).recibido : 0;
   const nRej = rows.filter((t) => t.rejected).length;
   const meta = (db.dayMeta && db.dayMeta[day]) || {};
 
@@ -493,11 +513,15 @@ function render() {
   if (!last) {
     document.body.className = "s-idle";
     document.getElementById("truck-num").textContent = "—";
-    document.getElementById("truck-sub").innerHTML = "Sin camiones registrados hoy";
+    document.getElementById("truck-sub").innerHTML = abierto
+      ? "Sin camiones registrados hoy"
+      : "No hay ningún tiro abierto";
     setPlant(null);
     ANN.primed = true;
     verdict.className = "verdict v-idle";
-    verdict.innerHTML = `<div class="ring">—</div><div class="word">EN ESPERA</div><div class="note">QC en vivo</div>`;
+    verdict.innerHTML = abierto
+      ? `<div class="ring">—</div><div class="word">EN ESPERA</div><div class="note">QC en vivo</div>`
+      : `<div class="ring">—</div><div class="word">SIN TIRO</div><div class="note">Ready para tirar</div>`;
     document.getElementById("indics").innerHTML =
       cell("Slump", null, "in", null) + cell("Unit Weight", null, "pcf", null) +
       cell("Aire", null, "%", null) + cell("Temp", null, "°F", null) + cell("Hora", null, "", null);
