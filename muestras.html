@@ -804,8 +804,38 @@ function liveVerdict() {
   const any = ["slump", "uw", "air", "temp"].some((k) => state.buf[k] != null);
   if (!any) return { cls: "idle", mark: "·", word: "En espera", sub: "Entre los resultados", bad: false, ready: false };
   const ready = state.buf.slump != null && state.buf.uw != null;
-  if (w === "susp") return { cls: "susp", mark: "✕", word: "Rechazar", sub: "Fuera de límite de suspensión", bad: true, ready };
-  if (w === "act")  return { cls: "act", mark: "✓", word: "Aceptar", sub: "Zona de acción · vigilar", bad: false, ready };
+
+  /* EL VEREDICTO DICE DE QUE — Q-115, 28 de agosto de 2026.
+
+     Victor: «abajo dice rechazado fuera de limite de suspension y es de
+     slump». Decia la sentencia sin decir el cargo. Con cuatro lecturas en
+     pantalla, el tecnico tiene que ir a buscar cual de las cuatro lo tumbo —y
+     lo hace de pie, con guante mojado y el mixer esperando.
+
+     Y no es solo comodidad: quien rechaza una carga tiene que poder decir por
+     que en voz alta delante del chofer. La razon del rechazo es parte del
+     rechazo. */
+  const NOMBRE = { slump: "Slump", uw: "Unit Weight", air: "Aire", temp: "Temp" };
+  const culpables = (zona) => ["slump", "uw", "air", "temp"]
+    .filter((k) => {
+      const z = k === "slump" ? zoneSlump(pseudo) : k === "uw" ? zoneUW(pseudo)
+              : k === "air" ? zoneAir(pseudo) : zoneTemp(pseudo);
+      return z === zona;
+    })
+    .map((k) => NOMBRE[k]);
+
+  if (w === "susp") {
+    const q = culpables("susp");
+    return { cls: "susp", mark: "✕", word: "Rechazar",
+      sub: (q.length ? q.join(" y ") + " f" : "F") + "uera de límite de suspensión",
+      bad: true, ready };
+  }
+  if (w === "act") {
+    const q = culpables("act");
+    return { cls: "act", mark: "✓", word: "Aceptar",
+      sub: (q.length ? q.join(" y ") + " en zona de acción" : "Zona de acción") + " · vigilar",
+      bad: false, ready };
+  }
   return { cls: "ok", mark: "✓", word: "Aceptar", sub: "Dentro de límites", bad: false, ready };
 }
 
@@ -815,6 +845,46 @@ function render() {
      también es el tiro de hoy (Q-46). */
   const days = diasDelProyecto();
   const today = todayISO();
+
+  /* SIN TIRO ABIERTO NO SE TOMAN MUESTRAS — Q-114, 28 de agosto de 2026.
+
+     Victor: «no hay tiro y en muestras aparece eso». Y de las tres pantallas
+     que tenian esta enfermedad, esta era la peor: caia en el ultimo vaciado
+     —cerrado y firmado— y ofrecia el TECLADO ENTERO para escribir lecturas
+     encima del camion 134 del 22 de agosto. Guardar lo habria parado, pero
+     invitar a teclear donde no se puede es una trampa igual.
+
+     Una muestra es de un camion, y un camion es de un tiro. Sin tiro abierto
+     no hay de que tomar muestra, y la pantalla lo dice en vez de fingir. */
+  const abierto = typeof hayTiroActivo === "function" ? hayTiroActivo() : true;
+  if (!abierto) {
+    state.day = null; state.n = null; state.buf = {};
+    if (typeof pintarTiro === "function") pintarTiro();
+    document.getElementById("hsub").textContent =
+      `${db.project.qcFirm || "QCheck"} · sin tiro abierto`;
+    const pick0 = document.getElementById("truck-pick");
+    if (pick0) pick0.hidden = true;
+    const rej0 = document.querySelector(".ver-rejilla");
+    if (rej0) rej0.hidden = true;
+    const u = typeof ultimoTiroProcesado === "function" ? ultimoTiroProcesado() : null;
+    document.getElementById("body").innerHTML = `
+      <div style="grid-column:1/-1; display:flex; flex-direction:column; align-items:center;
+                  justify-content:center; text-align:center; gap:10px; padding:8vh 6vw">
+        <div style="font-size:3.2vh; font-weight:750">No hay ningún tiro abierto</div>
+        <div style="font-size:1.9vh; color:var(--muted); max-width:44ch; line-height:1.5">${
+          u ? `El último fue el ${esc(fmtDate(u.dia))}${u.obra ? " · " + esc(u.obra) : ""}, y está cerrado.
+               Una muestra es de un camión, y un camión es de un tiro.`
+            : "Todavía no hay ningún vaciado registrado."}</div>
+        <a class="ver-rejilla" style="margin-top:1.4vh; text-decoration:none" href="conduce.html">⇄ Ir a Recepción</a>
+      </div>`;
+    document.getElementById("foot").innerHTML = "";
+    return;
+  }
+  const pick1 = document.getElementById("truck-pick");
+  if (pick1) pick1.hidden = false;
+  const rej1 = document.querySelector(".ver-rejilla");
+  if (rej1) rej1.hidden = false;
+
   state.day = days.includes(today) ? today : days[0];
   if (typeof pintarTiro === "function") pintarTiro(state.day);   // el tiro sube en vivo
   const pend = pendingTrucks(state.day);
