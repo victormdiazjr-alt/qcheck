@@ -813,10 +813,30 @@ export default {
     if (url.pathname === "/api/cambios" && req.method === "GET") {
       if (exige && !quien) return json({ error: "sesion" }, 401);
       const desde = Number(url.searchParams.get("desde") || 0) || 0;
-      /* El tope evita que un aparato apagado un mes se traiga medio proyecto
-         de un tirón: pide otra vez y sigue desde donde quedó. */
+      /* CUANTAS LINEAS POR VIAJE — Q-108, 28 de agosto de 2026.
+       *
+       * El tope evita que un aparato apagado un mes se traiga medio proyecto
+       * de un tiron: pide otra vez y sigue desde donde quedo.
+       *
+       * Estuvo en 2.000 desde el principio, y esa noche se midio de donde
+       * salia: de ningun sitio. Un numero redondo. Victor pregunto por que, y
+       * la respuesta honesta era que nadie lo habia comprobado.
+       *
+       * Medido contra el worker de verdad, en una version de prueba aparte:
+       *
+       *     20.000 lineas (el expediente entero, 5,7 MB) → 1 segundo, sin error
+       *
+       * Cloudflare no pone ningun tope aqui. Lo que si es una razon de verdad
+       * para trocear es LA COBERTURA EN OBRA: 5,7 MB de un tiron en el km 14
+       * de la PR-52, con una raya de señal, se cortan a la mitad y hay que
+       * empezar de cero. En trozos, lo cortado se reintenta solo y lo demas
+       * ya esta dentro.
+       *
+       * 5.000 es el punto medio medido: 1,3 MB por viaje —tragable con mala
+       * señal— y el expediente completo baja en cuatro viajes en vez de diez.
+       * La primera carga de un aparato pasa de unos 7 segundos a unos 2. */
       const { results } = await env.DB.prepare(
-        "SELECT * FROM ops WHERE seq > ? ORDER BY seq LIMIT 2000"
+        "SELECT * FROM ops WHERE seq > ? ORDER BY seq LIMIT 5000"
       ).bind(desde).all();
       const tope = await env.DB.prepare("SELECT IFNULL(MAX(seq),0) AS seq FROM ops").first();
       return json({ seq: tope.seq, ops: (results || []).map(leerOp) });
