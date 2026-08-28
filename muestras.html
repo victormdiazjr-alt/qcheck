@@ -825,9 +825,19 @@ function liveVerdict() {
     .map((k) => NOMBRE[k]);
 
   if (w === "susp") {
+    /* «SUSPENSION» NO SE ENTIENDE — Victor, 28 ago 2026: «no se que es de
+       suspension; Fuera de Limite de Slump debe decir».
+
+       Y si no la reconoce el ingeniero de record, no la va a reconocer el
+       tecnico de pie junto al camion. «Limite de suspension» es la palabra de
+       la especificacion, y su sitio es la letra pequeña debajo de cada lectura
+       y el informe — no el renglon que se lee en un segundo para decidir si
+       ese camion descarga o se va.
+
+       Aqui se dice lo unico que hace falta saber: QUE se salio. */
     const q = culpables("susp");
     return { cls: "susp", mark: "✕", word: "Rechazar",
-      sub: (q.length ? q.join(" y ") + " f" : "F") + "uera de límite de suspensión",
+      sub: "Fuera de límite" + (q.length ? " de " + q.join(" y ") : ""),
       bad: true, ready };
   }
   if (w === "act") {
