@@ -3258,14 +3258,52 @@ function formSP934(alGuardar) {
         hint: "Tabla 934-2. Si los planos no lo indican, la nota 7 manda usar el 2 en toda la obra." },
       { key: "uwTarget", label: "Unit Weight objetivo (pcf)", type: "number", step: "0.1", full: true,
         hint: `Del diseño de mezcla aprobado. La ventana de aceptación es ese valor ± ${SP934_CUW_TOLERANCIA} pcf.` },
+      /* Se dice lo que la 934 NO pone, para que nadie de por hecho que ya esta
+         puesto. Un hueco que se cree lleno es como se juzga hormigon con la
+         vara de otra obra — y eso ya paso una vez. */
+      { type: "label", label: "El slump, el aire y la temperatura NO los fija la SP-934: "
+        + "se muestrean para control y no deciden el pago. Salen del diseño de mezcla, "
+        + "y se ponen en Plan & Datos antes del primer camión." },
     ],
     onSave: (v) => {
       db.project.clase934 = v.clase934 || "";
       db.project.nivelPermeabilidad = v.nivelPermeabilidad || "";
       const uw = num(v.uwTarget);
       if (uw != null) { db.plan.uw = Object.assign({}, db.plan.uw, { target: uw }); }
+
+      /* LA CLASE PONE LA RESISTENCIA — Q-134, 29 de agosto de 2026.
+
+         Victor: «cuando se selecciona 934, que se cambien a los limites 934
+         automaticamente».
+
+         Esto es lo que la 934 SI define, y el propio formulario ya lo prometia
+         —«la resistencia especificada y su techo salen de aqui: no se
+         teclean»— pero nadie lo aplicaba: se escogia la clase y el plan seguia
+         con los 3.000 psi de la PR-52. Una promesa a medias es peor que
+         ninguna, porque el que la lee se fia.
+
+         La Tabla 934-3 da el suelo y el techo de cada clase. El suelo ES la
+         resistencia especificada; el techo lo usa la 934 para el factor de
+         pago. Se escriben los dos.
+
+         LO QUE NO SE TOCA, Y NO ES UN OLVIDO: slump, aire y temperatura. La
+         934 no los define — su propia letra dice que «no son caracteristicas
+         de aceptacion»: se muestrean para control y no deciden el pago. Salen
+         del diseño de mezcla y del contrato, que es distinto en cada obra: por
+         eso las vigas eran de 8" y las losas de la PR-52 son de 3". Ponerlos
+         solos seria inventarlos, y con ellos se rechaza hormigon.
+
+         Y tampoco se toca la ventana de proceso del unit weight. La 934 juzga
+         el pago con ± 2.9 pcf y QCheck vigila la mezcla con 2.3 / 3.0: son dos
+         cosas distintas con el mismo nombre y mezclarlas seria un error. */
+      const cls = SP934_CCS[v.clase934];
+      if (cls) {
+        db.plan.cs = Object.assign({}, db.plan.cs, { target: cls.lsl, techo934: cls.usl });
+        toast(`SP-934 · Clase ${v.clase934}: f'c ${fmt(cls.lsl, 0)} psi`);
+      } else {
+        toast("SP-934 actualizada");
+      }
       saveDB(); if (typeof render === "function") render();
-      toast("SP-934 actualizada");
       if (typeof alGuardar === "function") alGuardar();
     },
   });
