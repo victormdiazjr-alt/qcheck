@@ -240,7 +240,7 @@ table.rep td.dif { font-weight: 700; }
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=aff83867"></script>
-<script src="assets/core.js?v=2bbb919b"></script>
+<script src="assets/core.js?v=7d112390"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -285,7 +285,19 @@ function cambiarDia(d) {
    plan declarado. Hoy sale siempre, aunque esté vacío — si no hay nada que
    reportar, el reporte lo dice; no se esconde la fecha. */
 function diasDelReporte() {
-  const s = new Set([...testDates(), ...Object.keys(db.dayMeta || {}), todayISO()]);
+  /* UN DIA RETIRADO NO SE OFRECE — Q-120, 28 de agosto de 2026.
+
+     Esto metia TODAS las llaves de `dayMeta`, retiradas incluidas. Se vio en la
+     auditoria de la vispera: el desplegable ofrecia «28 ago 2026», que es el
+     dia que se retiro al mover el tiro al 29. Emitir el informe de un vaciado
+     retirado es emitir un papel de algo que el expediente dice que no paso.
+
+     Mismo criterio que `diasDelProyecto()`: vivo, y con algo dentro. */
+  const conAlgo = Object.entries(db.dayMeta || {})
+    .filter(([, m]) => m && !m.borrado &&
+      (m.cyPlan != null || m.losas || m.losasPlan != null || m.horaInicio || m.cerradoA))
+    .map(([d]) => d);
+  const s = new Set([...testDates(), ...conAlgo, todayISO()]);
   /* El día pedido por el enlace entra en la lista aunque sus datos aún no hayan
      llegado, para que el selector lo enseñe escogido y no salte a otro. */
   if (state.dia) s.add(state.dia);

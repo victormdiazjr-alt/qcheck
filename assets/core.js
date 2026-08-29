@@ -1777,7 +1777,23 @@ function discrepanciaDeOrden(day) {
   return { plan, conduces: [...dichas].sort((a, b) => a - b), dia: d, ajuste,
            camion: ajuste ? (ultimo.truck || null) : null };
 }
-function nextTestN() { return db.tests.length ? Math.max(...db.tests.map((t) => t.n)) + 1 : 1; }
+/* EL NUMERO DE ENSAYO ES DEL EXPEDIENTE, Y EL EXPEDIENTE SON LOS VIVOS —
+   Q-121, 28 de agosto de 2026.
+
+   Esto miraba `db.tests` entero, retirados incluidos. Y los retirados arrastran
+   numeros inflados de aquel fallo de renumeracion (Q-99): en la prueba de la
+   vispera, el primer camion del tiro de mañana salio con el ENSAYO 4718 cuando
+   el expediente va por el 465.
+
+   Ese numero va al informe y tiene que cuadrar con el Control Chart que Victor
+   entrega. Un ensayo 4718 detras del 465 no es un numero feo: es un expediente
+   que no cuadra consigo mismo.
+
+   Mismo criterio que `qcReconciliarN()`: el que cuenta es el que esta vivo. */
+function nextTestN() {
+  const vivos = (db.tests || []).filter((t) => t && !t.borrado && t.n != null);
+  return vivos.length ? Math.max(...vivos.map((t) => t.n)) + 1 : 1;
+}
 function shortIdent(s) {
   if (!s) return "—";
   return String(s).replace(/^Phase\s+(\d+)\s*-\s*/i, "F$1 · ").replace(/SLAB\s*/i, "");
