@@ -137,6 +137,74 @@ function json(cuerpo, codigo = 200) {
 
 /* El valor viaja como JSON dentro de una columna de texto: un campo puede
    ser un número, una cadena, `false` o el objeto de límites del plan. */
+/* ============================================================
+   LA PUERTA DE ESCRITURA — Q-142, 29 de agosto de 2026.
+
+   Hasta hoy el servidor guardaba lo que le mandaran. Y el 29 de agosto, con el
+   tiro abierto, **uno de mis propios aparatos de pruebas subio un plan vacio y
+   borro los limites de la PR-52 para todos**: slump, aire, unit weight y
+   temperatura, en blanco, en produccion.
+
+   Lo peor no fue el borrado. Fue lo que hizo la pantalla despues: con el plan
+   vacio, Muestras no fallaba — JUZGABA MAL. Daba «ok» al slump sin tener contra
+   que compararlo, y rechazaba todos los camiones por temperatura, porque en
+   JavaScript `88 > null` es cierto. Un expediente que dice «ok» sin haber
+   comparado nada es lo mas peligroso que puede hacer esto: parece que funciona.
+
+   Ese dia puse un filtro para que el cliente no subiera esos huecos. Estaba en
+   el lado equivocado del cable: cualquier aparato con una version vieja —o con
+   la copia rota, que es justo el que mas peligro tiene— se lo salta entero.
+
+   Aqui esta donde tenia que estar. Es lo que hace Zero (el servidor acepta o
+   rechaza cada mutacion) y lo que hace Convex (las ejecuta el). El cliente
+   propone; el servidor decide.
+
+   Y NO EN SILENCIO. Lo que se rechaza vuelve en `rechazadas` con su motivo, y
+   queda en el log del worker. Un dato que desaparece sin que nadie se entere es
+   el peor fallo posible — el mismo error que casi cometemos bloqueando la obra
+   AC-220037 en la puerta.
+   ============================================================ */
+const ENTIDADES = new Set(["test", "dayMeta", "humidity", "plan", "project", "config", "interes"]);
+
+/* Unos limites sirven si tienen el slump puesto. No es un capricho: `slump` es
+   el primero que se escribe al crear una obra y el que usa `abrirProyecto` para
+   decidir si una ficha trae limites de verdad o viene en blanco. */
+function limitesUtiles(p) {
+  return !!(p && typeof p === "object" && p.slump && p.slump.actLo != null);
+}
+
+/* Devuelve el motivo del rechazo, o `null` si la linea puede pasar. */
+function revisarOp(o) {
+  if (!o || typeof o !== "object") return "no es una linea";
+  if (!o.uid) return "sin uid";
+  const ent = String(o.ent || "");
+  const campo = String(o.campo || "");
+  if (!ENTIDADES.has(ent)) return "entidad desconocida: " + ent;
+  if (!campo) return "sin campo";
+  if (campo === "id") return "el id es la llave, no un campo";
+
+  /* LOS LIMITES NO SE BORRAN POR ACCIDENTE.
+     Un aparato a medio sincronizar tiene la ficha de la obra vacia. Si guarda
+     cualquier cosa, la diferencia contra su copia dice «los limites pasaron a
+     estar vacios» y lo sube. Eso no es un cambio: es un hueco. */
+  if (ent === "project" && campo === "plan" && !limitesUtiles(o.valor)) {
+    return "plan sin limites (hueco de un aparato a medio sincronizar)";
+  }
+  if (ent === "project" && campo === "planes") {
+    const v = o.valor;
+    if (!Array.isArray(v) || !v.length || !v.some((x) => limitesUtiles(x && x.plan))) {
+      return "historial de limites vacio";
+    }
+  }
+  /* Un limite suelto en blanco es la otra cara de lo mismo, y es el que provoco
+     el `88 > null`: sin tope, la comparacion no dice «no se», dice «pasa». */
+  if (ent === "plan" && o.valor == null &&
+      /^(tempMax|fc|slump|air|uw|cs)$/.test(campo)) {
+    return "limite en blanco: " + campo;
+  }
+  return null;
+}
+
 function leerOp(fila) {
   let valor = null;
   try { valor = JSON.parse(fila.valor); } catch (_) { valor = null; }
@@ -971,6 +1039,77 @@ export default {
       return json({ ok: true });
     }
 
+    /* ============================================================
+       ESTRENAR UN APARATO DE UN VIAJE — Q-141, 29 de agosto de 2026.
+
+       Victor, despues del primer tiro: «no entiendo por que hay tanto problema
+       con el database, las conexiones, la carga, la señal».
+
+       Se midio, y la respuesta no era la que yo venia diciendo. Yo dije por la
+       mañana que eran «6 MB que no le entran a un iPad con la señal de la
+       obra», y trocee la bajada por eso. Era FALSO: Cloudflare ya comprimia y
+       en el cable son 486 KB. Estuve la mañana persiguiendo la causa
+       equivocada.
+
+       El problema nunca fue el tamaño. Fue el NUMERO DE VIAJES: estrenar un
+       aparato eran 22 peticiones seguidas, y las 22 tenian que salir bien. Con
+       un 5 % de fallo por viaje, el 68 % de las veces no termina — y no avisa,
+       porque cada pagina se aplicaba y se enseñaba por separado. Ahi vivia el
+       camion fantasma de Pretensados: se creaba en el viaje 3 y se retiraba en
+       el 14, y un aparato parado entre los dos no tiene menos informacion:
+       tiene informacion FALSA.
+
+       La pieza que faltaba la usan todos los que viven de esto (Replicache la
+       llama «reset patch», PowerSync manda el contenido de las shapes): **un
+       aparato nuevo no reproduce la historia, recibe el ESTADO.**
+
+       Aqui esta. De las 43.696 lineas del registro, solo gana una por cada
+       (ent, id, campo) — las demas son versiones viejas de ese mismo dato. Las
+       ganadoras son 22.861 y pesan 91 KB comprimidas. Un viaje.
+
+       POR QUE ESTO ES CORRECTO Y NO UN ATAJO: `qcAplicarOp` es last-write-wins
+       campo a campo. Aplicar solo la ganadora de cada campo, en orden de `seq`,
+       da EXACTAMENTE el mismo estado que aplicar las 43.696. Lo que se pierde
+       es la historia intermedia, que es justo lo que un aparato que se estrena
+       no necesita — y que sigue entera en la tabla para auditar.
+
+       El registro es para el expediente. No tiene por que ser tambien el camion
+       de mudanzas.
+       ============================================================ */
+    if (url.pathname === "/api/estado" && req.method === "GET") {
+      if (exige && !quien) return json({ error: "sesion" }, 401);
+      const { results } = await env.DB.prepare(
+        `SELECT o.seq, o.uid, o.ent, o.id, o.campo, o.valor, o.ts, o.dev, o.usr
+           FROM ops o
+           JOIN (SELECT ent, id, campo, MAX(seq) AS seq
+                   FROM ops GROUP BY ent, id, campo) g
+             ON o.seq = g.seq
+          ORDER BY o.seq`
+      ).all();
+      const tope = await env.DB.prepare("SELECT IFNULL(MAX(seq),0) AS seq FROM ops").first();
+      /* `seq` es el ultimo numero del REGISTRO, no el de la ultima ganadora:
+         el aparato queda al dia de verdad y lo siguiente que pida es lo nuevo.
+         Si se pusiera el de la ultima ganadora, volveria a bajar las lineas
+         intermedias que ya estan resueltas en este estado. */
+      /* SOLO LO QUE HACE FALTA PARA SABER COMO ESTAN LAS COSAS.
+
+         `qcAplicarOp` solo mira `ent`, `id`, `campo` y `valor`. Lo demas —quien
+         lo escribio, desde que aparato, a que hora, con que uid— es la
+         AUDITORIA, y la auditoria vive en el registro, que no se toca y se
+         puede pedir entera por `/api/registro`.
+
+         No es un recorte cosmetico: mandarlo bajaba 263 KB en vez de 139 KB, y
+         en obra eso es el doble de tiempo con el camion esperando. Un aparato
+         que se estrena necesita saber COMO ESTAN LAS COSAS, no quien las puso
+         asi — y en cuanto se estrena, todo lo que llegue despues viene por
+         `/api/cambios` con su firma completa, como siempre. */
+      const estado = (results || []).map((f) => {
+        const o = leerOp(f);
+        return { ent: o.ent, id: o.id, campo: o.campo, valor: o.valor };
+      });
+      return json({ seq: tope.seq, estado: true, ops: estado });
+    }
+
     if (url.pathname === "/api/cambios" && req.method === "GET") {
       if (exige && !quien) return json({ error: "sesion" }, 401);
       const desde = Number(url.searchParams.get("desde") || 0) || 0;
@@ -1085,14 +1224,32 @@ export default {
         "mt4be3fk-miibc", "mt4bexzi-f5yk2", "mt4bfew4-sylbq", "mt4buj01-fc0zp",
         "msuy61m7-73d5s",
       ]);
-      const antesDeFiltrar = ops.length;
-      const vivas = ops.filter((o) => !MUERTOS.has(String(o && o.id)));
-      if (vivas.length !== antesDeFiltrar) {
-        console.warn(`QCheck: descartadas ${antesDeFiltrar - vivas.length} lineas de una obra muerta`);
+      const muertas = ops.filter((o) => MUERTOS.has(String(o && o.id)));
+      if (muertas.length) {
+        console.warn(`QCheck: descartadas ${muertas.length} lineas de una obra muerta`);
+      }
+
+      /* Q-142: y aqui pasa la puerta de escritura. Lo que no la pasa se
+         devuelve con su motivo — no se guarda, pero tampoco se pierde en
+         silencio: el aparato lo descuela de la cola sabiendo por que. */
+      const rechazadas = [];
+      const vivas = [];
+      for (const o of ops) {
+        if (MUERTOS.has(String(o && o.id))) continue;
+        const motivo = revisarOp(o);
+        if (motivo) {
+          rechazadas.push({ uid: String((o && o.uid) || ""), ent: (o && o.ent) || "", campo: (o && o.campo) || "", motivo });
+          continue;
+        }
+        vivas.push(o);
+      }
+      if (rechazadas.length) {
+        console.warn(`QCheck: ${rechazadas.length} lineas rechazadas en la puerta — ` +
+          rechazadas.slice(0, 8).map((r) => `${r.ent}.${r.campo}: ${r.motivo}`).join(" | "));
       }
       if (!vivas.length) {
         const t0 = await env.DB.prepare("SELECT IFNULL(MAX(seq),0) AS seq FROM ops").first();
-        return json({ seq: t0.seq, aceptadas: [] });
+        return json({ seq: t0.seq, aceptadas: [], rechazadas });
       }
       ops.length = 0;
       for (const o of vivas) ops.push(o);
@@ -1138,7 +1295,7 @@ export default {
         for (const fila of (r.results || [])) results.push(fila);
       }
       const t = await env.DB.prepare("SELECT IFNULL(MAX(seq),0) AS seq FROM ops").first();
-      return json({ seq: t.seq, aceptadas: (results || []).map((r) => r.uid) });
+      return json({ seq: t.seq, aceptadas: (results || []).map((r) => r.uid), rechazadas });
     }
 
     return json({ error: "ruta" }, 404);

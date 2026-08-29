@@ -505,6 +505,23 @@ const QCSync = {
     try {
       const r = await this._pedir("/api/cambios", { method: "POST", body: JSON.stringify({ ops: cola }) });
       const ok = new Set(r.aceptadas || []);
+      /* LO RECHAZADO TAMBIÉN SE DESCUELGA, Y SE DICE — Q-142, 29 ago 2026.
+
+         Desde hoy el servidor revisa lo que le mandan y puede decir que no (un
+         plan vacío, un límite en blanco, una entidad que no existe). Eso no es
+         un fallo de red: reintentarlo es reintentarlo para siempre, y la cola
+         se quedaría atascada delante de lo que sí vale.
+
+         Así que se descuelga — pero NUNCA en silencio. Un dato que desaparece
+         sin que nadie se entere es peor que uno que se pierde con ruido. */
+      const no = r.rechazadas || [];
+      if (no.length) {
+        try {
+          console.warn("QCheck: el servidor rechazó " + no.length + " línea(s):",
+            no.map((x) => `${x.ent}.${x.campo} → ${x.motivo}`).join(" | "));
+        } catch (_) {}
+        for (const x of no) ok.add(x.uid);
+      }
       this._guardarCola(cola.filter((o) => !ok.has(o.uid)));
       this.estado = "al-dia";
     } catch (e) {
@@ -569,12 +586,62 @@ const QCSync = {
     } catch (_) {}
   },
 
+  /* ============================================================
+     ESTRENARSE DE UN VIAJE — Q-141, 29 de agosto de 2026.
+
+     Un aparato que va por la línea cero no está atrasado: está VACÍO, y no
+     tiene por qué reproducir 43.696 líneas de historia para saber cómo están
+     las cosas hoy. Pide el estado y ya está: un viaje, 91 KB.
+
+     Y con esto desaparece sola la peor familia de fallos que hemos tenido. No
+     porque se baje menos, sino porque **no existe el medio estreno**: antes
+     eran 22 peticiones y la app dejaba entrar entre una y otra, así que un
+     aparato podía quedarse parado con el camión ya creado y su retirada tres
+     páginas más adelante. Con un solo viaje, o está todo o no está nada.
+
+     Si el estado falla, no se inventa nada: se devuelve `false` y la vuelta
+     siguiente lo intenta otra vez, o se cae al camino de siempre. */
+  async _bajarEstado() {
+    try {
+      const r = await this._pedir("/api/estado");
+      if (!r || !Array.isArray(r.ops) || r.seq == null) return false;
+      for (const o of r.ops) qcAplicarOp(o);
+      qcReconciliarN();
+      this._guardarSeq(r.seq);
+      localStorage.setItem("qc-sync-tope", String(r.seq));
+      this._guardarBase(qcProyectar(db));
+      localStorage.setItem(DB_KEY, JSON.stringify(db));
+      localStorage.setItem(QC_SYNC_VISTO, "1");
+      this.estado = "al-dia";
+      this.ultimo = new Date();
+      try { console.info(`QCheck: estreno de un viaje — ${r.ops.length} datos, línea ${r.seq}`); } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;   /* sin estado no se toca nada: se cae al camino largo */
+    }
+  },
+
   async _bajar() {
     if (!qcSyncActivo()) return;
+
+    /* Q-141: aparato en blanco → una sola petición. */
+    if (this._seq() === 0 && await this._bajarEstado()) { this._avisar(); return; }
+
+    /* ENSEÑAR AL FINAL, NO A CADA PÁGINA — Q-141 bis.
+
+       Antes cada página se aplicaba Y SE ENSEÑABA. Un aparato que vuelve de un
+       túnel con cinco páginas pendientes repintaba las pantallas cinco veces, y
+       en las cuatro primeras enseñaba un expediente a medias — con lo creado
+       pero sin lo retirado, que es exactamente el camión fantasma.
+
+       Ahora se aplica todo y se avisa una vez, al final. Es lo que hace
+       Replicache: aplicar el parche entero y revelar el resultado de golpe. */
+    this._cambioEnEstaVuelta = false;
     for (let pagina = 0; pagina < 60; pagina++) {
       const quedaMas = await this._bajarUna();
-      if (!quedaMas) return;
+      if (!quedaMas) break;
     }
+    if (this._cambioEnEstaVuelta) this._avisar();
   },
 
   /* Devuelve `true` si el servidor tiene todavía más de lo que se ha traído. */
@@ -625,7 +692,11 @@ const QCSync = {
            subir en un bucle. */
         this._guardarBase(qcProyectar(db));
         localStorage.setItem(DB_KEY, JSON.stringify(db));
-        this._avisar();
+        /* Q-141 bis: aquí ya NO se avisa a las pantallas. Se guarda —para no
+           perder lo bajado si el aparato se apaga— pero se repinta una sola vez
+           al terminar TODAS las páginas, en `_bajar()`. Enseñar a medio parche
+           es lo que ponía camiones retirados delante del técnico. */
+        this._cambioEnEstaVuelta = true;
       }
       /* UN APARATO VACIO NO ESTA AL DIA — Q-129, 29 de agosto de 2026.
 
@@ -727,10 +798,44 @@ const QCSync = {
     location.href = "index.html?fuera=1";
   },
 
+  /* ESPERAR MÁS CADA VEZ, Y NO TODOS A LA VEZ — Q-143, 29 de agosto de 2026.
+
+     Con mala cobertura, el ciclo de 3 segundos sigue llamando cada 3 segundos
+     aunque lleve veinte fallos seguidos: gasta batería y datos del técnico para
+     nada, y en cuanto la señal vuelve, los cinco aparatos de la obra golpean el
+     servidor en el mismo instante.
+
+     Es lo primero que hace cualquiera que trabaje contra red celular: esperar
+     el doble en cada intento, con un tope, y con un poco de azar para que no
+     coincidan. El azar no es adorno — sin él, cinco aparatos que perdieron la
+     señal en el mismo túnel la recuperan y reintentan a la vez para siempre.
+
+     Se reinicia en cuanto sale bien una. Y NO afecta a lo que el técnico
+     escribe: eso va a la cola local al instante, como siempre. Esto solo decide
+     cada cuánto se intenta el viaje. */
+  _saltarPorFallos() {
+    const f = this._fallos || 0;
+    if (!f) return false;
+    const espera = Math.min(60000, 3000 * Math.pow(2, f - 1));
+    const azar = espera * (0.5 + Math.random() * 0.5);   /* entre la mitad y el total */
+    return Date.now() - (this._ultimoIntento || 0) < azar;
+  },
+
   async _ciclo() {
+    if (this._saltarPorFallos()) return;
+    this._ultimoIntento = Date.now();
     this._latir();
     await this._empujar();
     await this._bajar();
+    if (this.estado === "sin-senal" || this.estado === "sin-cuota") {
+      this._fallos = (this._fallos || 0) + 1;
+      if (this._fallos === 1 || this._fallos % 5 === 0) {
+        try { console.warn(`QCheck: ${this._fallos} intento(s) sin conexión — se espera cada vez más`); } catch (_) {}
+      }
+    } else if (this._fallos) {
+      try { console.info(`QCheck: conexión recuperada tras ${this._fallos} intento(s)`); } catch (_) {}
+      this._fallos = 0;
+    }
     /* La franja de arriba lleva el estado real de la sincronización, y está en
        todas las pantallas: es donde el técnico se entera de que lleva media
        hora entrando muestras que no salen del aparato. */
@@ -767,6 +872,9 @@ const QCSync = {
     document.addEventListener("visibilitychange", () => { arrancarTimer(); if (!document.hidden) paso(); });
     window.addEventListener("pageshow", paso);
     window.addEventListener("focus", paso);
-    window.addEventListener("online", paso);
+    /* Q-143: si el aparato dice que vuelve a haber red, se perdona la espera y
+       se intenta ya. El castigo es para no machacar a ciegas, no para hacer
+       esperar al técnico cuando la señal ha vuelto de verdad. */
+    window.addEventListener("online", () => { this._fallos = 0; paso(); });
   },
 };
