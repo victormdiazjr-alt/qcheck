@@ -4799,8 +4799,33 @@ function inyectarEstilosCarga() {
   document.head.appendChild(e);
 }
 
+/* EL SELLO SE COMPRUEBA AL ABRIR LA PANTALLA — Q-130 bis, 29 ago 2026.
+
+   Lo puse dentro del bucle de sincronizacion y ahi no basta: si ese bucle no
+   arranca —y en un aparato con la copia rota puede no arrancar— el sello no se
+   mira nunca. Se probo con un iPad en el estado exacto del de Victor y a los
+   45 segundos seguia enseñando el vaciado de Pretensados.
+
+   Aqui se mira SIEMPRE, antes de dibujar nada, en cualquier pantalla. */
+function comprobarSello() {
+  const AHORA = "20260829-pretensados";
+  try {
+    if (typeof qcSyncActivo === "function" && !qcSyncActivo()) return;
+    if (localStorage.getItem("qc-sync-sello") === AHORA) return;
+    const cola = localStorage.getItem("qc-sync-cola");
+    localStorage.removeItem(DB_KEY);
+    localStorage.removeItem("qc-sync-base");
+    localStorage.removeItem("qc-sync-visto");
+    localStorage.removeItem("qc-sync-tope");
+    localStorage.setItem("qc-sync-seq", "0");
+    if (cola) localStorage.setItem("qc-sync-cola", cola);
+    localStorage.setItem("qc-sync-sello", AHORA);
+    location.reload();
+  } catch (_) {}
+}
+
 if (typeof document !== "undefined") {
-  const arrancar = () => { inyectarEstilosCarga(); tapaDeCarga(); };
+  const arrancar = () => { comprobarSello(); inyectarEstilosCarga(); tapaDeCarga(); };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", arrancar);
   else arrancar();
 }

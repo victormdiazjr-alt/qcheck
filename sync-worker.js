@@ -1013,10 +1013,24 @@ export default {
        * llega nada y la pantalla de carga se queda puesta diciendolo. Medido
        * contra este mismo worker: 20.880 lineas, 5,7 MB, un segundo.
        *
-       * El tope se queda escrito —100.000— como freno de mano por si algun dia
-       * el expediente crece de verdad, no como reparto. */
+       * ────────────────────────────────────────────────────────────────────
+       * Y MEDIA HORA DESPUES SE VOLVIO A TROCEAR — Q-128, mismo dia.
+       *
+       * Quitar el tope arreglo lo de la media copia y rompio otra cosa peor: 6
+       * MB de una sentada NO LE ENTRAN a un iPad con la señal de la obra. La
+       * bajada fallaba entera y el aparato se quedaba con CERO — «todavia no
+       * hay ningun vaciado registrado», con el tiro del dia en el servidor y un
+       * camion esperando fuera.
+       *
+       * Asi que se trocea otra vez, y en trozos pequeños: 2.000 lineas, unos
+       * 600 KB, que es lo que aguanta una raya de cobertura. Once viajes.
+       *
+       * Lo que hacia peligroso trocear no era el troceo: era que la pantalla
+       * dejaba pasar a medias (Q-124) y que el sincronizador se daba por al dia
+       * con las manos vacias (Q-129). Arregladas esas dos, trocear es solo
+       * prudente. */
       const { results } = await env.DB.prepare(
-        "SELECT * FROM ops WHERE seq > ? ORDER BY seq LIMIT 100000"
+        "SELECT * FROM ops WHERE seq > ? ORDER BY seq LIMIT 2000"
       ).bind(desde).all();
       const tope = await env.DB.prepare("SELECT IFNULL(MAX(seq),0) AS seq FROM ops").first();
       return json({ seq: tope.seq, ops: (results || []).map(leerOp) });

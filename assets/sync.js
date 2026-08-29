@@ -381,6 +381,32 @@ const QCSync = {
       return;
     }
 
+    /* NADIE RESUCITA UN REGISTRO SIN QUERER — Q-131, 29 de agosto de 2026.
+
+       Aqui estaba la fuga que llevabamos toda la mañana persiguiendo. No era
+       que los aparatos no se enteraran de los retiros: era que LOS DESHACIAN.
+
+       Un aparato con una copia vieja no tiene el campo `borrado` en sus fichas.
+       Al comparar con lo que hay, esa ausencia se lee como «lo han borrado» y
+       sube `borrado: null` — que en el expediente significa «este registro ya
+       no esta retirado». Asi resucito el vaciado de Pretensados del 14 de
+       agosto una y otra vez, con su camion 209 y su viga 404, por mucho que yo
+       lo retirara. Y esta mañana estuvo a punto de recibir hormigon dentro.
+
+       > Quitar la marca de retirado es un ACTO. Nunca el efecto de que a un
+       > aparato le falte un campo.
+
+       Asi que un hueco no puede deshacer un retiro. Reabrir sigue siendo
+       posible —eso escribe `false`, con su firma y su motivo—, pero `null` en
+       cualquiera de las marcas de retiro no sube jamas. Es la misma familia
+       que Q-108: lo que un aparato no tiene, no lo sabe. */
+    const MARCAS = ["borrado", "borradoMotivo", "borradoPor", "borradoA"];
+    const resucita = ops.filter((o) => MARCAS.includes(o.campo) && (o.valor === null || o.valor === undefined));
+    if (resucita.length) {
+      ops = ops.filter((o) => !(MARCAS.includes(o.campo) && (o.valor === null || o.valor === undefined)));
+      try { console.warn(`QCheck: no se suben ${resucita.length} huecos que desharian un retiro`); } catch (_) {}
+    }
+
     if (!ops.length) return;
     this._guardarBase(ahora);
     this._guardarCola(this._cola().concat(ops));
@@ -451,6 +477,42 @@ const QCSync = {
      120.000 apuntes, muy por encima de lo que hay. Si algún día se alcanza, la
      vuelta siguiente sigue donde quedó — como antes, pero desde mucho más
      cerca. */
+  /* EL INTERRUPTOR DE VOLVER A EMPEZAR — Q-130, 29 de agosto de 2026, con el
+     primer camion del tiro esperando en la obra.
+
+     Esta mañana un iPad volvio a enseñar el vaciado de Pretensados del 14 de
+     agosto —retirado en el servidor desde hace dias— y estuvo a punto de
+     recibir un camion dentro. La causa de fondo es siempre la misma: el
+     aparato guarda por que linea va y solo pide lo que viene DESPUES. Si lo
+     que le falta esta ANTES de ese numero —y las lineas que retiran algo casi
+     siempre lo estan— no lo pide nunca. Ni recargando, ni esperando, ni con
+     buena señal.
+
+     Este sello es la palanca para esos casos: se cambia su valor y CADA
+     aparato, la proxima vez que abra, tira lo que tiene y se baja el
+     expediente entero desde la linea cero. No hay que ir aparato por aparato
+     ni acordarse de ningun enlace.
+
+     Se toca a mano y con motivo, nunca por costumbre: bajarlo todo cuesta unos
+     segundos y en obra los segundos se notan. La cola de lo que el tecnico
+     escribio y todavia no ha subido NO se toca. */
+  _sello() {
+    const AHORA = "20260829-pretensados";
+    try {
+      if (localStorage.getItem("qc-sync-sello") === AHORA) return;
+      const cola = localStorage.getItem(QC_SYNC_COLA);
+      localStorage.removeItem(DB_KEY);
+      localStorage.removeItem(QC_SYNC_BASE);
+      localStorage.removeItem(QC_SYNC_VISTO);
+      localStorage.removeItem("qc-sync-tope");
+      localStorage.setItem(QC_SYNC_SEQ, "0");
+      if (cola) localStorage.setItem(QC_SYNC_COLA, cola);
+      localStorage.setItem("qc-sync-sello", AHORA);
+      try { console.warn("QCheck: se vuelve a bajar el expediente entero (sello " + AHORA + ")"); } catch (_) {}
+      location.reload();
+    } catch (_) {}
+  },
+
   async _bajar() {
     if (!qcSyncActivo()) return;
     for (let pagina = 0; pagina < 60; pagina++) {
@@ -508,8 +570,26 @@ const QCSync = {
         this._guardarBase(qcProyectar(db));
         localStorage.setItem(DB_KEY, JSON.stringify(db));
         this._avisar();
-      } else if (r.seq != null && this._seq() === 0) {
-        this._guardarSeq(r.seq);
+      }
+      /* UN APARATO VACIO NO ESTA AL DIA — Q-129, 29 de agosto de 2026.
+
+         Aqui habia un atajo: si el servidor no devolvia nada y este aparato iba
+         por la linea cero, se saltaba hasta el final «para no replicar toda la
+         historia». La intencion era buena y la consecuencia, terrible.
+
+         Esta mañana, con el camion en la puerta: la bajada de 6 MB fallo en el
+         iPad, `r.ops` llego vacio, y este atajo dio el aparato por al dia CON
+         CERO DATOS. La tapa de carga se quito —porque estaba «al dia»— y Victor
+         entro a un QCheck que decia «todavia no hay ningun vaciado registrado»
+         con el tiro del dia en el servidor.
+
+         Un aparato sin una sola linea no esta al dia: esta vacio. Y la
+         diferencia entre las dos cosas es justo lo que no se puede confundir.
+
+         Si de verdad el servidor esta vacio, `r.seq` es 0 y no hay nada que
+         esperar; ese caso se dice aparte y sin mentir. */
+      else if (r.seq === 0) {
+        this._guardarSeq(0);
       }
       /* NO BASTA CON HABER BAJADO ALGO: HAY QUE ESTAR AL DÍA — Q-108 bis.
 
