@@ -3121,10 +3121,10 @@ function formObras() {
       { key: "obra", label: "Obra abierta", type: "select", full: true, options: lista,
         hint: "Cambiar de obra no mueve nada: cada ensayo queda con la suya." },
       { type: "label", label: "— o abrir una obra nueva —" },
-      { key: "nuevoId", label: "Identificador", half: true, placeholder: "ac-220037",
+      { key: "nuevoId", label: "Identificador", half: true, placeholder: "ac-000000",
         hint: "Corto, sin espacios. No se puede cambiar después." },
       { key: "nuevoNombre", label: "Nombre de la obra", half: true,
-        placeholder: "AC-220037 · Puentes 1067@1070" },
+        placeholder: "AC-000000 · Nombre de la obra" },
     ],
     onSave: (v) => {
       if (v.nuevoId && v.nuevoNombre) {
@@ -4808,7 +4808,7 @@ function inyectarEstilosCarga() {
 
    Aqui se mira SIEMPRE, antes de dibujar nada, en cualquier pantalla. */
 function comprobarSello() {
-  const AHORA = "20260829-pretensados";
+  const AHORA = "20260829-sin-pretensados";
   try {
     if (typeof qcSyncActivo === "function" && !qcSyncActivo()) return;
     if (localStorage.getItem("qc-sync-sello") === AHORA) return;

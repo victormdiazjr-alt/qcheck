@@ -497,7 +497,7 @@ const QCSync = {
      segundos y en obra los segundos se notan. La cola de lo que el tecnico
      escribio y todavia no ha subido NO se toca. */
   _sello() {
-    const AHORA = "20260829-pretensados";
+    const AHORA = "20260829-sin-pretensados";
     try {
       if (localStorage.getItem("qc-sync-sello") === AHORA) return;
       const cola = localStorage.getItem(QC_SYNC_COLA);

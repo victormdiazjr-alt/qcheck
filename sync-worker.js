@@ -1051,6 +1051,44 @@ export default {
         return json({ seq: t.seq, aceptadas: [] });
       }
 
+      /* LO QUE ESTÁ MUERTO NO VUELVE — Q-132, 29 de agosto de 2026.
+
+         Victor, despues de perder la mañana del primer tiro: «saca de la
+         existencia de la aplicacion y del code cualquier cosa relacionada al
+         tiro de Pretensados. BORRALO. Nada de Pretensados debe seguir en el
+         database».
+
+         Borrarlo del servidor no basta y lo aprendimos a base de golpes: cada
+         aparato lleva su propia copia, y en cuanto uno con la copia vieja
+         guarda algo, la diferencia se lee como trabajo nuevo y lo sube otra
+         vez. Lo retiramos cuatro veces y volvio cuatro veces.
+
+         Asi que el servidor deja de aceptarlo. Estos identificadores estan
+         muertos: cualquier linea que llegue con ellos se descarta en la puerta,
+         sin error y sin ruido, venga del aparato que venga.
+
+         No es censura del expediente: es una obra que nunca fue de este
+         proyecto y que se llevo por delante una mañana de hormigon. */
+      const MUERTOS = new Set([
+        "ac-220037",
+        "2026-08-12", "2026-08-13", "2026-08-14",
+        "msrgtznv-bnzkq", "msrgvy16-xxbly", "msrgwzhp-hxd64", "msrgy6xz-us6zy",
+        "msrgz6t5-prkot", "msrh0c21-rg3th", "mssymfdj-7ui4o", "msuc4ual-35w8y",
+        "mt4be3fk-miibc", "mt4bexzi-f5yk2", "mt4bfew4-sylbq", "mt4buj01-fc0zp",
+        "msuy61m7-73d5s",
+      ]);
+      const antesDeFiltrar = ops.length;
+      const vivas = ops.filter((o) => !MUERTOS.has(String(o && o.id)));
+      if (vivas.length !== antesDeFiltrar) {
+        console.warn(`QCheck: descartadas ${antesDeFiltrar - vivas.length} lineas de una obra muerta`);
+      }
+      if (!vivas.length) {
+        const t0 = await env.DB.prepare("SELECT IFNULL(MAX(seq),0) AS seq FROM ops").first();
+        return json({ seq: t0.seq, aceptadas: [] });
+      }
+      ops.length = 0;
+      for (const o of vivas) ops.push(o);
+
       /* `INSERT OR IGNORE` sobre `uid` único: un reintento porque se cayó la
          señal justo al contestar no duplica la línea. */
       const stmt = env.DB.prepare(
