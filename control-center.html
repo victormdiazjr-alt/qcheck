@@ -953,6 +953,33 @@ function render() {
       </a>
     </div>
 
+    <!-- EL ASISTENTE — Q-116, 28 de agosto de 2026.
+
+         Victor: «lo que quiero es decirle "creame este tiro" y darle paste al
+         mensaje que me envio Ruben». Se pega el WhatsApp tal cual y sale el
+         tiro montado — pero como BORRADOR: el formulario se abre relleno y lo
+         confirma una persona. Nada entra al expediente porque lo diga un
+         modelo.
+
+         Solo con el permiso «config», el mismo de Plan & Datos y del registro
+         de Actividad. Ruben tiene un camion delante: su pantalla tiene que
+         decirle que hacer en un segundo, no invitarle a conversar. -->
+    ${typeof qcVeConfig === "function" && qcVeConfig() ? `
+    <section class="panel">
+      <div class="panel-head"><h2>Asistente</h2><div class="spacer"></div>
+        <span class="muted" style="font-size:12px">solo tu cuenta</span></div>
+      <div class="panel-body">
+        <textarea id="asis-texto" rows="4" placeholder="Pega aquí el mensaje de Rubén, o pregunta lo que sea.&#10;Ej. «mañana tiramos 160 yardas, carril L2, fase 10, empezamos 6:00»"
+          style="width:100%; padding:12px 14px; border-radius:10px; font:inherit; font-size:14px;
+                 background:var(--surface-2); color:var(--text); border:1px solid var(--hairline); resize:vertical"></textarea>
+        <div style="display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap">
+          <button class="btn primary" id="asis-btn" onclick="preguntarAsistente()">Preguntar</button>
+          <span class="muted" id="asis-estado" style="font-size:12.5px"></span>
+        </div>
+        <div id="asis-salida" style="margin-top:14px"></div>
+      </div>
+    </section>` : ""}
+
     <!-- LOS AVISOS, AL FINAL Y EN NINGÚN OTRO SITIO — Q-52, 7 de agosto de
          2026. Son tendencias que el sistema sospecha, no hechos de la obra:
          se miran cuando se busca contexto, no cuando se entra a ver cómo va
@@ -998,6 +1025,100 @@ mountThemeToggle();
 mountStatusBar();
 enableLiveSync(() => render());
 render();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   EL ASISTENTE — Q-116, 28 de agosto de 2026.
+
+   Manda el texto al servidor con el contexto de la obra delante —que obras
+   hay, que estructuras, que mezclas, los limites, la fecha de hoy— y pinta lo
+   que devuelve. Si trae un tiro, NO lo guarda: abre el formulario de siempre
+   con los campos rellenos, para que lo confirme una persona. */
+function contextoDeLaObra() {
+  const p = db.project || {};
+  const plan = db.plan || {};
+  return {
+    hoy: todayISO(),
+    obras: (typeof obrasVivas === "function" ? obrasVivas() : (db.proyectos || []))
+      .map((o) => ({ id: o.id, nombre: o.name || o.id })),
+    obraAbierta: db.proyectoActivo,
+    estructuras: (typeof estructurasDeLaObra === "function" ? estructurasDeLaObra() : [])
+      .map((e) => e.value),
+    mezclas: String(p.mezclas || p.mixId || "").split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean),
+    contratista: p.contractor || null,
+    concretera: p.concretera || null,
+    spec: p.spec || null,
+    limites: {
+      slump: plan.slump, air: plan.air, uw: plan.uw, tempMax: plan.tempMax,
+    },
+    ultimoTiro: (typeof ultimoTiroProcesado === "function" ? ultimoTiroProcesado() : null),
+    hayTiroAbierto: typeof tiroActivo === "function" ? tiroActivo() : null,
+  };
+}
+
+let ASIS_BORRADOR = null;
+
+async function preguntarAsistente() {
+  const caja = document.getElementById("asis-texto");
+  const estado = document.getElementById("asis-estado");
+  const salida = document.getElementById("asis-salida");
+  const boton = document.getElementById("asis-btn");
+  const texto = (caja.value || "").trim();
+  if (!texto) { caja.focus(); return; }
+
+  boton.disabled = true;
+  estado.textContent = "Pensando…";
+  salida.innerHTML = "";
+  try {
+    const api = (localStorage.getItem("qc-api") || location.origin).replace(/\/+$/, "");
+    const cab = { "Content-Type": "application/json" };
+    const tk = localStorage.getItem("qc-token"); if (tk) cab["X-QC-Token"] = tk;
+    const ses = localStorage.getItem("qc-sesion"); if (ses) cab["X-QC-Sesion"] = ses;
+    const r = await fetch(api + "/api/asistente", {
+      method: "POST", headers: cab,
+      body: JSON.stringify({ texto, contexto: contextoDeLaObra() }),
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      estado.textContent = d.error === "sin-lector" ? "El servidor no tiene la llave puesta."
+        : d.error === "rol" ? "Esta cuenta no puede usar el asistente."
+        : "No se pudo preguntar (" + (d.error || r.status) + ").";
+      return;
+    }
+    estado.textContent = "";
+    ASIS_BORRADOR = d.tiro || null;
+    const huecos = d.tiro
+      ? Object.entries(d.tiro).filter(([, v]) => v === null || v === "").map(([k]) => k)
+      : [];
+    salida.innerHTML = `
+      <div style="white-space:pre-wrap; line-height:1.55">${esc(d.respuesta || "")}</div>
+      ${d.tiro ? `
+      <div style="margin-top:14px; padding:14px; border:1px solid var(--hairline); border-radius:10px">
+        <div style="font-size:11px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:9px">El tiro que propone</div>
+        ${Object.entries(d.tiro).filter(([, v]) => v !== null && v !== "").map(([k, v]) =>
+          `<div style="display:flex; gap:10px; font-size:13.5px; padding:3px 0">
+             <span style="color:var(--muted); min-width:120px">${esc(k)}</span>
+             <b>${esc(String(v))}</b></div>`).join("")}
+        ${huecos.length ? `<div style="margin-top:9px; font-size:12.5px; color:var(--act)">
+          En blanco, para completar a mano: ${esc(huecos.join(", "))}</div>` : ""}
+        <button class="btn primary" style="margin-top:13px" onclick="abrirTiroPropuesto()">Abrir el formulario con esto</button>
+      </div>` : ""}`;
+  } catch (e) {
+    estado.textContent = "Sin conexión con el servidor.";
+  } finally {
+    boton.disabled = false;
+  }
+}
+
+/* El borrador entra al formulario de siempre. De ahi en adelante es el camino
+   normal: se revisa campo por campo y se guarda con el boton de siempre. */
+function abrirTiroPropuesto() {
+  if (!ASIS_BORRADOR) return;
+  const b = {};
+  for (const [k, v] of Object.entries(ASIS_BORRADOR)) if (v !== null && v !== "") b[k] = v;
+  const dia = b.fecha || todayISO();
+  if (typeof formDayMeta === "function") formDayMeta(dia, b);
+}
+
 </script>
 </body>
 </html>

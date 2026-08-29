@@ -444,6 +444,144 @@ export default {
          npx wrangler secret put QC_ANTHROPIC
        Sin ella la ruta contesta 501 y Recepción sigue funcionando a mano, que
        es como funciona hoy. */
+    /* ══════════════════════════════════════════════════════════════════════
+       EL ASISTENTE DE OBRA — Q-116, 28 de agosto de 2026.
+
+       Victor: «lo que quiero es decirle "creame este tiro" y darle paste al
+       mensaje que me envio Ruben».
+
+       Eso es lo que hace. Entra el mensaje tal cual llego por WhatsApp —«manana
+       tiramos 160 yardas en el carril L2, fase 10, empezamos 6 am, losas de la
+       0.400 a la 0.312»— y sale el tiro montado.
+
+       DOS REGLAS, Y NO SE NEGOCIAN:
+
+       1. **Propone, no escribe.** Devuelve un borrador; el formulario se abre
+          relleno y Victor confirma campo por campo. Es el mismo trato que el
+          lector de conduces (Q-01) y que el proximo ticket sugerido: nada entra
+          al expediente porque lo diga un modelo. Un tiro mal montado cambia las
+          yardas planificadas, el tramo y el cumplimiento del dia.
+
+       2. **Lo que no se lee con seguridad va en `null`.** No se rellena el
+          hueco con algo verosimil. En este proyecto un numero equivocado que
+          parece bueno es peor que un hueco (DECISIONS §3): el hueco se ve.
+
+       Y solo para quien lleva el contrato: `config`, el mismo permiso que abre
+       Plan & Datos y el registro de Actividad. Ruben tiene un camion delante;
+       su pantalla tiene que decirle que hacer en un segundo, no invitarle a
+       conversar. */
+    if (url.pathname === "/api/asistente" && req.method === "POST") {
+      if (exige && !quien) return json({ error: "sesion" }, 401);
+      if (quien && !quien.config) return json({ error: "rol" }, 403);
+      if (!env.QC_ANTHROPIC) return json({ error: "sin-lector" }, 501);
+
+      let d;
+      try { d = await req.json(); } catch (_) { return json({ error: "json" }, 400); }
+      const texto = String(d.texto || "").slice(0, 6000).trim();
+      if (!texto) return json({ error: "texto" }, 400);
+      const ctx = d.contexto && typeof d.contexto === "object" ? d.contexto : {};
+
+      const oNulo = (t) => ({ anyOf: [{ type: t }, { type: "null" }] });
+      const ESQUEMA = {
+        type: "object",
+        additionalProperties: false,
+        required: ["respuesta", "tiro"],
+        properties: {
+          respuesta: { type: "string" },
+          tiro: {
+            anyOf: [{ type: "null" }, {
+              type: "object",
+              additionalProperties: false,
+              required: ["fecha", "proyecto", "estructura", "es934", "horaInicio",
+                         "cyPlan", "losasPlan", "losas", "mix", "fase", "cierre",
+                         "lane", "km", "notas"],
+              properties: {
+                fecha: oNulo("string"), proyecto: oNulo("string"),
+                estructura: oNulo("string"), es934: oNulo("boolean"),
+                horaInicio: oNulo("string"), cyPlan: oNulo("number"),
+                losasPlan: oNulo("number"), losas: oNulo("string"),
+                mix: oNulo("string"), fase: oNulo("string"),
+                cierre: oNulo("string"), lane: oNulo("string"),
+                km: oNulo("string"), notas: oNulo("string"),
+              },
+            }],
+          },
+        },
+      };
+
+      const INSTRUCCIONES = [
+        "Eres el asistente de QCheck, el sistema de control de calidad de hormigon de",
+        "Segarra Engineering. Hablas con el ingeniero de record, en español de Puerto",
+        "Rico, claro y sin rodeos. Los terminos tecnicos van en ingles: slump, unit",
+        "weight, mix, tickets.",
+        "",
+        "TU TRABAJO PRINCIPAL: te pegan el mensaje que el tecnico mando por WhatsApp",
+        "describiendo el vaciado de manana, y devuelves el tiro montado en `tiro`.",
+        "",
+        "REGLAS QUE NO SE ROMPEN:",
+        "- Lo que el mensaje NO diga va en `null`. No inventes. Un hueco se ve y se",
+        "  rellena a mano; un dato inventado que parece bueno se firma sin mirarlo.",
+        "- `fecha` en formato AAAA-MM-DD. Si dicen «manana», calcula desde la fecha",
+        "  de hoy que viene en el contexto.",
+        "- `horaInicio` en formato HH:MM de 24 horas.",
+        "- `estructura` solo puede ser uno de los valores que trae el contexto.",
+        "- `proyecto` solo puede ser el id de una obra del contexto.",
+        "- `mix` solo de la lista del contexto, si la hay.",
+        "- `cyPlan` son yardas cubicas (CY). Si hablan de metros cubicos, convierte y",
+        "  dilo en `respuesta`.",
+        "- `losas` es el listado o el tramo tal como lo escribieron, sin reordenar.",
+        "",
+        "Si el mensaje no habla de un vaciado —es una pregunta sobre limites, sobre",
+        "un camion, sobre como se hace algo— entonces `tiro` va en `null` y contestas",
+        "en `respuesta`, con los datos del contexto delante.",
+        "",
+        "En `respuesta` di en dos o tres lineas que entendiste y, sobre todo, QUE TE",
+        "FALTA: nombra los campos que quedaron en null para que los complete a mano.",
+        "Nunca digas que has creado o guardado el tiro: tu propones, el confirma.",
+        "",
+        "CONTEXTO DE LA OBRA:",
+        JSON.stringify(ctx),
+      ].join("\n");
+
+      const REINTENTABLE2 = new Set([408, 409, 425, 429, 500, 502, 503, 504, 529]);
+      const ESPERAS2 = [400, 1200];
+      let r2, fallo2 = null;
+      for (let intento = 0; intento <= ESPERAS2.length; intento++) {
+        if (intento) await new Promise((s) => setTimeout(s, ESPERAS2[intento - 1]));
+        try {
+          r2 = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "x-api-key": env.QC_ANTHROPIC,
+              "anthropic-version": "2023-06-01",
+            },
+            body: JSON.stringify({
+              model: "claude-opus-5",
+              max_tokens: 8000,
+              output_config: {
+                effort: "medium",
+                format: { type: "json_schema", schema: ESQUEMA },
+              },
+              system: INSTRUCCIONES,
+              messages: [{ role: "user", content: texto }],
+            }),
+          });
+        } catch (e) { fallo2 = e; continue; }
+        if (!REINTENTABLE2.has(r2.status)) break;
+      }
+      if (!r2) return json({ error: "sin-respuesta", detalle: String(fallo2 || "") }, 502);
+      if (!r2.ok) return json({ error: "modelo", codigo: r2.status }, 502);
+
+      let salida;
+      try {
+        const cuerpo = await r2.json();
+        const trozo = (cuerpo.content || []).find((c) => c.type === "text");
+        salida = JSON.parse(trozo ? trozo.text : "{}");
+      } catch (_) { return json({ error: "respuesta-ilegible" }, 502); }
+      return json(salida);
+    }
+
     if (url.pathname === "/api/leer-conduce" && req.method === "POST") {
       if (exige && !quien) return json({ error: "sesion" }, 401);
       if (quien && quien.rol !== "qc") return json({ error: "rol" }, 403);
