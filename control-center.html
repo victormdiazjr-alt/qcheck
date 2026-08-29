@@ -276,6 +276,25 @@ a.w:hover::after { opacity: 1; color: var(--accent); }
 .alert-row .t { font-weight: 800; font-size: 13.5px; }
 .alert-row .d { font-size: 12.5px; margin-top: 1px; }
 .alert-row .a { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+
+/* LA SEPARACIÓN ENTRE MÓDULOS, EN EL CONTENEDOR — Q-117, 28 ago 2026.
+
+   Víctor: «deja espacio de separación entre los dos módulos». La tarjeta del
+   último camión y el panel del Asistente se tocaban: 0 px, cuando entre los
+   demás había 16 y 18.
+
+   La causa era que cada módulo se separaba por su cuenta —`.panel` con margen
+   abajo, las rejillas con el suyo—, así que el hueco dependía de cuál de los
+   dos vecinos llevara margen. El que yo añadí no llevaba, y ahí se pegaron.
+
+   Un hueco que depende de quién esté al lado no es una regla: es una
+   casualidad que se rompe con el siguiente módulo. Ahora la separación la pone
+   el contenedor, una vez y para todos. El próximo nace bien sin que nadie se
+   acuerde. Y de paso se emparejan los 16 y los 20 sueltos que había. */
+#app { display: flex; flex-direction: column; gap: 18px; }
+/* Y las tarjetas de dentro tampoco separan por su cuenta: su margen se sumaba
+   al hueco del contenedor y dejaba 34 px donde los demas tenian 18. */
+#app > *, #app .grid > * { margin-bottom: 0; }
 </style>
 </head>
 <body>
@@ -876,7 +895,7 @@ function render() {
     ${panelDiscrepancia(discrepanciaDeOrden(day))}
 
     <!-- fila 1: lo del día -->
-    <div class="grid cols-2" style="margin-bottom:16px">
+    <div class="grid cols-2">
       <!-- Q-72: pasadas 24 horas, el tiro viejo deja de ocupar la casilla de
            lo de hoy. Los números no se pierden —siguen en Results y en el
            reporte— pero aquí arriba lo que hace falta saber es que no hay nada
@@ -919,7 +938,7 @@ function render() {
          Slump y Unit Weight van ENCIMA de los avisos y del último camión
          (Víctor, 31 jul 2026): son las dos lecturas que mira de verdad, así
          que ganan la posición alta. -->
-    <div class="grid cols-2" style="margin-bottom:16px">
+    <div class="grid cols-2">
       <a class="w" href="results.html#charts">
         <div class="lbl">Slump — en vivo <span class="trend">${trendLabel(day, "slump")}</span></div>
         <div class="chart-scroll" style="margin-top:6px">${chartForDay(CHART_DEFS[0], day, 22)}</div>
