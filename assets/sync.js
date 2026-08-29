@@ -176,10 +176,29 @@ function qcCambios(antes, ahora) {
         if (!(campo in vb) && va[campo] != null) anota(ent, id, campo, null);
       }
     }
-    for (const id of Object.keys(A)) {
-      if (id in B) continue;
-      for (const campo of Object.keys(A[id])) if (A[id][campo] != null) anota(ent, id, campo, null);
-    }
+    /* UN REGISTRO QUE FALTA NO ES UN REGISTRO BORRADO — Q-149, 29 ago 2026.
+
+       Aquí había un bucle que decía: si un registro está en la copia de
+       referencia y ya no está en la base, sube TODOS sus campos a `null`. Es
+       decir, un registro que este aparato ya no tiene se llevaba por delante el
+       del expediente.
+
+       Nada legítimo lo dispara. En QCheck **nada se borra**: un ensayo que sale
+       mal se retira con `borrado: true`, que es un campo más y viaja por el
+       camino normal. Lo único que desaparece de verdad de `db` son los datos de
+       la simulación, y esos no viajan nunca (`qcProyectar` los salta).
+
+       Así que este bucle solo podía dispararse cuando a un aparato le FALTA
+       algo — que es exactamente el caso en el que no hay que hacerle caso. Es
+       la misma regla que ya costó una mañana entera con los retiros (Q-131),
+       escrita entonces para un campo y ahora para el registro entero:
+
+       > Quitar algo del expediente es un ACTO. Nunca el efecto de que a un
+       > aparato le falte.
+
+       Y es lo que permite que el aparato deje de cargar con el histórico
+       (Q-150): podar lo viejo de la copia local ya no puede confundirse con
+       borrarlo del expediente. Sin esto, podar habría sido una bomba. */
   }
   return ops;
 }
@@ -673,7 +692,17 @@ const QCSync = {
      siguiente lo intenta otra vez, o se cae al camino de siempre. */
   async _bajarEstado() {
     try {
-      const r = await this._pedir("/api/estado");
+      /* Q-150: SOLO LA VENTANA QUE ESTE APARATO VA A LLEVAR.
+
+         Sin esto el aparato se bajaba el expediente entero y acto seguido
+         soltaba casi todo: con cuatro años dentro eran 34 MB y 500.000 apuntes
+         aplicados uno a uno para quedarse con 1.220 ensayos — **69 segundos**
+         hasta poder trabajar, con el camión en la puerta.
+
+         Pedir la ventana lo convierte en 2,5 MB. La historia entera se pide
+         aparte, y solo cuando alguien abre un informe. */
+      const dias = Number(localStorage.getItem("qc-ventana-dias") || 60) || 60;
+      const r = await this._pedir("/api/estado?dias=" + dias);
       if (!r || !Array.isArray(r.ops) || r.seq == null) return false;
       for (const o of r.ops) qcAplicarOp(o);
       qcReconciliarN();
@@ -688,6 +717,106 @@ const QCSync = {
       return true;
     } catch (_) {
       return false;   /* sin estado no se toca nada: se cae al camino largo */
+    }
+  },
+
+  /* ============================================================
+     EL APARATO NO CARGA CON EL HISTÓRICO — Q-150, 29 de agosto de 2026.
+
+     Víctor, al pasar QCheck a uso diario: «necesitamos la infraestructura para
+     manejar la cantidad de datos». Se midió, y con un año de trabajo dentro el
+     almacén del navegador va por 4.310 KB de los ~5 MB que da Safari. A los
+     8.000 ensayos —año y medio— ya no se puede guardar.
+
+     La respuesta no es apretar los datos para que quepan más años: es que el
+     aparato deje de llevar años encima. Un iPad en obra necesita el tiro
+     abierto y lo reciente. El expediente entero vive en el servidor, que es
+     donde tiene que vivir, y las pantallas que miran historia —Reportes, la de
+     la Autoridad— se lo piden cuando alguien las abre.
+
+     Víctor eligió **60 días**: el almacén baja de 4.310 KB a unos 570 KB, y lo
+     importante no es que sea menos — es que **deja de crecer**. Queda acotado
+     por la ventana, no por los años.
+
+     LAS TRES REGLAS QUE HACEN QUE ESTO NO SEA UNA BOMBA
+     ---------------------------------------------------
+     1. NO SE PODA SI HAY ALGO SIN SUBIR. Ni con la cola llena, ni a medio
+        sincronizar, ni sin haberse estrenado. Si este aparato tiene algo que el
+        servidor todavía no tiene, aquí no se toca nada.
+     2. NO SE PODA EL TIRO ABIERTO, pase el tiempo que pase. Un vaciado sin
+        cerrar es lo que está pasando, no historia (Q-98).
+     3. PRIMERO LA COPIA DE REFERENCIA, DESPUÉS LA BASE. Si se hiciera al
+        revés y fallara en medio, la comparación siguiente vería registros de
+        menos y los subiría como borrados. Con este orden, el peor caso es que
+        se suban repetidos: ruido, no daño. (Y desde Q-149 ni eso: un registro
+        que falta ya no se lee como borrado.)
+
+     Podar no borra nada del expediente. Solo suelta peso de este aparato. */
+  _podar() {
+    if (!qcSyncActivo()) return 0;
+    /* Regla 1: solo un aparato al día y con la cola vacía tiene derecho a
+       olvidar. Cualquier duda, no se toca. */
+    if (localStorage.getItem(QC_SYNC_VISTO) !== "1") return 0;
+    if (this._cola().length) return 0;
+    const tope = Number(localStorage.getItem("qc-sync-tope") || 0);
+    if (!tope || this._seq() < tope) return 0;
+
+    const DIAS = Number(localStorage.getItem("qc-ventana-dias") || 60) || 60;
+    const corte = new Date(Date.now() - DIAS * 86400000).toISOString().slice(0, 10);
+
+    /* Regla 2: el tiro abierto se queda, tenga la fecha que tenga. */
+    const abierto = (typeof tiroActivo === "function" && tiroActivo()) || null;
+    const seQueda = (dia) => !dia || dia >= corte || dia === abierto;
+
+    const antes = (db.tests || []).length;
+    const fuera = (db.tests || []).filter((t) => !seQueda(t && t.date)).length;
+    if (!fuera) return 0;
+
+    db.tests = (db.tests || []).filter((t) => seQueda(t && t.date));
+    for (const dia of Object.keys(db.dayMeta || {})) if (!seQueda(dia)) delete db.dayMeta[dia];
+
+    /* Regla 3: el orden importa. */
+    try {
+      this._guardarBase(qcProyectar(db));
+      localStorage.setItem(DB_KEY, JSON.stringify(db));
+    } catch (e) {
+      try { console.warn("QCheck: no se pudo guardar despues de podar", e); } catch (_) {}
+    }
+    try { console.info(`QCheck: soltados ${fuera} ensayos de mas de ${DIAS} dias (quedan ${antes - fuera}). El expediente entero sigue en el servidor.`); } catch (_) {}
+    return fuera;
+  },
+
+  /* LA HISTORIA, CUANDO ALGUIEN LA PIDE — Q-150, 29 de agosto de 2026.
+
+     El aparato lleva 60 días encima (`_podar`). Pero Reportes y la pantalla de
+     la Autoridad existen justo para mirar hacia atrás, y ahí sí hace falta todo.
+
+     Así que se pide al abrirlas, y **solo a la memoria**: se mete en `db` para
+     que las pantallas lo lean como siempre, y NO se guarda ni se sincroniza. Al
+     recargar, el aparato vuelve a su ventana solo.
+
+     Por eso no llama a `saveDB()` y por eso actualiza también la copia de
+     referencia: si no lo hiciera, el siguiente guardado vería mil ensayos
+     «nuevos» y los subiría enteros y repetidos.
+
+     Sin cobertura no hay historia — y se dice, no se disimula: una pantalla que
+     enseña medio expediente sin avisar es peor que una que dice «no puedo». */
+  async traerHistorial() {
+    if (!qcSyncActivo()) return { ok: false, motivo: "sin-servidor" };
+    try {
+      const r = await this._pedir("/api/estado");        // sin `dias`: todo
+      if (!r || !Array.isArray(r.ops)) return { ok: false, motivo: "sin-respuesta" };
+      let n = 0;
+      for (const o of r.ops) { qcAplicarOp(o); n++; }
+      if (typeof qcReconciliarN === "function") qcReconciliarN();
+      /* La referencia se pone al día con lo que ahora hay en memoria, para que
+         esto no se lea después como trabajo nuevo. NO se toca `DB_KEY`: la
+         copia guardada sigue siendo la ventana. */
+      try { this._guardarBase(qcProyectar(db)); } catch (_) {}
+      this._avisar();
+      return { ok: true, datos: n };
+    } catch (e) {
+      return { ok: false, motivo: e && e.message === "sin-senal" ? "sin-senal" : "error" };
     }
   },
 
@@ -711,6 +840,11 @@ const QCSync = {
       const quedaMas = await this._bajarUna();
       if (!quedaMas) break;
     }
+    /* Q-150: al terminar de ponerse al día —y solo entonces— se suelta lo
+       viejo. Va aquí y no en un temporizador aparte porque el permiso para
+       olvidar depende de estar al día, y este es el sitio donde acaba de
+       comprobarse. */
+    if (this._podar()) this._cambioEnEstaVuelta = true;
     if (this._cambioEnEstaVuelta) this._avisar();
   },
 

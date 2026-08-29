@@ -1078,6 +1078,35 @@ export default {
        ============================================================ */
     if (url.pathname === "/api/estado" && req.method === "GET") {
       if (exige && !quien) return json({ error: "sesion" }, 401);
+
+      /* SOLO LA VENTANA QUE EL APARATO VA A LLEVAR — Q-150, 29 ago 2026.
+       *
+       * Desde hoy el aparato no carga con el historico: lleva el tiro abierto y
+       * los ultimos 60 dias (`?dias=60`). No tiene sentido mandarle tres años
+       * de ensayos para que los suelte acto seguido — con un año dentro son
+       * 8,5 MB que este worker arma en memoria cada vez que alguien estrena un
+       * aparato.
+       *
+       * Se recortan SOLO los ensayos. Las obras, los limites, la configuracion
+       * y las fichas de dia son cuatro cosas y se mandan siempre: son lo que
+       * hace falta para juzgar, y juzgar mal por no tener los limites es
+       * exactamente lo que paso el 29 de agosto por la mañana.
+       *
+       * Sin `dias` se manda todo, que es lo que necesitan los informes y la
+       * pantalla de la Autoridad cuando alguien pide ver la historia entera. */
+      const dias = Number(url.searchParams.get("dias") || 0) || 0;
+      let vivos = null;
+      if (dias > 0) {
+        const corte = new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10);
+        /* `valor` guarda JSON, asi que una fecha va entrecomillada: "2026-07-01".
+         * Comparar textos funciona porque el formato es AAAA-MM-DD. */
+        const { results: ids } = await env.DB.prepare(
+          `SELECT DISTINCT id FROM ops
+            WHERE ent = 'test' AND campo = 'date' AND valor >= ?`
+        ).bind(JSON.stringify(corte)).all();
+        vivos = new Set((ids || []).map((r) => String(r.id)));
+      }
+
       const { results } = await env.DB.prepare(
         `SELECT o.seq, o.uid, o.ent, o.id, o.campo, o.valor, o.ts, o.dev, o.usr
            FROM ops o
@@ -1103,11 +1132,14 @@ export default {
          que se estrena necesita saber COMO ESTAN LAS COSAS, no quien las puso
          asi — y en cuanto se estrena, todo lo que llegue despues viene por
          `/api/cambios` con su firma completa, como siempre. */
-      const estado = (results || []).map((f) => {
+      const estado = [];
+      for (const f of (results || [])) {
         const o = leerOp(f);
-        return { ent: o.ent, id: o.id, campo: o.campo, valor: o.valor };
-      });
-      return json({ seq: tope.seq, estado: true, ops: estado });
+        /* Q-150: los ensayos fuera de la ventana no se mandan. Todo lo demas si. */
+        if (vivos && o.ent === "test" && !vivos.has(String(o.id))) continue;
+        estado.push({ ent: o.ent, id: o.id, campo: o.campo, valor: o.valor });
+      }
+      return json({ seq: tope.seq, estado: true, ventana: dias || null, ops: estado });
     }
 
     if (url.pathname === "/api/cambios" && req.method === "GET") {

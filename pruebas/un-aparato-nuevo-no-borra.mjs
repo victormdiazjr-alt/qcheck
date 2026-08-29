@@ -51,10 +51,44 @@ console.log("\nEL APARATO DE LAS 12:11 — recién conectado, base vacía");
   di(r.total === 0, `y no sube nada en total: ${r.total}`);
 }
 
-console.log("\nEL MISMO APARATO, YA ESTRENADO — sus borrados sí valen");
+console.log("\nY UN REGISTRO QUE FALTA NO ES UN REGISTRO BORRADO — Q-149");
 {
+  /* ESTO AFIRMABA LO CONTRARIO Y SE CAMBIO A PROPOSITO el 29 de agosto de 2026.
+
+     Decia: «el mismo aparato, ya estrenado, sus borrados si valen» — es decir,
+     si a un aparato al dia le faltan tres ensayos que estan en su copia de
+     referencia, que suba tres borrados.
+
+     No. En QCheck nada se borra: un ensayo que salio mal se retira con
+     `borrado: true`, que es un campo mas y viaja por el camino normal. Lo unico
+     que desaparece de verdad de `db` son los datos de la simulacion, y esos no
+     viajan nunca.
+
+     Asi que ese caso solo se daba cuando a un aparato le FALTABA algo — que es
+     justo cuando no hay que hacerle caso. Y desde Q-150 le falta A PROPOSITO:
+     el aparato suelta lo de mas de 60 dias para no llenarse. Con la regla vieja,
+     podar habria subido veinte mil borrados y se habria llevado el expediente
+     por delante.
+
+     > Quitar algo del expediente es un ACTO. Nunca el efecto de que a un
+     > aparato le falte. */
   const r = corre(true);
-  di(r.borrados > 0, `ahora sí los sube: ${r.borrados}`);
+  di(r.borrados === 0, `un aparato al dia tampoco borra por ausencia: ${r.borrados}`);
+  di(r.total === 0, `y no sube nada de esos tres: ${r.total}`);
+}
+
+console.log("\nPERO UN RETIRO DE VERDAD SI VIAJA");
+{
+  /* La contraparte, para que lo de arriba no se lea como «los retiros no
+     suben». Retirar es poner `borrado: true`, y eso es un cambio de campo. */
+  const { api, alm } = montar({ estrenado: true });
+  alm.set("qc-sync-base", JSON.stringify({ test: { t1: { ticket: "1917", borrado: null } },
+    dayMeta:{}, plan:{}, project:{}, humidity:{}, config:{} }));
+  api.poner({ tests: [{ id: "t1", ticket: "1917", borrado: true, borradoMotivo: "duplicado" }],
+    dayMeta:{}, humidity:[], plan:{}, project:{}, proyectos:[], proyectoActivo:"p" });
+  api.QCSync.alGuardar();
+  const cola = JSON.parse(alm.get("qc-sync-cola") || "[]");
+  di(cola.some((o) => o.campo === "borrado" && o.valor === true), "el retiro sube como lo que es");
 }
 
 console.log("\nY UN APARATO SIN ESTRENAR TAMPOCO AÑADE — espera al primer viaje (Q-106)");

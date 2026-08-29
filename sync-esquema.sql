@@ -26,6 +26,22 @@ CREATE INDEX IF NOT EXISTS ops_seq ON ops (seq);
 -- Para la línea de tiempo de un conduce (Q-05).
 CREATE INDEX IF NOT EXISTS ops_registro ON ops (ent, id, seq);
 
+-- Para la instantánea que estrena un aparato — Q-141, y el índice, Q-150.
+--
+-- `/api/estado` pregunta "de cada (ent, id, campo), ¿cuál es la última?", y el
+-- índice de arriba no sirve para eso: agrupa por `seq`, no por `campo`. Con el
+-- registro de hoy son 0,9 s y no molesta; con tres años de uso diario —unos
+-- 400.000 apuntes— sí, y se nota justo donde peor: un aparato estrenándose en
+-- obra con un camión esperando.
+--
+-- Se aplica con:
+--   npx wrangler d1 execute qcheck --remote --file sync-esquema.sql
+CREATE INDEX IF NOT EXISTS ops_estado ON ops (ent, id, campo, seq);
+
+-- Y para recortar la ventana de días: `/api/estado?dias=60` busca los ensayos
+-- cuya fecha entra en la ventana antes de armar nada.
+CREATE INDEX IF NOT EXISTS ops_fecha ON ops (ent, campo, valor);
+
 -- Quién está usando QCheck ahora mismo.
 --
 -- Una fila por aparato, y se PISA: aquí no hay expediente que guardar, es una
