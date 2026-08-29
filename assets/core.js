@@ -4422,7 +4422,40 @@ function formDayMeta(day, borrador) {
 
            Quien programa un tiro es una persona. Desde ese momento el día es
            de verdad y viaja. */
-      db.dayMeta[day] = { ...(db.dayMeta[day] || {}), ...v };
+      /* LA FECHA MUEVE EL TIRO — Q-119, 28 de agosto de 2026.
+
+         Esto escribia SIEMPRE bajo el dia con el que se abrio el formulario e
+         ignoraba `v.fecha`. Y ese campo existe precisamente para programar el
+         de mañana (Q-47): se abria hoy, se cambiaba la fecha al dia siguiente,
+         y el tiro quedaba guardado bajo HOY con una fecha de mañana escrita
+         dentro. Dos cosas que se contradicen en el mismo registro.
+
+         Lo encontre auditando el tiro que Victor acababa de crear para hoy 29:
+         estaba bajo la llave del 28. Mañana por la mañana `tiroActivo()` habria
+         buscado el dia 29, no lo habria encontrado, y Ruben se habria plantado
+         delante de una pantalla sin tiro abierto con el primer mixer entrando.
+
+         Ahora el tiro vive en el dia que dice su fecha. Y si el dia de origen
+         se queda vacio —se abrio hoy solo para programar mañana— se retira, que
+         si no queda un vaciado fantasma: plan sin un solo camion.
+
+         Un tiro con camiones NO se mueve: eso ya no es programar, es reescribir
+         el expediente, y se hace a sabiendas o no se hace. */
+      const destino = String(v.fecha || day).slice(0, 10) || day;
+      if (destino !== day && testsOfDate(day).length) {
+        alert("Este vaciado ya tiene camiones registrados.\n\n" +
+              "Cambiarle la fecha movería camiones de un día a otro del expediente.\n" +
+              "Si de verdad hay que moverlo, dilo y se hace con su rastro.");
+        return;
+      }
+      db.dayMeta[destino] = { ...(db.dayMeta[destino] || {}), ...v };
+      if (destino !== day && db.dayMeta[day]) {
+        /* No se borra: se retira, con su motivo, como todo aqui. */
+        db.dayMeta[day].borrado = true;
+        db.dayMeta[day].borradoMotivo = "Se programó para el " + destino;
+        db.dayMeta[day].borradoA = new Date().toISOString();
+      }
+      day = destino;
       /* Q-89: el tiro se sella con la obra que se ELIGIÓ. `proyectoActivo()`
          queda solo de red por si el formulario se abrió sin obras declaradas.
          Y si la obra elegida no es la que está abierta, se abre: no puede haber
