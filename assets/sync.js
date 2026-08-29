@@ -463,6 +463,36 @@ const QCSync = {
   async _bajarUna() {
     try {
       const r = await this._pedir("/api/cambios?desde=" + this._seq());
+
+      /* UN APARATO QUE VIENE DE OTRO MUNDO SE ESTRENA SOLO — Q-123, 28 de
+         agosto de 2026.
+
+         Si este aparato dice ir por una linea que el servidor ni siquiera ha
+         escrito, lo que tiene guardado no es una copia atrasada: es una copia
+         de OTRO registro. Y una copia asi no se corrige nunca, porque la
+         sincronizacion solo trae lo que viene DESPUES de donde uno dice estar,
+         y ahi ya no hay nada. El aparato se queda mirando datos de otro mundo
+         para siempre, y ni recargar ni esperar lo arregla.
+
+         Paso de verdad, la vispera del primer tiro: el iPad seguia enseñando
+         una obra retirada y camiones que no existen, con /new hecho y todo.
+
+         Cuando se detecta, el aparato se estrena solo: se tira lo guardado y
+         se baja el expediente entero. Es lo mismo que hace `qterapr.com/new`,
+         pero sin que nadie tenga que darse cuenta ni acordarse del enlace.
+
+         Se hace con cuidado: se tira la BASE, no la cola. Lo que el tecnico
+         escribio y todavia no ha subido se respeta y sube despues. */
+      if (r && r.seq != null && this._seq() > r.seq) {
+        try { console.warn(`QCheck: este aparato iba por la linea ${this._seq()} y el servidor va por la ${r.seq}. Se estrena solo.`); } catch (_) {}
+        localStorage.removeItem(DB_KEY);
+        localStorage.removeItem(QC_SYNC_BASE);
+        localStorage.removeItem(QC_SYNC_VISTO);
+        localStorage.removeItem("qc-sync-tope");
+        this._guardarSeq(0);
+        location.reload();
+        return false;
+      }
       if (r.ops && r.ops.length) {
         for (const o of r.ops) qcAplicarOp(o);
         qcReconciliarN();

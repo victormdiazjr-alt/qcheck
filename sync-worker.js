@@ -993,11 +993,30 @@ export default {
        * empezar de cero. En trozos, lo cortado se reintenta solo y lo demas
        * ya esta dentro.
        *
-       * 5.000 es el punto medio medido: 1,3 MB por viaje —tragable con mala
-       * señal— y el expediente completo baja en cuatro viajes en vez de diez.
-       * La primera carga de un aparato pasa de unos 7 segundos a unos 2. */
+       * ────────────────────────────────────────────────────────────────────
+       * Y EL 29 POR LA MAÑANA SE QUITO EL TOPE — Q-125.
+       *
+       * Victor, con el iPad en la obra: «el sync que dividimos en 5000, quitale
+       * el limite, a lo mejor es eso». Y era eso.
+       *
+       * Trocear parecia prudente, y era justo lo contrario. La historia llega
+       * en orden, y las lineas que RETIRAN algo vienen despues de las que lo
+       * crearon. Un aparato que se queda a mitad de la bajada tiene lo creado y
+       * no tiene lo retirado: esa mañana, el iPad enseñaba en Recepcion el
+       * vaciado de Pretensados del 14 de agosto —con su camion 209 y su viga
+       * 404— que el servidor tiene retirado desde hace dias.
+       *
+       * > Media copia no es menos informacion. Es informacion falsa, y ademas
+       * > con toda la pinta de estar bien.
+       *
+       * En un solo viaje eso no puede pasar: o llega el expediente entero, o no
+       * llega nada y la pantalla de carga se queda puesta diciendolo. Medido
+       * contra este mismo worker: 20.880 lineas, 5,7 MB, un segundo.
+       *
+       * El tope se queda escrito —100.000— como freno de mano por si algun dia
+       * el expediente crece de verdad, no como reparto. */
       const { results } = await env.DB.prepare(
-        "SELECT * FROM ops WHERE seq > ? ORDER BY seq LIMIT 5000"
+        "SELECT * FROM ops WHERE seq > ? ORDER BY seq LIMIT 100000"
       ).bind(desde).all();
       const tope = await env.DB.prepare("SELECT IFNULL(MAX(seq),0) AS seq FROM ops").first();
       return json({ seq: tope.seq, ops: (results || []).map(leerOp) });

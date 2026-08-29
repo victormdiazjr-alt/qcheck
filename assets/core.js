@@ -4715,10 +4715,44 @@ function tapaDeCarga() {
     return true;
   };
   const reloj = setInterval(() => { pintarAvance(); if (listo()) clearInterval(reloj); }, 200);
-  /* Si la señal esta tan mal que no acaba, la tapa NO se queda para siempre:
-     mas vale una pantalla a medias, que se puede leer y avisa arriba de que
-     no hay conexion, que una puerta cerrada. */
-  setTimeout(() => { clearInterval(reloj); if (document.getElementById(QCS_CARGA)) { capa.classList.add("fuera"); setTimeout(() => capa.remove(), 420); } }, 25000);
+
+  /* MEDIA COPIA ES PEOR QUE NINGUNA — Q-124, 29 de agosto de 2026, 7 de la mañana.
+
+     Aqui habia un tope de 25 segundos: si la bajada no terminaba, la tapa se
+     quitaba igual «porque mas vale una pantalla a medias que una puerta
+     cerrada». Estaba equivocado, y se vio el mismo dia del primer tiro.
+
+     El iPad de Victor, con la señal de la obra, no llego a terminar. La tapa se
+     quito sola, la app parecia bien —entro, vio el tiro— y en Recepcion le
+     salio el vaciado del 14 de agosto de Pretensados, con su camion 209 y su
+     viga 404. Un vaciado que el servidor tiene RETIRADO desde hace dias.
+
+     La razon es exacta: la historia llega por paginas, y las lineas que retiran
+     algo vienen DESPUES de las que lo crearon. Un aparato que se queda a medias
+     tiene lo creado y no tiene lo retirado. No enseña menos: **enseña otra
+     cosa**, y con toda la pinta de estar bien.
+
+     > Una copia a medias no es menos informacion. Es informacion falsa.
+
+     Asi que la tapa ya no se quita hasta que el expediente esta entero. Si
+     tarda, se dice que tarda y se ofrece reintentar. Un tecnico esperando
+     treinta segundos con el mixer entrando es un mal rato; un tecnico midiendo
+     camiones contra un expediente que no es el suyo es un dia perdido y un
+     papel que no vale. */
+  setTimeout(() => {
+    if (!document.getElementById(QCS_CARGA)) return;
+    const t = capa.querySelector("b");
+    const n = capa.querySelector("span");
+    if (t) t.textContent = "Está tardando";
+    if (n) n.textContent = "La señal va lenta. Sigue bajando — no cierres esta pantalla.";
+    if (!capa.querySelector(".qc-carga-otra")) {
+      const b = document.createElement("button");
+      b.className = "qc-carga-otra";
+      b.textContent = "Reintentar";
+      b.onclick = () => { try { location.reload(); } catch (_) {} };
+      capa.insertBefore(b, capa.querySelector(".qc-carga-riel"));
+    }
+  }, 25000);
 }
 
 function inyectarEstilosCarga() {
@@ -4748,6 +4782,12 @@ function inyectarEstilosCarga() {
 }
 /* La linea de carga, al borde de abajo. Fina y sin brillo: es un dato, no un
    adorno — la misma regla que el resto de QCheck. */
+#${QCS_CARGA} .qc-carga-otra {
+  margin-top: 4px; padding: 11px 22px; border-radius: 10px; cursor: pointer;
+  font: 700 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: .04em; color: var(--text, #eef2f6);
+  background: transparent; border: 1px solid var(--logo-blue, #4a7ef0);
+}
 #${QCS_CARGA} .qc-carga-riel {
   position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
   background: rgba(127,140,155,.20);
