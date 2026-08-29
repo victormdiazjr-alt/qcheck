@@ -758,6 +758,10 @@ const QCSync = {
        olvidar. Cualquier duda, no se toca. */
     if (localStorage.getItem(QC_SYNC_VISTO) !== "1") return 0;
     if (this._cola().length) return 0;
+    /* Q-150 bis: si alguien pidio el historico en esta pestaña, no se le quita
+       de debajo. Se suelta solo al recargar, que es cuando se vuelve a la
+       ventana. */
+    if (this._historialEnMemoria) return 0;
     const tope = Number(localStorage.getItem("qc-sync-tope") || 0);
     if (!tope || this._seq() < tope) return 0;
 
@@ -813,6 +817,17 @@ const QCSync = {
          esto no se lea después como trabajo nuevo. NO se toca `DB_KEY`: la
          copia guardada sigue siendo la ventana. */
       try { this._guardarBase(qcProyectar(db)); } catch (_) {}
+      /* Y SE APAGA LA PODA MIENTRAS DURE ESTA PESTAÑA.
+
+         Sin esto, traer el historico duraba tres segundos: la vuelta siguiente
+         del sincronizador llamaba a `_podar()` y lo soltaba otra vez. Alguien
+         le daba al boton, veia el numero subir, y al parpadear volvia a los 60
+         dias — sin un solo aviso, que es la peor forma de fallar.
+
+         La marca vive en memoria a proposito: se va con la pestaña, igual que
+         el historico. Al recargar, el aparato vuelve a su ventana y la poda
+         vuelve a estar encendida. */
+      this._historialEnMemoria = true;
       this._avisar();
       return { ok: true, datos: n };
     } catch (e) {
