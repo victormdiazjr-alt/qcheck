@@ -403,6 +403,32 @@ function proyectoActivo() { return db.proyectoActivo || "pr-52"; }
 function proyectoDe(x) { return (x && x.proyecto) || "pr-52"; }
 function esDeLaObra(x) { return proyectoDe(x) === proyectoActivo(); }
 
+/* ¿ESTE TIRO TIENE PARADA DE RECEPCIÓN? — Q-136, 29 de agosto de 2026.
+
+   Victor, después de ver el primer tiro de verdad: «viendo cómo es la dinámica
+   pude observar que nuestro flujo tiene una pieza de más. No es necesario tener
+   una recepción, porque en este tiro el técnico es quien recibe el camión en la
+   estación de muestras. Pero habrán tiros que sí será necesario».
+
+   Y tenía razón. El flujo lo diseñamos con dos puestos —uno que recibe y otro
+   que mide— porque así se hace en una obra grande. En la PR-52 es una sola
+   persona: el camión llega a la estación de muestras y ahí mismo se apunta y se
+   mide. Obligarle a pasar por otra pantalla es un toque de más con las manos
+   sucias, y en obra los toques de más se saltan.
+
+   Así que la parada de Recepción es una DECISIÓN DEL TIRO, no del programa. Se
+   escoge al programarlo y por omisión NO la hay, que es el caso de siempre.
+
+   Un tiro de antes, sin nada escrito, sigue con las dos pantallas: cambiar el
+   flujo de un vaciado ya andado por una omisión sería peor que la pieza de más. */
+function recepcionAparte(dia) {
+  const m = (db.dayMeta || {})[dia || diaActivo()] || {};
+  if (m.recepcion === "aparte") return true;
+  if (m.recepcion === "muestras") return false;
+  /* Sin decir nada: los tiros de antes se quedan como estaban. */
+  return !!m.cerradoA || testsOfDate(dia || diaActivo()).length > 0 ? true : false;
+}
+
 /* LO QUE SE TIRA EN ESTA OBRA — Q-104, 28 de agosto de 2026.
 
    Victor: «los tiros de la PR-52 son de losas; solo deben salir vigas si el
@@ -480,6 +506,25 @@ function abrirProyecto(id) {
 
   db.proyectoActivo = id;
   db.project = p;
+  /* Y SI LA OBRA NO TIENE PLAN A MANO, SE MIRA SU HISTORIAL — Q-138, 29 de
+     agosto de 2026.
+
+     `db.plan = p.plan` dejaba el plan VACÍO cuando la ficha de la obra no traía
+     ese campo — y entonces media pantalla juzga contra `{}`: slump, aire y unit
+     weight salen «ok» pase lo que pase, porque no hay contra qué comparar.
+
+     Un expediente que dice «ok» sin haber comparado nada es lo más peligroso
+     que puede hacer este programa: parece que funciona.
+
+     El historial de límites de la obra SÍ está, y su última versión es el plan
+     vigente. Se toma de ahí antes de rendirse a los de fábrica. */
+  if (!p.plan || !p.plan.slump || p.plan.slump.actLo == null) {
+    const h = Array.isArray(p.planes) ? p.planes : [];
+    const ultima = h.length ? h[h.length - 1] : null;
+    if (ultima && ultima.plan && ultima.plan.slump) {
+      p.plan = JSON.parse(JSON.stringify(ultima.plan));
+    }
+  }
   /* Q-59b: una obra sin límites propios NO hereda los de la anterior. Se le
      dan los de fábrica y se ponen a mano en Plan & Datos, a la vista. Juzgar
      el hormigón de una obra con la vara de otra es lo que hizo que el Field
@@ -1466,7 +1511,21 @@ function zoneUW(t) {
 }
 function zoneTemp(t) {
   const v = num(t.temp); if (v == null) return null;
-  const tope = planDe(t && t.date).tempMax;
+  const tope = num((planDe(t && t.date) || {}).tempMax);
+  /* UN LÍMITE QUE FALTA NO ES CERO — Q-137, 29 de agosto de 2026.
+
+     Esto comparaba contra el tope sin mirar si existía. Con el plan vacío el
+     tope llega en `null`, y en JavaScript `88 > null` es CIERTO —null vale
+     cero—, así que la pantalla rechazaba por temperatura TODOS los camiones,
+     incluido uno a 88 °F con el máximo en 100.
+
+     Se cazó probando el flujo nuevo, y es de los peores que ha tenido esto: no
+     fallaba, juzgaba. Y juzgaba mal en la dirección que parece prudente —
+     rechazar—, que es justo la que nadie discute.
+
+     Sin tope no se juzga. `null` significa «no lo sé», y no saber no es
+     motivo para rechazar hormigón. Que el hueco se vea, como todo aquí. */
+  if (tope == null) return null;
   if (v > tope) return "susp";
   if (v > tope - 3) return "act";
   return "ok";
@@ -4290,7 +4349,9 @@ function formDayMeta(day, borrador) {
     /* El interruptor de la 934 nace con la respuesta correcta ya puesta —Q-105:
        si el tiro ya dijo lo suyo, eso; si no, lo que diga la obra. Así en la
        PR-52 se abre encendido y en una obra normal, apagado. */
-    initial: { ...meta, fecha: day, proyecto: obraDelTiro, es934: ahora934, ...(borrador || {}) },
+    initial: { ...meta, fecha: day, proyecto: obraDelTiro, es934: ahora934,
+               tecnicoRecibe: meta.recepcion ? meta.recepcion === "muestras" : true,
+               ...(borrador || {}) },
     fields: [
       /* Q-89: la obra, la primera y a lo ancho. No se teclea nunca — se elige
          de las que existen. Crear obras es otra cosa y se hace en su sitio. */
@@ -4334,6 +4395,11 @@ function formDayMeta(day, borrador) {
 
          Manda lo que se elija aquí: de ella salen las etiquetas de abajo y de
          ella depende que el tramo sea obligatorio o no. */
+      /* Q-136: quién recibe el camión. Marcado por omisión porque es el caso
+         de siempre en esta obra — una sola persona en la estación de muestras.
+         Se apaga cuando hay alguien dedicado a recibir. */
+      { key: "tecnicoRecibe", label: "El técnico recibe y muestrea", type: "checkbox", full: true,
+        hint: "Marcado: todo se hace en Muestras, sin parada de Recepción. Desmarcado: hay alguien recibiendo los camiones aparte." },
       { key: "estructura", label: "Estructura", type: "select", half: true,
         options: estructurasDeLaObra((db.proyectos || []).find((x) => x.id === obraDelTiro)) },
       /* LA PERMEABILIDAD, SOLO BAJO LA 934 — Q-105 ter, 14 ago 2026.
@@ -4519,6 +4585,10 @@ function formDayMeta(day, borrador) {
          heredara la 934 de la obra, que es justo lo que se estaba diciendo
          que no. `es934` no se guarda: es la pregunta, no el dato. */
       db.dayMeta[day].spec = db.dayMeta[day].es934 ? "934" : "no";
+      /* Q-136: se escribe con todas las letras, no por ausencia. Un tiro tiene
+         que decir cómo se trabaja en él, no dejar que se deduzca. */
+      db.dayMeta[destino].recepcion = v.tecnicoRecibe === false ? "aparte" : "muestras";
+      delete db.dayMeta[destino].tecnicoRecibe;
       delete db.dayMeta[day].es934;
       if (!db.dayMeta[day].proyecto) db.dayMeta[day].proyecto = proyectoActivo();
       delete db.dayMeta[day].source;

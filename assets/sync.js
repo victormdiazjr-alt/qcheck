@@ -235,7 +235,28 @@ function qcAplicarOp(o) {
       pr[o.campo] = o.valor;
       /* Si la que llega es la que está abierta, `db.project` tiene que ser
          ESE objeto y no una copia: media pantalla lo lee directo. */
-      if (o.id === (db.proyectoActivo || "")) db.project = pr;
+      if (o.id === (db.proyectoActivo || "")) {
+        db.project = pr;
+        /* Y SI LO QUE LLEGA SON LOS LÍMITES, `db.plan` TAMBIÉN — Q-140, 29 de
+           agosto de 2026.
+
+           Aquí faltaba un eslabón y costó media tarde encontrarlo. Los límites
+           de una obra viven en su ficha (`project.plan`), pero `db.plan` es un
+           objeto aparte que se enganchó al abrir la obra — y eso pasa ANTES de
+           que baje el expediente, cuando la ficha todavía está vacía.
+
+           Resultado: llegaban los límites, se guardaban en la ficha, y
+           `db.plan` seguía apuntando al vacío de antes. La pantalla juzgaba
+           contra `{}`: slump, aire y unit weight «ok» pase lo que pase, y la
+           temperatura rechazando todo. Se repuso el plan tres veces en el
+           servidor y el aparato seguía sin verlo.
+
+           Cuando llegan los límites de la obra abierta, se enganchan. */
+        if ((o.campo === "plan" || o.campo === "planes") && pr.plan && pr.plan.slump) {
+          db.plan = pr.plan;
+        }
+        if (o.campo === "planes" && Array.isArray(pr.planes)) db.planes = pr.planes;
+      }
     }
   } else if (o.ent === "config") {
     if (o.campo === "demo") db.demo = o.valor;
@@ -400,6 +421,41 @@ const QCSync = {
        posible —eso escribe `false`, con su firma y su motivo—, pero `null` en
        cualquiera de las marcas de retiro no sube jamas. Es la misma familia
        que Q-108: lo que un aparato no tiene, no lo sabe. */
+    /* UN HUECO NO BORRA LOS LÍMITES — Q-139, 29 de agosto de 2026.
+
+       Esto es lo que ha estado rompiendo la obra todo el día, y lo encontré
+       mirando quién había vaciado el plan de la PR-52:
+
+           seq 236337   plan     tempMax null     [PC · durp]
+           seq 236338   planes   1 versión, 95    [PC · durp]
+
+       Un aparato cuya copia local no tiene el plan —recién estrenado, a medio
+       bajar, o con la base rota— compara ese vacío con lo que hay y sube el
+       vacío. Y a partir de ese momento NADIE tiene límites: slump, aire y unit
+       weight salen «ok» pase lo que pase, porque no hay contra qué comparar, y
+       la temperatura rechaza todo porque `88 > null` es cierto.
+
+       > Un expediente que dice «ok» sin haber comparado nada es lo más
+       > peligroso que puede hacer este programa: parece que funciona.
+
+       Los límites de una obra se cambian en Plan & Datos, a mano y con firma.
+       Nunca porque a un aparato le falte el dato. Misma familia que Q-131 —lo
+       que un aparato no tiene, no lo sabe— y que Q-106.
+
+       Se bloquea el HUECO, no el cambio: un plan de verdad sube igual. */
+    const vaciaLimites = (o) =>
+      o.ent === "project" && (o.campo === "plan" || o.campo === "planes") &&
+      (o.valor == null ||
+       (o.campo === "plan" && (!o.valor.slump || o.valor.slump.actLo == null)) ||
+       (o.campo === "planes" && (!Array.isArray(o.valor) || !o.valor.length ||
+          !o.valor[o.valor.length - 1] || !o.valor[o.valor.length - 1].plan ||
+          !o.valor[o.valor.length - 1].plan.slump)));
+    const borraLimites = ops.filter(vaciaLimites);
+    if (borraLimites.length) {
+      ops = ops.filter((o) => !vaciaLimites(o));
+      try { console.warn(`QCheck: no se suben ${borraLimites.length} huecos que borrarian los limites`); } catch (_) {}
+    }
+
     const MARCAS = ["borrado", "borradoMotivo", "borradoPor", "borradoA"];
     const resucita = ops.filter((o) => MARCAS.includes(o.campo) && (o.valor === null || o.valor === undefined));
     if (resucita.length) {

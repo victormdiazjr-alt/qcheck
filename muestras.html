@@ -372,6 +372,30 @@ footer .spacer { flex: 1; }
 .icon-btn:active { border-color: var(--idle); color: var(--idle); }
 .icon-btn.muted { opacity: .55; border-style: dashed; }
 .empty-state { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 2.4vh; line-height: 1.6; }
+
+/* La fila del camión — Q-136. Todo botón gordo y todo en una línea: se opera
+   de pie, junto al camión, con guante mojado. */
+.recibir { display: flex; align-items: center; gap: 1vw; flex: none;
+  padding: 1.4vh 2.4vw; border-bottom: 1px solid var(--hairline); flex-wrap: wrap; }
+.recibir .rec-c { background: var(--surface); border: 2px solid var(--hairline);
+  color: var(--text); border-radius: 12px; padding: 1.2vh 1.2vw; font: inherit;
+  font-size: 2vh; font-weight: 700; width: 15vw; min-width: 110px; }
+.recibir .rec-c.rec-corto { width: 9vw; min-width: 80px; }
+.recibir .rec-c:focus { outline: none; border-color: var(--logo-navy); }
+.recibir .rec-foto, .recibir .rec-ok {
+  background: var(--surface); border: 2px solid var(--hairline); color: var(--text);
+  border-radius: 12px; padding: 1.2vh 1.6vw; font: inherit; font-size: 1.9vh;
+  font-weight: 800; cursor: pointer; white-space: nowrap; }
+.recibir .rec-ok { border-color: var(--logo-navy); }
+.recibir .rec-foto:hover, .recibir .rec-ok:hover { border-color: var(--logo-navy); }
+.recibir .rec-aviso { font-size: 1.6vh; color: var(--muted); }
+.recibir .rec-aviso.leido { color: var(--ok); }
+.recibir .rec-aviso.mal { color: var(--susp); }
+@media (max-width: 700px) {
+  .recibir { padding: 1vh 3vw; gap: 6px; }
+  .recibir .rec-c { font-size: 15px; width: auto; flex: 1 1 90px; }
+  .recibir .rec-foto, .recibir .rec-ok { font-size: 14px; flex: 1 1 auto; }
+}
 </style>
 <script src="assets/usuarios.js?v=7523e141"></script>
 <script src="assets/auth.js?v=b9cf7fd2"></script>
@@ -432,6 +456,21 @@ footer .spacer { flex: 1; }
   </div>
 </header>
 
+<!-- LA FILA DEL CAMIÓN — Q-136, 29 de agosto de 2026.
+     Solo sale cuando el tiro dice que el técnico recibe y muestrea. Con
+     recepción aparte no aparece: ahí el camión ya viene apuntado. -->
+<div class="recibir" id="recibir" hidden>
+  <button class="rec-foto" onclick="document.getElementById('rec-file').click()">
+    <span>📷</span> Escanear conduce
+  </button>
+  <input type="file" id="rec-file" accept="image/*" capture="environment" style="display:none" onchange="recFoto(this)">
+  <input class="rec-c" id="rec-ticket" placeholder="Ticket *" inputmode="numeric">
+  <input class="rec-c" id="rec-truck" placeholder="Camión *" inputmode="numeric">
+  <input class="rec-c rec-corto" id="rec-vol" placeholder="CY *" inputmode="decimal">
+  <input class="rec-c" id="rec-ident" placeholder="Losa *">
+  <button class="rec-ok" onclick="recibirYMedir()">✔ Recibir</button>
+  <span class="rec-aviso" id="rec-aviso"></span>
+</div>
 <div class="body" id="body"></div>
 
 <footer id="foot"></footer>
@@ -490,8 +529,9 @@ footer .spacer { flex: 1; }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/sync.js?v=463f411e"></script>
-<script src="assets/core.js?v=c8f477a8"></script>
+<script src="assets/sync.js?v=fcfd7b99"></script>
+<script src="assets/recibir.js?v=5ac00a2c"></script>
+<script src="assets/core.js?v=6f937768"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
 "use strict";
@@ -851,6 +891,7 @@ function liveVerdict() {
 
 /* ---------- render ---------- */
 function render() {
+  if (typeof pintarFilaRecibir === "function") setTimeout(pintarFilaRecibir, 0);
   /* Con el plan del día dentro: un tiro programado sin camiones
      también es el tiro de hoy (Q-46). */
   const days = diasDelProyecto();
@@ -1146,6 +1187,110 @@ addEventListener("visibilitychange", () => { if (document.hidden) guardarParcial
 
 /* Escape cierra la rejilla — en el iPad con teclado, y en la PC de la caseta. */
 addEventListener("keydown", (e) => { if (e.key === "Escape") cerrarRejilla(); });
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RECIBIR EL CAMIÓN SIN SALIR DE MUESTRAS — Q-136, 29 de agosto de 2026.
+
+   Víctor, viendo el primer tiro: «el técnico es quien recibe el camión en la
+   estación de muestras. No es necesario tener una recepción».
+
+   Llega el camión, se escanea el conduce, se comprueban cuatro campos y se
+   mide. Una pantalla de principio a fin. */
+let recFotoGuardada = null;
+
+function pintarFilaRecibir() {
+  const fila = document.getElementById("recibir");
+  if (!fila) return;
+  const dia = diaActivo();
+  const aparte = typeof recepcionAparte === "function" ? recepcionAparte(dia) : true;
+  const tiro = (db.dayMeta || {})[dia] || {};
+  const vivo = !!(tiro && !tiro.borrado && !tiro.cerradoA &&
+    (tiro.cyPlan != null || tiro.losasPlan != null || tiro.losas || tiro.horaInicio));
+  fila.hidden = aparte || !vivo;
+  if (!fila.hidden) {
+    /* La losa que toca, como pista — la misma que ofrece Recepción. */
+    const c = document.getElementById("rec-ident");
+    if (c && !c.value && typeof losasDelDia === "function") {
+      const L = losasDelDia(dia);
+      const pend = (L.lista || []).find((x) => x.estado !== "vaciada");
+      if (pend) c.placeholder = pend.codigo + " — la que toca";
+    }
+    const t = document.getElementById("rec-truck");
+    if (t) t.placeholder = "Camión #" + (testsOfDate(dia).length + 1);
+  }
+}
+
+function recFoto(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const aviso = document.getElementById("rec-aviso");
+  aviso.className = "rec-aviso";
+  aviso.textContent = "Leyendo el conduce…";
+  const img = new Image();
+  img.onload = async () => {
+    recFotoGuardada = reducirFoto(img, 900, 0.6);
+    const r = await leerConduce(reducirFoto(img, 2576, 0.92));
+    URL.revokeObjectURL(img.src);
+    if (r.error) {
+      aviso.className = "rec-aviso mal";
+      aviso.textContent = r.error === "sin-senal" ? "Sin señal para leer la foto. Escríbelo a mano."
+        : r.error === "sin-servidor" ? "Este aparato no sabe dónde está el servidor. Escríbelo a mano."
+        : "No se pudo leer la foto. Escríbelo a mano.";
+      return;
+    }
+    const c = r.campos || {};
+    const poner = (id, v) => { const e = document.getElementById(id);
+      if (e && v != null && v !== "") e.value = v; };
+    poner("rec-ticket", c.ticket);
+    poner("rec-truck", c.truck);
+    poner("rec-vol", c.vol);
+    recLeido = c;
+    const escritos = ["ticket", "truck", "vol"].filter((k) => c[k] != null && c[k] !== "").length;
+    aviso.className = "rec-aviso leido";
+    aviso.textContent = escritos
+      ? `Leídos ${escritos} campos. Comprueba con el papel.`
+      : "No se leyó ningún campo. Escríbelo a mano.";
+  };
+  img.src = URL.createObjectURL(file);
+  input.value = "";
+}
+
+let recLeido = null;
+
+function recibirYMedir() {
+  const dia = diaActivo();
+  if (typeof frenoDiaCerrado === "function" && frenoDiaCerrado(dia)) return;
+  const val = (id) => (document.getElementById(id).value || "").trim();
+  const falta = [["rec-ticket", "el ticket"], ["rec-truck", "el camión"],
+                 ["rec-vol", "las yardas"], ["rec-ident", "la losa"]]
+    .filter(([id]) => !val(id)).map(([, q]) => q);
+  if (falta.length) {
+    document.getElementById("rec-aviso").className = "rec-aviso mal";
+    document.getElementById("rec-aviso").textContent = "Falta " + falta.join(", ") + ".";
+    return;
+  }
+  const repetido = typeof findConduce === "function"
+    ? findConduce((db.project || {}).concretera, val("rec-ticket")) : null;
+  if (repetido && !confirm(`El conduce ${val("rec-ticket")} ya está registrado (camión ${repetido.truck || "—"}).\n\n¿Registrarlo otra vez?`)) return;
+
+  const c = recLeido || {};
+  const t = recibirCamion({
+    ticket: val("rec-ticket"), truck: val("rec-truck"), vol: val("rec-vol"),
+    ident: val("rec-ident"), mix: c.mix || null, batch: c.batch || null,
+    company: c.company || null, ordenadas: c.ordenadas,
+    photo: recFotoGuardada, source: recFotoGuardada ? "foto" : "manual",
+  });
+
+  /* y se abre para medirlo, que es a lo que vino */
+  state.n = t.n;
+  state.buf = {}; state.borrados = new Set();
+  recFotoGuardada = null; recLeido = null;
+  for (const id of ["rec-ticket", "rec-truck", "rec-vol", "rec-ident"]) document.getElementById(id).value = "";
+  document.getElementById("rec-aviso").className = "rec-aviso leido";
+  document.getElementById("rec-aviso").textContent = `Camión ${t.truck} recibido — mide y aprueba.`;
+  render();
+}
+
 </script>
 </body>
 </html>
