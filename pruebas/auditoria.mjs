@@ -148,6 +148,12 @@ seccion("B5 · NINGUNA PANTALLA SE QUEDA SIN PUERTA NI CON UNA PUERTA ROTA");
     const s = readFileSync(f, "utf8");
     /* index y conectar son la entrada: no pueden exigir sesión. */
     if (f === "index.html" || f === "conectar.html") return false;
+    /* Y `preparar.html` tampoco — Q-105. Es a donde lleva `qterapr.com/new`:
+       limpia lo guardado y deja el aparato apuntando al servidor, ANTES de que
+       nadie haya entrado. Pedirle sesión sería pedírsela justo al aparato que
+       todavía no puede tenerla, que es el único caso para el que existe.
+       No abre nada por sí sola: después hay que entrar con la cuenta igual. */
+    if (f === "preparar.html") return false;
     return !/assets\/auth\.js/.test(s);
   });
   di(sinAuth.length === 0, sinAuth.length ? `sin puerta: ${sinAuth.join(", ")}` : `las ${pantallas.length} pantallas llevan su puerta`);
@@ -208,8 +214,27 @@ seccion("D · LOS MONITORES DICEN LA VERDAD");
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })();
   const viejo = comoQuien("tecnico1", { tests:[{ ...t(1,{resultsAt:"08:30"}), date: ayer }],
                                         dayMeta:{ [ayer]: { cyPlan:60, proyecto:"pr-52" } } });
-  di(!viejo.hayTiroActivo(ayer), "el tiro de ayer no es un tiro activo");
-  di(viejo.estadoTiro(ayer).txt === "Ready para Tirar", `y el monitor dice «${viejo.estadoTiro(ayer).txt}»`);
+  /* UN VACIADO SIN CERRAR NO ES HISTORIA, ES LO QUE ESTÁ PASANDO — Q-98.
+
+     Esto afirmaba lo contrario: que el tiro de ayer NO es un tiro activo. Era
+     verdad hasta el 28 de agosto de 2026, cuando se cambió a propósito. Se vio
+     montando el tiro del sábado 22: el vaciado estaba abierto, con cuatro
+     camiones dentro y el cuarto esperando muestras, y el Control Center
+     presidía con «0 CY · sin comenzar» porque hoy era día 28.
+
+     `hayTiroActivo()` dejó de preguntar «¿es de hoy?» y pasó a preguntar «¿está
+     abierto?». Un tiro de ayer sin cerrar SÍ está abierto, y esa es justo la
+     respuesta que hacía falta.
+
+     La auditoría se quedó afirmando lo de antes, y llevaba desde entonces en
+     rojo. Una prueba que afirma el comportamiento viejo después de un cambio
+     deliberado es peor que no tener prueba: enseña a mirar el rojo sin leerlo,
+     y el día que se ponga rojo de verdad tampoco lo va a leer nadie. */
+  di(viejo.hayTiroActivo(ayer), "el tiro de ayer, sin cerrar, sigue siendo el tiro abierto");
+  di(!viejo.hayTiroActivo(HOY), "y hoy, que no tiene ficha, no tiene tiro");
+  const cerradoAyer = comoQuien("tecnico1", { tests:[{ ...t(1,{resultsAt:"08:30"}), date: ayer }],
+    dayMeta:{ [ayer]: { cyPlan:60, proyecto:"pr-52", cerradoA:"16:00" } } });
+  di(!cerradoAyer.hayTiroActivo(ayer), "y en cuanto se cierra, deja de estarlo");
 
   const fantasma = comoQuien("tecnico1", {
     tests:[t(1,{resultsAt:"08:30"}), { ...t(2), ticket:"", truck:"" }], dayMeta: META });

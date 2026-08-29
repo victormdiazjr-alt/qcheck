@@ -42,8 +42,41 @@ async function leerConduce(dataUrl) {
 /* Escribe la ficha del camión y la devuelve. El día, la obra, la concretera y
    el objetivo de unit weight NO se preguntan: salen del tiro y del plan, que es
    donde viven. Un dato que el técnico no decide no se le pregunta. */
+/* UN DÍA FIRMADO NO RECIBE CAMIONES SIN QUE ALGUIEN LO DIGA — Q-145, 29 ago 2026.
+
+   Salió en el ensayo general: con el tiro CERRADO, esto seguía creando el
+   camión y metiéndolo dentro del día firmado. La pantalla lo tapaba —la fila
+   de recibir se esconde cuando el tiro está cerrado— pero el tapón estaba solo
+   ahí, y encima no funcionaba (Q-144).
+
+   Cerrar un tiro es firmarlo. Si llega un camión rezagado después, eso no es
+   un descuido que se arregla solo: es reabrir un expediente firmado, y quien
+   lo hace tiene que saber que lo está haciendo. Rubén tiene `firma` y PUEDE
+   hacerlo — pero poder y hacerlo sin enterarse no son lo mismo.
+
+   Devuelve `null` si no se puede o si quien mira decide que no. Quien llama
+   enseña el motivo; nunca se crea el camión a la callada. */
+function puedeRecibirEn(dia) {
+  const permiso = typeof puedeEditarDia === "function" ? puedeEditarDia(dia) : true;
+  if (permiso !== true) return { ok: false, motivo: permiso };
+  if (typeof tiroCerrado === "function" && tiroCerrado(dia)) {
+    return { ok: true, avisar: "El vaciado del " +
+      (typeof fmtDate === "function" ? fmtDate(dia) : dia) +
+      " está cerrado. Recibir este camión lo reabre y queda en el expediente. ¿Seguir?" };
+  }
+  return { ok: true };
+}
+
 function recibirCamion(v) {
   const dia = (typeof diaActivo === "function" ? diaActivo() : todayISO());
+
+  const puerta = puedeRecibirEn(dia);
+  if (!puerta.ok) {
+    if (typeof alert === "function") alert(puerta.motivo);
+    return null;
+  }
+  if (puerta.avisar && typeof confirm === "function" && !confirm(puerta.avisar)) return null;
+
   const tiro = (db.dayMeta || {})[dia] || {};
   const obra = tiro.proyecto || (typeof proyectoActivo === "function" ? proyectoActivo() : "pr-52");
   const plan = (typeof planDe === "function" ? planDe(dia) : null) || db.plan || {};

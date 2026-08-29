@@ -12,6 +12,25 @@ const j = async (r) => { const x = await r.text(); try { return JSON.parse(x); }
 
 console.log("\n  CANDADO DE SESIÓN (exigir_sesion)\n");
 
+/* SI NO ESTA EL WORKER, SE DICE Y SE SALTA — no se revienta.
+
+   Esta prueba necesita `wrangler dev --local` en el 8462 (ver LEEME). Sin el,
+   se caia con un ECONNREFUSED en bruto y `todas.sh` la contaba como FALLO. Y un
+   comprobador que sale en rojo por algo que no es un fallo enseña a mirar el
+   rojo sin leerlo: el 29 de agosto la suite llevaba SEIS en rojo y ninguno era
+   un fallo de verdad, asi que nadie los miraba — y entre ellos podia haber
+   estado escondido cualquiera de los que si importan. */
+try {
+  const r = await fetch(W + "/api/salud", { headers: H(), signal: AbortSignal.timeout(3000) });
+  const d = await j(r);
+  if (!d || d.ok !== true) throw new Error("el Worker contesta " + JSON.stringify(d).slice(0, 60));
+} catch (e) {
+  console.log("  se salta — no hay Worker sano en " + W);
+  console.log("  (levantalo con: npx wrangler dev --local --port 8462 …  ver pruebas/LEEME.md)");
+  console.log("  motivo: " + String(e.message || e).slice(0, 80) + "\n");
+  process.exit(0);
+}
+
 // cuenta de trabajo
 await fetch(W + "/api/cuentas", { method: "POST", headers: H({ "X-QC-Admin": AD }),
   body: JSON.stringify({ usr: "tec", clave: "clave-larga-1234", rol: "qc", nombre: "Técnico" }) });

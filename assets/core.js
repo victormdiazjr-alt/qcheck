@@ -1407,6 +1407,38 @@ function zoneRange(v, actLo, actHi, suspLo, suspHi) {
    se sigue juzgando exactamente con lo que se juzgaba ayer. */
 function migrarPlanes() {
   if (Array.isArray(db.planes) && db.planes.length) return;
+
+  /* UN APARATO QUE NO HA BAJADO EL EXPEDIENTE NO INVENTA HISTORIA — Q-146,
+     29 de agosto de 2026.
+
+     Esto congela una copia de `db.plan` como «la versión que rige desde el
+     principio». La idea es buena y el momento era el equivocado: corre en
+     `loadDB()`, al abrir la página, y en un aparato recién estrenado eso pasa
+     ANTES de que hayan bajado los límites de la obra. Así que lo que congelaba
+     no eran los límites: eran los VALORES DE FÁBRICA.
+
+     Y una vez congelados mandan, porque `planDe(dia)` prefiere la versión con
+     fecha antes que `db.plan`. Resultado: los límites de la obra llegaban bien
+     —`db.plan.tempMax` = 100—, y cada camión se juzgaba igualmente contra el
+     95 de fábrica, sin que nada lo dijera en pantalla.
+
+     Lo encontró el ensayo general con una obra que tiene `plan` y todavía no
+     tiene `planes`: `db.plan.tempMax` 100 y `planDe(hoy)` 95.
+
+     Es exactamente la misma familia que Q-140 y que Q-129: un arranque que se
+     ejecuta antes de que lleguen los datos y guarda el vacío como si fuera
+     verdad. La regla ya la teníamos escrita tres veces y aquí faltaba:
+
+     > Estar conectado no es estar al día, y a medio camino se parecen.
+
+     Si el aparato aún no está al día, no se inventa nada y `db.planes` se
+     queda vacío — que es lo correcto, porque `planDe()` sin versiones devuelve
+     `db.plan`, o sea los límites de verdad. Cuando el expediente termine de
+     bajar traerá el historial real, y si la obra no tiene ninguno se creará en
+     la carga siguiente, ya con los límites buenos delante. */
+  if (typeof qcSyncActivo === "function" && qcSyncActivo() &&
+      !localStorage.getItem("qc-sync-visto")) return;
+
   const fechas = (db.tests || []).map((t) => t.date).filter(Boolean).sort();
   db.planes = [{
     desde: fechas[0] || "1970-01-01",

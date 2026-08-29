@@ -70,3 +70,41 @@ más los factores de pago, el rechazo y el reparto en lotes y sub-lotes.
 **Se corre siempre que se toque `assets/sp934.js`.** Ese archivo decide cuánto
 se cobra: un error ahí no se ve como un error, se ve como un número plausible.
 
+
+## El ensayo general — la víspera de un tiro
+
+```
+QC_ENSAYO=1 node pruebas/el-ensayo-general.mjs
+```
+
+Todo lo demás mira el código o habla con los servidores. Esto abre **dos
+navegadores de verdad sobre las pantallas de verdad** —uno hace de iPad del
+técnico, el otro de Field Display colgado en la obra— y hace el día entero en
+orden: sin tiro, programarlo, recibir el camión, medirlo, leer el veredicto,
+verlo aparecer en la pantalla de obra, cerrar y sacar el informe. Levanta su
+propio servidor con un registro nuevo y lo borra al terminar.
+
+Tarda unos tres minutos y necesita Chrome, así que `todas.sh` lo salta salvo que
+se pida con `QC_ENSAYO=1`. **Es la prueba que hay que correr la víspera de un
+tiro**, y la que hay que creer cuando alguien pregunta si está todo bien.
+
+Nació el 29 de agosto de 2026, después de que Víctor se fuera de la obra sin
+haber podido entrar un solo camión. La primera vez que corrió de verdad encontró
+tres cosas que llevaban horas escondidas:
+
+- **Q-144** — la fila de «recibir camión» se veía sin ningún tiro abierto.
+  `pintarFilaRecibir()` la escondía bien con `hidden`, y `.recibir{display:flex}`
+  la volvía a encender. El guardián estaba escrito y no hacía nada.
+- **Q-145** — con el tiro cerrado, `recibirCamion()` seguía metiendo el camión
+  dentro del día firmado sin decir que lo estaba reabriendo.
+- **Q-146** — `migrarPlanes()` congelaba los valores de fábrica como historial
+  de límites, porque corre al cargar la página y en un aparato recién estrenado
+  eso pasa antes de que bajen los límites de la obra. Los límites llegaban bien
+  y cada camión se juzgaba igualmente contra el 95 de fábrica.
+
+> Y dos lecciones sobre las pruebas mismas, que costaron dos vueltas: **una
+> prueba que no controla su punto de partida no encuentra fallos, los inventa**
+> —la primera versión dio ocho y siete eran míos—, y **hay que preguntar lo que
+> se quiere saber**: `tiroActivo()` contesta «qué día estoy mirando» y
+> `hayTiroActivo()` contesta «¿hay alguno abierto?». Confundirlas me hizo dar
+> por roto código que estaba bien.

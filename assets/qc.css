@@ -1,6 +1,33 @@
 /* ============================================================
    QC — Control de Hormigón PR-52 (prototipo)
    ============================================================ */
+
+/* ============================================================
+   APAGAR ALGO TIENE QUE APAGARLO — Q-144, 29 de agosto de 2026.
+
+   `elemento.hidden = true` se apoya en la regla `[hidden]{display:none}` que
+   trae el navegador. Y esa regla es del NAVEGADOR: cualquier regla nuestra que
+   ponga `display` —una clase, un id, lo que sea— le gana siempre. Así que un
+   `.fila { display: flex }` deja el `hidden` sin efecto, en silencio, y el
+   guardián que alguien escribió con cuidado no apaga nada.
+
+   Esto ya se había pisado CINCO veces en el proyecto, y las cinco se taparon
+   con una regla suelta para ese elemento concreto —`#qc-info-capa[hidden]`,
+   `.visor[hidden]`, `.aps[hidden]`…— con su comentario explicándolo al lado.
+   Cinco parches para el mismo agujero es un agujero que nadie ha tapado.
+
+   Hoy lo volvió a pisar la fila de «recibir» de Muestras (Q-136, de esta misma
+   mañana): `pintarFilaRecibir()` comprueba bien que el tiro no esté cerrado y
+   pone `fila.hidden = true` — y la fila se seguía viendo, con el tiro cerrado
+   y sin ningún tiro abierto. Es exactamente lo que Víctor señaló tres veces:
+   «si no hay tiro abierto no debe decir nada de tiro». La guardia estaba
+   escrita. Simplemente no hacía nada.
+
+   Una línea, en la hoja que cargan las veinte pantallas, y no vuelve a pasar.
+   Lleva `!important` a propósito: el sentido de `hidden` es «esto no está», y
+   eso no se negocia con una regla de maquetación.
+   ============================================================ */
+[hidden] { display: none !important; }
 :root {
   /* ============================================================
      Paleta de QCheck — la misma del Field Display y de Muestras.
