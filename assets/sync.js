@@ -1078,10 +1078,38 @@ const QCSync = {
        inicio del iPhone es el caso—, así que bajarlas a 20 s las dejaba
        muertas: Rubén entraba datos en la PC y el Field Display del teléfono
        tardaba en enterarse. Las demás sí se relajan cuando nadie mira. */
+    /* CADA TRES SEGUNDOS SOLO CUANDO HAY ALGO QUE MIRAR — Q-151, 29 ago 2026.
+
+       Medido: una pantalla de campo quieta hace **23 peticiones por minuto**.
+       Con tres aparatos y una jornada de diez horas son 41.000 al día, y con
+       cinco, 69.000 — cerca del tope diario del plan de Cloudflare. Y la
+       inmensa mayoría de esas preguntas son «¿ha cambiado algo?» un martes por
+       la tarde, sin ningún vaciado abierto.
+
+       Los tres segundos existen por una razón buena y concreta: durante un tiro,
+       Rubén entra un dato en la PC y el Field Display de la obra tiene que
+       enterarse ya. Fuera del tiro, esa prisa no la necesita nadie.
+
+       Así que el ritmo lo marca el trabajo: **con un tiro abierto, tres
+       segundos; sin él, treinta.** Programar un vaciado tarda hasta medio
+       minuto en verse en los demás aparatos, y eso no es un problema — nadie
+       programa un tiro y mira el reloj. En cuanto hay tiro, se vuelve a tres.
+
+       Y cualquier cosa que pase de verdad —volver a la pantalla, recuperar la
+       señal, guardar un dato— dispara una vuelta al momento, sin esperar. */
     const RAPIDA = /(display|muestras)\.html/.test(location.pathname);
+    const cadencia = () => {
+      if (!RAPIDA && document.hidden) return 20000;
+      const hayTiro = typeof hayTiroActivo === "function" && hayTiroActivo();
+      return hayTiro ? 3000 : 30000;
+    };
+    let _ultimaCadencia = 0;
     const arrancarTimer = () => {
+      const ms = cadencia();
+      if (ms === _ultimaCadencia && this._timer) return;
+      _ultimaCadencia = ms;
       clearInterval(this._timer);
-      this._timer = setInterval(paso, (!RAPIDA && document.hidden) ? 20000 : 3000);
+      this._timer = setInterval(() => { paso(); arrancarTimer(); }, ms);
     };
     arrancarTimer();
 
