@@ -1069,8 +1069,16 @@ export default {
 
          No es censura del expediente: es una obra que nunca fue de este
          proyecto y que se llevo por delante una mañana de hormigon. */
+      /* OJO: aqui NO va «ac-220037». Victor quiere poder volver a crear esa obra
+         cuando la retomen, y bloquear el identificador la habria dejado muda —
+         se creaba en pantalla y el servidor la tiraba en silencio, que es el
+         peor fallo posible: el que no se ve.
+
+         Lo que se bloquea son los REGISTROS MUERTOS concretos: los tres dias de
+         agosto y los ocho ensayos de aquel tiro. Nadie va a volver a usar esos
+         identificadores, y son los que resucitaban una y otra vez desde las
+         copias viejas de los aparatos. */
       const MUERTOS = new Set([
-        "ac-220037",
         "2026-08-12", "2026-08-13", "2026-08-14",
         "msrgtznv-bnzkq", "msrgvy16-xxbly", "msrgwzhp-hxd64", "msrgy6xz-us6zy",
         "msrgz6t5-prkot", "msrh0c21-rg3th", "mssymfdj-7ui4o", "msuc4ual-35w8y",
