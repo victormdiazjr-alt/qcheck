@@ -940,11 +940,11 @@ function render() {
          que ganan la posición alta. -->
     <div class="grid cols-2">
       <a class="w" href="results.html#charts">
-        <div class="lbl">Slump — en vivo <span class="trend">${trendLabel(day, "slump")}</span></div>
+        <div class="lbl">Slump — ${hayTiroActivo(day) ? "en vivo" : esc(fmtDate(day))} <span class="trend">${trendLabel(day, "slump")}</span></div>
         <div class="chart-scroll" style="margin-top:6px">${chartForDay(CHART_DEFS[0], day, 22)}</div>
       </a>
       <a class="w" href="results.html#charts">
-        <div class="lbl">Unit Weight — en vivo <span class="trend">${trendLabel(day, "uw")}</span></div>
+        <div class="lbl">Unit Weight — ${hayTiroActivo(day) ? "en vivo" : esc(fmtDate(day))} <span class="trend">${trendLabel(day, "uw")}</span></div>
         <div class="chart-scroll" style="margin-top:6px">${chartForDay(CHART_DEFS[2], day, 22)}</div>
       </a>
     </div>
@@ -958,6 +958,17 @@ function render() {
          La humedad de los áridos sigue siendo una pregunta viva del oficio
          (P-11, por qué se imprimen a 0.00 %), pero eso se resuelve leyendo el
          papel de la planta, no con una casilla que nadie rellena. -->
+    ${hayTiroActivo(day) ? `
+    <!-- «ÚLTIMO CAMIÓN · EN PRUEBAS» SIN TIRO ABIERTO — Q-118, 28 ago 2026.
+
+         Victor: «¿por qué dice esto?». Decía que el camión 96 estaba «en
+         pruebas, tomando muestras» — en presente, un viernes por la tarde, de
+         un vaciado del sábado anterior que está cerrado y firmado. Al camión
+         nunca se le termino la muestra, asi que la tarjeta lo daba por vivo
+         para siempre.
+
+         Es la cuarta pantalla con la misma enfermedad, y la mas descarada: no
+         solo enseñaba datos de otro dia, los conjugaba en presente. -->
     <div class="grid cols-2">
       <a class="w lastruck ${lt.cls}" href="display.html" target="_blank" style="align-content:start">
         <div>
@@ -970,7 +981,7 @@ function render() {
           <div class="sub">${lt.s}</div>
         </div>
       </a>
-    </div>
+    </div>` : ""}
 
     <!-- EL ASISTENTE — Q-116, 28 de agosto de 2026.
 
