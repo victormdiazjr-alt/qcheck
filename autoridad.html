@@ -380,7 +380,7 @@ render();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(v)){ mail.focus(); mail.style.borderColor="var(--susp)"; return; }
     mail.style.borderColor="";
     try{
-      const api=(localStorage.getItem("qc-api")||"").replace(/\/+$/,"");
+      const api=(typeof qcApiURL==="function"?qcApiURL():(localStorage.getItem("qc-api")||"").replace(/\/+$/,""));
       await fetch(api+"/api/interes",{ method:"POST",
         headers:{ "Content-Type":"application/json",
                   "X-QC-Token": localStorage.getItem("qc-token")||"",

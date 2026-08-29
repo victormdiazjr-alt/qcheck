@@ -818,14 +818,33 @@ let valoresAntesDeEscanear = {};
    que nadie miró es exactamente el número inventado que este proyecto no puede
    tener en el expediente. */
 async function leerDeLaFoto(dataUrl) {
-  const api = (localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
-  if (!api) return;                                  // sin servidor no hay lector
+  /* SE LE PREGUNTA A LA APP, NO A LO GUARDADO — Q-127, 29 de agosto de 2026,
+     con el primer camion en la obra.
+
+     Esto leia `qc-api` de lo guardado a pelo. Desde que la app y el servidor
+     viven en el mismo sitio (Q-103) esa casilla puede estar vacia y ser
+     correcto: `qcApiURL()` cae en la propia direccion. Pero aqui no se le
+     preguntaba a `qcApiURL()`, asi que `api` salia vacio y la funcion SE IBA
+     EN SILENCIO.
+
+     Eso es lo que veia Victor: foto, «Use Photo», y no pasa nada. Ni lee, ni
+     falla, ni avisa. Un camino que se rinde sin decirlo es peor que uno que
+     falla: al menos el que falla se puede arreglar.
+
+     La misma casilla la leia el token. Las dos por su puerta. */
+  const api = (typeof qcApiURL === "function" ? qcApiURL()
+    : (localStorage.getItem("qc-api") || "").replace(/\/+$/, ""));
+  if (!api) {
+    const a0 = document.getElementById("aviso-lectura");
+    if (a0) { a0.textContent = "Este aparato no sabe dónde está el servidor. Entra los datos a mano."; a0.style.display = "block"; }
+    return;
+  }
   const aviso = document.getElementById("aviso-lectura");
   aviso.textContent = "Leyendo el conduce…";
   aviso.style.display = "block";
 
   const cab = { "Content-Type": "application/json" };
-  const tk = localStorage.getItem("qc-token");
+  const tk = typeof qcApiToken === "function" ? qcApiToken() : localStorage.getItem("qc-token");
   if (tk) cab["X-QC-Token"] = tk;
   const ses = localStorage.getItem("qc-sesion");
   if (ses) cab["X-QC-Sesion"] = ses;
@@ -1427,6 +1446,7 @@ function render() {
 
      Y encaja con lo de anoche (Q-104): o hay tiro hoy, o no hay tiro. Aquí
      igual: o son los camiones de este tiro, o no hay camiones. */
+  const tiro = (db.dayMeta || {})[day] || null;
   const shown = day;
   const rows = testsOfDate(shown);
   const cy = rows.reduce((a, t) => a + (num(t.vol) || 0), 0);
@@ -1437,7 +1457,23 @@ function render() {
      hizo que nadie notara nada. */
   /* Q-112: y la cabecera tampoco puede llamarlo «el tiro» si esta cerrado.
      «Tiro del 22 ago» encima de un vaciado firmado se lee como el de ahora. */
-  const _abierto = typeof hayTiroActivo === "function" ? hayTiroActivo(day) : true;
+  /* SE PREGUNTA AL DIA, NO A UNA CADENA DE FUNCIONES — Q-126, 29 de agosto
+     de 2026, con el primer camion esperando en la obra.
+
+     Esto preguntaba `hayTiroActivo(day)`, que por dentro compara el dia con
+     `tiroActivo()`, que a su vez mira el calendario. Bastaba con que uno de
+     esos eslabones no cuadrara —y esta mañana no cuadro— para que Recepcion se
+     diera por cerrada y ESCONDIERA EL FORMULARIO con un mixer en la puerta.
+
+     La pregunta de verdad es mucho mas simple, y se le hace al propio dia: ¿hay
+     un tiro aqui, vivo y sin cerrar? Si lo hay, se trabaja. Punto.
+
+     La leccion, que es la que importa: un guardian que protege el expediente
+     no puede impedir el trabajo cuando duda. Si no esta seguro, abre — el
+     expediente ya tiene su propia guarda al guardar (`frenoDiaCerrado`), que
+     es donde debe estar. */
+  const _abierto = !!(tiro && !tiro.borrado && !tiro.cerradoA &&
+    (tiro.cyPlan != null || tiro.losasPlan != null || tiro.losas || tiro.horaInicio));
   document.getElementById("hero-day").textContent =
     !_abierto ? "Último tiro — " + fmtDate(shown)
     : shown === todayISO() ? "Vaciado de hoy — " + fmtDate(shown)

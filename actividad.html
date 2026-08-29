@@ -276,7 +276,7 @@ async function mirar() {
   const pulso = document.getElementById("pulso");
   const txt = document.getElementById("pulso-txt");
   try {
-    const api = (localStorage.getItem("qc-api") || "").replace(/\/+$/, "");
+    const api = (typeof qcApiURL === "function" ? qcApiURL() : (localStorage.getItem("qc-api") || "").replace(/\/+$/, ""));
     if (!api) { txt.textContent = "sin servidor"; pulso.classList.remove("vivo"); return; }
     const cab = {};
     const tk = localStorage.getItem("qc-token"); if (tk) cab["X-QC-Token"] = tk;
