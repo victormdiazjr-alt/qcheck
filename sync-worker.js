@@ -214,6 +214,29 @@ export default {
   async atender(req, env) {
     const url = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
+    /* ESTRENAR UN APARATO SE DICE POR TELEFONO — Q-122, 28 de agosto de 2026.
+     *
+     * Victor: «haz que el enlace de limpiar sea qterapr.com/new».
+     *
+     * Antes habia que mandar `preparar.html?k=<treinta y dos caracteres>`, que
+     * no se dicta, no se copia bien de un WhatsApp citado y no se teclea en un
+     * iPad con guante. Ahora se dice: qterapr punto com barra new.
+     *
+     * La llave la pone el servidor, que ya la tiene. Y no se pierde nada: la
+     * llave sola no abre NADA —`exigir_sesion` esta encendido, asi que sin
+     * usuario y clave no se lee ni se escribe una linea— y ya viajaba en cada
+     * enlace de conexion que se manda por WhatsApp. Lo que decide quien entra
+     * es la cuenta. */
+    if (url.pathname === "/new") {
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: "/preparar.html?k=" + encodeURIComponent(env.QC_TOKEN || ""),
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
     if (!url.pathname.startsWith("/api/")) return json({ error: "ruta" }, 404);
 
     const protegido = !!env.QC_TOKEN;

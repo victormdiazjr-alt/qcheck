@@ -33,7 +33,8 @@ database_id = "506c7a22-b75c-427a-8448-42b2a6aa1d7a"
 [assets]
 directory = "./publico"
 binding = "ASSETS"
-run_worker_first = ["/api/*"]
+# `/new` tambien lo atiende el worker: es el que sabe la llave del proyecto.
+run_worker_first = ["/api/*", "/new"]
 
 [[routes]]
 pattern = "qterapr.com"
