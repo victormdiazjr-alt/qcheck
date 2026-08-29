@@ -573,9 +573,83 @@ function publishSpec() {
     try { C.publishMixSpec(db, db.project && db.project.mixId, db.plan); } catch (_) {}
   }
 }
+/* ============================================================
+   CUANDO EL APARATO SE QUEDA SIN SITIO — Q-148, 29 de agosto de 2026.
+
+   Víctor: «el plan es que ahora se empiece a usar QCheck a diario para
+   monitorear todos los tiros, así que necesitamos la infraestructura para
+   manejar la cantidad de datos».
+
+   Se midió generando el volumen en vez de estimarlo, y sale un muro con fecha:
+
+     5.000 ensayos (un año de uso diario) → 4.310 KB en el almacén del navegador
+     8.000 ensayos (año y medio)          → QuotaExceededError
+
+   El límite de Safari son unos 5 MB por sitio, y aquí se gastan DOS VECES: la
+   base (`qc-pr52-db-v1`) y su copia de referencia (`qc-sync-base`), que existe
+   solo para saber qué cambió.
+
+   PERO LO GRAVE NO ERA EL MURO. ERA CÓMO SE CHOCA CONTRA ÉL.
+
+   Esto llamaba a `setItem` a pelo. Cuando revienta la cuota, la excepción sube
+   y se lleva por delante lo que venía detrás — incluida la línea que encola el
+   cambio para subirlo. Resultado: el técnico teclea el slump, le da a guardar,
+   **no se guarda, no se encola, no se sube, y la pantalla no dice nada.** El
+   camión siguiente igual. Y el siguiente.
+
+   Es exactamente la familia que llevamos toda la semana persiguiendo: algo que
+   parece que funciona. Solo que esta vez perdiendo el dato medido en obra, que
+   es lo único que no se puede volver a tomar.
+
+   Ahora: se avisa fuerte, y **se sigue encolando pase lo que pase**. Si el
+   aparato no puede recordarlo, el servidor sí — y el servidor es el
+   expediente. Un aparato lleno es un incordio; un dato perdido no.
+   ============================================================ */
+function almacenUsado() {
+  try {
+    let n = 0;
+    for (const k of Object.keys(localStorage)) n += k.length + (localStorage.getItem(k) || "").length;
+    return n;
+  } catch (_) { return 0; }
+}
+
+/* El aviso se da UNA vez por sesión de pantalla: repetirlo en cada tecla
+   convierte una alarma en ruido, y de las alarmas con ruido nadie hace caso. */
+let _avisadoLleno = false;
+function avisarAlmacenLleno() {
+  const kb = Math.round(almacenUsado() / 1024);
+  try { console.error(`QCheck: el aparato se quedó sin sitio (${kb} KB). Lo escrito se sigue subiendo al servidor.`); } catch (_) {}
+  if (_avisadoLleno) return;
+  _avisadoLleno = true;
+  const msg = "Este aparato se quedó sin espacio (" + kb + " KB).\n\n" +
+    "Lo que estás entrando SE SIGUE SUBIENDO al servidor, así que no se pierde.\n" +
+    "Pero este aparato ya no puede recordarlo por su cuenta.\n\n" +
+    "Cuando la franja de arriba diga «al día», entra en qterapr.com/new para dejarlo limpio.";
+  try { if (typeof alert === "function") alert(msg); } catch (_) {}
+}
+
+/* Y un aviso ANTES del muro, que es cuando todavía se puede hacer algo.
+   Un límite que solo se nota al chocar no es un límite, es una emboscada. */
+let _avisadoCasiLleno = false;
+function vigilarAlmacen() {
+  if (_avisadoCasiLleno || _avisadoLleno) return;
+  const usado = almacenUsado();
+  if (usado < 4 * 1024 * 1024) return;          // por debajo de 4 MB, tranquilo
+  _avisadoCasiLleno = true;
+  try { console.warn(`QCheck: el almacén va por ${Math.round(usado / 1024)} KB de unos 5 MB.`); } catch (_) {}
+  if (typeof toast === "function") toast("Este aparato va lleno — conviene pasarlo por qterapr.com/new");
+}
+
 function saveDB() {
   publishSpec();
-  localStorage.setItem(DB_KEY, JSON.stringify(db));
+  try {
+    localStorage.setItem(DB_KEY, JSON.stringify(db));
+    vigilarAlmacen();
+  } catch (e) {
+    /* Q-148: no se puede guardar, pero SÍ se puede subir. Se avisa y se sigue:
+       el `alGuardar()` de abajo es el que manda el dato al expediente. */
+    avisarAlmacenLleno(e);
+  }
   /* La sincronización se cuelga aquí y de ningún otro sitio: mira qué
      cambió respecto a la última vez y encola las líneas del registro.
      Por eso ninguna de las once pantallas tuvo que cambiar nada — siguen

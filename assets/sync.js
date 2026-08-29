@@ -320,7 +320,43 @@ const QCSync = {
   _cola() {
     try { return JSON.parse(localStorage.getItem(QC_SYNC_COLA)) || []; } catch (_) { return []; }
   },
-  _guardarCola(c) { localStorage.setItem(QC_SYNC_COLA, JSON.stringify(c)); this.pendientes = c.length; },
+  /* LA COLA ES LO ÚNICO QUE NO SE PUEDE PERDER — Q-148, 29 de agosto de 2026.
+
+     Todo lo que guarda este aparato se puede volver a bajar del servidor menos
+     una cosa: **lo que el técnico acaba de medir y todavía no ha subido.** Eso
+     no está en ningún otro sitio del mundo, y el camión ya se fue.
+
+     Así que cuando no cabe, no se avisa y se abandona: se hace sitio. Y se hace
+     tirando por orden de lo que menos duele, que es lo que sí se puede
+     recuperar:
+
+       1. La copia local de la base. Está entera en el servidor y vuelve en un
+          viaje de 88 KB (Q-141). Perderla cuesta unos segundos al recargar.
+       2. La copia de referencia. Perderla hace que el próximo guardado crea
+          que todo es nuevo y lo suba repetido: ruido en el registro, ningún
+          dato perdido — en un registro que solo añade, escribir dos veces el
+          mismo valor no hace daño.
+
+     Las dos son molestias. Perder una medida no es una molestia.
+
+     Si aun así no cabe, la excepción sube y `alGuardar` avisa fuerte. */
+  _guardarCola(c) {
+    const texto = JSON.stringify(c);
+    try {
+      localStorage.setItem(QC_SYNC_COLA, texto);
+    } catch (e1) {
+      try { console.warn("QCheck: no cabe la cola — se tira la copia local de la base para hacerle sitio"); } catch (_) {}
+      try { localStorage.removeItem(DB_KEY); } catch (_) {}
+      try {
+        localStorage.setItem(QC_SYNC_COLA, texto);
+      } catch (e2) {
+        try { console.warn("QCheck: sigue sin caber — se tira tambien la copia de referencia"); } catch (_) {}
+        try { localStorage.removeItem(QC_SYNC_BASE); } catch (_) {}
+        localStorage.setItem(QC_SYNC_COLA, texto);   /* si falla, que suba y se avise */
+      }
+    }
+    this.pendientes = c.length;
+  },
   _seq() { return Number(localStorage.getItem(QC_SYNC_SEQ) || 0) || 0; },
   _guardarSeq(n) { localStorage.setItem(QC_SYNC_SEQ, String(n)); },
 
@@ -464,8 +500,42 @@ const QCSync = {
     }
 
     if (!ops.length) return;
-    this._guardarBase(ahora);
-    this._guardarCola(this._cola().concat(ops));
+
+    /* PRIMERO LA COLA, DESPUÉS LA COPIA DE REFERENCIA — Q-148, 29 ago 2026.
+
+       Iba al revés, y con el almacén lleno eso era la diferencia entre perder
+       el dato y no perderlo.
+
+       La copia de referencia pesa **dos megas** con un año de trabajo dentro;
+       la cola pesa unos kilos. Al quedarse el aparato sin sitio, reventaba la
+       grande — y como iba primero, se llevaba por delante la línea siguiente:
+       la que encola el cambio. El slump que el técnico acababa de medir no se
+       guardaba, no se encolaba y no se subía, sin un solo aviso.
+
+       Ahora entra primero lo pequeño y lo imprescindible. Si luego falla la
+       copia de referencia, el precio es que en el siguiente guardado se vuelva
+       a detectar el mismo cambio y suba repetido: en un registro que solo
+       añade, escribir dos veces el mismo valor no hace daño.
+
+       > Escribir dos veces es ruido. No escribir es perder una medida que ya
+       > no se puede volver a tomar, porque el camión se fue.
+
+       Cada una va con su propio freno para que la de al lado no dependa de que
+       esta salga bien. */
+    try {
+      this._guardarCola(this._cola().concat(ops));
+    } catch (e) {
+      try { console.error("QCheck: no se pudo encolar — el aparato no tiene sitio", e); } catch (_) {}
+      if (typeof avisarAlmacenLleno === "function") avisarAlmacenLleno(e);
+      return;   /* sin cola no hay nada que empujar, y la base NO se toca:
+                   así el cambio se vuelve a detectar y se reintenta entero. */
+    }
+    try {
+      this._guardarBase(ahora);
+    } catch (e) {
+      try { console.warn("QCheck: no se pudo guardar la copia de referencia; el cambio ya está encolado", e); } catch (_) {}
+      if (typeof avisarAlmacenLleno === "function") avisarAlmacenLleno(e);
+    }
     this._empujar();
   },
 
