@@ -1224,18 +1224,30 @@ export default {
         "mt4be3fk-miibc", "mt4bexzi-f5yk2", "mt4bfew4-sylbq", "mt4buj01-fc0zp",
         "msuy61m7-73d5s",
       ]);
-      const muertas = ops.filter((o) => MUERTOS.has(String(o && o.id)));
-      if (muertas.length) {
-        console.warn(`QCheck: descartadas ${muertas.length} lineas de una obra muerta`);
-      }
-
       /* Q-142: y aqui pasa la puerta de escritura. Lo que no la pasa se
          devuelve con su motivo — no se guarda, pero tampoco se pierde en
          silencio: el aparato lo descuela de la cola sabiendo por que. */
       const rechazadas = [];
       const vivas = [];
       for (const o of ops) {
-        if (MUERTOS.has(String(o && o.id))) continue;
+        /* LO MUERTO SE DESCARTA, PERO SE CONTESTA — Q-147, 29 ago 2026.
+
+           Esto hacia `continue` a secas: ni se guardaba ni se contestaba. Y una
+           linea que no se acepta ni se rechaza **no se descuelga nunca de la
+           cola del aparato**: la reenvia cada tres segundos, para siempre.
+
+           Justo lo contrario de lo que se buscaba. Se queria que la obra muerta
+           dejara de resucitar, y en vez de eso cada aparato con esa copia vieja
+           se quedaba empujandola sin descanso, gastando bateria y datos del
+           tecnico y tapando en la cola lo que si tenia que subir.
+
+           Ahora se contesta que no, con su motivo. El aparato la descuelga, y
+           esa linea deja de existir para siempre — que era el objetivo. */
+        if (MUERTOS.has(String(o && o.id))) {
+          rechazadas.push({ uid: String((o && o.uid) || ""), ent: (o && o.ent) || "",
+            campo: (o && o.campo) || "", motivo: "registro retirado de la aplicacion" });
+          continue;
+        }
         const motivo = revisarOp(o);
         if (motivo) {
           rechazadas.push({ uid: String((o && o.uid) || ""), ent: (o && o.ent) || "", campo: (o && o.campo) || "", motivo });

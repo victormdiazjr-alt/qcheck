@@ -73,6 +73,21 @@ const CASOS = [
   ["cerrar sesiones valor falso",  "/api/cuentas", { m: "POST", cab: { "X-QC-Admin": AD }, cuerpo: { cerrar_sesiones: false } }],
 ];
 
+/* SI FALTA ALGUNO DE LOS DOS, SE DICE Y SE SALTA — 29 ago 2026.
+
+   Sin el Worker levantado esto sacaba 44 divergencias, todas «fetch failed», y
+   `todas.sh` lo contaba como si los dos servidores se hubieran separado. Un
+   comprobador que grita 44 veces por algo que no es un fallo ensena a no
+   mirarlo — y este existe justo para el dia que los gemelos SI se separen. */
+for (const s of [A, B]) {
+  const r = await pega(s, "/api/salud");
+  if (r.s === "CAÍDA") {
+    console.log(`\n  se salta — no contesta el servidor ${s.n.trim()} en ${s.u}`);
+    console.log("  (ver pruebas/LEEME.md para levantar los dos)\n");
+    process.exit(0);
+  }
+}
+
 console.log("\n  CASO                              LOCAL         WORKER        ¿IGUAL?\n" + "  " + "─".repeat(74));
 let dif = 0, n = 0;
 for (const [nombre, ruta, op] of CASOS) {

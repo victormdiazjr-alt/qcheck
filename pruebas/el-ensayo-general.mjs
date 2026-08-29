@@ -324,6 +324,146 @@ d = JSON.parse(await tecnico.ver(`(() => {
 comprobar("recibirCamion no mete camiones en un día cerrado", !d.creo,
   d.creo ? "creó uno en " + d.dia : "preguntó y respetó el no");
 
+/* ============================================================
+   LO QUE PASA DE VERDAD EN OBRA, y hasta hoy no se probaba nunca.
+   ============================================================ */
+
+console.log("\n9 · SIN SEÑAL: SE SIGUE TRABAJANDO Y LUEGO SUBE");
+/* Es la razon de ser de la cola offline y nunca se habia comprobado de punta a
+   punta. En la PR-52 la cobertura se va, y cuando se va el tecnico no para de
+   tomar muestras: sigue, y lo que escribio tiene que estar entero cuando
+   vuelva. Si esto falla, falla en silencio y se descubre al hacer el informe. */
+await tecnico.ir("/control-center.html", 12000);
+/* Se reabre el tiro para poder trabajar (Ruben firma, asi que puede). */
+await tecnico.ver(`(() => { delete db.dayMeta["${DIA}"].cerradoA;
+  delete db.dayMeta["${DIA}"].cerradoPor; saveDB(); return 'ok'; })()`);
+await dormir(6000);
+
+/* SE CORTA LA SEÑAL. Nada de red desde este aparato.
+
+   OJO CON LOS ESCAPES: esto llevaba `/\/api\//.test(...)` y dentro de una
+   plantilla de JavaScript `\/` se convierte en `/`, asi que al navegador le
+   llegaba `//api//` — un COMENTARIO. La condicion quedaba partida, el eval
+   fallaba en silencio y la prueba media un corte que nunca ocurria: decia
+   «al-dia» con la red supuestamente cortada. Se busca la cadena a pelo, que no
+   se puede escapar mal. */
+await tecnico.ver(`(() => {
+  window.__redCortada = true;
+  const _f = window.fetch;
+  window.__fetchReal = _f;
+  window.fetch = function (u) {
+    if (window.__redCortada && String(u && u.url ? u.url : u).indexOf("/api/") >= 0) {
+      window.__cortes = (window.__cortes || 0) + 1;
+      return Promise.reject(new TypeError("Failed to fetch"));
+    }
+    return _f.apply(this, arguments);
+  };
+  return 'ok'; })()`);
+
+await tecnico.ir("/muestras.html", 11000);
+/* La mordaza se pierde al navegar, asi que se vuelve a poner en la pagina nueva. */
+await tecnico.ver(`(() => {
+  const _f = window.fetch; window.__redCortada = true;
+  window.__fetchReal = _f;
+  window.fetch = function (u) {
+    if (window.__redCortada && String(u && u.url ? u.url : u).indexOf("/api/") >= 0) {
+      window.__cortes = (window.__cortes || 0) + 1;
+      return Promise.reject(new TypeError("Failed to fetch"));
+    }
+    return _f.apply(this, arguments); };
+  return 'ok'; })()`);
+await dormir(6000);
+
+d = JSON.parse(await tecnico.ver(`(() => {
+  const t = recibirCamion({ ticket: "88002", truck: "411", vol: 9, ident: "L-11" });
+  if (t) { t.slump = 3.2; t.air = 2.1; t.uw = 150.2; t.temp = 90; saveDB(); }
+  return JSON.stringify({ id: t && t.id, creado: !!t,
+    enCola: JSON.parse(localStorage.getItem('qc-sync-cola') || '[]').length }); })()`));
+comprobar("sin señal se sigue recibiendo y midiendo", d.creado, "ticket 88002");
+comprobar("y lo escrito se guarda en la cola", d.enCola > 0, d.enCola + " apuntes esperando");
+const ID2 = d.id;
+
+/* HAY QUE DARLE TIEMPO A FALLAR. El ciclo va cada 3 s, y desde Q-143 espera
+   cada vez mas entre intentos fallidos — asi que preguntar el estado justo
+   despues de cortar la red contesta lo de antes del corte, no un fallo. Se me
+   colo en la primera version y la prueba dijo «al-dia» con la red cortada. */
+await dormir(10000);
+d = JSON.parse(await tecnico.ver(`JSON.stringify({ estado: QCSync.estado,
+  intentosCortados: window.__cortes || 0 })`));
+comprobar("y la pantalla lo dice, no lo disimula", d.estado === "sin-senal",
+  `estado=${d.estado} · ${d.intentosCortados} intento(s) cortados`);
+
+/* VUELVE LA SEÑAL. */
+await tecnico.ver(`(() => { window.__redCortada = false;
+  QCSync._fallos = 0; return 'ok'; })()`);
+/* Y hay que darle tiempo a RECUPERARSE: tras varios fallos la espera de Q-143
+   puede llegar a la media hora... no, a 60 s como mucho, pero mas que los 3 s
+   de siempre. Se le perdona el castigo (que es justo lo que hace el aviso de
+   «online» del navegador) y se espera de sobra. */
+await tecnico.ver(`(() => { QCSync._fallos = 0; QCSync._ultimoIntento = 0; return 'ok'; })()`);
+await dormir(20000);
+d = JSON.parse(await tecnico.ver(`(() => {
+  const cola = JSON.parse(localStorage.getItem('qc-sync-cola') || '[]');
+  return JSON.stringify({ enCola: cola.length, estado: QCSync.estado,
+    /* si algo se queda atascado, que la prueba diga QUE es — un numero suelto
+       no se puede perseguir */
+    muestra: cola.slice(0, 4).map(o => (o.ent + '.' + o.campo + '=' + JSON.stringify(o.valor)).slice(0, 42)) }); })()`));
+comprobar("al volver la señal la cola se vacia", d.enCola === 0,
+  d.enCola ? `${d.enCola} atascados: ${d.muestra.join(" | ")}` : "vacia · " + d.estado);
+
+await obra.ir("/display.html", 14000);
+d = JSON.parse(await obra.ver(`JSON.stringify({
+  loVe: !!(db.tests||[]).find(t => t.id === '${ID2}'),
+  slump: ((db.tests||[]).find(t => t.id === '${ID2}')||{}).slump })`));
+comprobar("y la obra recibe entero lo que se hizo sin cobertura",
+  d.loVe && d.slump === 3.2, "slump=" + d.slump);
+
+console.log("\n10 · UN CAMION RECHAZADO, DE PRINCIPIO A FIN");
+/* El acto mas consecuente de la aplicacion: mandar un camion de vuelta. Tiene
+   que quedar escrito, decir por que, y verse en la pantalla que mira el
+   chofer — no solo en el iPad del tecnico. */
+await tecnico.ir("/muestras.html", 11000);
+d = JSON.parse(await tecnico.ver(`(() => {
+  const t = recibirCamion({ ticket: "88003", truck: "412", vol: 9, ident: "L-11" });
+  t.slump = 5.4; t.air = 2.0; t.uw = 150.0; t.temp = 88;
+  t.rejected = true; t.reason = "Fuera de límite de Slump";
+  saveDB();
+  state.buf.slump = 5.4; state.buf.air = 2.0; state.buf.uw = 150.0; state.buf.temp = 88;
+  const v = liveVerdict();
+  return JSON.stringify({ id: t.id, palabra: v.word, motivo: v.sub, malo: v.bad }); })()`));
+comprobar("el veredicto manda rechazar", /rechazar/i.test(d.palabra) && d.malo === true, d.palabra);
+comprobar("y dice de que", /slump/i.test(d.motivo), d.motivo);
+const ID3 = d.id;
+await dormir(9000);
+await obra.ir("/display.html", 14000);
+d = JSON.parse(await obra.ver(`JSON.stringify({
+  loVe: !!(db.tests||[]).find(t => t.id === '${ID3}'),
+  rechazado: ((db.tests||[]).find(t => t.id === '${ID3}')||{}).rejected,
+  texto: (document.body.innerText||'').replace(/\s+/g,' ') })`));
+comprobar("la pantalla de obra recibe el rechazo", d.loVe && d.rechazado === true);
+comprobar("y lo dice con todas las letras", /rechazado/i.test(d.texto),
+  (d.texto.match(/.{0,28}RECHAZADO.{0,34}/i) || ["no aparece «RECHAZADO»"])[0]);
+
+console.log("\n11 · CON RECEPCION APARTE, CADA PUESTO EN SU SITIO");
+/* La otra mitad de Q-136: los tiros donde SI hay alguien recibiendo camiones.
+   Muestras no debe ofrecer recibir, y Recepcion si. */
+await tecnico.ir("/control-center.html", 11000);
+await tecnico.ver(`(() => { db.dayMeta["${DIA}"].recepcion = "aparte"; saveDB(); return 'ok'; })()`);
+await dormir(6000);
+d = JSON.parse(await tecnico.ver(`JSON.stringify({ aparte: recepcionAparte("${DIA}") })`));
+comprobar("el tiro queda marcado con Recepcion aparte", d.aparte === true);
+await tecnico.ir("/muestras.html", 11000);
+d = JSON.parse(await tecnico.ver(`JSON.stringify({ fila: (() => {
+  const f = document.querySelector('.recibir');
+  return !!f && getComputedStyle(f).display !== 'none'; })() })`));
+comprobar("Muestras deja de ofrecer recibir", !d.fila);
+await tecnico.ir("/conduce.html", 11000);
+d = JSON.parse(await tecnico.ver(`JSON.stringify({
+  formulario: !!document.querySelector('#manual-card') &&
+    getComputedStyle(document.querySelector('#manual-card')).display !== 'none',
+  texto: (document.body.innerText||'').replace(/\s+/g,' ').slice(0,120) })`));
+comprobar("y Recepcion si lo ofrece", d.formulario, d.texto.slice(0, 58));
+
 console.log("\n9 · ERRORES EN CONSOLA");
 const errs = [...tecnico.errores(), ...obra.errores()].filter((e) => e && !/favicon|manifest/i.test(e));
 comprobar("ninguna pantalla lanza errores", errs.length === 0, errs.slice(0, 2).join(" | ").slice(0, 110));
