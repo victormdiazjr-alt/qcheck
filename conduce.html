@@ -1312,14 +1312,54 @@ function saveArrival() {
   const planDelDia = num((db.dayMeta[t.date] || {}).cyPlan);
   if (ordenadasLeidas != null && planDelDia != null &&
       Math.abs(ordenadasLeidas - planDelDia) > 0.5) {
-    const seguir = confirm(
-      `⚠ El conduce no cuadra con el tiro programado.\n\n` +
-      `El conduce dice ${fmt(ordenadasLeidas, 0)} CY ordenadas.\n` +
-      `El tiro de hoy está programado a ${fmt(planDelDia, 0)} CY.\n\n` +
-      `Avísale al ingeniero antes de seguir: o cambió el pedido y no se apuntó,\n` +
-      `o este camión viene contra otra orden.\n\n` +
-      `¿Registrar el camión igual?`);
-    if (!seguir) return;
+    /* EL PRIMER CONDUCE PUEDE CORREGIR LAS YARDAS DEL TIRO — Q-135, 29 de
+       agosto de 2026.
+
+       Victor: «las yardas ordenadas si se pueden leer del primer conduce y
+       corregir si el tiro fue creado con otra cantidad en QCheck. Pero que
+       pregunte antes de cambiarlo».
+
+       Hasta hoy la pantalla solo avisaba de que no cuadraba y preguntaba si
+       registrar igual. Eso deja al tecnico con la duda y un camion delante: el
+       aviso salta en cada camion del dia y nadie corrige nada, asi que el tiro
+       se termina con las yardas equivocadas y el porcentaje del informe
+       tampoco cuadra.
+
+       El PRIMER conduce del dia es distinto: trae la orden con la que la
+       planta va a despachar. Si el tiro se programo a ojo la vispera y la orden
+       dice otra cosa, la que manda es la orden — pero eso lo decide una
+       persona, no la pantalla. Se pregunta, con los dos numeros delante.
+
+       Del segundo camion en adelante NO se ofrece corregir: a mitad de tiro un
+       numero que no cuadra ya no es un plan mal apuntado, es algo que hay que
+       hablar con el ingeniero. Ahi se sigue avisando, como hasta ahora.
+
+       Y el conduce nunca fija limites: esto son las yardas ORDENADAS, un dato
+       del pedido. El conduce se fiscaliza; no manda sobre como se juzga. */
+    const esElPrimero = testsOfDate(t.date).length === 0;
+    if (esElPrimero) {
+      const corregir = confirm(
+        `El conduce dice ${fmt(ordenadasLeidas, 0)} CY ordenadas.\n` +
+        `El tiro está programado a ${fmt(planDelDia, 0)} CY.\n\n` +
+        `Es el primer camión del tiro, así que el conduce trae la orden buena.\n\n` +
+        `¿Corregir el tiro a ${fmt(ordenadasLeidas, 0)} CY?\n\n` +
+        `Aceptar — se corrige y se registra el camión.\n` +
+        `Cancelar — se deja en ${fmt(planDelDia, 0)} y se registra igual.`);
+      if (corregir) {
+        if (typeof frenoDiaCerrado === "function" && frenoDiaCerrado(t.date)) return;
+        db.dayMeta[t.date] = Object.assign({}, db.dayMeta[t.date], { cyPlan: ordenadasLeidas });
+        toast(`Tiro corregido a ${fmt(ordenadasLeidas, 0)} CY — del conduce ${esc(t.ticket || "")}`);
+      }
+    } else {
+      const seguir = confirm(
+        `⚠ El conduce no cuadra con el tiro programado.\n\n` +
+        `El conduce dice ${fmt(ordenadasLeidas, 0)} CY ordenadas.\n` +
+        `El tiro de hoy está programado a ${fmt(planDelDia, 0)} CY.\n\n` +
+        `A mitad de tiro esto no se corrige solo. Avísale al ingeniero:\n` +
+        `o cambió el pedido y no se apuntó, o este camión viene contra otra orden.\n\n` +
+        `¿Registrar el camión igual?`);
+      if (!seguir) return;
+    }
   }
 
   /* Q-67: sin conexión no se somete. Aquí, justo antes de escribir, porque
