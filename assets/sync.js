@@ -1097,18 +1097,51 @@ const QCSync = {
 
        Y cualquier cosa que pase de verdad —volver a la pantalla, recuperar la
        señal, guardar un dato— dispara una vuelta al momento, sin esperar. */
-    const RAPIDA = /(display|muestras)\.html/.test(location.pathname);
+    /* SI NADIE LA ESTÁ USANDO, QUE NO LLAME — Q-152, 29 ago 2026.
+
+       Víctor: «¿no se puede hacer que si no se está usando la aplicación no
+       llame?». Sí, y es mejor que bajar el ritmo: un iPad que se queda abierto
+       toda la noche hacía **4.300 llamadas** para oír «nada» cuatro mil trescientas
+       veces.
+
+       Con dos cuidados, y los dos tienen nombre y cicatriz:
+
+       1. EL FIELD DISPLAY NO SE PARA NUNCA. Cuelga en la obra y nadie lo toca:
+          «no se está usando» es su estado normal, y está para mirarse. Pararlo
+          seria apagarlo.
+
+       2. `document.hidden` MIENTE EN EL iPHONE. Una aplicación guardada en la
+          pantalla de inicio se declara escondida mientras se está viendo
+          perfectamente — ya nos costó una vez que Muestras se quedara muerta.
+          Y si se para creyéndose escondida cuando no lo está, no llega ningún
+          aviso que la despierte: se queda congelada delante del técnico.
+
+          Así que en las pantallas que van en la mano —Muestras y Recepción— no
+          se para mientras haya un tiro abierto, que es cuando se usan. Sin tiro
+          abierto no hay nada que perder aunque `hidden` mienta.
+
+       Lo que escribe el técnico NO espera a la próxima llamada: `saveDB` empuja
+       en el momento. Pararse solo deja de PREGUNTAR, nunca de contar. */
+    const MURAL = /display\.html/.test(location.pathname);
+    const EN_LA_MANO = /(muestras|conduce)\.html/.test(location.pathname);
+
     const cadencia = () => {
-      if (!RAPIDA && document.hidden) return 20000;
       const hayTiro = typeof hayTiroActivo === "function" && hayTiroActivo();
+      if (MURAL) return hayTiro ? 3000 : 30000;          // la de la obra no duerme
+      if (document.hidden && !(EN_LA_MANO && hayTiro)) return 0;   // 0 = parada
       return hayTiro ? 3000 : 30000;
     };
-    let _ultimaCadencia = 0;
+    let _ultimaCadencia = -1;
     const arrancarTimer = () => {
       const ms = cadencia();
-      if (ms === _ultimaCadencia && this._timer) return;
+      if (ms === _ultimaCadencia && (ms === 0 || this._timer)) return;
       _ultimaCadencia = ms;
       clearInterval(this._timer);
+      this._timer = null;
+      /* Parada del todo. NO se toca `estado`: pausar no es un problema de
+         conexión y no hay nadie mirando la franja. Al volver se reanuda y la
+         franja sigue diciendo lo mismo que decía. */
+      if (!ms) return;
       this._timer = setInterval(() => { paso(); arrancarTimer(); }, ms);
     };
     arrancarTimer();
@@ -1117,11 +1150,14 @@ const QCSync = {
        descongela al volver. Sin estos avisos, volver a la aplicación enseñaba
        lo de hace un rato hasta que saltara el próximo intervalo. */
     document.addEventListener("visibilitychange", () => { arrancarTimer(); if (!document.hidden) paso(); });
-    window.addEventListener("pageshow", paso);
-    window.addEventListener("focus", paso);
+    /* Q-152: al volver hay que ARRANCAR el reloj, no solo dar una vuelta — si
+       estaba parado, una vuelta suelta no lo vuelve a poner en marcha. */
+    const despertar = () => { arrancarTimer(); paso(); };
+    window.addEventListener("pageshow", despertar);
+    window.addEventListener("focus", despertar);
     /* Q-143: si el aparato dice que vuelve a haber red, se perdona la espera y
        se intenta ya. El castigo es para no machacar a ciegas, no para hacer
        esperar al técnico cuando la señal ha vuelto de verdad. */
-    window.addEventListener("online", () => { this._fallos = 0; paso(); });
+    window.addEventListener("online", () => { this._fallos = 0; despertar(); });
   },
 };
