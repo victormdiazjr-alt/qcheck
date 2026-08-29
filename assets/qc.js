@@ -707,6 +707,32 @@ initTheme();
 mountThemeToggle();
 pintarPestanas();                   // fuera «Plan & Datos» para quien no sea admin
 enableLiveSync(() => render());
+
+/* LA HISTORIA ENTERA, QUE ES A LO QUE SE VIENE AQUI — Q-150.
+
+   El aparato lleva encima los ultimos 60 dias. Results es una de las tres
+   pantallas que existen para mirar atras —con Reportes y la de la Autoridad—,
+   asi que aqui se pide el resto al abrir. Va solo a memoria: al recargar, el
+   aparato vuelve a su ventana.
+
+   Si no hay cobertura no hay historia, y se DICE. Una pantalla de resultados
+   que enseña medio expediente sin avisar es peor que una que reconoce que no
+   puede: quien la mire se la va a creer entera. */
+if (typeof QCSync !== "undefined" && typeof QCSync.traerHistorial === "function") {
+  QCSync.traerHistorial().then((r) => {
+    if (r.ok) { render(); return; }
+    const b = document.createElement("div");
+    b.setAttribute("role", "status");
+    b.style.cssText = "margin:12px auto;max-width:1100px;padding:10px 14px;border-radius:6px;" +
+      "background:var(--susp-bg,#3a1c1c);color:var(--susp,#e88);font:600 13px/1.45 system-ui,sans-serif";
+    b.textContent = r.motivo === "sin-senal"
+      ? "Sin cobertura: solo se ve lo de los ultimos 60 dias. Lo anterior esta en el servidor."
+      : "No se pudo traer el historico. Solo se ve lo de los ultimos 60 dias.";
+    const app = document.getElementById("app");
+    if (app && app.parentNode) app.parentNode.insertBefore(b, app);
+  });
+}
+
 window.addEventListener("hashchange", () => { const t = tabFromHash(); if (t) switchTab(t, false); });
 const inicial = tabFromHash();
 if (inicial) state.tab = inicial;   // la pestaña se subraya abajo, tras pintar
