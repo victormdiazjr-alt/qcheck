@@ -54,6 +54,17 @@ custom_domain = true
 # ANTES DE DESPLEGAR CON ESTO: hay que activar R2 en el panel de Cloudflare
 # (una vez, la cuenta es de Victor) y crear el cubo:
 #   npx wrangler r2 bucket create qcheck-conduces
-[[r2_buckets]]
-binding = "FOTOS"
-bucket_name = "qcheck-conduces"
+# DESACTIVADO HASTA QUE R2 ESTE ENCENDIDO. Con esto puesto, `wrangler deploy`
+# falla entero —«Please enable R2 through the Cloudflare Dashboard»— y eso
+# bloquea desplegar CUALQUIER otra cosa, incluidos arreglos que si corren prisa.
+# Mientras esta comentado, el worker contesta 501 «sin-archivador» a las rutas
+# de foto y el aparato deja la foto esperando en su cajon, sin perderla.
+#
+# Para encenderlo, una vez:
+#   1. Panel de Cloudflare -> R2 -> Enable
+#   2. npx wrangler r2 bucket create qcheck-conduces
+#   3. quitar los almohadillas de las tres lineas de abajo
+#   4. npx wrangler deploy
+# [[r2_buckets]]
+# binding = "FOTOS"
+# bucket_name = "qcheck-conduces"
