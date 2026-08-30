@@ -464,6 +464,58 @@ d = JSON.parse(await tecnico.ver(`JSON.stringify({
   texto: (document.body.innerText||'').replace(/\s+/g,' ').slice(0,120) })`));
 comprobar("y Recepcion si lo ofrece", d.formulario, d.texto.slice(0, 58));
 
+console.log("\n12 · EL CONDUCE SE ARCHIVA, NO SE METE EN LA FICHA");
+/* Con R2 dentro (Q-153), esto es lo que no se habia probado por las pantallas
+   de verdad: que la foto capturada en Muestras acabe en el archivador, que la
+   ficha lleve el enlace y NO la imagen, y que se pueda ver. */
+await tecnico.ir("/control-center.html", 11000);
+await tecnico.ver(`(() => { db.dayMeta["${DIA}"].recepcion = "muestras";
+  delete db.dayMeta["${DIA}"].cerradoA; delete db.dayMeta["${DIA}"].cerradoPor;
+  saveDB(); return 'ok'; })()`);
+await dormir(6000);
+await tecnico.ir("/muestras.html", 12000);
+
+/* Una foto como la que sale de la camara, dibujada en la propia pantalla. */
+d = JSON.parse(await tecnico.ver(`(async () => {
+  const c = document.createElement("canvas"); c.width = 900; c.height = 1200;
+  const x = c.getContext("2d");
+  x.fillStyle = "#f4f2ee"; x.fillRect(0,0,900,1200);
+  x.fillStyle = "#111"; x.font = "bold 30px sans-serif";
+  x.fillText("CONCRE-TECH · CONDUCE 88010", 50, 90);
+  const foto = c.toDataURL("image/jpeg", 0.6);
+  const t = recibirCamion({ ticket: "88010", truck: "413", vol: 9, ident: "L-11", photo: foto });
+  await new Promise(r => setTimeout(r, 3000));
+  return JSON.stringify({ id: t && t.id, ref: t && t.photoRef || null,
+    tieneImagenDentro: !!(t && t.photo), pesoFoto: Math.round(foto.length/1024) }); })()`));
+comprobar("el camión se recibe con su foto", !!d.id, `foto de ${d.pesoFoto} KB`);
+comprobar("la foto va al archivador", !!d.ref && /^conduce\//.test(d.ref), "ref=" + d.ref);
+comprobar("y la ficha NO se queda la imagen dentro", !d.tieneImagenDentro);
+
+/* Q-158: como la enseña la pantalla de verdad — con el pase en la cabecera y la
+   imagen ya descargada, porque una `<img src>` no puede mandar cabeceras y con
+   `exigir_sesion` encendido el visor habria salido siempre en blanco. */
+const ID_FOTO = d.id;
+d = JSON.parse(await tecnico.ver(`(async () => {
+  const t = (db.tests||[]).find(x => x.id === ${JSON.stringify(ID_FOTO)});
+  if (!t) return JSON.stringify({ ok: false, porque: "no se encontro el ensayo" });
+  const f = await cargarConduce(t);
+  if (!f) return JSON.stringify({ ok: false, porque: "cargarConduce no devolvio nada" });
+  const esBlob = /^blob:/.test(f.src);
+  const r = await fetch(f.src); const b = await r.blob();
+  f.soltar();
+  return JSON.stringify({ ok: true, esBlob, tipo: b.type, bytes: b.size }); })()`));
+comprobar("y se puede ver desde el archivador", d.ok && d.bytes > 0,
+  d.ok ? `${d.bytes} bytes · ${d.tipo}${d.esBlob ? " · como blob, con el pase en la cabecera" : ""}` : d.porque);
+
+/* Y lo que de verdad importa del cambio: que la foto no viaje en el registro. */
+await dormir(8000);
+await obra.ir("/display.html", 13000);
+d = JSON.parse(await obra.ver(`JSON.stringify({
+  copiaLocal: Math.round((localStorage.getItem('qc-pr52-db-v1')||'').length/1024),
+  algunaImagenDentro: /"photo":"data:/.test(localStorage.getItem('qc-pr52-db-v1')||'') })`));
+comprobar("la pantalla de obra no carga con imágenes encima", !d.algunaImagenDentro,
+  `copia local: ${d.copiaLocal} KB`);
+
 console.log("\n9 · ERRORES EN CONSOLA");
 const errs = [...tecnico.errores(), ...obra.errores()].filter((e) => e && !/favicon|manifest/i.test(e));
 comprobar("ninguna pantalla lanza errores", errs.length === 0, errs.slice(0, 2).join(" | ").slice(0, 110));

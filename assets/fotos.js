@@ -30,6 +30,51 @@
 
 const QC_FOTOS = "qc-fotos";          /* cajón local: NO viaja, no se sincroniza */
 
+/* CUÁNTO PUEDE ESPERAR EL CAJÓN — Q-157, 30 de agosto de 2026.
+
+   Medido: una foto de conduce guardada (900 px, calidad 0.6) pesa **130 KB**.
+   Veinte camiones sin cobertura son 2,5 MB, y el almacén entero del navegador
+   son unos 5 MB con la base ocupando ya cerca de uno. O sea: el cajón de fotos
+   podía llevar al aparato exactamente contra la pared que acabábamos de quitar
+   — por la puerta que abrimos al archivar en R2.
+
+   Con señal esto no pasa nunca: la foto sube y no toca el cajón. Solo se llena
+   en un tiro largo sin cobertura, que es justo cuando menos se puede fallar.
+
+   Así que hay una escalera, y ningún escalón tira una prueba en silencio:
+
+     1. Cabe entera, en la calidad buena que va al archivo.
+     2. No cabe → se guarda una copia más pequeña (600 px, 0.45 ≈ 50 KB). Una
+        foto legible más ligera es mejor prueba que ninguna foto.
+     3. Tampoco cabe → NO se guarda, y se dice en voz alta, diciendo qué hacer.
+        El camión queda registrado igual; lo que falta es la foto, y quien está
+        delante tiene que saberlo para sacarla con el teléfono. */
+const TOPE_CAJON = 1200000;           /* ~1,2 MB: nueve fotos buenas o veinticuatro reducidas */
+
+function _pesoCajon(c) { return c.reduce((n, f) => n + (f.dataUrl || "").length, 0); }
+
+/* Vuelve a comprimir una foto más pequeña. Devuelve la original si no se puede
+   —mejor la grande que ninguna—, y quien llama decide si cabe. */
+function _reducirMas(dataUrl) {
+  return new Promise((listo) => {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const c = document.createElement("canvas");
+          const e = Math.min(1, 600 / img.naturalWidth);
+          c.width = Math.round(img.naturalWidth * e);
+          c.height = Math.round(img.naturalHeight * e);
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          listo(c.toDataURL("image/jpeg", 0.45));
+        } catch (_) { listo(dataUrl); }
+      };
+      img.onerror = () => listo(dataUrl);
+      img.src = dataUrl;
+    } catch (_) { listo(dataUrl); }
+  });
+}
+
 function _fotosCajon() {
   try { return JSON.parse(localStorage.getItem(QC_FOTOS) || "[]"); } catch (_) { return []; }
 }
@@ -75,11 +120,33 @@ async function archivarConduce(dataUrl, test) {
   if (!dataUrl || !test) return null;
   const clave = await subirFoto(dataUrl, { uid: test.id, ticket: test.ticket });
   if (clave) { test.photoRef = clave; return clave; }
-  /* Sin señal: al cajón, con el id del camión para saber a quién pertenece. */
+  /* Sin señal: al cajón, con el id del camión para saber a quién pertenece.
+     Y por la escalera de Q-157, que el cajón tiene tope. */
   const c = _fotosCajon();
-  c.push({ id: test.id, ticket: test.ticket || null, dataUrl, ts: new Date().toISOString() });
+  const usado = _pesoCajon(c);
+  let guardar = dataUrl;
+  let reducida = false;
+  if (usado + guardar.length > TOPE_CAJON) {
+    guardar = await _reducirMas(dataUrl);
+    reducida = guardar !== dataUrl;
+  }
+  if (usado + guardar.length > TOPE_CAJON) {
+    /* Escalón 3: no cabe ni reducida. Se dice, con lo que hay que hacer. */
+    const msg = "No se pudo guardar la foto de este conduce: el aparato está lleno " +
+      "y ya hay " + c.length + " esperando a que vuelva la señal.\n\n" +
+      "EL CAMIÓN SÍ QUEDÓ REGISTRADO — lo que falta es la foto.\n" +
+      "Sácale una con la cámara del teléfono y guárdala tú hasta que haya cobertura.";
+    try { console.error("QCheck: " + msg.replace(/\n/g, " ")); } catch (_) {}
+    try { if (typeof alert === "function") alert(msg); } catch (_) {}
+    return null;
+  }
+  c.push({ id: test.id, ticket: test.ticket || null, dataUrl: guardar,
+           reducida: reducida || undefined, ts: new Date().toISOString() });
   _fotosGuardar(c);
-  try { console.warn(`QCheck: la foto del conduce ${test.ticket || ""} espera a que vuelva la señal (${c.length} en cola)`); } catch (_) {}
+  try {
+    console.warn(`QCheck: la foto del conduce ${test.ticket || ""} espera señal` +
+      ` (${c.length} en cola, ${Math.round(_pesoCajon(c) / 1024)} KB${reducida ? ", esta reducida por falta de sitio" : ""})`);
+  } catch (_) {}
   return null;
 }
 
@@ -105,9 +172,49 @@ async function subirFotosPendientes() {
   return subidas;
 }
 
-/* De dónde sale la imagen de un camión, en el orden en que se debe intentar:
-   el archivador primero, y la foto vieja guardada dentro de la ficha después —
-   que ya no se crea, pero puede existir en una base de antes. */
+/* UNA ETIQUETA `<img>` NO SABE ENSEÑAR EL PASE — Q-158, 30 de agosto de 2026.
+
+   El archivador pide sesión, como todo lo demás. Y una `<img src="...">` no
+   puede mandar cabeceras: el navegador pide esa URL a pelo, sin el pase, y el
+   servidor contesta 401. O sea que el visor de conduces **nunca habría podido
+   enseñar una foto en producción**, donde `exigir_sesion` está encendido.
+
+   Lo cazó el ensayo general por otra puerta, y menos mal: es de las que no se
+   ven hasta que alguien intenta mirar un conduce delante de un chofer.
+
+   La salida limpia no es abrir el archivador ni meter el pase en la dirección
+   —que acaba en los registros del servidor y en el historial del navegador—:
+   es pedir la foto como se piden las demás cosas, con el pase en la cabecera, y
+   dársela a la etiqueta ya descargada. Eso es un `blob`.
+
+   Quien lo use tiene que soltarlo después (`URL.revokeObjectURL`), que si no la
+   memoria se va llenando de conduces mirados. */
+async function cargarConduce(t) {
+  if (!t) return null;
+  /* La que todavía espera señal ya está aquí: se enseña tal cual. */
+  if (typeof conduceEnEspera === "function") {
+    const local = conduceEnEspera(t.id);
+    if (local) return { src: local, soltar: () => {} };
+  }
+  if (t.photo) return { src: t.photo, soltar: () => {} };   /* base de antes */
+  const url = fuenteDelConduce(t);
+  if (!url) return null;
+  const cab = {};
+  const tk = typeof qcApiToken === "function" ? qcApiToken() : "";
+  if (tk) cab["X-QC-Token"] = tk;
+  const ses = localStorage.getItem("qc-sesion");
+  if (ses) cab["X-QC-Sesion"] = ses;
+  try {
+    const r = await fetch(url, { headers: cab });
+    if (!r.ok) return null;
+    const b = await r.blob();
+    const src = URL.createObjectURL(b);
+    return { src, soltar: () => { try { URL.revokeObjectURL(src); } catch (_) {} } };
+  } catch (_) { return null; }
+}
+
+/* La dirección de la foto en el archivador. Sirve para pedirla con cabeceras
+   —ver `cargarConduce`—, NO para metérsela a una `<img>` directamente. */
 function fuenteDelConduce(t) {
   if (!t) return null;
   if (t.photoRef) {

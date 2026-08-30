@@ -337,7 +337,7 @@ body { background: var(--bg); }
 <script src="assets/seed.js?v=acf41aba"></script>
 <script src="assets/sync.js?v=23e8bf05"></script>
 <script src="assets/core.js?v=594ffba5"></script>
-<script src="assets/fotos.js?v=b2d275a5"></script>
+<script src="assets/fotos.js?v=7b0f6778"></script>
 <!-- Q-89: las tablas de la SP-934. Desde aquí se CREA un tiro, y un tiro de
      la 934 pregunta su clase y su ventana de aceptacion al nacer. Sin esto,
      `formSP934()` reventaba en silencio dentro del `setTimeout` y la pregunta
@@ -664,17 +664,23 @@ let fichaPlant = null;
    porque es lo que la lista tiene a mano; si ese camión no trae foto no se
    enseña nada y tampoco se inventa un hueco: el clip solo aparece cuando la
    hay. */
-function verConduceDe(n) {
+async function verConduceDe(n) {
   const t = (db.tests || []).find((x) => String(x.n) === String(n));
   if (!t) return;
-  /* Q-153: primero el archivador; si todavia espera señal, la copia que hay en
-     este aparato — que el tecnico tiene que poder comprobar lo que capturo sin
-     esperar a la cobertura. */
-  const src = (typeof fuenteDelConduce === "function" && fuenteDelConduce(t))
-           || (typeof conduceEnEspera === "function" && conduceEnEspera(t.id));
-  if (!src) return;
-  verConduce(src, `Conduce · camión ${t.truck || "—"} · ticket ${t.ticket || "—"}`);
+  /* Q-158: la foto se PIDE con el pase de sesión y se enseña ya descargada.
+     Una `<img src>` no puede mandar cabeceras, así que apuntarla al archivador
+     daba 401 y el visor salía en blanco. Ver assets/fotos.js. */
+  const f = typeof cargarConduce === "function" ? await cargarConduce(t) : null;
+  if (!f) {
+    if (typeof toast === "function") toast("No se pudo traer el conduce. ¿Hay cobertura?");
+    return;
+  }
+  _soltarConduce = f.soltar;
+  verConduce(f.src, `Conduce · camión ${t.truck || "—"} · ticket ${t.ticket || "—"}`);
 }
+/* Lo que hay que soltar al cerrar el visor: un blob que no se suelta se queda
+   en memoria, y en un iPad de obra eso se nota tras veinte conduces. */
+let _soltarConduce = null;
 
 function verConduce(src, titulo) {
   if (!src) return;
@@ -690,6 +696,7 @@ function verConduce(src, titulo) {
 function cerrarVisor() {
   document.getElementById("visor").hidden = true;
   document.getElementById("visor-img").src = "";      // que no se quede en memoria
+  if (_soltarConduce) { _soltarConduce(); _soltarConduce = null; }   // Q-158
   document.body.style.overflow = "";
 }
 

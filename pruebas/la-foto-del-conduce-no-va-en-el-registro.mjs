@@ -54,9 +54,13 @@ function montarAparato({ conSenal = true } = {}) {
     localStorage: { getItem: (k) => (m.has(k) ? m.get(k) : null),
       setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) },
     console: { ...console, warn() {}, info() {}, error() {} },
+    alert: (m) => { ultimo = String(m); if (alerta) alerta(m); },
+    Image: function () { this.src = ""; setTimeout(() => this.onerror && this.onerror(), 0); },
+    document: { createElement: () => ({ getContext: () => ({ drawImage() {} }), toDataURL: () => "x" }) },
     fetch: async (...a) => { if (!conSenal.valor) throw new TypeError("Failed to fetch"); return fetch(...a); },
     db: null,
   };
+  let alerta = null, ultimo = null;
   const src = "var db = { tests: [] };\n"
     + "function qcApiURL(){ return localStorage.getItem('qc-api') || ''; }\n"
     + "function qcApiToken(){ return ''; }\n"
@@ -65,8 +69,16 @@ function montarAparato({ conSenal = true } = {}) {
     + "var guardados = 0; function saveDB(){ guardados++; }\n"
     + readFileSync(join(RAIZ, "assets/fotos.js"), "utf8");
   const f = new Function(...Object.keys(ctx), src +
-    "\n;return { archivarConduce, subirFotosPendientes, fuenteDelConduce, conduceEnEspera, fotosPendientes, db };");
-  return { api: f(...Object.values(ctx)), alm: m };
+    "\n;return { archivarConduce, subirFotosPendientes, fuenteDelConduce, conduceEnEspera," +
+    " fotosPendientes, db, pesoCajon: () => _pesoCajon(_fotosCajon()) };");
+  const dentro = f(...Object.values(ctx));
+  /* Los avisos se oyen DESDE FUERA: `alerta` y `ultimo` viven en este ambito,
+     no en el del sandbox. Devolverlos desde dentro fue mi primer intento y
+     reventaba con «ultimo is not defined». */
+  return { api: Object.assign(dentro, {
+      ponerAlerta: (fn) => { alerta = fn; },
+      ultimoAviso: () => ultimo,
+    }), alm: m };
 }
 
 console.log("\n1 · CON SEÑAL: LA FOTO AL ARCHIVADOR, EL ENLACE A LA FICHA");
@@ -123,6 +135,31 @@ console.log("\n3 · SIN SEÑAL: EL CAMIÓN ENTRA Y LA FOTO ESPERA");
   di(api.fotosPendientes() === 0, "el cajón queda vacío");
   const r = await fetch(api.fuenteDelConduce(t));
   di(r.ok, "y la foto ya se puede ver desde el archivador");
+}
+
+console.log("\n5 · EL CAJÓN TIENE TOPE, Y NO TIRA UNA PRUEBA EN SILENCIO");
+{
+  /* Una foto de conduce de verdad pesa 130 KB (medido). Sin cobertura, veinte
+     camiones son 2,5 MB — la misma pared que quitamos, por la puerta nueva. */
+  const senal = { valor: false };
+  const { api } = montarAparato({ conSenal: senal });
+  const GORDA = "data:image/jpeg;base64," + "A".repeat(140 * 1024);   /* ~140 KB */
+  let avisos = 0;
+  api.ponerAlerta(() => avisos++);
+
+  let guardadas = 0;
+  for (let i = 0; i < 20; i++) {
+    const t = { id: "g" + i, ticket: String(90000 + i) };
+    api.db.tests.push(t);
+    const antes = api.fotosPendientes();
+    await api.archivarConduce(GORDA, t);
+    if (api.fotosPendientes() > antes) guardadas++;
+  }
+  di(guardadas < 20, `no se guardan las veinte: caben ${guardadas}`);
+  di(api.pesoCajon() <= 1250000, `y el cajón queda acotado: ${Math.round(api.pesoCajon()/1024)} KB`);
+  di(avisos > 0, `y las que no caben se DICEN: ${avisos} aviso(s)`);
+  di(/registrado/i.test(api.ultimoAviso() || ""),
+     `diciendo que el camión sí entró: «${(api.ultimoAviso()||"").split("\n")[0].slice(0,52)}…»`);
 }
 
 console.log(fallos ? `\n  ${fallos} FALLO(S)\n` : "\n  sin fallos\n");
