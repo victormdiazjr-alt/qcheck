@@ -1153,15 +1153,19 @@ const QCSync = {
        verdad instantáneo hace falta una conexión viva permanente —un
        WebSocket—, que es otra pieza y no está hecha.
 
-       Lo más cerca sin eso es un minuto: la pared se entera del tiro como
-       tarde en sesenta segundos y salta a tres segundos ella sola. Sigue siendo
-       la mitad de llamadas que antes, y el resto del día —que es casi todo— no
-       hay nada que mirar de todas formas.
+       Así que el número es un dial, y lo puso Víctor: **diez segundos**. La
+       pared se entera del tiro como tarde en diez segundos y salta a tres ella
+       sola. Sigue siendo un tercio de las llamadas que hacía antes —seis por
+       minuto en vez de veinte— y el rato de espera es corto de verdad, no un
+       minuto mirando «SIN TIRO» con la cuadrilla montada.
+
+       El coste de bajarlo es solo número de peticiones, y ahí sobra sitio: una
+       pantalla a diez segundos son unas 4.300 al día contra un tope de 100.000.
 
        En cuanto entra algo de verdad, `_avisar` vuelve a mirar el ritmo, así
        que la subida a tres segundos es en el mismo instante en que llega el
        tiro, no en la vuelta siguiente. */
-    const DORMIDA_MURAL = 60000;
+    const DORMIDA_MURAL = 10000;
 
     const cadencia = () => {
       const hayTiro = typeof hayTiroActivo === "function" && hayTiroActivo();
