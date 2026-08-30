@@ -3910,7 +3910,7 @@ function openForm({ title, fields, initial = {}, onSave, onDelete = null, submit
             if (f.type === "select")
               ctrl = `<select name="${f.key}">${(f.options || []).map((o) => `<option value="${esc(o.value)}" ${String(val) === String(o.value) ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`;
             else if (f.type === "textarea")
-              ctrl = `<textarea name="${f.key}" rows="2">${esc(val)}</textarea>`;
+              ctrl = `<textarea name="${f.key}" rows="${f.rows || 2}" ${f.placeholder ? `placeholder="${esc(f.placeholder)}"` : ""} ${f.mono ? `style="font-family:var(--mono,ui-monospace,monospace); font-size:12px; white-space:pre; overflow-wrap:normal; overflow-x:auto"` : ""}>${esc(val)}</textarea>`;
             else if (f.type === "checkbox")
               /* UN INTERRUPTOR, Y QUE NO SE LO PISE LA HOJA DE ESTILOS — Q-105 ter.
 
@@ -4842,6 +4842,16 @@ function formTest(_ignored, n, opts = {}) {
       { key: "uw", label: "Unit Weight (pcf)", type: "number", step: "0.01" },
       { key: "air", label: "Aire (%)", type: "number", step: "0.1" },
       { key: "temp", label: "Temp (°F)", type: "number", step: "1" },
+      /* EL AGUA QUE SE AÑADE EN OBRA — Q-159, 30 ago 2026.
+
+         Es el único dato del camión que NO viene en ningún papel: lo decide
+         una persona delante del camión y lo firma en la casilla «AGUA
+         AUTORIZADA POR ENCARGADO DE LA OBRA» del conduce. Sin él la pesada no
+         puede decir dónde queda de verdad la relación agua/cemento, porque el
+         camión llega corto a propósito y el diseño reserva unos galones para
+         este momento. */
+      { key: "aguaAdd", label: "Agua añadida en obra (gal)", type: "number", step: "1",
+        hint: "La que autorizó el encargado. El diseño reserva unos galones; pasarse de ellos sale del diseño." },
       { key: "rejected", label: "¿Rechazado?", type: "checkbox" },
       { type: "label", label: "Resistencias (promedio del set, psi)" },
       { key: "cs1", label: "1 día", type: "number", step: "10" },
@@ -4891,6 +4901,132 @@ function formTest(_ignored, n, opts = {}) {
       saveDB(); render();
       toast(existing ? "Prueba actualizada" : "Prueba registrada");
       if (opts.after) opts.after(existing || v);
+    },
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CARGAR LA PESADA — Q-159, 30 de agosto de 2026.
+
+   Víctor: «creo que debemos subir la pesada también y preparar la
+   infraestructura para eso porque es un dato importante del tiro».
+
+   Y, el mismo día, el destino: «el objetivo final es que no haya que entrar
+   nada ni subir fotos, porque QTicket y/o QBatch daría la info».
+
+   Así que este formulario es un puente, y está construido para desaparecer sin
+   dejar agujero. La puerta de entrada es **texto**: se pega el bloque de la
+   pesada y `parsearPesada()` lo desmonta. El día que QBatch mande la pesada por
+   su cuenta entrará por esa misma función, y de esta pantalla solo sobrará el
+   recuadro de pegar.
+
+   POR QUÉ NO UN FORMULARIO CON UN CAMPO POR MATERIAL
+   --------------------------------------------------
+   Porque serían catorce campos por camión y diecisiete camiones por tiro. Eso
+   no se llena en obra: se llena mal. Un solo recuadro se pega de una vez, y
+   abajo se ve al momento lo que el programa entendió — que es donde se caza el
+   error, no en una casilla que nadie relee.
+
+   EL AGUA VA APARTE, Y A PROPÓSITO
+   --------------------------------
+   La pesada se carga una vez, cuando llega el camión. Los galones se autorizan
+   DESPUÉS, mirando el slump. Por eso el recuadro puede quedarse vacío al
+   editar: guardar sin pegar nada cambia solo el agua y respeta la pesada que
+   ya estaba. Volver a pegar la pesada entera para corregir un número sería la
+   forma más segura de que nadie corrija ninguno.
+   ══════════════════════════════════════════════════════════════════════════ */
+function formPesada(n) {
+  /* `pesada.js` no se carga en las pantallas de campo, que no la necesitan y
+     cargan lo justo. Si alguien llega aquí desde una de ellas, se dice — no se
+     revienta con «parsearPesada is not defined», que no le explica nada a
+     quien lo lee. */
+  if (typeof parsearPesada !== "function") { toast("Las pesadas se cargan desde Results"); return; }
+  if (typeof puedeSometer === "function" && !puedeSometer()) { avisarSinConexion(); return; }
+  const dia = (typeof state !== "undefined" && state.day) ? state.day : todayISO();
+  const delDia = (typeof testsOfDate === "function" ? testsOfDate(dia) : []);
+  if (!delDia.length) { toast("No hay camiones en este vaciado todavía"); return; }
+  const t0 = n != null ? delDia.find((x) => x.n === n) : null;
+
+  const resumen = (p, t, gal) => {
+    if (!p) return `<div class="muted" style="font-size:12.5px">Pegue arriba el bloque de la pesada — el que empieza por «Job:» y lleva la tabla de materiales.</div>`;
+    const ds = pesadaDesvios(p);
+    const ag = pesadaAgua(p, gal) || {};
+    const ac = pesadaAC(p, gal), acTope = ag.reservaGa != null ? pesadaAC(p, ag.reservaGa) : null;
+    const ctx = { hermanos: delDia.filter((x) => x !== t).map((x) => x.pesada).filter(Boolean),
+                  uw: num(t && t.uw), vol: num(t && t.vol), galObra: gal };
+    const av = pesadaBanderas(p, ctx);
+    return `
+      <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:12px; margin-bottom:8px">
+        <span class="badge neutral">Ticket ${esc(p.ticket || "—")}</span>
+        <span class="badge neutral">Camión ${esc(p.camion || "—")}</span>
+        <span class="badge neutral">Planta ${esc(p.planta || "—")}</span>
+        <span class="badge neutral">${esc(p.mezcla || "—")}</span>
+        <span class="badge neutral">${fmt(p.cy, 2)} CY</span>
+        <span class="badge ${ag.excesoGa > 0 ? "susp" : "ok"}">A/C ${fmt(ac, 3, 3)}${acTope != null ? ` · tope del diseño ${fmt(acTope, 3, 3)}` : ""}</span>
+      </div>
+      ${/* LO QUE CUESTA EL GALÓN SIGUIENTE. Quien está delante del camión no
+            decide «relaciones agua/cemento»: decide galones. Enseñarle cuánto
+            mueve cada uno es lo que convierte este número en una decisión. */""}
+      ${ag.reservaGa != null ? `<div class="muted" style="font-size:12px; margin-bottom:8px">
+        Cada galón sube el A/C ${fmt(pesadaPorGalon(p) * 1000, 2)} milésimas ·
+        quedan <b>${fmt(Math.max(0, ag.reservaGa - gal), 1, 1)} gal</b> de los ${fmt(ag.reservaGa, 1, 1)} que reserva el diseño.
+      </div>` : ""}
+      <div class="table-wrap" style="max-height:170px; overflow:auto"><table class="data">
+        <tr><th>Material</th><th class="num">Objetivo</th><th class="num">Real</th><th class="num">Desv.</th></tr>
+        ${ds.map((d) => `<tr><td>${esc(d.nombre)}</td>
+          <td class="num mono">${fmt(d.target, 1)} ${esc(d.unidad)}</td>
+          <td class="num mono">${fmt(d.actual, 1)}</td>
+          <td${zClass(d.zona)}>${d.pct == null ? "—" : (d.pct > 0 ? "+" : "") + fmt(d.pct, 2, 2)} %</td></tr>`).join("")}
+      </table></div>
+      ${av.length ? av.map((a) => `<div style="margin-top:8px; display:flex; gap:8px; align-items:flex-start">
+          <span class="badge ${a.nivel === "susp" ? "susp" : "act"}" style="flex:none">${a.nivel === "susp" ? "SUSPENSIÓN" : "ACCIÓN"}</span>
+          <div style="font-size:12.5px"><b>${esc(a.titulo)}</b> — ${esc(a.detalle)}</div>
+        </div>`).join("")
+        : `<div class="badge ok" style="margin-top:8px">Sin anomalías en esta pesada</div>`}`;
+  };
+
+  openForm({
+    title: t0 ? `Pesada — camión ${t0.truck || ""} (ticket ${t0.ticket || "?"})` : `Cargar pesada — ${fmtDate(dia)}`,
+    initial: { camion: t0 ? String(t0.n) : String(delDia[0].n),
+               aguaAdd: t0 && t0.aguaAdd != null ? t0.aguaAdd : "" },
+    fields: [
+      { key: "camion", label: "Camión del vaciado", type: "select",
+        options: delDia.map((x) => ({ value: String(x.n),
+          label: `#${x.n} · camión ${x.truck || "—"} · ticket ${x.ticket || "—"}${x.pesada ? " · (ya tiene pesada)" : ""}` })) },
+      { key: "aguaAdd", label: "Agua añadida en obra (gal)", type: "number", step: "1",
+        hint: "La que autorizó el encargado en la casilla del conduce. Déjelo en blanco si no se añadió." },
+      { key: "texto", label: "Pesada — pegue el texto tal cual", type: "textarea", full: true,
+        rows: 12, mono: true,
+        placeholder: "Job:      #28489    Date: Aug 29,26  Time:06:44/06:50  Plant:SJU Ref#:155918\nULink Tkt: 69298 …",
+        hint: "Se puede pegar la hoja entera: solo se lee la parte de la pesada. Al editar, déjelo vacío para cambiar únicamente el agua." },
+    ],
+    liveEval: (v) => {
+      const t = delDia.find((x) => String(x.n) === String(v.camion)) || t0;
+      const p = v.texto ? parsearPesada(v.texto) : (t && t.pesada) || null;
+      if (v.texto && !p) return `<div class="badge susp">No se reconoce ninguna pesada en ese texto</div>
+        <div class="muted" style="font-size:12.5px; margin-top:4px">Tiene que traer la tabla de materiales, con las columnas Target y Actual y las unidades Lb, Oz o Ga.</div>`;
+      return resumen(p, t, num(v.aguaAdd) || 0);
+    },
+    onSave: (v) => {
+      if (typeof puedeSometer === "function" && !puedeSometer()) { avisarSinConexion(); return; }
+      const t = delDia.find((x) => String(x.n) === String(v.camion));
+      if (!t) { toast("Ese camión ya no está en el vaciado"); return; }
+      if (v.texto) {
+        const p = parsearPesada(v.texto);
+        if (!p) { toast("No se reconoce ninguna pesada en ese texto"); return; }
+        /* EL TICKET TIENE QUE SER EL MISMO. La pesada y el conduce se unen por
+           el `ULink Tkt`, y pegar la pesada del camión de al lado es el error
+           más fácil de cometer con diecisiete papeles en la mano. Se avisa y se
+           deja decidir: en obra hay conduces con el número mal impreso, y un
+           candado que no se puede abrir se acaba abriendo por otro lado. */
+        if (p.ticket && t.ticket && String(p.ticket) !== String(t.ticket) &&
+            !confirm(`Esta pesada es del ticket ${p.ticket} y el camión #${t.n} tiene el ticket ${t.ticket}.\n\n¿Guardarla igual?`)) return;
+        t.pesada = p;
+      } else if (!t.pesada) { toast("Pegue la pesada"); return; }
+      t.aguaAdd = num(v.aguaAdd);
+      saveDB();
+      if (typeof render === "function") render();
+      toast(`Pesada guardada · camión ${t.truck || t.n}`);
     },
   });
 }

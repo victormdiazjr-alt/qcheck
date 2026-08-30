@@ -14,7 +14,7 @@ const state = { tab: "dashboard", day: null, search: "", showAll: false, chartRa
    `config: true` (`qcVeConfig()`), y la comprobación se hace en TRES sitios
    porque esconder el botón no es esconder la pantalla: la pestaña no se pinta,
    el enrutador no la acepta desde la dirección, y `switchTab` la rechaza. */
-const TABS_BASE = ["dashboard", "live", "daily", "losas", "tests", "strength", "charts"];
+const TABS_BASE = ["dashboard", "live", "daily", "pesada", "losas", "tests", "strength", "charts"];
 function tabsVisibles() {
   return typeof qcVeConfig === "function" && qcVeConfig() ? TABS_BASE.concat("plan") : TABS_BASE;
 }
@@ -46,6 +46,7 @@ function render() {
   if (state.tab === "dashboard") app.innerHTML = viewDashboard();
   else if (state.tab === "live") app.innerHTML = viewLive();
   else if (state.tab === "daily") app.innerHTML = viewDaily();
+  else if (state.tab === "pesada") app.innerHTML = viewPesada();
   else if (state.tab === "losas") app.innerHTML = viewLosas();
   else if (state.tab === "tests") app.innerHTML = viewTests();
   else if (state.tab === "strength") app.innerHTML = viewStrength();
@@ -122,10 +123,48 @@ function viewDashboard() {
       </div>
     </div>
 
+    ${resumenPesadaPanel(lastDay)}
+
     <div class="panel">
       <div class="panel-head"><h2>Carta rápida — Resistencia @ 5 días + Moving Average</h2><div class="spacer"></div>
         <button class="btn small" onclick="switchTab('charts')">Todas las cartas</button></div>
       <div class="panel-body"><div class="chart-scroll">${chartCS5(sets, 60)}</div></div>
+    </div>`;
+}
+
+/* EL PANEL LO DICE, PERO NO LO EXPLICA — Q-159, 30 de agosto de 2026.
+
+   En la portada de Results la pesada aparece solo si hay algo que decir: si el
+   último vaciado no tiene ninguna cargada, no se pinta un recuadro vacío
+   recordándole a nadie una tarea. Y si las hay, lo que se enseña es lo que se
+   mira de pie: cuántas anomalías y de qué tipo. El detalle está a un clic. */
+function resumenPesadaPanel(dia) {
+  if (!dia || typeof pesadaBanderas !== "function") return "";
+  const rows = testsOfDate(dia).filter((t) => t.pesada);
+  if (!rows.length) return "";
+  const av = [];
+  for (const t of rows) for (const b of pesadaBanderas(t.pesada, contextoPesada(t, rows))) av.push({ t, ...b });
+  const nSusp = av.filter((a) => a.nivel === "susp").length;
+  const acs = rows.map((t) => pesadaAC(t.pesada, num(t.aguaAdd))).filter(Number.isFinite).sort((a, b) => a - b);
+  const gal = rows.reduce((a, t) => a + (num(t.aguaAdd) || 0), 0);
+  return `
+    <div class="panel">
+      <div class="panel-head"><h2>Pesadas — ${fmtDate(dia)}</h2><div class="spacer"></div>
+        <button class="btn small" onclick="state.day='${dia}'; switchTab('pesada')">Ver pesadas</button></div>
+      <div class="panel-body">
+        <div class="day-meta">
+          <div class="kv"><div class="k">Cargadas</div><b>${rows.length}</b></div>
+          <div class="kv"><div class="k">A/C mediana</div><b>${acs.length ? fmt(acs[acs.length >> 1], 3, 3) : "—"}</b></div>
+          <div class="kv"><div class="k">Agua en obra</div><b>${fmt(gal, 0)} gal</b></div>
+          <div class="kv"><div class="k">Avisos</div><b style="${nSusp ? "color:var(--susp)" : av.length ? "color:var(--act)" : ""}">${av.length}</b></div>
+        </div>
+        ${av.length ? `<div style="margin-top:10px; font-size:12.5px">
+          ${agruparAvisos(av).slice(0, 3).map((g) => `<div style="display:flex; gap:8px; align-items:baseline; padding:3px 0">
+            <span class="badge ${g.nivel === "susp" ? "susp" : "act"}" style="flex:none">${g.n > 1 ? "×" + g.n : "#" + g.casos[0].t.n}</span>
+            <span><b>${esc(g.titulo)}</b> — <span class="muted">${esc(g.detalle)}</span></span></div>`).join("")}
+          ${agruparAvisos(av).length > 3 ? `<div class="muted" style="padding-top:4px">y ${agruparAvisos(av).length - 3} más.</div>` : ""}
+        </div>` : `<div class="muted" style="margin-top:10px; font-size:12.5px">Todas las pesadas del vaciado dentro de tolerancia.</div>`}
+      </div>
     </div>`;
 }
 
@@ -260,6 +299,7 @@ function viewDaily() {
       </select>
       <button class="btn small" onclick="formDayMeta('${state.day}')">Plan y datos del día</button>
       <div class="spacer"></div>
+      <button class="btn" onclick="switchTab('pesada')">⚖ Pesadas</button>
       <a class="btn" href="reporte.html?dia=${state.day}">📄 Reporte del vaciado</a>
       <button class="btn" onclick="window.print()">🖨 Imprimir</button>
       <button class="btn primary" onclick="formTest(null)">＋ Camión</button>
@@ -302,7 +342,7 @@ function viewDaily() {
             <td${zClass(zoneTemp(t))}>${fmt(t.temp, 0)}</td>
             <td>${estadoBadge(t)}</td>
             <td style="white-space:normal; min-width:120px; font-size:12px">${esc(t.comments || "")}</td>
-            <td class="no-print"><button class="btn link small" onclick="formTest(null,${t.n})">Editar</button><button class="btn link small" onclick="lineaDeTiempo(${t.n})" title="Qué le pasó a este camión y quién entró cada dato">Historia</button>${t.rejected ? `<button class="btn link small" style="color:var(--susp)" onclick="notifyReject(${t.n})">✉</button>` : ""}</td>
+            <td class="no-print"><button class="btn link small" onclick="formTest(null,${t.n})">Editar</button><button class="btn link small" onclick="lineaDeTiempo(${t.n})" title="Qué le pasó a este camión y quién entró cada dato">Historia</button><button class="btn link small" onclick="formPesada(${t.n})" title="Los pesos del batch: proporciones, agua y relación agua/cemento">${t.pesada ? "⚖" : "⚖＋"}</button>${t.rejected ? `<button class="btn link small" style="color:var(--susp)" onclick="notifyReject(${t.n})">✉</button>` : ""}</td>
           </tr>`;
         }).join("")}
       </table></div>` : `<div class="empty">Sin camiones para esta fecha — pulse “＋ Camión”.</div>`}
@@ -313,6 +353,231 @@ function viewDaily() {
       <span class="badge act">ACCIÓN</span> entre acción y suspensión ·
       <span class="badge susp">SUSPENSIÓN</span> fuera de límites — según plan de control (pestaña Plan &amp; Datos).
       “Min” = minutos batch→termina (límite ${db.plan.maxElapsedMin}).
+    </p>`;
+}
+
+/* ------------------------------------------------------------ La pesada
+
+   Q-159, 30 de agosto de 2026. Víctor: «q todo eso se vea en resultados».
+
+   La pesada es el recibo de los pesos del batch, y viene impresa en la misma
+   hoja que el conduce. Trae lo único que prueba las proporciones de lo que
+   está dentro del camión, y llega ANTES de que descargue.
+
+   Esta pantalla existe para que eso se pueda mirar de un vistazo y decidir. El
+   orden es el de la urgencia, no el del papel:
+
+     1. Lo que hay que hacer AHORA — los avisos, arriba del todo.
+     2. El tiro entero de un vistazo — un renglón por camión.
+     3. La dosificación material a material — la rejilla, que es donde se ve
+        la deriva de la planta a lo largo de la mañana.
+
+   La rejilla es lo que ningún papel suelto puede enseñar: diecisiete conduces
+   en la mano son diecisiete papeles; diecisiete renglones en una rejilla son
+   una tendencia.
+--------------------------------------------------------------------------- */
+function pesadaDe(t) { return t && t.pesada ? t.pesada : null; }
+
+/* Lo que un camión no puede saber de sí mismo: contra quién se compara. */
+function contextoPesada(t, delDia) {
+  return {
+    hermanos: delDia.filter((x) => x !== t).map(pesadaDe).filter(Boolean),
+    uw: num(t.uw), vol: num(t.vol), galObra: num(t.aguaAdd),
+  };
+}
+
+/* CATORCE VECES LA MISMA FRASE NO SON CATORCE AVISOS — Q-159 bis.
+
+   Se vio en la primera pantalla con datos: una deriva de la planta —un
+   material que se va del objetivo toda la mañana— salía como un renglón por
+   camión, y catorce renglones idénticos empujaban fuera de la vista al único
+   camión con agua de más, que era el que había que atender AHORA.
+
+   Y no es un fallo de pintura: es que un mismo defecto en catorce camiones
+   **no es lo mismo** que catorce defectos. Es uno solo, de la planta, y hay que
+   leerlo así. Así que lo repetido se junta en un renglón, con los números de
+   los camiones al lado para poder abrir cualquiera.
+
+   > Lo que se repite se cuenta una vez y se dice cuántas. */
+function agruparAvisos(avisos) {
+  const por = new Map();
+  for (const a of avisos) {
+    if (!por.has(a.titulo)) por.set(a.titulo, []);
+    por.get(a.titulo).push(a);
+  }
+  const gs = [...por.entries()].map(([titulo, casos]) => ({
+    titulo, casos, n: casos.length,
+    /* El nivel del grupo es el peor de los suyos, no el del primero. */
+    nivel: casos.some((c) => c.nivel === "susp") ? "susp" : "act",
+    /* De ejemplo se enseña el primero; cada camión lleva el suyo en el rótulo
+       de su botón, que es donde se va a mirar el que interese. */
+    detalle: (casos.length > 1 ? "p.ej. " : "") + casos[0].detalle,
+  }));
+  const orden = { susp: 0, act: 1, nota: 2 };
+  /* Y dentro de cada nivel, lo que afecta a MÁS camiones primero: si algo le
+     pasa a media flota, es lo primero que hay que saber. */
+  return gs.sort((a, b) => orden[a.nivel] - orden[b.nivel] || b.n - a.n);
+}
+
+function viewPesada() {
+  const days = diasDelProyecto();
+  if (!state.day || !days.includes(state.day)) state.day = days[0] || todayISO();
+  const rows = testsOfDate(state.day);
+  const conP = rows.filter(pesadaDe);
+  const sinP = rows.length - conP.length;
+
+  /* ------- resumen del tiro ------- */
+  const acs = conP.map((t) => pesadaAC(pesadaDe(t), num(t.aguaAdd))).filter(Number.isFinite);
+  const acMed = acs.length ? [...acs].sort((a, b) => a - b)[acs.length >> 1] : null;
+  const cemCY = conP.map((t) => { const p = pesadaDe(t), c = pesadaCemento(p), v = num(p.cy) || num(t.vol);
+                                  return c && v ? c / v : null; }).filter(Number.isFinite);
+  const galTot = conP.reduce((a, t) => a + (num(t.aguaAdd) || 0), 0);
+  const plantas = {};
+  for (const t of conP) { const k = pesadaDe(t).planta || "—"; plantas[k] = (plantas[k] || 0) + 1; }
+
+  /* ------- avisos, camión a camión ------- */
+  const avisos = [];
+  for (const t of conP) {
+    for (const b of pesadaBanderas(pesadaDe(t), contextoPesada(t, conP))) avisos.push({ t, ...b });
+  }
+  const orden = { susp: 0, act: 1, nota: 2 };
+  avisos.sort((a, b) => orden[a.nivel] - orden[b.nivel] || a.t.n - b.t.n);
+  const nSusp = avisos.filter((a) => a.nivel === "susp").length;
+
+  /* ------- la rejilla de dosificación -------
+     Las columnas salen de los materiales que aparecen en el día, no de una
+     lista fija: cada mezcla lleva los suyos y mañana puede llevar otros. */
+  const cols = [];
+  for (const t of conP) for (const m of pesadaMateriales(pesadaDe(t)))
+    if (!cols.some((c) => c.nombre === m.nombre)) cols.push({ nombre: m.nombre, tipo: m.tipo, unidad: m.unidad });
+
+  const stat = (label, valor, sub, cls) =>
+    `<div class="stat ${cls || ""}"><div class="label">${esc(label)}</div><div class="value">${valor}</div><div class="sub">${sub}</div></div>`;
+
+  return `
+    <div class="print-title">
+      <h1>Pesadas del vaciado — ${fmtDate(state.day)}</h1>
+      <div class="muted">${esc(db.project.name)} · pesos de batch declarados por la planta</div>
+    </div>
+
+    <div class="toolbar">
+      <h2>Pesada</h2>
+      <select onchange="state.day=this.value; render()">
+        ${days.map((d) => `<option value="${d}" ${d === state.day ? "selected" : ""}>${fmtDate(d)}</option>`).join("")}
+      </select>
+      <div class="spacer"></div>
+      <button class="btn" onclick="window.print()">🖨 Imprimir</button>
+      <button class="btn primary" onclick="formPesada()">＋ Cargar pesada</button>
+    </div>
+
+    <div class="grid cols-6">
+      ${stat("Pesadas", `${conP.length}`, sinP ? `${sinP} camión(es) sin pesada` : "todos los camiones", sinP ? "" : "good")}
+      ${stat("A/C mediana", acMed != null ? fmt(acMed, 3, 3) : "—",
+             acs.length > 1 ? `rango ${fmt(Math.min(...acs), 3, 3)} – ${fmt(Math.max(...acs), 3, 3)}` : "agua total ÷ cemento")}
+      ${stat("Cemento", cemCY.length ? fmt(cemCY.reduce((a, b) => a + b, 0) / cemCY.length, 0) : "—", "lb por yarda")}
+      ${stat("Agua en obra", fmt(galTot, 0), "galones añadidos", galTot ? "act" : "")}
+      ${stat("Avisos", `${avisos.length}`, nSusp ? `${nSusp} de suspensión` : "ninguno de suspensión", nSusp ? "alert" : avisos.length ? "" : "good")}
+      ${stat("Plantas", Object.keys(plantas).length || "—",
+             Object.entries(plantas).map(([k, n]) => `${esc(k)} ${n}`).join(" · ") || "—")}
+    </div>
+
+    ${avisos.length ? `<div class="panel" style="margin-top:16px">
+      <div class="panel-head"><h2>Antes de descargar</h2><div class="spacer"></div>
+        <span class="muted" style="font-size:12.5px">de la propia pesada y de comparar los camiones entre sí</span></div>
+      <div class="panel-body flush">
+        ${agruparAvisos(avisos).map((g) => `<div style="display:flex; gap:12px; align-items:flex-start; padding:10px 16px; border-bottom:1px solid var(--line)">
+          <span class="badge ${g.nivel === "susp" ? "susp" : "act"}" style="flex:none">${g.nivel === "susp" ? "SUSPENSIÓN" : "ACCIÓN"}</span>
+          <div style="min-width:0; flex:1">
+            <b>${esc(g.titulo)}</b>${g.n > 1 ? ` <span class="muted">— en ${g.n} camiones</span>` : ""}
+            <div class="muted" style="font-size:12.5px; margin-top:2px">${esc(g.detalle)}</div>
+            ${g.n > 1 ? `<div class="no-print" style="margin-top:5px; display:flex; flex-wrap:wrap; gap:4px">
+              ${g.casos.map((a) => `<button class="btn link small" style="padding:1px 6px" onclick="formTest(null,${a.t.n})" title="${esc(a.detalle)}">#${a.t.n}</button>`).join("")}
+            </div>` : ""}
+          </div>
+          ${g.n === 1 ? `<button class="btn link small no-print" style="flex:none" onclick="formTest(null,${g.casos[0].t.n})">#${g.casos[0].t.n} · camión ${esc(g.casos[0].t.truck || "—")}</button>` : ""}
+        </div>`).join("")}
+      </div>
+    </div>` : `<div class="panel" style="margin-top:16px"><div class="panel-body">
+        <div class="empty">${conP.length ? "Ninguna anomalía en las pesadas de este vaciado." : "Todavía no hay pesadas cargadas para este vaciado."}</div>
+      </div></div>`}
+
+    <div class="panel">
+      <div class="panel-head"><h2>Camión a camión</h2></div>
+      <div class="panel-body flush">
+        ${conP.length ? `<div class="table-wrap"><table class="data">
+          <tr><th>#</th><th>Ticket</th><th>Camión</th><th>Planta</th><th>Mezcla</th>
+              <th class="num">Cemento (lb)</th><th class="num">lb/CY</th>
+              <th class="num">Agua balanza</th><th class="num">Humedad</th><th class="num">En obra</th><th class="num">Reserva</th>
+              <th class="num">A/C</th><th class="num">A/C al tope</th>
+              <th class="num">Peso balanza</th><th class="num">Rend. medido</th><th class="num">Facturado</th><th class="num">Δ CY</th>
+              <th>Estado</th><th class="no-print"></th></tr>
+          ${conP.map((t) => {
+            const p = pesadaDe(t), ctx = contextoPesada(t, conP);
+            const gal = num(t.aguaAdd) || 0;
+            const ag = pesadaAgua(p, gal) || {};
+            const cem = pesadaCemento(p);
+            const cy = num(p.cy) || num(t.vol);
+            const ac = pesadaAC(p, gal);
+            const acTope = ag.reservaGa != null ? pesadaAC(p, ag.reservaGa) : null;
+            const rend = pesadaRendimiento(p, num(t.uw), gal);
+            const vol = num(t.vol);
+            const dCY = rend != null && vol != null ? rend - vol : null;
+            const z = pesadaZona(p, ctx);
+            const zAgua = ag.excesoGa > 0 ? "susp" : null;
+            const zRend = dCY == null || vol == null ? null : (-dCY / vol > 0.02 ? "susp" : -dCY / vol > 0.01 ? "act" : "ok");
+            return `<tr>
+              <td class="mono">${t.n}</td>
+              <td class="mono"><b>${esc(t.ticket || p.ticket || "—")}</b></td>
+              <td class="mono">${esc(t.truck || p.camion || "—")}</td>
+              <td class="mono">${esc(p.planta || "—")}</td>
+              <td class="mono" style="font-size:11.5px">${esc(p.mezcla || "—")}</td>
+              <td class="num mono">${fmt(cem, 0)}</td>
+              <td class="num mono">${cem && cy ? fmt(cem / cy, 0) : "—"}</td>
+              <td class="num mono">${fmt(ag.balanzaGa, 1, 1)}</td>
+              <td class="num mono">${fmt(ag.humedadGa, 1, 1)}</td>
+              <td${zClass(zAgua)}>${gal ? fmt(gal, 1, 1) : "—"}</td>
+              <td class="num mono muted">${fmt(ag.reservaGa, 1, 1)}</td>
+              <td class="num mono"><b>${fmt(ac, 3, 3)}</b></td>
+              <td class="num mono muted">${fmt(acTope, 3, 3)}</td>
+              <td class="num mono">${fmt(pesadaPesoTotal(p, gal), 0)}</td>
+              <td class="num mono">${fmt(rend, 2, 2)}</td>
+              <td class="num mono">${fmt(vol, 2, 2)}</td>
+              <td${zClass(zRend)}>${dCY == null ? "—" : (dCY > 0 ? "+" : "") + fmt(dCY, 2, 2)}</td>
+              <td>${z === "susp" ? `<span class="badge susp">REVISAR</span>`
+                     : z === "act" ? `<span class="badge act">VIGILAR</span>`
+                     : `<span class="badge ok">OK</span>`}</td>
+              <td class="no-print"><button class="btn link small" onclick="formPesada(${t.n})">Editar</button></td>
+            </tr>`;
+          }).join("")}
+        </table></div>` : `<div class="empty">Sin pesadas — pulse “＋ Cargar pesada”.</div>`}
+      </div>
+    </div>
+
+    ${cols.length ? `<div class="panel">
+      <div class="panel-head"><h2>Dosificación — desviación contra el objetivo de cada pesada</h2><div class="spacer"></div>
+        <span class="muted" style="font-size:12.5px">tolerancias ASTM C94: cemento ±1 % · áridos ±2 % · agua ±1 % · aditivos ±3 %</span></div>
+      <div class="panel-body flush">
+        <div class="table-wrap"><table class="data">
+          <tr><th>#</th><th>Camión</th>${cols.map((c) => `<th class="num">${esc(c.nombre)}<div class="muted" style="font-weight:500; font-size:10px">±${PESADA_TOL[c.tipo]} %</div></th>`).join("")}</tr>
+          ${conP.map((t) => {
+            const ds = pesadaDesvios(pesadaDe(t));
+            return `<tr><td class="mono">${t.n}</td><td class="mono">${esc(t.truck || "—")}</td>
+              ${cols.map((c) => {
+                const d = ds.find((x) => x.nombre === c.nombre);
+                if (!d || d.pct == null) return `<td class="num muted">—</td>`;
+                return `<td${zClass(d.zona)} title="${esc(fmt(d.actual, 1) + " de " + fmt(d.target, 1) + " " + d.unidad)}">${(d.pct > 0 ? "+" : "") + fmt(d.pct, 2, 2)}</td>`;
+              }).join("")}
+            </tr>`;
+          }).join("")}
+        </table></div>
+      </div>
+    </div>` : ""}
+
+    <p class="muted" style="font-size:12px">
+      La pesada viene impresa bajo el conduce en la misma hoja; las une el <b>ULink Tkt</b>, que es el número del conduce.
+      El A/C se recalcula aquí con el agua de la balanza más la humedad de los áridos más la que se añade en obra — no se copia del papel.
+      «A/C al tope» es dónde quedaría si se añadiera toda el agua que el diseño reserva: ese es el límite del propio diseño, y
+      pasarse de él es lo que levanta la bandera. El rendimiento usa el <b>Unit Weight medido</b> en obra, no el de diseño.
     </p>`;
 }
 
