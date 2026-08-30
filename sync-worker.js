@@ -183,6 +183,31 @@ function revisarOp(o) {
   if (!campo) return "sin campo";
   if (campo === "id") return "el id es la llave, no un campo";
 
+  /* LAS FOTOS NO VIVEN EN EL REGISTRO — Q-153, 29 ago 2026.
+
+     El registro solo añade y no se borra nunca: lo que entra aqui se queda para
+     siempre y viaja a todos los aparatos. Una foto de conduce son 100 KB, y
+     veinte camiones al dia la llenan de imagenes que nadie va a mirar.
+
+     Desde hoy la foto va al archivador (`/api/foto`) y en la ficha queda el
+     enlace, `photoRef`, que son sesenta bytes. Esto es el pestillo para que no
+     vuelva a colarse por una version vieja de la aplicacion.
+
+     Se rechaza DICIENDOLO —vuelve en `rechazadas` con su motivo— para que el
+     aparato la descuelgue y se vea en el log lo que paso. Cuando esto se puso
+     no habia ni una sola foto en el expediente, asi que no se pierde nada. */
+  if (ent === "test" && campo === "photo" && o.valor) {
+    return "las fotos van al archivador, no al registro (usa photoRef)";
+  }
+
+  /* Y UN TOPE GENERAL, por lo que no se nos haya ocurrido. Ningun dato honesto
+     de este expediente pasa de unos kilobytes: el mas gordo es el historial de
+     limites de una obra. Cien kilos en un solo campo es siempre otra cosa. */
+  try {
+    const n = JSON.stringify(o.valor === undefined ? null : o.valor).length;
+    if (n > 100000) return `valor de ${Math.round(n / 1024)} KB: demasiado para una linea del registro`;
+  } catch (_) { return "valor que no se puede serializar"; }
+
   /* LOS LIMITES NO SE BORRAN POR ACCIDENTE.
      Un aparato a medio sincronizar tiene la ficha de la obra vacia. Si guarda
      cualquier cosa, la diferencia contra su copia dice «los limites pasaron a
@@ -1076,6 +1101,70 @@ export default {
        El registro es para el expediente. No tiene por que ser tambien el camion
        de mudanzas.
        ============================================================ */
+    /* ============================================================
+       EL ARCHIVADOR DE CONDUCES — Q-153, 29 de agosto de 2026.
+
+       Victor: «hazlo con R2 entonces».
+
+       La foto del conduce se guardaba DENTRO de la ficha del camion. Como la
+       ficha viaja a todos los aparatos, la foto viajaba con ella: cada iPad se
+       bajaba y cargaba encima fotos que nadie iba a mirar, y el registro —que
+       no se borra— se las quedaba para siempre. Veinte camiones al dia son 2 MB
+       diarios dentro de un almacen de 5 MB: se llena en dias.
+
+       Ahora se guarda una vez aqui y la ficha solo lleva el enlace. Es la
+       diferencia entre fotocopiar cada conduce en la libreta de cada uno, o
+       tener las fotos en un archivador y que la libreta diga «cajon 3».
+
+       LA FOTO NO PIERDE VALOR NI CATEGORIA: sigue siendo prueba, sigue estando
+       para siempre y sigue llegando desde el mismo sitio. Lo unico que cambia
+       es que deja de ir en el bolsillo de todos.
+       ============================================================ */
+    if (url.pathname === "/api/foto" && req.method === "POST") {
+      if (!env.FOTOS) return json({ error: "sin-archivador" }, 501);
+      if (exige && !quien) return json({ error: "sesion" }, 401);
+      let d;
+      try { d = await req.json(); } catch (_) { return json({ error: "json" }, 400); }
+      if (!d || !d.imagen) return json({ error: "sin-imagen" }, 400);
+      let bytes;
+      try { bytes = Uint8Array.from(atob(String(d.imagen)), (c) => c.charCodeAt(0)); }
+      catch (_) { return json({ error: "imagen-ilegible" }, 400); }
+      /* Un tope generoso pero real: una foto de conduce reducida ronda los
+         100 KB. Dos megas es cualquier cosa menos un conduce. */
+      if (bytes.length > 2 * 1024 * 1024) return json({ error: "demasiado-grande" }, 413);
+
+      /* La clave lleva el mes delante para que el archivador se pueda mirar y
+         limpiar por temporada sin abrir cada archivo. */
+      const mes = new Date().toISOString().slice(0, 7);
+      const clave = `conduce/${mes}/${(d.uid || crypto.randomUUID()).replace(/[^a-zA-Z0-9_-]/g, "")}.jpg`;
+      await env.FOTOS.put(clave, bytes, {
+        httpMetadata: { contentType: String(d.tipo || "image/jpeg") },
+        customMetadata: {
+          usr: quien ? quien.usr : "?", dev: String(d.dev || "?").slice(0, 60),
+          ticket: String(d.ticket || "").slice(0, 40),
+        },
+      });
+      return json({ clave, bytes: bytes.length });
+    }
+
+    if (url.pathname === "/api/foto" && req.method === "GET") {
+      if (!env.FOTOS) return json({ error: "sin-archivador" }, 501);
+      if (exige && !quien) return json({ error: "sesion" }, 401);
+      const clave = url.searchParams.get("clave") || "";
+      if (!/^conduce\/[0-9-]{7}\/[a-zA-Z0-9_-]+\.jpg$/.test(clave)) return json({ error: "clave" }, 400);
+      const o = await env.FOTOS.get(clave);
+      if (!o) return json({ error: "no-esta" }, 404);
+      return new Response(o.body, {
+        headers: {
+          "Content-Type": o.httpMetadata?.contentType || "image/jpeg",
+          /* Una foto de conduce no cambia nunca: se puede guardar en el
+             navegador y no volver a pedirla. */
+          "Cache-Control": "private, max-age=31536000, immutable",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
     if (url.pathname === "/api/estado" && req.method === "GET") {
       if (exige && !quien) return json({ error: "sesion" }, 401);
 

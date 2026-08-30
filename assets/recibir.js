@@ -100,7 +100,13 @@ function recibirCamion(v) {
     source: v.source || "manual",
     rejected: false,
   };
-  if (v.photo) t.photo = v.photo;
+  /* Q-153: la foto NO entra en la ficha. Se archiva aparte y aqui queda el
+     enlace; si no hay señal, espera en el cajon del aparato y se engancha
+     sola cuando vuelva. Se lanza sin esperar para no dejar al tecnico
+     mirando una rueda con el camion delante. */
+  if (v.photo && typeof archivarConduce === "function") {
+    archivarConduce(v.photo, t).then((clave) => { if (clave && typeof saveDB === "function") saveDB(); });
+  }
 
   db.tests.push(t);
   saveDB();

@@ -335,8 +335,9 @@ body { background: var(--bg); }
 
 <script src="shared/conduce-contract.js?v=55633415"></script>
 <script src="assets/seed.js?v=acf41aba"></script>
-<script src="assets/sync.js?v=f45c3d22"></script>
+<script src="assets/sync.js?v=4ec4c6ed"></script>
 <script src="assets/core.js?v=60ec7af1"></script>
+<script src="assets/fotos.js?v=b2d275a5"></script>
 <!-- Q-89: las tablas de la SP-934. Desde aquí se CREA un tiro, y un tiro de
      la 934 pregunta su clase y su ventana de aceptacion al nacer. Sin esto,
      `formSP934()` reventaba en silencio dentro del `setTimeout` y la pregunta
@@ -665,8 +666,14 @@ let fichaPlant = null;
    hay. */
 function verConduceDe(n) {
   const t = (db.tests || []).find((x) => String(x.n) === String(n));
-  if (!t || !t.photo) return;
-  verConduce(t.photo, `Conduce · camión ${t.truck || "—"} · ticket ${t.ticket || "—"}`);
+  if (!t) return;
+  /* Q-153: primero el archivador; si todavia espera señal, la copia que hay en
+     este aparato — que el tecnico tiene que poder comprobar lo que capturo sin
+     esperar a la cobertura. */
+  const src = (typeof fuenteDelConduce === "function" && fuenteDelConduce(t))
+           || (typeof conduceEnEspera === "function" && conduceEnEspera(t.id));
+  if (!src) return;
+  verConduce(src, `Conduce · camión ${t.truck || "—"} · ticket ${t.ticket || "—"}`);
 }
 
 function verConduce(src, titulo) {
@@ -1299,7 +1306,10 @@ function saveArrival() {
     ordenadas: ordenadasLeidas,
     rejected: false,
   };
-  if (pendingPhoto) t.photo = pendingPhoto;
+  /* Q-153: al archivador, no a la ficha. Ver assets/fotos.js. */
+  if (pendingPhoto && typeof archivarConduce === "function") {
+    archivarConduce(pendingPhoto, t).then((clave) => { if (clave) saveDB(); });
+  }
   /* El identificador de QTicket es lo único que permite mandar una corrección
      del mismo conduce sin duplicar el camión (contrato §2). Si viene, se
      guarda. */
@@ -1577,7 +1587,7 @@ function render() {
     return `<div class="truck-row ${t.rejected ? "rejected" : ""}">
       <div class="tno">${esc(t.truck || "—")}</div>
       <div class="tinfo">
-        <div><b>Ticket ${esc(t.ticket || "—")}</b>${t.photo
+        <div><b>Ticket ${esc(t.ticket || "—")}</b>${(t.photoRef || t.photo)
           ? ` <button class="clip" onclick="verConduceDe(${t.n})" title="Ver el conduce de este camión">📎</button>` : ""}</div>
         <div class="meta">${fmt(t.vol, 1)} CY · llegó ${esc(t.arrive || "—")}${t.ident ? " · " + esc(shortIdent(t.ident)) : ""}</div>
       </div>

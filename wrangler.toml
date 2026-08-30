@@ -39,3 +39,21 @@ run_worker_first = ["/api/*", "/new"]
 [[routes]]
 pattern = "qterapr.com"
 custom_domain = true
+
+# ============================================================
+# EL ARCHIVADOR DE CONDUCES — Q-153, 29 de agosto de 2026.
+#
+# La foto del conduce es prueba del expediente y no se toca. Lo que se cambia
+# es DONDE vive. Hasta hoy se guardaba dentro de la ficha del camion, asi que
+# viajaba a todos los aparatos y se quedaba en el registro para siempre: veinte
+# camiones al dia son 2 MB diarios metidos en un almacen de 5 MB.
+#
+# Ahora se guarda una sola vez aqui y la ficha solo lleva el enlace. El iPad no
+# se baja ninguna foto; solo la que alguien abre.
+#
+# ANTES DE DESPLEGAR CON ESTO: hay que activar R2 en el panel de Cloudflare
+# (una vez, la cuenta es de Victor) y crear el cubo:
+#   npx wrangler r2 bucket create qcheck-conduces
+[[r2_buckets]]
+binding = "FOTOS"
+bucket_name = "qcheck-conduces"

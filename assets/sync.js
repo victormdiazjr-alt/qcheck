@@ -1054,6 +1054,12 @@ const QCSync = {
     this._ultimoIntento = Date.now();
     this._latir();
     await this._empujar();
+    /* Q-153: las fotos de conduce que esperaban señal. Van con lo demas y en la
+       misma vuelta: son prueba del expediente, no un adorno que pueda esperar
+       a que a alguien se le ocurra recargar. */
+    if (typeof subirFotosPendientes === "function") {
+      try { await subirFotosPendientes(); } catch (_) {}
+    }
     await this._bajar();
     if (this.estado === "sin-senal" || this.estado === "sin-cuota") {
       this._fallos = (this._fallos || 0) + 1;

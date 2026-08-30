@@ -60,6 +60,17 @@ function revisarOp(o) {
   if (!campo) return "sin campo";
   if (campo === "id") return "el id es la llave, no un campo";
 
+  /* LAS FOTOS NO VIVEN EN EL REGISTRO — Q-153. Gemela de la del worker: la foto
+     va al archivador y en la ficha queda el enlace (`photoRef`). Esto es el
+     pestillo para que no vuelva a colarse por una version vieja. */
+  if (ent === "test" && campo === "photo" && o.valor) {
+    return "las fotos van al archivador, no al registro (usa photoRef)";
+  }
+  try {
+    const n = JSON.stringify(o.valor === undefined ? null : o.valor).length;
+    if (n > 100000) return `valor de ${Math.round(n / 1024)} KB: demasiado para una linea del registro`;
+  } catch (_) { return "valor que no se puede serializar"; }
+
   /* LOS LIMITES NO SE BORRAN POR ACCIDENTE.
      Un aparato a medio sincronizar tiene la ficha de la obra vacia. Si guarda
      cualquier cosa, la diferencia contra su copia dice «los limites pasaron a
@@ -595,6 +606,10 @@ async function enviarCorreo(env, { para, asunto, html, texto, responderA }) {
 function montarAPI(almacen, token, opciones) {
   const presencia = new Map();   // dev → { dev, usr, pagina, desde, visto }
   const cfg = opciones || {};
+  /* Donde van las fotos de conduce en local — Q-153. En Cloudflare es un cubo
+     de R2; aqui, una carpeta al lado de los datos. Se puede cambiar por
+     `fotos` al montar, y por defecto vive junto al registro. */
+  const CARPETA_FOTOS = cfg.fotos || path.join(process.cwd(), "datos", "conduces");
   const cuentas = cfg.cuentas || null;
   const admin = cfg.admin || "";
 
@@ -821,6 +836,41 @@ function montarAPI(almacen, token, opciones) {
         para: d.para, asunto: d.asunto, html: d.html, texto: d.texto, responderA: d.responderA,
       });
       return responder(res, r.ok ? 200 : r.codigo, r.ok ? { ok: true, id: r.id } : { error: r.error });
+    }
+
+    /* EL ARCHIVADOR DE CONDUCES — Q-153, gemelo del de R2.
+
+       En Cloudflare las fotos van a un cubo de R2; aqui, a una carpeta al lado
+       del registro. Mismas rutas y mismas respuestas, que es lo que permite
+       que la aplicacion no sepa contra cual de los dos esta hablando. */
+    if (url.pathname === "/api/foto" && req.method === "POST") {
+      if (exige && !quien) return responder(res, 401, { error: "sesion" });
+      let d;
+      try { d = await cuerpoDe(req, 4e6); } catch (_) { return responder(res, 400, { error: "json" }); }
+      if (!d || !d.imagen) return responder(res, 400, { error: "sin-imagen" });
+      let bytes;
+      try { bytes = Buffer.from(String(d.imagen), "base64"); }
+      catch (_) { return responder(res, 400, { error: "imagen-ilegible" }); }
+      if (bytes.length > 2 * 1024 * 1024) return responder(res, 413, { error: "demasiado-grande" });
+      const mes = new Date().toISOString().slice(0, 7);
+      const limpio = String(d.uid || Date.now().toString(36)).replace(/[^a-zA-Z0-9_-]/g, "");
+      const clave = `conduce/${mes}/${limpio}.jpg`;
+      const destino = path.join(CARPETA_FOTOS, clave);
+      fs.mkdirSync(path.dirname(destino), { recursive: true });
+      fs.writeFileSync(destino, bytes);
+      return responder(res, 200, { clave, bytes: bytes.length });
+    }
+
+    if (url.pathname === "/api/foto" && req.method === "GET") {
+      if (exige && !quien) return responder(res, 401, { error: "sesion" });
+      const clave = url.searchParams.get("clave") || "";
+      if (!/^conduce\/[0-9-]{7}\/[a-zA-Z0-9_-]+\.jpg$/.test(clave)) return responder(res, 400, { error: "clave" });
+      const f = path.join(CARPETA_FOTOS, clave);
+      if (!fs.existsSync(f)) return responder(res, 404, { error: "no-esta" });
+      res.writeHead(200, { "Content-Type": "image/jpeg",
+        "Cache-Control": "private, max-age=31536000, immutable" });
+      res.end(fs.readFileSync(f));
+      return true;
     }
 
     /* Q-141 — gemelo de `/api/estado` en el worker. */
