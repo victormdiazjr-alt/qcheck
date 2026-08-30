@@ -501,8 +501,35 @@ function abrirProyecto(id) {
   /* Se guarda lo que estaba puesto ANTES de cambiar: `db.plan` es el objeto
      vivo de la obra que se deja, y si no se ancla aquí se pierde el último
      retoque. */
+  /* SOLO SE ANCLA LO QUE DE VERDAD ERA DE ESA OBRA — Q-156, 29 ago 2026.
+
+     Esto hacía `antes.plan = db.plan` a secas, y la intención era buena: al
+     dejar una obra, no perder el último retoque de sus límites.
+
+     Pero `db.plan` no siempre es el plan de esa obra. En un aparato que acaba
+     de abrir —o que estuvo semanas apagado— `db.plan` son todavía los valores
+     DE FÁBRICA mientras el expediente termina de bajar. Y entonces esta línea
+     escribía la vara de fábrica encima de los límites reales de la obra:
+     `tempMax` 100 pasaba a 95, y ahí se quedaba.
+
+     Peor: como los de fábrica no están vacíos, pasan todos los filtros que
+     pusimos hoy contra los huecos (Q-139, Q-142) y **se suben al expediente**.
+     Un aparato recién encendido le cambiaba los límites a la obra para todos.
+
+     Salió midiendo el iPad de repuesto que lleva tres semanas apagado.
+
+     La comprobación correcta es de identidad, no de contenido: cuando la obra
+     está abierta, `db.plan` ES su objeto (lo engancha Q-140 por referencia). Si
+     no lo es, es que nunca llegó a apuntar ahí, y lo que hay en `db.plan` no le
+     pertenece a nadie. Lo de verdad editado ya lo ancla `guardarPlan` (Q-90).
+
+     > Un dato solo se guarda donde vino. Si no se sabe de dónde vino, no se
+     > guarda: se deja el que estaba, que sí tiene dueño. */
   const antes = (db.proyectos || []).find((x) => x.id === db.proyectoActivo);
-  if (antes) { antes.plan = db.plan; antes.planes = db.planes; }
+  if (antes) {
+    if (antes.plan === db.plan || !antes.plan) antes.plan = db.plan;
+    if (antes.planes === db.planes || !antes.planes) antes.planes = db.planes;
+  }
 
   db.proyectoActivo = id;
   db.project = p;
@@ -1513,7 +1540,27 @@ function migrarPlanes() {
   if (typeof qcSyncActivo === "function" && qcSyncActivo() &&
       !localStorage.getItem("qc-sync-visto")) return;
 
+  /* Y SIN HISTORIA NO HAY HISTORIAL DE LIMITES — Q-155, 29 de agosto de 2026.
+
+     El guardian de arriba (Q-146) tapaba el caso del aparato que nunca se ha
+     sincronizado. Faltaba el otro, y salio midiendo un iPad de repuesto que
+     lleva semanas apagado: tiene la marca de estrenado de hace tres semanas
+     —asi que pasa el guardian— pero su copia local esta vacia. Entonces esto
+     congelaba los VALORES DE FABRICA como «la version que rige desde 1970», y
+     a partir de ahi cada camion se juzgaba contra el 95 de fabrica en vez de
+     contra los 100 de la obra. Medido: `db.plan.tempMax` 100 y `planDe(hoy)`
+     95, sin que nada lo dijera en pantalla.
+
+     La regla que faltaba es de sentido: **este historial fecha versiones contra
+     los ensayos que hay.** Sin un solo ensayo no hay nada que fechar, y una
+     version «desde 1970» hecha con lo que hubiera a mano no es historia: es una
+     invencion que despues manda sobre los limites de verdad.
+
+     Sin versiones, `planDe()` devuelve `db.plan` — los limites buenos. Y cuando
+     baje el expediente traera el historial real, o se creara en la carga
+     siguiente ya con los ensayos delante. */
   const fechas = (db.tests || []).map((t) => t.date).filter(Boolean).sort();
+  if (!fechas.length) return;
   db.planes = [{
     desde: fechas[0] || "1970-01-01",
     plan: JSON.parse(JSON.stringify(db.plan)),

@@ -906,6 +906,42 @@ const QCSync = {
         location.reload();
         return false;
       }
+      /* UN APARATO MUY ATRASADO SE ESTRENA DE NUEVO — Q-154, 29 ago 2026.
+
+         La instantánea de un viaje (Q-141) solo entraba con el aparato EN
+         BLANCO. Faltaba el otro caso, y es peor de lo que parece.
+
+         Un aparato puede decir que va por la línea 41.000 y tener la copia
+         VACÍA. No es raro: desde Q-148, cuando el almacén se llena se tira la
+         copia local para hacerle sitio a la cola — a propósito, porque la copia
+         se puede recuperar y lo que el técnico midió no.
+
+         Y ahí pasa lo que no se ve: la sincronización solo trae lo que viene
+         DESPUÉS de esa línea. Los límites de la obra se escribieron en la línea
+         3, hace meses. Ese aparato **no los pide nunca**, se queda con los de
+         fábrica, y juzga los camiones contra 95 °F en vez de 100. Sin un solo
+         aviso, y con el expediente del servidor intacto y correcto.
+
+         Medido con el iPad de repuesto de tres semanas: `planDe(hoy)` = 95 con
+         el servidor diciendo 100.
+
+         Aquí, con `r.seq` en la mano, sí se sabe el atraso de verdad —el tope
+         guardado puede ser viejo, que fue mi primer error—. Si falta más de lo
+         que se lleva encima, sale más barato estrenarse otra vez.
+
+         Se tira lo guardado, NUNCA la cola: lo que este aparato escribió y no
+         ha subido se respeta y sube después. Igual que Q-123. */
+      const atraso = (r.seq || 0) - this._seq();
+      if (atraso > 20000 && !this._yaMeEstrene) {
+        this._yaMeEstrene = true;      /* una vez por sesión, nunca en bucle */
+        try { console.info(`QCheck: ${atraso} apuntes de atraso — sale mas barato estrenarse otra vez`); } catch (_) {}
+        localStorage.removeItem(DB_KEY);
+        localStorage.removeItem(QC_SYNC_BASE);
+        localStorage.removeItem(QC_SYNC_VISTO);
+        this._guardarSeq(0);
+        if (await this._bajarEstado()) { this._avisar(); return false; }
+      }
+
       if (r.ops && r.ops.length) {
         for (const o of r.ops) qcAplicarOp(o);
         qcReconciliarN();
