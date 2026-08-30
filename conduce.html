@@ -444,7 +444,26 @@ async function startScan() {
       return await cuarto(d);
     };
   }
-  const detector = new BarcodeDetector({ formats: ["qr_code", "code_128", "code_39"] });
+  /* AQUÍ HABÍA UNA LÍNEA DE MÁS, Y SE COMÍA EL ESCÁNER DEL IPAD — Q-161,
+     30 de agosto de 2026.
+
+         const detector = new BarcodeDetector({ formats: [...] });
+
+     Sobró de la versión anterior a Q-80, cuando solo existía el camino de
+     `BarcodeDetector`. Al partir el código en dos —el del sistema y el lector
+     propio— se dejó también FUERA del `if`, en el ámbito de la función.
+
+     En Chrome de Android no se nota: construye un detector que nadie usa y
+     sigue. **En Safari `BarcodeDetector` no existe**, así que esa línea lanza
+     `ReferenceError` antes de llegar al `setInterval` — y como `startScan()` es
+     `async`, la promesa se rompe callada. Resultado en el iPad de obra: la
+     cámara se abre, se ve, y no lee un código jamás.
+
+     Lo tapaba justo lo que lo hacía invisible: el aparato donde funciona es el
+     que no se usa en obra, y el que se usa no da ni un error en pantalla.
+
+     > Una rama que solo corre en el navegador que no está en obra no está
+     > probada. */
   scanTimer = setInterval(async () => {
     try {
       const leido = await mirar();
