@@ -14,15 +14,27 @@
                font: 500 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
   main { height: 100%; display: grid; place-content: center; text-align: center; gap: 12px; padding: 24px; }
   h1 { font-size: 21px; font-weight: 750; margin: 0; letter-spacing: .01em; }
-  p  { margin: 0; color: #77848f; font-size: 14px; max-width: 30ch; }
+  p  { margin: 0; color: #77848f; font-size: 14px; max-width: 34ch; }
   .ok { color: #34d27b; }
   .mal { color: #ff5a52; }
+  .ojo { color: #ffb020; }
+  /* Los botones solo salen cuando hay una decisión que tomar, y entonces la
+     decisión tiene que verse: el que borra no se parece al que salva. */
+  #b { display: grid; gap: 10px; justify-items: stretch; margin-top: 8px; }
+  #b:empty { display: none; }
+  #b button { font: 650 16px/1 inherit; padding: 15px 20px; border-radius: 11px;
+              border: 1px solid #2a3441; background: #18202b; color: #eef2f6;
+              cursor: pointer; -webkit-appearance: none; min-height: 52px; }
+  #b button.primero { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+  #b button.borrar  { background: transparent; border-color: #6b2b28; color: #ff8a80; font-weight: 550; }
+  #b button:active { filter: brightness(1.25); }
 </style>
 </head>
 <body>
 <main>
   <h1 id="t">Preparando el aparato…</h1>
   <p id="s">Un momento.</p>
+  <div id="b"></div>
 </main>
 <script>
 /* ESTRENAR UN APARATO, DE UN SOLO TOQUE — Q-105, 28 de agosto de 2026.
@@ -42,6 +54,38 @@
  * recién sacado de la caja y lo manda a la pantalla de acceso, donde sigue
  * haciendo falta la cuenta de cada quien.
  */
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Y NO SE LLEVA POR DELANTE LO QUE NADIE MÁS TIENE — Q-160, 30 ago 2026.
+ *
+ * Víctor preguntó cuál era el enlace oficial para entrar desde el iPad y si
+ * era `qterapr.com/new`. No lo es —el de todos los días es `qterapr.com` a
+ * secas—, y al ir a explicar la diferencia salió esto:
+ *
+ *   `localStorage.clear()` NO distingue. Se lleva la copia del expediente,
+ *   que se recupera del servidor en veinte segundos… y se lleva **la cola de
+ *   lo que este aparato midió y todavía no ha subido**, que no está en
+ *   ningún otro sitio del mundo. Y las fotos de conduce esperando señal, que
+ *   son prueba.
+ *
+ * O sea que el enlace que existe para ARREGLAR un aparato confundido era, en
+ * el único momento en que de verdad hace falta —sin cobertura, en mitad de un
+ * tiro—, la forma más rápida de perder la mañana. Y callado.
+ *
+ * Es la misma regla de Q-148, Q-149, Q-150 y Q-157, escrita otra vez:
+ *
+ *   > Perder una prueba tiene que ser un ACTO de alguien. Nunca el efecto de
+ *   > tocar un botón que decía otra cosa.
+ *
+ * Así que ahora, antes de borrar nada, se mira. Si no hay nada pendiente —el
+ * caso normal, un aparato recién sacado de la caja o uno al día— no cambia
+ * absolutamente nada: borra y entra, igual que siempre.
+ *
+ * Si hay algo pendiente, se INTENTA SUBIR PRIMERO. Con cobertura eso se
+ * resuelve solo en un segundo y el técnico ni se entera. Y si no se puede
+ * subir, se para y se dice qué hay dentro, con dos botones que no se parecen:
+ * reintentar, o borrar sabiendo lo que se borra.
+ * ══════════════════════════════════════════════════════════════════════════ */
 (function () {
   /* Nada entra al HTML: el texto va como texto y el color va por la clase del
      propio elemento. Aqui las dos cosas son constantes mias, pero un `innerHTML`
@@ -53,22 +97,160 @@
     t.className = clase || "";
     document.getElementById("s").textContent = nota;
   };
+  const cajon = document.getElementById("b");
+  const sinBotones = () => { while (cajon.firstChild) cajon.removeChild(cajon.firstChild); };
+  const boton = (texto, clase, hacer) => {
+    const b = document.createElement("button");
+    b.textContent = texto;
+    if (clase) b.className = clase;
+    b.onclick = hacer;
+    cajon.appendChild(b);
+    return b;
+  };
+
   const llave = (new URLSearchParams(location.search).get("k") || "").trim();
   if (!llave) {
     di("Falta la llave", "Este enlace tiene que traer la llave del proyecto. Pídesela a Víctor.", "mal");
     return;
   }
-  try { localStorage.clear(); } catch (e) {}
-  try { sessionStorage.clear(); } catch (e) {}
-  try {
-    localStorage.setItem("qc-api", location.origin);
-    localStorage.setItem("qc-token", llave);
-  } catch (e) {
-    di("No se pudo guardar", "El navegador está en un modo que no deja guardar nada. Prueba fuera de navegación privada.", "mal");
-    return;
+
+  const leer = (k) => { try { return JSON.parse(localStorage.getItem(k) || "[]"); } catch (e) { return []; } };
+  const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+  /* ------------------------------------------------------------ el borrado */
+  function limpiar() {
+    try { localStorage.clear(); } catch (e) {}
+    try { sessionStorage.clear(); } catch (e) {}
+    try {
+      localStorage.setItem("qc-api", location.origin);
+      localStorage.setItem("qc-token", llave);
+    } catch (e) {
+      di("No se pudo guardar", "El navegador está en un modo que no deja guardar nada. Prueba fuera de navegación privada.", "mal");
+      return;
+    }
+    sinBotones();
+    di("Aparato listo", "Entrando…", "ok");
+    setTimeout(function () { location.replace("index.html"); }, 800);
   }
-  di("Aparato listo", "Entrando…", "ok");
-  setTimeout(function () { location.replace("index.html"); }, 800);
+
+  /* ------------------------------------------------------------ ¿hay algo? */
+  const cola = leer("qc-sync-cola");
+  const fotos = leer("qc-fotos");
+  if (!cola.length && !fotos.length) { limpiar(); return; }   /* el caso normal */
+
+  const cuenta = () => {
+    const p = [];
+    if (cola.length) p.push(cola.length === 1 ? "1 apunte" : cola.length + " apuntes");
+    if (fotos.length) p.push(fotos.length === 1 ? "1 foto de conduce" : fotos.length + " fotos de conduce");
+    return p.join(" y ");
+  };
+  /* Que concuerde. «Queda 3 apuntes» delante de alguien que está a punto de
+     perderlos suena a programa que no sabe lo que dice, y eso es exactamente
+     lo que no se quiere transmitir en esta pantalla. */
+  const cuantos = () => cola.length + fotos.length;
+  const quedan = () => (cuantos() === 1 ? "Queda" : "Quedan");
+
+  /* ------------------------------------------------------------ subirlo
+
+     Se manda con lo que el propio aparato tiene guardado: su servidor, su
+     llave y su pase de sesión. Si la llave se le quedó vieja, se reintenta con
+     la que trae este enlace, que la pone el servidor y es la buena. */
+  const API = localStorage.getItem("qc-api") || location.origin;
+  const SESION = localStorage.getItem("qc-sesion") || "";
+
+  async function mandar(ruta, cuerpo, token) {
+    const cab = { "Content-Type": "application/json" };
+    if (token) cab["X-QC-Token"] = token;
+    if (SESION) cab["X-QC-Sesion"] = SESION;
+    return fetch(API + ruta, { method: "POST", headers: cab, body: JSON.stringify(cuerpo) });
+  }
+  /* Dos llaves, un solo sitio donde decidir cuál. */
+  async function mandarConLaQueSea(ruta, cuerpo) {
+    const propia = localStorage.getItem("qc-token") || "";
+    let r = await mandar(ruta, cuerpo, propia || llave);
+    if (r.status === 401 && propia && propia !== llave) r = await mandar(ruta, cuerpo, llave);
+    return r;
+  }
+
+  async function subirTodo() {
+    sinBotones();
+    di("Subiendo lo que falta…", "Este aparato tiene " + cuenta() + " sin subir. Antes de borrar nada, se manda al servidor.", "ojo");
+
+    /* 1 · LAS FOTOS PRIMERO, porque cada una genera un apunte (`photoRef`) que
+           tiene que viajar con los demás. Al revés, la foto subiría y su camión
+           se quedaría sin el enlace. */
+    const quedan = [];
+    for (const f of fotos) {
+      try {
+        const r = await mandarConLaQueSea("/api/foto", {
+          imagen: String(f.dataUrl || "").split(",")[1],
+          tipo: "image/jpeg", uid: f.id || null, ticket: f.ticket || null,
+          dev: localStorage.getItem("qc-dev") || "preparar",
+        });
+        const d = r.ok ? await r.json() : null;
+        if (d && d.clave) {
+          cola.push({
+            uid: "prep|" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            ent: "test", id: f.id, campo: "photoRef", valor: d.clave,
+            ts: new Date().toISOString(),
+            dev: localStorage.getItem("qc-dev") || "preparar",
+            usr: localStorage.getItem("qc-user") || "?",
+          });
+        } else { quedan.push(f); }
+      } catch (e) { quedan.push(f); }
+    }
+    guardar("qc-fotos", quedan);
+    fotos.length = 0; for (const f of quedan) fotos.push(f);
+
+    /* 2 · Y ahora la cola entera. Se descuelga lo aceptado Y lo rechazado —el
+           servidor dice por qué—, que es lo mismo que hace la sincronización
+           normal desde Q-147. Lo que no contestó, se queda. */
+    let motivo = null;
+    if (cola.length) {
+      try {
+        const r = await mandarConLaQueSea("/api/cambios", { ops: cola });
+        if (r.ok) {
+          const d = await r.json();
+          const fuera = new Set([].concat(d.aceptadas || [], (d.rechazadas || []).map((x) => x.uid)));
+          const restan = cola.filter((o) => !fuera.has(o.uid));
+          cola.length = 0; for (const o of restan) cola.push(o);
+          guardar("qc-sync-cola", cola);
+        } else if (r.status === 401) {
+          /* Esto no se arregla desde aquí: hace falta la clave de una persona. */
+          motivo = "sesion";
+        } else { motivo = "servidor"; }
+      } catch (e) { motivo = "senal"; }
+    }
+
+    if (!cola.length && !fotos.length) {
+      di("Subido y a salvo", "Ya está todo en el servidor. Ahora sí se puede preparar el aparato.", "ok");
+      setTimeout(limpiar, 1100);
+      return;
+    }
+    atascado(motivo);
+  }
+
+  /* ------------------------------------------------------------ y si no sube */
+  function atascado(motivo) {
+    sinBotones();
+    const nota = motivo === "sesion"
+      ? "El servidor no acepta este aparato sin una clave. Entra en QCheck con tu usuario, deja que suba, y vuelve a abrir este enlace."
+      : motivo === "servidor"
+      ? "El servidor contestó con un error. Espera un momento y reintenta."
+      : "No hay señal para subirlo. Busca cobertura y reintenta — no hace falta prisa: aquí dentro no se pierde.";
+    di(quedan() + " " + cuenta() + " sin subir",
+       nota + " Esto es lo único que este aparato tiene y el servidor no; borrarlo ahora lo pierde para siempre.", "ojo");
+    boton("Reintentar", "primero", subirTodo);
+    boton("Borrar igual y perderlo", "borrar", function () {
+      const aviso = (cuantos() === 1 ? "Se va a PERDER " : "Se van a PERDER ") + cuenta() +
+        (cuantos() === 1 ? " que solo está" : " que solo están") + " en este aparato.\n\n" +
+        "Esto no se puede deshacer.\n\n¿Borrar de todos modos?";
+      if (confirm(aviso)) limpiar();
+    });
+  }
+
+  /* Con cobertura esto tarda un segundo y nadie ve esta pantalla. */
+  subirTodo();
 })();
 </script>
 </body>
