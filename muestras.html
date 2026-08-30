@@ -939,7 +939,20 @@ function render() {
           u ? `El último fue el ${esc(fmtDate(u.dia))}${u.obra ? " · " + esc(u.obra) : ""}, y está cerrado.
                Una muestra es de un camión, y un camión es de un tiro.`
             : "Todavía no hay ningún vaciado registrado."}</div>
-        <a class="ver-rejilla" style="margin-top:1.4vh; text-decoration:none" href="conduce.html">⇄ Ir a Recepción</a>
+        ${/* SIN TIRO, LA SALIDA ES PROGRAMARLO — Q-162, 30 ago 2026.
+
+              Aquí había un «⇄ Ir a Recepción», y no era un enlace de navegación:
+              era el escape, porque Recepción es la que sabe programar un tiro.
+
+              Con el atajo escondido en los tiros sin recepción, esta pantalla se
+              quedaba diciendo «no hay ningún tiro abierto» y nada más — un
+              callejón. Y la vuelta atrás sería peor: enseñar el atajo justo aquí
+              es mandar al técnico a otra estación para hacer algo que se hace
+              desde cualquier sitio.
+
+              Lo que hace falta no es ir a Recepción: es programar el tiro. Se
+              ofrece eso, que es el mismo `programarTiro()` de siempre. */""}
+        <button class="ver-rejilla" style="margin-top:1.4vh" onclick="programarTiro()">Programar el tiro</button>
       </div>`;
     document.getElementById("foot").innerHTML = "";
     return;
@@ -1220,6 +1233,28 @@ function pintarFilaRecibir() {
   const vivo = !!(tiro && !tiro.borrado && !tiro.cerradoA &&
     (tiro.cyPlan != null || tiro.losasPlan != null || tiro.losas || tiro.horaInicio));
   fila.hidden = aparte || !vivo;
+
+  /* Y LA PUERTA A RECEPCIÓN SE VA CON ELLA — Q-162, 30 de agosto de 2026.
+
+     Víctor, mirando la pantalla: «sigue viéndose el botón de recepción».
+
+     Y es peor que un botón de sobra. Q-136 dejó que el tiro dijera si hay
+     parada de Recepción o no, y por omisión NO la hay — pero el enlace «⇄
+     Recepción» de la cabecera se quedó fijo, de cuando era el único camino por
+     donde entraban los camiones.
+
+     Así que en un tiro sin recepción la pantalla ofrecía, arriba a la derecha,
+     irse a una pantalla que no es de este tiro. Y no es inocuo: es un botón
+     grande, en la esquina donde se mira para salir, delante de alguien con el
+     camión esperando. El que lo toque acaba en una estación que nadie está
+     atendiendo, teclea el camión allí, y vuelve a Muestras a buscarlo.
+
+     > Un camino que este tiro no usa no se enseña. Enseñarlo es proponerlo.
+
+     Se buscan por el destino y no por la clase: son dos —el de la cabecera y
+     el del hueco cuando no hay tiro— y la clase de uno de ellos la comparte
+     otro botón que no tiene nada que ver. */
+  for (const a of document.querySelectorAll('a[href="conduce.html"]')) a.hidden = !aparte;
   if (!fila.hidden) {
     /* La losa que toca, como pista — la misma que ofrece Recepción. */
     /* UNA PISTA NO ES UN VALOR — Q-116, y aquí se me había colado.

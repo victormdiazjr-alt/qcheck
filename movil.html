@@ -217,8 +217,19 @@ function pintar() {
 
   /* El orden es el del día: recibir, muestrear, mirar. Quien no lleva el
      control de calidad no ve ninguna de las de trabajar. */
+  /* Y RECEPCIÓN SOLO SI ESTE TIRO LA TIENE — Q-162, 30 de agosto de 2026.
+
+     Estas dos no son un menú: son la propuesta de trabajo del día, y por eso
+     van las primeras y resaltadas. Desde Q-136 el tiro decide si hay parada de
+     Recepción, y por omisión no la hay — así que en el caso normal la primera
+     cosa que este teléfono proponía era irse a una estación que nadie atiende.
+
+     Se cae de la propuesta, no del programa: Recepción sigue en el menú
+     completo del Control Center, que es un menú y no una sugerencia. */
+  const conRecepcion = typeof recepcionAparte !== "function" || recepcionAparte();
+  const trabajo = PUERTAS_TRABAJO.filter((x) => conRecepcion || x.href !== "conduce.html");
   const puertas = qcEsQC()
-    ? [...PUERTAS_TRABAJO, PUERTA_RESULTADOS, ...PUERTAS]
+    ? [...trabajo, PUERTA_RESULTADOS, ...PUERTAS]
     : PUERTAS;
   document.getElementById("mv-menu").innerHTML = puertas.map((x) => x.tableros
     ? `<button class="mv-btn" type="button" onclick="abrirDashboards()">
