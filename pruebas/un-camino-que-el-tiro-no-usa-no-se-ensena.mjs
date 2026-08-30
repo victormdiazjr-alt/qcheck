@@ -51,8 +51,8 @@ console.log("\n1 · EL INTERRUPTOR DEL TIRO MANDA, Y POR OMISIÓN NO HAY RECEPCI
 console.log("\n2 · MUESTRAS: EL ATAJO SE VA CON LA FILA, NO SE QUEDA SOLO");
 {
   const g = guionDe("muestras.html");
-  const trozo = (g.match(/function pintarFilaRecibir\(\)[\s\S]*?\n\}/) || [""])[0];
-  di(/fila\.hidden = aparte/.test(trozo), "la fila de recibir sigue mirando el interruptor");
+  const trozo = (g.match(/function pintarBotonRecibir\(\)[\s\S]*?\n\}/) || [""])[0];
+  di(/b\.hidden = aparte/.test(trozo), "el botón ＋ Camión sigue mirando el interruptor");
   di(/a\[href="conduce\.html"\]/.test(trozo),
      "y el enlace a Recepción se decide en el MISMO sitio, con el mismo dato");
   /* Por destino y no por clase: `.ver-rejilla` la comparte otro botón que no

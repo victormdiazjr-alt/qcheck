@@ -215,11 +215,11 @@ for (const [pag, quien] of [["/conduce.html", "Recepción"], ["/muestras.html", 
   const t = JSON.parse(await tecnico.ver(`JSON.stringify({
     texto: (document.body.innerText||'').replace(/\\s+/g,' ').slice(0, 240),
     formulario: !!document.querySelector('#manual-card:not([hidden])'),
-    filaRecibir: (() => { const f = document.querySelector('.recibir');
-      return !!f && getComputedStyle(f).display !== 'none'; })() })`));
+    filaRecibir: (() => { const b = document.querySelector('#btn-camion');
+      return !!b && getComputedStyle(b).display !== 'none'; })() })`));
   comprobar(`${quien} no invita a trabajar sin tiro`,
     !/tiro de hoy|camiones del tiro/i.test(t.texto) && !t.formulario && !t.filaRecibir,
-    t.filaRecibir ? "la fila de recibir SIGUE VISIBLE (Q-144)" : t.texto.slice(0, 60));
+    t.filaRecibir ? "el boton ＋ Camión SIGUE VISIBLE (Q-144)" : t.texto.slice(0, 60));
 }
 
 console.log("\n3 · SE PROGRAMA EL TIRO");
@@ -240,9 +240,9 @@ comprobar("los límites resuelven por la obra del día", d.tempMaxDelDia === 100
 console.log("\n4 · LLEGA EL CAMIÓN (recibir y medir en una pantalla)");
 await tecnico.ir("/muestras.html", 12000);
 d = JSON.parse(await tecnico.ver(`JSON.stringify({ fila: (() => {
-  const f = document.querySelector('.recibir');
-  return !!f && getComputedStyle(f).display !== 'none'; })() })`));
-comprobar("Muestras ofrece recibir el camión", d.fila);
+  const b = document.querySelector('#btn-camion');
+  return !!b && getComputedStyle(b).display !== 'none'; })() })`));
+comprobar("Muestras ofrece recibir el camión (＋ Camión)", d.fila);
 
 d = JSON.parse(await tecnico.ver(`(() => {
   const t = recibirCamion({ ticket: "88001", truck: "410", vol: 9, ident: "L-10" });
@@ -312,8 +312,8 @@ comprobar("el tiro cerrado aparece en Reportes", d.sale);
 console.log("\n8 · CON EL TIRO CERRADO NO SE RECIBEN CAMIONES");
 await tecnico.ir("/muestras.html", 12000);
 d = JSON.parse(await tecnico.ver(`JSON.stringify({ fila: (() => {
-  const f = document.querySelector('.recibir');
-  return !!f && getComputedStyle(f).display !== 'none'; })() })`));
+  const b = document.querySelector('#btn-camion');
+  return !!b && getComputedStyle(b).display !== 'none'; })() })`));
 comprobar("Muestras ya no ofrece recibir", !d.fila);
 /* Q-145: y si alguien llama a la función directamente, se le pregunta —
    reabrir un día firmado es un acto, no un descuido. Aquí se dice que no. */
@@ -454,8 +454,8 @@ d = JSON.parse(await tecnico.ver(`JSON.stringify({ aparte: recepcionAparte("${DI
 comprobar("el tiro queda marcado con Recepcion aparte", d.aparte === true);
 await tecnico.ir("/muestras.html", 11000);
 d = JSON.parse(await tecnico.ver(`JSON.stringify({ fila: (() => {
-  const f = document.querySelector('.recibir');
-  return !!f && getComputedStyle(f).display !== 'none'; })() })`));
+  const b = document.querySelector('#btn-camion');
+  return !!b && getComputedStyle(b).display !== 'none'; })() })`));
 comprobar("Muestras deja de ofrecer recibir", !d.fila);
 await tecnico.ir("/conduce.html", 11000);
 d = JSON.parse(await tecnico.ver(`JSON.stringify({

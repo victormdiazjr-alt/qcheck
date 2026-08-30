@@ -387,26 +387,92 @@ footer .spacer { flex: 1; }
 
 /* La fila del camión — Q-136. Todo botón gordo y todo en una línea: se opera
    de pie, junto al camión, con guante mojado. */
-.recibir { display: flex; align-items: center; gap: 1vw; flex: none;
-  padding: 1.4vh 2.4vw; border-bottom: 1px solid var(--hairline); flex-wrap: wrap; }
-.recibir .rec-c { background: var(--surface); border: 2px solid var(--hairline);
-  color: var(--text); border-radius: 12px; padding: 1.2vh 1.2vw; font: inherit;
-  font-size: 2vh; font-weight: 700; width: 15vw; min-width: 110px; }
-.recibir .rec-c.rec-corto { width: 9vw; min-width: 80px; }
-.recibir .rec-c:focus { outline: none; border-color: var(--logo-navy); }
-.recibir .rec-foto, .recibir .rec-ok {
-  background: var(--surface); border: 2px solid var(--hairline); color: var(--text);
-  border-radius: 12px; padding: 1.2vh 1.6vw; font: inherit; font-size: 1.9vh;
-  font-weight: 800; cursor: pointer; white-space: nowrap; }
-.recibir .rec-ok { border-color: var(--logo-navy); }
-.recibir .rec-foto:hover, .recibir .rec-ok:hover { border-color: var(--logo-navy); }
-.recibir .rec-aviso { font-size: 1.6vh; color: var(--muted); }
-.recibir .rec-aviso.leido { color: var(--ok); }
-.recibir .rec-aviso.mal { color: var(--susp); }
-@media (max-width: 700px) {
-  .recibir { padding: 1vh 3vw; gap: 6px; }
-  .recibir .rec-c { font-size: 15px; width: auto; flex: 1 1 90px; }
-  .recibir .rec-foto, .recibir .rec-ok { font-size: 14px; flex: 1 1 auto; }
+/* ＋ Camión: es una acción del trabajo, no navegación, así que se ve. */
+.btn-camion {
+  margin-right: 1vw; flex: none; background: var(--surface);
+  border: 2px solid var(--logo-navy); color: var(--text);
+  border-radius: 12px; padding: 1.1vh 1.5vw; font-size: 1.7vh; font-weight: 850;
+  font-family: inherit; cursor: pointer; letter-spacing: .01em;
+  transition: box-shadow .18s, background .16s;
+}
+.btn-camion:hover { box-shadow: 0 0 18px -5px var(--logo-navy); }
+.btn-camion:active { transform: scale(.985); }
+
+/* EL PANEL DEL CAMIÓN NUEVO — Q-163.
+   Tapa la pantalla porque es un acto entero: mientras se apunta un camión no
+   se está midiendo otro, y una tira a medias en la esquina compite con la
+   lectura que el técnico tiene abierta. */
+.rec-capa { position: fixed; inset: 0; z-index: 350; background: rgba(6,9,13,.86);
+  display: flex; align-items: center; justify-content: center; padding: 3vh 4vw; }
+.rec-caja { background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 20px; width: min(680px, 100%); max-height: 94vh; overflow: auto;
+  padding: 2.2vh 2vw; display: flex; flex-direction: column; gap: 1.4vh;
+  box-shadow: 0 24px 70px rgba(0,0,0,.6); }
+.rec-cab { display: flex; align-items: center; font-size: 2.1vh; font-weight: 850; }
+.rec-cab .spacer { flex: 1; }
+.rec-x { background: none; border: 0; color: var(--muted); font-size: 2.4vh;
+  cursor: pointer; font-family: inherit; padding: 0 .4vw; }
+.rec-x:hover { color: var(--text); }
+.rec-paso { display: flex; flex-direction: column; gap: 1.1vh; }
+
+/* Las opciones. De dedo gordo y con la coletilla debajo: quien las lee tiene
+   guante y prisa, y «Escanear conduce» solo no dice si es el código o la foto. */
+.rec-op { display: flex; align-items: center; gap: 1.4vw; text-align: left;
+  background: var(--bg); border: 1px solid var(--hairline); border-radius: 14px;
+  padding: 2vh 1.6vw; cursor: pointer; color: var(--text); font-family: inherit;
+  transition: border-color .16s, box-shadow .18s; }
+.rec-op:hover { border-color: var(--logo-navy); box-shadow: 0 0 18px -7px var(--logo-navy); }
+.rec-op:active { transform: scale(.99); }
+.rec-op .i { font-size: 2.6vh; flex: none; width: 3vh; text-align: center; }
+.rec-op .t { display: flex; flex-direction: column; gap: .3vh; flex: 1; min-width: 0; }
+.rec-op .t b { font-size: 2vh; font-weight: 800; }
+.rec-op .t i { font-style: normal; font-size: 1.5vh; color: var(--muted); }
+.rec-op .fl { color: var(--muted); font-size: 2.2vh; flex: none; }
+
+.rec-atras { background: none; border: 0; color: var(--muted); font-family: inherit;
+  font-size: 1.6vh; font-weight: 700; cursor: pointer; padding: .8vh 0; text-align: left; }
+.rec-atras:hover { color: var(--text); }
+
+.rec-rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2vh 1.2vw; }
+.rec-rejilla label { display: flex; flex-direction: column; gap: .5vh;
+  font-size: 1.4vh; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); }
+.rec-rejilla label b { color: var(--susp); }
+.rec-c { background: var(--bg); border: 2px solid var(--hairline); border-radius: 12px;
+  color: var(--text); font-family: inherit; font-size: 2.4vh; font-weight: 750;
+  padding: 1.2vh 1vw; width: 100%; }
+.rec-c:focus { outline: none; border-color: var(--logo-navy); }
+/* Leído de la foto o del código y todavía sin mirar: por el resplandor, nunca
+   por el relleno (AGENTS.md §10). */
+.rec-c.leido { border-color: var(--act); box-shadow: 0 0 0 3px rgba(245,184,61,.14); }
+
+.rec-pie { display: flex; align-items: center; gap: 1vw; }
+.rec-pie .spacer { flex: 1; }
+.rec-ok { background: var(--surface); border: 2px solid var(--logo-navy); color: var(--text);
+  border-radius: 12px; padding: 1.3vh 1.8vw; font-size: 1.9vh; font-weight: 850;
+  font-family: inherit; cursor: pointer; }
+.rec-ok:hover { box-shadow: 0 0 18px -5px var(--logo-navy); }
+
+.rec-camara { position: relative; border-radius: 14px; overflow: hidden; background: #000; }
+.rec-camara video { width: 100%; display: block; max-height: 44vh; object-fit: cover; }
+.rec-marco { position: absolute; inset: 12% 18%; border: 3px solid rgba(255,255,255,.85);
+  border-radius: 14px; box-shadow: 0 0 0 2000px rgba(0,0,0,.32); }
+.rec-cerrar-cam { position: absolute; top: 1vh; right: 1vw; background: rgba(10,13,18,.85);
+  border: 1px solid var(--hairline); color: var(--text); border-radius: 10px;
+  padding: .8vh 1vw; font-family: inherit; font-size: 1.5vh; font-weight: 750; cursor: pointer; }
+.rec-nota:empty { display: none; }
+.rec-nota { position: absolute; left: 1vw; right: 1vw; bottom: 1vh;
+  background: rgba(10,13,18,.9); border: 1px solid var(--susp); color: var(--susp);
+  border-radius: 10px; padding: 1vh 1.2vw; font-size: 1.5vh; font-weight: 700; }
+
+.rec-aviso:empty { display: none; }
+.rec-aviso { font-size: 1.6vh; color: var(--muted); }
+.rec-aviso.leido { color: var(--ok); }
+.rec-aviso.mal { color: var(--susp); }
+@media (max-width: 760px) {
+  .rec-rejilla { grid-template-columns: 1fr; }
+  .rec-caja { padding: 2vh 4vw; }
+}
 }
 </style>
 <script src="assets/usuarios.js?v=7523e141"></script>
@@ -440,6 +506,17 @@ footer .spacer { flex: 1; }
   <!-- La rejilla de camiones (Q-33). Va PEGADA al selector porque son la misma
        decisión —a qué camión voy— y con la mano sucia se busca en un sitio, no
        en dos. El selector sigue estando: para un solo camión es más rápido. -->
+  <!-- ＋ CAMIÓN — Q-163, 30 de agosto de 2026.
+
+       Víctor: «desde Muestras que haya un botón de ＋Camión y cuando le das te
+       da a escoger… q sea escanear conduce o entrar manual, y escanear sea
+       escanear QR o foto de conduce».
+
+       Va PRIMERO, antes de «Camiones», porque es el primer acto del ciclo: el
+       camión llega, se apunta, se mide. Y solo sale cuando este tiro no tiene
+       parada de Recepción — si la tiene, el camión ya viene apuntado y este
+       botón sería una segunda puerta al mismo sitio. -->
+  <button class="btn-camion" id="btn-camion" hidden onclick="abrirRecibir()">＋ Camión</button>
   <button class="ver-rejilla" onclick="abrirRejilla()" title="Ver todos los camiones y qué les falta">▦ Camiones</button>
   <select class="truck-pick" id="truck-pick" onchange="pickTruck(this.value)"></select>
   <!-- CERRAR EL TIRO YA NO ESTÁ AQUÍ — Q-99, 14 ago 2026.
@@ -471,18 +548,88 @@ footer .spacer { flex: 1; }
 <!-- LA FILA DEL CAMIÓN — Q-136, 29 de agosto de 2026.
      Solo sale cuando el tiro dice que el técnico recibe y muestrea. Con
      recepción aparte no aparece: ahí el camión ya viene apuntado. -->
-<div class="recibir" id="recibir" hidden>
-  <button class="rec-foto" onclick="document.getElementById('rec-file').click()">
-    <span>📷</span> Escanear conduce
-  </button>
-  <input type="file" id="rec-file" accept="image/*" capture="environment" style="display:none" onchange="recFoto(this)">
-  <input class="rec-c" id="rec-ticket" placeholder="Ticket *" inputmode="numeric">
-  <input class="rec-c" id="rec-truck" placeholder="Camión *" inputmode="numeric">
-  <input class="rec-c rec-corto" id="rec-vol" placeholder="CY *" inputmode="decimal">
-  <input class="rec-c" id="rec-ident" placeholder="Losa *">
-  <button class="rec-ok" onclick="recibirYMedir()">✔ Recibir</button>
-  <span class="rec-aviso" id="rec-aviso"></span>
+<!-- EL CAMIÓN NUEVO, EN DOS PREGUNTAS — Q-163, 30 de agosto de 2026.
+
+     Antes esto era una tira siempre puesta debajo de la cabecera: se comía una
+     fila de la pantalla las veinticuatro horas para algo que pasa quince veces
+     en una mañana, y no tenía el QR.
+
+     Ahora es un panel que se abre y pregunta lo justo, en dos escalones:
+
+         ＋ Camión ─┬─ Escanear conduce ─┬─ Código QR
+                    │                    └─ Foto del conduce
+                    └─ Entrar manual
+
+     Los dos escalones son de Víctor y son los correctos: «escanear» es UNA
+     intención con dos maneras, no dos opciones sueltas. Poner las tres al mismo
+     nivel obligaba a elegir la máquina antes que el propósito.
+
+     Las cuatro casillas son las mismas de siempre y se llaman igual, así que
+     `recFoto()` y `recibirYMedir()` no se enteran de nada. -->
+<div class="rec-capa" id="recibir" hidden>
+  <div class="rec-caja">
+    <div class="rec-cab">
+      <b id="rec-tit">Camión nuevo</b>
+      <span class="spacer"></span>
+      <button class="rec-x" onclick="cerrarRecibir()" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="rec-paso" id="rec-menu">
+      <button class="rec-op" onclick="recPaso('escanear')">
+        <span class="i">▣</span>
+        <span class="t"><b>Escanear conduce</b><i>El código, o una foto del papel</i></span>
+        <span class="fl">›</span>
+      </button>
+      <button class="rec-op" onclick="recPaso('campos')">
+        <span class="i">⌨</span>
+        <span class="t"><b>Entrar manual</b><i>Teclear ticket, camión, yardas y losa</i></span>
+        <span class="fl">›</span>
+      </button>
+    </div>
+
+    <div class="rec-paso" id="rec-escanear" hidden>
+      <button class="rec-op" onclick="recQR()">
+        <span class="i">▦</span>
+        <span class="t"><b>Código QR</b><i>Apunta la cámara al código del conduce</i></span>
+        <span class="fl">›</span>
+      </button>
+      <!-- `capture="environment"` abre la cámara trasera del iPad sin pasar por
+           el carrete. En una PC no hay cámara y el navegador enseña el buscador
+           de archivos, que es lo correcto. -->
+      <label class="rec-op">
+        <span class="i">📷</span>
+        <span class="t"><b>Foto del conduce</b><i>Se lee sola; lo que no se lea, se teclea</i></span>
+        <span class="fl">›</span>
+        <input type="file" id="rec-file" accept="image/*" capture="environment" hidden onchange="recFoto(this)">
+      </label>
+      <button class="rec-atras" onclick="recPaso('menu')">‹ Atrás</button>
+    </div>
+
+    <div class="rec-camara" id="rec-camara" hidden>
+      <video id="rec-video" playsinline muted></video>
+      <div class="rec-marco"></div>
+      <button class="rec-cerrar-cam" onclick="recPararQR()">✕ Cerrar cámara</button>
+      <div class="rec-nota" id="rec-nota"></div>
+    </div>
+
+    <div class="rec-paso" id="rec-campos" hidden>
+      <div class="rec-rejilla">
+        <label>Ticket <b>*</b><input class="rec-c" id="rec-ticket" inputmode="numeric"></label>
+        <label>Camión <b>*</b><input class="rec-c" id="rec-truck" inputmode="numeric"></label>
+        <label>Yardas <b>*</b><input class="rec-c" id="rec-vol" inputmode="decimal"></label>
+        <label>Losa <b>*</b><input class="rec-c" id="rec-ident"></label>
+      </div>
+      <div class="rec-pie">
+        <button class="rec-atras" onclick="recPaso('menu')">‹ Atrás</button>
+        <span class="spacer"></span>
+        <button class="rec-ok" onclick="recibirYMedir()">✔ Recibir y medir</button>
+      </div>
+    </div>
+
+    <div class="rec-aviso" id="rec-aviso"></div>
+  </div>
 </div>
+
 <div class="body" id="body"></div>
 
 <footer id="foot"></footer>
@@ -544,6 +691,7 @@ footer .spacer { flex: 1; }
 <script src="assets/sync.js?v=23e8bf05"></script>
 <script src="assets/recibir.js?v=5b40b59f"></script>
 <script src="assets/core.js?v=636bf7c4"></script>
+<script src="assets/qr-conduce.js?v=bdb3516f"></script>
 <script src="assets/fotos.js?v=7b0f6778"></script>
 <script src="assets/demo.js?v=d4e2897f"></script>
 <script>
@@ -904,7 +1052,7 @@ function liveVerdict() {
 
 /* ---------- render ---------- */
 function render() {
-  if (typeof pintarFilaRecibir === "function") setTimeout(pintarFilaRecibir, 0);
+  if (typeof pintarBotonRecibir === "function") setTimeout(pintarBotonRecibir, 0);
   /* Con el plan del día dentro: un tiro programado sin camiones
      también es el tiro de hoy (Q-46). */
   const days = diasDelProyecto();
@@ -1224,90 +1372,180 @@ addEventListener("keydown", (e) => { if (e.key === "Escape") cerrarRejilla(); })
    mide. Una pantalla de principio a fin. */
 let recFotoGuardada = null;
 
-function pintarFilaRecibir() {
-  const fila = document.getElementById("recibir");
-  if (!fila) return;
+function pintarBotonRecibir() {
   const dia = diaActivo();
   const aparte = typeof recepcionAparte === "function" ? recepcionAparte(dia) : true;
   const tiro = (db.dayMeta || {})[dia] || {};
   const vivo = !!(tiro && !tiro.borrado && !tiro.cerradoA &&
     (tiro.cyPlan != null || tiro.losasPlan != null || tiro.losas || tiro.horaInicio));
-  fila.hidden = aparte || !vivo;
+  const b = document.getElementById("btn-camion");
+  if (b) b.hidden = aparte || !vivo;
 
-  /* Y LA PUERTA A RECEPCIÓN SE VA CON ELLA — Q-162, 30 de agosto de 2026.
+  /* Y LA PUERTA A RECEPCIÓN SE VA CON ÉL — Q-162, 30 de agosto de 2026.
 
      Víctor, mirando la pantalla: «sigue viéndose el botón de recepción».
 
      Y es peor que un botón de sobra. Q-136 dejó que el tiro dijera si hay
-     parada de Recepción o no, y por omisión NO la hay — pero el enlace «⇄
+     parada de Recepción, y por omisión NO la hay — pero el enlace «⇄
      Recepción» de la cabecera se quedó fijo, de cuando era el único camino por
      donde entraban los camiones.
 
-     Así que en un tiro sin recepción la pantalla ofrecía, arriba a la derecha,
-     irse a una pantalla que no es de este tiro. Y no es inocuo: es un botón
-     grande, en la esquina donde se mira para salir, delante de alguien con el
-     camión esperando. El que lo toque acaba en una estación que nadie está
-     atendiendo, teclea el camión allí, y vuelve a Muestras a buscarlo.
+     Es un botón grande, en la esquina donde se mira para salir, delante de
+     alguien con el camión esperando. El que lo toque acaba en una estación que
+     nadie está atendiendo, teclea el camión allí, y vuelve aquí a buscarlo.
 
-     > Un camino que este tiro no usa no se enseña. Enseñarlo es proponerlo.
+     > Enseñar un camino es proponerlo.
 
-     Se buscan por el destino y no por la clase: son dos —el de la cabecera y
-     el del hueco cuando no hay tiro— y la clase de uno de ellos la comparte
-     otro botón que no tiene nada que ver. */
+     Se busca por el destino y no por la clase: la clase de uno de ellos la
+     comparte otro botón que no tiene nada que ver. */
   for (const a of document.querySelectorAll('a[href="conduce.html"]')) a.hidden = !aparte;
-  if (!fila.hidden) {
-    /* La losa que toca, como pista — la misma que ofrece Recepción. */
-    /* UNA PISTA NO ES UN VALOR — Q-116, y aquí se me había colado.
+}
 
-       Estas dos pistas las puse esta mañana con la fila de recibir (Q-136) y
-       las escribí como si fueran datos: «L-10 — la que toca» y «Camión #3».
-       Es exactamente lo que Víctor pidió que no pasara: en el gris del
-       placeholder eso se lee como un campo YA RELLENO, el técnico pasa de
-       largo dándolo por puesto, y el camión entra sin losa o sin número.
+/* ---------- el panel del camión nuevo (Q-163) ---------- */
+const REC_PASOS = ["menu", "escanear", "campos"];
 
-       Lo cazó `pruebas/un-campo-en-blanco-esta-en-blanco.mjs`, que existe
-       justo para esto. La regla es «ej.» delante, siempre. */
-    const c = document.getElementById("rec-ident");
-    if (c && !c.value && typeof losasDelDia === "function") {
-      const L = losasDelDia(dia);
-      const pend = (L.lista || []).find((x) => x.estado !== "vaciada");
-      if (pend) c.placeholder = "ej. " + pend.codigo;
-    }
-    const t = document.getElementById("rec-truck");
-    if (t) t.placeholder = "ej. " + (testsOfDate(dia).length + 1);
+function recPaso(cual) {
+  recPararQR();
+  for (const p of REC_PASOS) {
+    const el = document.getElementById("rec-" + p);
+    if (el) el.hidden = p !== cual;
   }
+  const t = document.getElementById("rec-tit");
+  if (t) t.textContent = cual === "campos" ? "Datos del camión"
+    : cual === "escanear" ? "Escanear el conduce" : "Camión nuevo";
+}
+
+function abrirRecibir() {
+  const dia = diaActivo();
+  if (typeof frenoDiaCerrado === "function" && frenoDiaCerrado(dia)) return;
+  /* UNA PISTA NO ES UN VALOR — Q-116. En el gris del marcador de posición, un
+     «L-10» a secas se lee como un campo YA RELLENO: el técnico pasa de largo
+     dándolo por puesto y el camión entra sin losa. La regla es «ej.» delante,
+     siempre. */
+  const c = document.getElementById("rec-ident");
+  if (c && typeof losasDelDia === "function") {
+    const L = losasDelDia(dia);
+    const pend = (L.lista || []).find((x) => x.estado !== "vaciada");
+    c.placeholder = pend ? "ej. " + pend.codigo : "";
+  }
+  const t = document.getElementById("rec-truck");
+  if (t) t.placeholder = "ej. " + (testsOfDate(dia).length + 1);
+
+  recAviso("");
+  recPaso("menu");
+  document.getElementById("recibir").hidden = false;
+}
+
+function cerrarRecibir() {
+  recPararQR();
+  document.getElementById("recibir").hidden = true;
+}
+
+function recAviso(txt, clase) {
+  const a = document.getElementById("rec-aviso");
+  if (!a) return;
+  a.className = "rec-aviso" + (clase ? " " + clase : "");
+  a.textContent = txt || "";
+}
+
+/* Marca lo que vino del código o de la foto y nadie ha mirado todavía (Q-01).
+   Tocar el campo lo desmarca: mirarlo es confirmarlo. */
+function recPoner(id, v) {
+  const el = document.getElementById(id);
+  if (!el || v == null || v === "") return false;
+  el.value = v;
+  el.classList.add("leido");
+  el.addEventListener("input", () => el.classList.remove("leido"), { once: true });
+  return true;
+}
+
+/* ---------- el código QR ---------- */
+function recPararQR() {
+  const cam = document.getElementById("rec-camara");
+  if (typeof pararQR === "function") pararQR();
+  if (cam) cam.hidden = true;
+}
+
+async function recQR() {
+  if (typeof escanearQR !== "function") { recAviso("Este aparato no trae el lector de códigos.", "mal"); return; }
+  const cam = document.getElementById("rec-camara");
+  cam.hidden = false;
+  recAviso("");
+  await escanearQR({
+    video: document.getElementById("rec-video"),
+    nota: document.getElementById("rec-nota"),
+    alLeer: (texto) => { recPararQR(); recCodigo(texto); },
+  });
+}
+
+/* Qué hacer con lo que diga el código. Desmontarlo es del módulo compartido;
+   decidir es de esta pantalla, que es la que sabe cómo se llaman sus campos. */
+function recCodigo(raw) {
+  const leido = typeof leerCodigoDeConduce === "function"
+    ? leerCodigoDeConduce(raw, (db.project || {}).qticketHosts) : null;
+
+  if (!leido) {
+    recPaso("campos");
+    recAviso("No se entendió ese código. Entra el conduce a mano.", "mal");
+    return;
+  }
+  /* Q-82: un QR lo imprime cualquiera. Si apunta a un servidor que no es de
+     este proyecto no se le pide nada, y se dice a dónde apuntaba. */
+  if (leido.tipo === "ajeno") {
+    recPaso("campos");
+    recAviso("Ese código apunta a «" + leido.host + "», que no es un servidor de este proyecto. " +
+             "No se pidió nada. Entra el conduce a mano.", "mal");
+    return;
+  }
+  if (leido.tipo === "qticket") {
+    recPaso("campos");
+    pedirConduceAQTicket(leido.enlace, (txt, mal) => recAviso(txt, mal ? "mal" : ""))
+      .then((d) => { if (d) recRellenar(d); });
+    return;
+  }
+  recRellenar(leido.campos);
+}
+
+/* Pone en las casillas lo que se haya leído, venga del código o de QTicket, y
+   dice qué NO vino — que es lo que hay que teclear mirando el papel. */
+function recRellenar(c) {
+  recLeido = Object.assign({}, recLeido, c);
+  const puestos = [
+    recPoner("rec-ticket", c.ticket) && "ticket",
+    recPoner("rec-truck", c.truck) && "camión",
+    recPoner("rec-vol", c.vol) && "yardas",
+    recPoner("rec-ident", c.ident) && "losa",
+  ].filter(Boolean);
+  recPaso("campos");
+  const faltan = ["ticket", "camión", "yardas", "losa"].filter((x) => !puestos.includes(x));
+  recAviso(faltan.length
+    ? `Leído: ${puestos.join(", ") || "nada"}. Falta por teclear: ${faltan.join(", ")}.`
+    : "Leído del conduce — compruébalo contra el papel.",
+    faltan.length ? "" : "leido");
 }
 
 function recFoto(input) {
   const file = input.files && input.files[0];
   if (!file) return;
-  const aviso = document.getElementById("rec-aviso");
-  aviso.className = "rec-aviso";
-  aviso.textContent = "Leyendo el conduce…";
+  /* Se pasa al paso de las casillas antes de leer: la lectura tarda unos
+     segundos y el técnico tiene que ver DÓNDE van a caer los datos, no un
+     recuadro de opciones con un aviso debajo. */
+  recPaso("campos");
+  recAviso("Leyendo el conduce…");
   const img = new Image();
   img.onload = async () => {
     recFotoGuardada = reducirFoto(img, 900, 0.6);
     const r = await leerConduce(reducirFoto(img, 2576, 0.92));
     URL.revokeObjectURL(img.src);
     if (r.error) {
-      aviso.className = "rec-aviso mal";
-      aviso.textContent = r.error === "sin-senal" ? "Sin señal para leer la foto. Escríbelo a mano."
+      recAviso(r.error === "sin-senal" ? "Sin señal para leer la foto. Escríbelo a mano — la foto se guarda igual."
         : r.error === "sin-servidor" ? "Este aparato no sabe dónde está el servidor. Escríbelo a mano."
-        : "No se pudo leer la foto. Escríbelo a mano.";
+        : "No se pudo leer la foto. Escríbelo a mano.", "mal");
       return;
     }
-    const c = r.campos || {};
-    const poner = (id, v) => { const e = document.getElementById(id);
-      if (e && v != null && v !== "") e.value = v; };
-    poner("rec-ticket", c.ticket);
-    poner("rec-truck", c.truck);
-    poner("rec-vol", c.vol);
-    recLeido = c;
-    const escritos = ["ticket", "truck", "vol"].filter((k) => c[k] != null && c[k] !== "").length;
-    aviso.className = "rec-aviso leido";
-    aviso.textContent = escritos
-      ? `Leídos ${escritos} campos. Comprueba con el papel.`
-      : "No se leyó ningún campo. Escríbelo a mano.";
+    /* Lo que leyó el modelo entra por la misma puerta que lo que lee el código:
+       marcado como pendiente de mirar, y diciendo qué NO vino. */
+    recRellenar(r.campos || {});
   };
   img.src = URL.createObjectURL(file);
   input.value = "";
@@ -1322,11 +1560,7 @@ function recibirYMedir() {
   const falta = [["rec-ticket", "el ticket"], ["rec-truck", "el camión"],
                  ["rec-vol", "las yardas"], ["rec-ident", "la losa"]]
     .filter(([id]) => !val(id)).map(([, q]) => q);
-  if (falta.length) {
-    document.getElementById("rec-aviso").className = "rec-aviso mal";
-    document.getElementById("rec-aviso").textContent = "Falta " + falta.join(", ") + ".";
-    return;
-  }
+  if (falta.length) { recAviso("Falta " + falta.join(", ") + ".", "mal"); return; }
   const repetido = typeof findConduce === "function"
     ? findConduce((db.project || {}).concretera, val("rec-ticket")) : null;
   if (repetido && !confirm(`El conduce ${val("rec-ticket")} ya está registrado (camión ${repetido.truck || "—"}).\n\n¿Registrarlo otra vez?`)) return;
@@ -1349,9 +1583,15 @@ function recibirYMedir() {
   state.n = t.n;
   state.buf = {}; state.borrados = new Set();
   recFotoGuardada = null; recLeido = null;
-  for (const id of ["rec-ticket", "rec-truck", "rec-vol", "rec-ident"]) document.getElementById(id).value = "";
-  document.getElementById("rec-aviso").className = "rec-aviso leido";
-  document.getElementById("rec-aviso").textContent = `Camión ${t.truck} recibido — mide y aprueba.`;
+  for (const id of ["rec-ticket", "rec-truck", "rec-vol", "rec-ident"]) {
+    const e = document.getElementById(id);
+    e.value = ""; e.classList.remove("leido");
+  }
+  /* Y el panel se va: lo que viene ahora es medir, y el camión ya está abierto
+     detrás. Dejarlo puesto tapando la lectura sería pedir un toque de más
+     justo cuando el técnico ya tiene el cono en la mano. */
+  cerrarRecibir();
+  toast(`Camión ${t.truck} recibido — mide y aprueba.`);
   render();
 }
 
