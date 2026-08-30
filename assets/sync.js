@@ -330,7 +330,16 @@ const QCSync = {
   _timer: null,
 
   alCambiar(fn) { this._oyentes.push(fn); },
-  _avisar() { for (const f of this._oyentes) { try { f(); } catch (_) {} } },
+  /* EN CUANTO LLEGA ALGO, SE REVISA EL RITMO — Victor: «que tan pronto se cree
+     un tiro le de señal para que este vivo».
+
+     `_avisar` se dispara cuando ha entrado algo de verdad. Si lo que ha entrado
+     es el tiro del dia, la pantalla tiene que ponerse viva en ese mismo
+     instante, sin esperar a la vuelta siguiente. */
+  _avisar() {
+    for (const f of this._oyentes) { try { f(); } catch (_) {} }
+    if (typeof this._revisarRitmo === "function") { try { this._revisarRitmo(); } catch (_) {} }
+  },
 
   _base() {
     try { return JSON.parse(localStorage.getItem(QC_SYNC_BASE)) || null; } catch (_) { return null; }
@@ -1125,9 +1134,38 @@ const QCSync = {
     const MURAL = /display\.html/.test(location.pathname);
     const EN_LA_MANO = /(muestras|conduce)\.html/.test(location.pathname);
 
+    /* LA DE LA PARED: VIVA EN EL TIRO, CASI DORMIDA FUERA — Q-152 bis.
+
+       Víctor: «que Field Display también esté vivo mientras haya tiro; mientras
+       no haya tiro abierto no hace falta que llame».
+
+       De acuerdo, y va casi hasta el final — pero no hasta cero, y la razón es
+       de obra: **es la única pantalla que nadie va a tocar.** Las demás se
+       paran del todo porque alguien vuelve a ellas y eso las despierta. A esta
+       no vuelve nadie: cuelga en un poste. Si deja de preguntar del todo, no se
+       entera nunca de que se ha programado el vaciado, y se queda toda la
+       mañana diciendo «SIN TIRO» delante de la cuadrilla hasta que alguien
+       suba a tocarla.
+
+       Víctor tambien pidió: «que tan pronto se cree un tiro le dé señal para que
+       esté vivo». Y ahí hay un límite que no es de programación: **un servidor
+       no puede avisar a una pantalla que no está preguntando.** Para que sea de
+       verdad instantáneo hace falta una conexión viva permanente —un
+       WebSocket—, que es otra pieza y no está hecha.
+
+       Lo más cerca sin eso es un minuto: la pared se entera del tiro como
+       tarde en sesenta segundos y salta a tres segundos ella sola. Sigue siendo
+       la mitad de llamadas que antes, y el resto del día —que es casi todo— no
+       hay nada que mirar de todas formas.
+
+       En cuanto entra algo de verdad, `_avisar` vuelve a mirar el ritmo, así
+       que la subida a tres segundos es en el mismo instante en que llega el
+       tiro, no en la vuelta siguiente. */
+    const DORMIDA_MURAL = 60000;
+
     const cadencia = () => {
       const hayTiro = typeof hayTiroActivo === "function" && hayTiroActivo();
-      if (MURAL) return hayTiro ? 3000 : 30000;          // la de la obra no duerme
+      if (MURAL) return hayTiro ? 3000 : DORMIDA_MURAL;
       if (document.hidden && !(EN_LA_MANO && hayTiro)) return 0;   // 0 = parada
       return hayTiro ? 3000 : 30000;
     };
@@ -1142,9 +1180,19 @@ const QCSync = {
          conexión y no hay nadie mirando la franja. Al volver se reanuda y la
          franja sigue diciendo lo mismo que decía. */
       if (!ms) return;
-      this._timer = setInterval(() => { paso(); arrancarTimer(); }, ms);
+      /* Se espera a que la vuelta TERMINE antes de decidir el ritmo siguiente.
+         Iba sin esperar, y por eso el mural se despertaba tarde y mal: la vuelta
+         de los cinco minutos traia el tiro, pero el ritmo se recalculaba antes
+         de que el dato estuviera aplicado, veia «no hay tiro» y se echaba otros
+         cinco minutos. Medido: tardaba 200 s en enterarse y luego seguia
+         dormida con el vaciado ya en marcha. */
+      this._timer = setInterval(() => {
+        Promise.resolve(paso()).then(() => arrancarTimer());
+      }, ms);
     };
     arrancarTimer();
+    /* Q-152 ter: lo deja a mano para que `_avisar` pueda tirar de el. */
+    this._revisarRitmo = arrancarTimer;
 
     /* iOS congela el JavaScript de una página que pasa a segundo plano y la
        descongela al volver. Sin estos avisos, volver a la aplicación enseñaba
