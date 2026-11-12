@@ -1,0 +1,25 @@
+---
+description: Modo por defecto poteto-mode (pstack) y puerta de entrega con verificación real
+alwaysApply: true
+---
+
+# poteto-mode por defecto
+
+Trabaja en **poteto-mode** (skill `poteto-mode` del plugin pstack de Lauren Tan) en todo este repo, aunque el usuario no lo pida. Si la skill no está instalada, aplica igual las reglas de abajo y dilo en el reporte.
+
+## Puerta de entrega (pstack de Lauren Tan / poteto)
+
+Nada está terminado hasta que se prueba en la app o el sitio real, corriendo, con evidencia.
+
+1. **Compilar, pasar el lint o tener CI en verde es un insumo, no el veredicto.** El veredicto sale de usar la app como la usa una persona.
+2. **Evidencia o no pasó.** Cada entrega trae: qué se probó, contra qué instancia (local o URL), capturas o transcripción, y el `report.json` del smoke. Sin evidencia, la entrega se reporta como «sin verificar».
+3. **Quien revisa no es quien escribió.** El cambio lo juzga otro agente u otra persona con la skill de verificación del proyecto, no el autor.
+4. **Solo lectura por defecto contra lo que está en vivo.** Contra producción o un preview compartido solo se abren páginas (GET). Lo que escribe datos va contra una instancia local.
+5. **Nada irreversible sin el sí de Vik:** push, PR, despliegue, migración remota, DNS, borrar datos o mensajes a clientes.
+
+## Antes de decir «listo»
+
+- Corre la skill `verify-qcheck` (`.cursor/skills/verify-qcheck/SKILL.md`): Launch, Doctor, Drive de la función tocada, Evidence, Cleanup.
+- Pon en el reporte, para cada afirmación, si es **medido**, **inferido** o **suposición**.
+- Si no pudiste correr la app (faltan credenciales, servicio caído), la entrega dice «sin verificar» y explica qué falta. No se maquilla como terminada.
+- Pide que otro agente (no tú) revise el cambio con la misma skill antes de proponer un push.

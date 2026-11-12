@@ -1,0 +1,95 @@
+# Verificación pstack (Lauren Tan / poteto). Propuesta del 12 nov 2026.
+#
+# NO BLOQUEA: cada job tiene continue-on-error. Corre solo en pull_request y a mano.
+# No despliega, no escribe en producción y no usa secretos. Contra lo publicado solo abre páginas.
+# El veredicto de una entrega sale de la skill .cursor/skills/verify-qcheck; esto es insumo.
+name: Verificación pstack
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pstack-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chequeos:
+    name: Chequeos del repo
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: "verificar.js (revisión estática del proyecto)"
+        continue-on-error: true
+        run: |
+          node verificar.js
+      - name: "Desconectar aparato (Q-77)"
+        continue-on-error: true
+        run: |
+          node pruebas/desconectar-aparato.mjs
+      - name: "Echar a todos (Q-85)"
+        continue-on-error: true
+        run: |
+          node pruebas/echar-a-todos.mjs
+
+  navegador:
+    name: Smoke Playwright + Lighthouse (local)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Instalar Playwright fuera del repo
+        run: |
+          npm i --prefix "$RUNNER_TEMP/pw" playwright@1.56
+          npx --prefix "$RUNNER_TEMP/pw" playwright install --with-deps chromium
+      - name: Levantar la app
+        run: |
+          (QC_TOKEN=llave-de-prueba QC_ADMIN=admin-de-prueba node serve.js 8461) > "$RUNNER_TEMP/server.log" 2>&1 &
+          for i in $(seq 1 120); do curl -fsS -o /dev/null http://127.0.0.1:8461/ && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/server.log"; exit 1
+      - name: Smoke de solo lectura
+        env:
+          BASE_URL: http://127.0.0.1:8461
+          PATHS: /index.html,/control-center.html,/muestras.html,/conduce.html
+          VERIFY_REPO: qcheck
+          EVIDENCE_DIR: ${{ runner.temp }}/evidencia
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/pw/node_modules/playwright/index.mjs
+        run: node .cursor/skills/verify-qcheck/smoke.mjs
+      - name: Lighthouse contra local
+        continue-on-error: true
+        run: |
+          npx -y @lhci/cli@0.15 collect --url=http://127.0.0.1:8461/ --numberOfRuns=1
+          npx -y @lhci/cli@0.15 upload --target=filesystem --outputDir="$RUNNER_TEMP/evidencia/lhci"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencia-local
+          path: |
+            ${{ runner.temp }}/evidencia
+            ${{ runner.temp }}/server.log
+          if-no-files-found: warn
+
+  lighthouse-vivo:
+    name: Lighthouse contra lo publicado (solo lectura)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: https://victormdiazjr-alt.github.io/qcheck/
+          uploadArtifacts: true
+          temporaryPublicStorage: false

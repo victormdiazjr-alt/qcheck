@@ -1,0 +1,24 @@
+---
+description: Cuando el mismo error de un agente pasa dos veces, proponer encodarlo en tipos, lint o CI con /correct
+alwaysApply: true
+---
+
+# Errores repetidos: /correct
+
+Supón que cada colaborador es un agente que solo ve los archivos que abrió y copia el ejemplo más cercano.
+
+**Disparador.** Vik (u otro revisor) corrige el mismo tipo de error por segunda vez, o encuentras en commits, reverts o notas del repo el mismo error dos veces.
+
+**Qué haces.** Corre la skill `correct` del plugin pstack y propone el arreglo al nivel más alto que funcione:
+
+1. Arquitectura: un solo dueño por estado, una sola forma de hacer cada cosa, borrar la forma vieja.
+2. Tipos (o validación en la frontera en JS sin tipos) para que el estado malo no se pueda escribir.
+3. Lint o chequeo de CI cuyo error diga qué usar en su lugar. Si el patrón ya es común, que falle solo cuando un cambio añade más.
+4. Prueba de comportamiento que falle cuando el comportamiento se rompe.
+5. Regla escrita, solo para juicios que no se pueden chequear.
+
+**Límites.**
+- Es una **propuesta para Vik**: rama local, diff y explicación. No push, no PR, no cambios a la configuración de GitHub sin su sí.
+- No toques código funcional para «arreglar» de paso. El arreglo propuesto va en su propio commit.
+- Demuestra que el chequeo nuevo falla con el error real del pasado antes de proponerlo.
+- Añade la regla a la tabla «Tabla de reglas y quién las hace cumplir» de `AGENTS.md` con lo que la hace cumplir.
